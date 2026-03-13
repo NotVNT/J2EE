@@ -1,116 +1,22 @@
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap");
+@import "tailwindcss";
+
 :root {
-  font-family: Arial, sans-serif;
-  color: #1f2937;
-  background: #f4f6f8;
+  font-family: "Outfit", sans-serif;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at top, rgba(59, 130, 246, 0.14), transparent 30%),
+    linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+  color: #0f172a;
 }
 
 * {
   box-sizing: border-box;
 }
 
-body {
-  margin: 0;
-}
-
-button,
-input {
-  font: inherit;
-}
-
-.page {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-}
-
-.card {
-  width: 100%;
-  max-width: 440px;
-  background: #ffffff;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
-}
-
-.title {
-  margin: 0 0 8px;
-  font-size: 28px;
-}
-
-.subtitle {
-  margin: 0 0 20px;
-  color: #6b7280;
-}
-
-.field {
-  margin-bottom: 16px;
-}
-
-.field label {
-  display: block;
-  margin-bottom: 6px;
-  font-size: 14px;
-}
-
-.field input {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 10px;
-}
-
-.actions {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.button {
-  width: 100%;
-  padding: 12px;
-  border: 0;
-  border-radius: 10px;
-  background: #111827;
-  color: #ffffff;
-  cursor: pointer;
-}
-
-.button.secondary {
-  background: #e5e7eb;
-  color: #111827;
-}
-
-.error {
-  margin: 0 0 16px;
-  padding: 12px;
-  border-radius: 10px;
-  background: #fef2f2;
-  color: #b91c1c;
-}
-
-.success {
-  margin: 0 0 16px;
-  padding: 12px;
-  border-radius: 10px;
-  background: #ecfdf5;
-  color: #047857;
-}
-
-.link {
-  color: #2563eb;
-  text-decoration: none;
-}
-
-.stack {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.row {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
+.btn-primary {
+  @apply w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800;
 }
