@@ -4,6 +4,7 @@ import Signup from "./pages/Signup.jsx";
 import Dashboard from "./components/Dashboard.jsx";
 import DashboardPlaceholder from "./pages/DashboardPlaceholder.jsx";
 import Category from "./pages/Category.jsx";
+import Income from "./pages/Income.jsx";
 
 const PrivateRoute = ({ children }) => {
   const token = localStorage.getItem("token");
@@ -30,9 +31,15 @@ const App = () => {
         path="/category"
         element={
           <PrivateRoute>
-            <Dashboard activeMenu="Category">
-                <Category />
-            </Dashboard>
+            <Category />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/income"
+        element={
+          <PrivateRoute>
+            <Income />
           </PrivateRoute>
         }
       />
