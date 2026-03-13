@@ -9,4 +9,30 @@ const axiosConfig = axios.create({
   }
 });
 
+const excludeEndpoints = ["/login", "/register", "/status", "/activate", "/health"];
+
+axiosConfig.interceptors.request.use(
+  (config) => {
+    const shouldSkipToken = excludeEndpoints.some((endpoint) => config.url?.includes(endpoint));
+    if (!shouldSkipToken) {
+      const accessToken = localStorage.getItem("token");
+      if (accessToken) {
+        config.headers.Authorization = `Bearer ${accessToken}`;
+      }
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+axiosConfig.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      window.location.href = "/login";
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default axiosConfig;
