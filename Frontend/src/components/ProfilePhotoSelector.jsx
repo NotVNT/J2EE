@@ -1,58 +1,62 @@
-import { useRef, useState } from "react";
-import { Camera, Trash2, User } from "lucide-react";
+import {useRef, useState} from "react";
+import {Trash, Upload, User} from "lucide-react";
 
-const ProfilePhotoSelector = ({ image, setImage }) => {
-  const inputRef = useRef(null);
-  const [previewUrl, setPreviewUrl] = useState(null);
+const ProfilePhotoSelector = ({image, setImage}) => {
+    const inputRef = useRef(null);
+    const [previewUrl, setPreviewUrl] = useState(null);
 
-  const handleImageChange = (event) => {
-    const file = event.target.files?.[0];
-    if (!file) {
-      return;
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setImage(file);
+
+            const preview = URL.createObjectURL(file);
+            setPreviewUrl(preview);
+        }
     }
-    setImage(file);
-    setPreviewUrl(URL.createObjectURL(file));
-  };
 
-  const handleRemoveImage = () => {
-    setImage(null);
-    setPreviewUrl(null);
-  };
+    const handleRemoveImage = (e) => {
+        e.preventDefault();
+        setImage(null);
+        setPreviewUrl(null);
+    }
 
-  return (
-    <div className="flex justify-center">
-      <input
-        ref={inputRef}
-        accept="image/*"
-        className="hidden"
-        onChange={handleImageChange}
-        type="file"
-      />
-      {!image ? (
-        <button
-          className="relative flex h-24 w-24 items-center justify-center rounded-full bg-slate-100 text-slate-500"
-          onClick={() => inputRef.current?.click()}
-          type="button"
-        >
-          <User size={36} />
-          <span className="absolute bottom-0 right-0 rounded-full bg-slate-900 p-2 text-white">
-            <Camera size={14} />
-          </span>
-        </button>
-      ) : (
-        <div className="relative">
-          <img alt="preview" className="h-24 w-24 rounded-full object-cover" src={previewUrl} />
-          <button
-            className="absolute bottom-0 right-0 rounded-full bg-red-600 p-2 text-white"
-            onClick={handleRemoveImage}
-            type="button"
-          >
-            <Trash2 size={14} />
-          </button>
+    const onChooseFile = (e) => {
+        e.preventDefault();
+        inputRef.current?.click();
+    }
+
+    return (
+        <div className="flex justify-center mb-6">
+            <input type="file"
+                accept="image/*"
+                ref={inputRef}
+                onChange={handleImageChange}
+                className="hidden"
+            />
+
+            {!image ? (
+                <div className="w-20 h-20 flex items-center justify-center bg-purple-100 rounded-full relative">
+                    <User className="text-purple-500" size={35} />
+
+                    <button
+                        onClick={onChooseFile}
+                        className="w-8 h-8 flex items-center justify-center bg-primary text-white rounded-full absolute -bottom-1 -right-1">
+                        <Upload size={15} className="text-purple-500" />
+                    </button>
+                </div>
+            ): (
+                <div className="relative">
+                    <img src={previewUrl} alt="profile photo" className="w-20 h-20 rounded-full object-cover" />
+                    <button
+                        onClick={handleRemoveImage}
+                        className="w-8 h-8 flex items-center justify-center bg-red-800 text-white rounded-full absolute -bottom-1 -right-1">
+                        <Trash size={15}/>
+                    </button>
+                </div>
+            )}
         </div>
-      )}
-    </div>
-  );
-};
+    )
+}
 
 export default ProfilePhotoSelector;
