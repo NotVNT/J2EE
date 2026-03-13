@@ -63,7 +63,6 @@ const IncomeList = ({transactions, onDelete, onDownload, onEmail}) => {
                         key={income.id}
                         title={income.name}
                         icon={income.icon}
-                        category={income.categoryName}
                         date={moment(income.date).format('Do MMM YYYY')}
                         amount={income.amount}
                         type="income"

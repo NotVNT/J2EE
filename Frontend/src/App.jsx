@@ -5,6 +5,8 @@ import Dashboard from "./components/Dashboard.jsx";
 import DashboardPlaceholder from "./pages/DashboardPlaceholder.jsx";
 import Category from "./pages/Category.jsx";
 import Income from "./pages/Income.jsx";
+import Expense from "./pages/Expense.jsx";
+
 
 const PrivateRoute = ({ children }) => {
   const token = localStorage.getItem("token");
@@ -17,6 +19,7 @@ const App = () => {
       <Route path="/" element={<Navigate to="/signup" replace />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/expense" element={<Expense />} />
       <Route
         path="/dashboard"
         element={
