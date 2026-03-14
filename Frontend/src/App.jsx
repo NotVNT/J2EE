@@ -1,53 +1,38 @@
-import { Navigate, Route, Routes } from "react-router-dom";
-import Login from "./pages/Login.jsx";
-import Signup from "./pages/Signup.jsx";
-import Dashboard from "./components/Dashboard.jsx";
-import DashboardPlaceholder from "./pages/DashboardPlaceholder.jsx";
-import Category from "./pages/Category.jsx";
+import {Navigate, Route, Routes} from "react-router-dom";
+import Home from "./pages/Home.jsx";
 import Income from "./pages/Income.jsx";
 import Expense from "./pages/Expense.jsx";
-
-
-const PrivateRoute = ({ children }) => {
-  const token = localStorage.getItem("token");
-  return token ? children : <Navigate replace to="/login" />;
-};
+import Category from "./pages/Category.jsx";
+import Filter from "./pages/Filter.jsx";
+import Login from "./pages/Login.jsx";
+import Signup from "./pages/Signup.jsx";
+import LandingPage from "./pages/LandingPage.jsx";
 
 const App = () => {
-  return (
-    <Routes>
-      <Route path="/" element={<Navigate to="/signup" replace />} />
-      <Route path="/signup" element={<Signup />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/expense" element={<Expense />} />
-      <Route
-        path="/dashboard"
-        element={
-          <PrivateRoute>
-            <Dashboard activeMenu="Dashboard">
-                <DashboardPlaceholder />
-            </Dashboard>
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/category"
-        element={
-          <PrivateRoute>
-            <Category />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/income"
-        element={
-          <PrivateRoute>
-            <Income />
-          </PrivateRoute>
-        }
-      />
-    </Routes>
-  );
-};
+    return (
+        <>
+            <Routes>
+                <Route path="/" element={<Root />} />
+                <Route path="/home" element={<LandingPage />} />
+                <Route path="/dashboard" element={<Home />} />
+                <Route path="/income" element={<Income />} />
+                <Route path="/expense" element={<Expense />} />
+                <Route path="/category" element={<Category />} />
+                <Route path="/filter" element={<Filter />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<Signup />} />
+            </Routes>
+        </>
+    )
+}
+
+const Root = () => {
+    const isAuthenticated = !!localStorage.getItem("token");
+    return isAuthenticated ? (
+        <Navigate to="/dashboard" />
+    ) : (
+      <Navigate to="/home" />
+    );
+}
 
 export default App;

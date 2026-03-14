@@ -10,7 +10,7 @@ export const API_ENDPOINTS = {
     ADD_CATEGORY: "/categories",
     UPDATE_CATEGORY: (categoryId) => `/categories/${categoryId}`,
     GET_ALL_INCOMES: "/incomes",
-    CATEGORY_BY_TYPE: (type) => `/categories/type/${type}`,
+    CATEGORY_BY_TYPE: (type) => `/categories/${type}`,
     ADD_INCOME: "/incomes",
     DELETE_INCOME: (incomeId) => `/incomes/${incomeId}`,
     INCOME_EXCEL_DOWNLOAD: "excel/download/income",
