@@ -22,9 +22,11 @@ package com.example.moneymanager.controller;
         private final ExpenseService expenseService;
         private final EmailService emailService;
         private final ProfileService profileService;
+        private final SubscriptionService subscriptionService;
 
         @GetMapping("/income-excel")
         public ResponseEntity<Void> emailIncomeExcel() throws IOException, MessagingException {
+            subscriptionService.ensureCanExport(profileService.getCurrentProfile());
             ProfileEntity profile = profileService.getCurrentProfile();
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             excelService.writeIncomesToExcel(baos, incomeService.getCurrentMonthIncomesForCurrentUser());
@@ -38,6 +40,7 @@ package com.example.moneymanager.controller;
 
         @GetMapping("/expense-excel")
         public ResponseEntity<Void> emailExpenseExcel() throws IOException, MessagingException {
+            subscriptionService.ensureCanExport(profileService.getCurrentProfile());
             ProfileEntity profile = profileService.getCurrentProfile();
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             excelService.writeExpensesToExcel(baos, expenseService.getCurrentMonthExpensesForCurrentUser());

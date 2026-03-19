@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -33,11 +34,27 @@ public class ProfileEntity {
     private LocalDateTime updatedAt;
     private Boolean isActive;
     private String activationToken;
+    @Enumerated(EnumType.STRING)
+    private SubscriptionPlan subscriptionPlan;
+    @Enumerated(EnumType.STRING)
+    private SubscriptionStatus subscriptionStatus;
+    private LocalDate subscriptionActivatedAt;
+    private LocalDate subscriptionExpiresAt;
+    private Boolean autoRenew;
 
     @PrePersist
     public void prePersist() {
         if (this.isActive == null) {
             isActive = false;
+        }
+        if (this.subscriptionPlan == null) {
+            subscriptionPlan = SubscriptionPlan.FREE;
+        }
+        if (this.subscriptionStatus == null) {
+            subscriptionStatus = SubscriptionStatus.INACTIVE;
+        }
+        if (this.autoRenew == null) {
+            autoRenew = false;
         }
     }
 

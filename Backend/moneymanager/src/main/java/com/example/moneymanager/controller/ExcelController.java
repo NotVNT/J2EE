@@ -3,7 +3,8 @@ package com.example.moneymanager.controller;
 import com.example.moneymanager.service.ExcelService;
 import com.example.moneymanager.service.ExpenseService;
 import com.example.moneymanager.service.IncomeService;
-import jakarta.persistence.criteria.CriteriaBuilder;
+import com.example.moneymanager.service.ProfileService;
+import com.example.moneymanager.service.SubscriptionService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,9 +21,12 @@ public class ExcelController {
     private final ExcelService excelService;
     private final IncomeService incomeService;
     private final ExpenseService expenseService;
+    private final ProfileService profileService;
+    private final SubscriptionService subscriptionService;
 
     @GetMapping("/download/income")
     public void downloadIncomeExcel(HttpServletResponse response) throws IOException {
+        subscriptionService.ensureCanExport(profileService.getCurrentProfile());
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         response.setHeader("Content-Disposition", "attachment; filename=income.xlsx");
         excelService.writeIncomesToExcel(response.getOutputStream(), incomeService.getCurrentMonthIncomesForCurrentUser());
@@ -30,6 +34,7 @@ public class ExcelController {
 
     @GetMapping("/download/expense")
     public void downloadExpenseExcel(HttpServletResponse response) throws IOException {
+        subscriptionService.ensureCanExport(profileService.getCurrentProfile());
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         response.setHeader("Content-Disposition", "attachment; filename=expense.xlsx");
         excelService.writeExpensesToExcel(response.getOutputStream(), expenseService.getCurrentMonthExpensesForCurrentUser());

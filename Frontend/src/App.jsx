@@ -7,6 +7,9 @@ import Filter from "./pages/Filter.jsx";
 import Login from "./pages/Login.jsx";
 import Signup from "./pages/Signup.jsx";
 import LandingPage from "./pages/LandingPage.jsx";
+import Payment from "./pages/Payment.jsx";
+import PaymentSuccess from "./pages/PaymentSuccess.jsx";
+import PaymentCancel from "./pages/PaymentCancel.jsx";
 
 const App = () => {
     return (
@@ -19,6 +22,9 @@ const App = () => {
                 <Route path="/expense" element={<Expense />} />
                 <Route path="/category" element={<Category />} />
                 <Route path="/filter" element={<Filter />} />
+                <Route path="/payment" element={<Payment />} />
+                <Route path="/payment/success" element={<PaymentSuccess />} />
+                <Route path="/payment/cancel" element={<PaymentCancel />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
             </Routes>
@@ -27,12 +33,7 @@ const App = () => {
 }
 
 const Root = () => {
-    const isAuthenticated = !!localStorage.getItem("token");
-    return isAuthenticated ? (
-        <Navigate to="/dashboard" />
-    ) : (
-      <Navigate to="/home" />
-    );
+    return <Navigate to="/home" replace />;
 }
 
 export default App;

@@ -1,6 +1,7 @@
 package com.example.moneymanager.controller;
 
 import com.example.moneymanager.dto.AuthDTO;
+import com.example.moneymanager.dto.AutoRenewRequestDTO;
 import com.example.moneymanager.dto.ProfileDTO;
 import com.example.moneymanager.service.ProfileService;
 import lombok.RequiredArgsConstructor;
@@ -53,5 +54,10 @@ public class ProfileController {
     public ResponseEntity<ProfileDTO> getPublicProfile() {
         ProfileDTO profileDTO = profileService.getPublicProfile(null);
         return ResponseEntity.ok(profileDTO);
+    }
+
+    @PutMapping("/profile/subscription/auto-renew")
+    public ResponseEntity<ProfileDTO> updateAutoRenew(@RequestBody AutoRenewRequestDTO requestDTO) {
+        return ResponseEntity.ok(profileService.updateAutoRenew(requestDTO));
     }
 }
