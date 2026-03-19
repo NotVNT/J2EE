@@ -1,5 +1,5 @@
 import logo from "./logo/devbot.png";
-import {Coins, FunnelPlus, LayoutDashboard, List, Wallet} from "lucide-react";
+import {BadgeDollarSign, Coins, FunnelPlus, LayoutDashboard, List, Wallet} from "lucide-react";
 
 export const assets = {
     logo,
@@ -35,5 +35,11 @@ export const SIDE_BAR_DATA = [
         label: "Filters",
         icon: FunnelPlus,
         path: "/filter",
+    },
+    {
+        id: "06",
+        label: "Payment",
+        icon: BadgeDollarSign,
+        path: "/payment",
     },
 ];
