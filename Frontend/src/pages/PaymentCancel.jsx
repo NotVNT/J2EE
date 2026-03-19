@@ -17,7 +17,7 @@ const PaymentCancel = () => {
 
   const handleSyncStatus = async () => {
     if (!orderCode) {
-      toast.error("Order code not found");
+      toast.error("Không tìm thấy mã đơn hàng");
       return;
     }
 
@@ -26,9 +26,9 @@ const PaymentCancel = () => {
     try {
       const response = await axiosConfig.get(API_ENDPOINTS.SYNC_PAYMENT_STATUS(orderCode));
       localStorage.setItem(PAYMENT_STORAGE_KEY, JSON.stringify(response.data));
-      toast.success(`Latest payment status: ${response.data.status}`);
+      toast.success(`Trạng thái thanh toán mới nhất: ${response.data.status}`);
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to sync payment status");
+      toast.error(error.response?.data?.message || "Không thể đồng bộ trạng thái thanh toán");
     } finally {
       setIsSyncing(false);
     }
@@ -42,15 +42,13 @@ const PaymentCancel = () => {
         </div>
 
         <div className="mt-6 text-center">
-          <p className="text-sm uppercase tracking-[0.25em] text-rose-600">Payment Cancelled</p>
-          <h1 className="mt-3 text-3xl font-semibold text-slate-900">The checkout was cancelled or not completed.</h1>
+          <p className="text-sm uppercase tracking-[0.25em] text-rose-600">Thanh toán đã bị hủy</p>
+          <h1 className="mt-3 text-3xl font-semibold text-slate-900">
+            Quá trình thanh toán đã bị hủy hoặc chưa được hoàn tất.
+          </h1>
           <p className="mt-3 text-slate-600">
-            You can return to the payment page to create a new link, or refresh the current order status in case the payment was completed in another tab.
+            Bạn có thể quay lại trang thanh toán để tạo liên kết mới, hoặc làm mới trạng thái đơn hàng hiện tại trong trường hợp thanh toán đã được hoàn tất ở tab khác.
           </p>
-        </div>
-
-        <div className="mt-8 rounded-[24px] border border-slate-200 bg-slate-50 p-5 text-sm text-slate-700">
-          <p>Order code: <span className="font-semibold text-slate-900">{orderCode || "--"}</span></p>
         </div>
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -61,7 +59,7 @@ const PaymentCancel = () => {
             type="button"
           >
             <RefreshCcw size={16} className={isSyncing ? "animate-spin" : ""} />
-            {isSyncing ? "Checking..." : "Check payment status"}
+            {isSyncing ? "Đang kiểm tra..." : "Kiểm tra trạng thái thanh toán"}
           </button>
 
           <Link
@@ -69,7 +67,7 @@ const PaymentCancel = () => {
             to="/payment"
           >
             <ArrowLeft size={16} />
-            Back to payment page
+            Quay lại trang thanh toán
           </Link>
         </div>
       </div>
