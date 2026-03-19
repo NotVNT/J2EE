@@ -20,10 +20,12 @@ public class IncomeService {
     private final CategoryRepository categoryRepository;
     private final IncomeRepository incomeRepository;
     private final ProfileService profileService;
+    private final SubscriptionService subscriptionService;
 
     // Adds a new income to the database
     public IncomeDTO addIncome(IncomeDTO dto) {
         ProfileEntity profile = profileService.getCurrentProfile();
+        subscriptionService.ensureCanCreateTransaction(profile, dto.getDate());
         CategoryEntity category = categoryRepository.findById(dto.getCategoryId())
                 .orElseThrow(() -> new RuntimeException("Category not found"));
         IncomeEntity newIncome = toEntity(dto, profile, category);

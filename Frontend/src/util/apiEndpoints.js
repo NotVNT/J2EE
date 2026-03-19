@@ -6,6 +6,7 @@ export const API_ENDPOINTS = {
     LOGIN: "/login",
     REGISTER: "/register",
     GET_USER_INFO: "/profile",
+    UPDATE_AUTO_RENEW: "/profile/subscription/auto-renew",
     CREATE_PAYMENT: "/payments/payos/create",
     CONFIRM_PAYMENT_WEBHOOK: "/payments/payos/confirm-webhook",
     GET_PAYMENT_BY_ORDER_CODE: (orderCode) => `/payments/${orderCode}`,

@@ -1,14 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { ArrowRight, BadgeCheck, CalendarClock, CreditCard, Hash, House } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
-import toast from "react-hot-toast";
 import axiosConfig from "../util/axiosConfig.jsx";
 import { API_ENDPOINTS } from "../util/apiEndpoints.js";
+import { AppContext } from "../context/AppContext.jsx";
 
 const PAYMENT_STORAGE_KEY = "latestPayment";
 
 const PaymentSuccess = () => {
   const [searchParams] = useSearchParams();
+  const { setUser } = useContext(AppContext);
   const [payment, setPayment] = useState(null);
   const [arrivedAt] = useState(() => new Date().toISOString());
 
@@ -21,25 +22,50 @@ const PaymentSuccess = () => {
   const transactionIdFromUrl = searchParams.get("id");
 
   useEffect(() => {
-    const savedPayment = localStorage.getItem(PAYMENT_STORAGE_KEY);
-    const parsedSavedPayment = savedPayment ? JSON.parse(savedPayment) : null;
+    const syncPaymentAndProfile = async () => {
+      const savedPayment = localStorage.getItem(PAYMENT_STORAGE_KEY);
+      const parsedSavedPayment = savedPayment ? JSON.parse(savedPayment) : null;
 
-    const nextPayment = {
-      ...parsedSavedPayment,
-      orderCode: searchParams.get("orderCode") || parsedSavedPayment?.orderCode || "",
-      paymentLinkId: transactionIdFromUrl || parsedSavedPayment?.paymentLinkId || "",
-      status: returnStatus === "PAID" ? "PAID" : parsedSavedPayment?.status || "PENDING"
+      const nextPayment = {
+        ...parsedSavedPayment,
+        orderCode: searchParams.get("orderCode") || parsedSavedPayment?.orderCode || "",
+        paymentLinkId: transactionIdFromUrl || parsedSavedPayment?.paymentLinkId || "",
+        status: returnStatus === "PAID" ? "PAID" : parsedSavedPayment?.status || "PENDING"
+      };
+
+      setPayment(nextPayment);
+      localStorage.setItem(PAYMENT_STORAGE_KEY, JSON.stringify(nextPayment));
+
+      if (!nextPayment.orderCode) {
+        return;
+      }
+
+      try {
+        const paymentResponse = await axiosConfig.get(API_ENDPOINTS.SYNC_PAYMENT_STATUS(nextPayment.orderCode));
+        const mergedPayment = {
+          ...nextPayment,
+          ...paymentResponse.data,
+          status: returnStatus === "PAID" ? "PAID" : paymentResponse.data.status
+        };
+
+        setPayment(mergedPayment);
+        localStorage.setItem(PAYMENT_STORAGE_KEY, JSON.stringify(mergedPayment));
+
+        const profileResponse = await axiosConfig.get(API_ENDPOINTS.GET_USER_INFO);
+        setUser(profileResponse.data);
+      } catch (error) {
+        console.error("Failed to sync payment success state", error);
+      }
     };
 
-    setPayment(nextPayment);
-    localStorage.setItem(PAYMENT_STORAGE_KEY, JSON.stringify(nextPayment));
-  }, [returnStatus, searchParams, transactionIdFromUrl]);
+    syncPaymentAndProfile();
+  }, [orderCode, returnStatus, searchParams, setUser, transactionIdFromUrl]);
 
   const displayStatus = returnStatus === "PAID" ? "PAID" : payment?.status || "PENDING";
   const isPaid = displayStatus === "PAID";
   const transactionId = transactionIdFromUrl || payment?.paymentLinkId || "--";
   const amount = payment?.amount;
-  const description = payment?.description || "Thanh toán PayOS";
+  const description = payment?.description || "Thanh toan PayOS";
   const displayedTime = payment?.updatedAt || payment?.createdAt || arrivedAt;
 
   return (
@@ -50,18 +76,18 @@ const PaymentSuccess = () => {
         </div>
 
         <div className="mt-6 text-center">
-          <p className="text-sm uppercase tracking-[0.25em] text-emerald-600">Thanh Toán Thành Công</p>
-          <h1 className="mt-3 text-3xl font-semibold text-slate-900">Giao dịch của bạn đã được ghi nhận thành công.</h1>
-          <p className="mt-3 text-slate-600">Bạn có thể xem lại chi tiết đơn hàng bên dưới.</p>
+          <p className="text-sm uppercase tracking-[0.25em] text-emerald-600">Thanh toan thanh cong</p>
+          <h1 className="mt-3 text-3xl font-semibold text-slate-900">Giao dich cua ban da duoc ghi nhan thanh cong.</h1>
+          <p className="mt-3 text-slate-600">Ban co the xem lai chi tiet don hang ben duoi.</p>
         </div>
 
         <div className="mt-8 overflow-hidden rounded-[24px] border border-slate-200 bg-slate-50">
           <div className="border-b border-slate-200 bg-white px-5 py-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-sm text-slate-500">Trạng thái thanh toán</p>
+                <p className="text-sm text-slate-500">Trang thai thanh toan</p>
                 <p className={`mt-1 text-xl font-semibold ${isPaid ? "text-emerald-700" : "text-slate-900"}`}>
-                  {isPaid ? "Đã thanh toán thành công" : displayStatus}
+                  {isPaid ? "Da thanh toan thanh cong" : displayStatus}
                 </p>
               </div>
               <span className={`rounded-full px-4 py-2 text-sm font-semibold ${isPaid ? "bg-emerald-100 text-emerald-700" : "bg-slate-900 text-white"}`}>
@@ -71,15 +97,15 @@ const PaymentSuccess = () => {
           </div>
 
           <div className="grid gap-3 p-5 sm:grid-cols-2">
-            <DetailCard icon={Hash} label="Mã đơn hàng" value={payment?.orderCode || orderCode || "--"} />
-            <DetailCard icon={CreditCard} label="Mã giao dịch" value={transactionId} />
-            <DetailCard icon={BadgeCheck} label="Số tiền" value={amount ? `${Number(amount).toLocaleString("vi-VN")} VND` : "--"} />
-            <DetailCard icon={CalendarClock} label="Thời gian" value={formatDateTime(displayedTime)} />
+            <DetailCard icon={Hash} label="Ma don hang" value={payment?.orderCode || orderCode || "--"} />
+            <DetailCard icon={CreditCard} label="Ma giao dich" value={transactionId} />
+            <DetailCard icon={BadgeCheck} label="So tien" value={amount ? `${Number(amount).toLocaleString("vi-VN")} VND` : "--"} />
+            <DetailCard icon={CalendarClock} label="Thoi gian" value={formatDateTime(displayedTime)} />
           </div>
 
           <div className="px-5 pb-5">
             <div className="rounded-2xl bg-white px-4 py-4 text-sm text-slate-700">
-              <p className="text-slate-500">Nội dung thanh toán</p>
+              <p className="text-slate-500">Noi dung thanh toan</p>
               <p className="mt-1 font-medium text-slate-900">{description}</p>
             </div>
           </div>
@@ -91,14 +117,14 @@ const PaymentSuccess = () => {
             to="/dashboard"
           >
             <House size={16} />
-            Về trang chủ
+            Ve trang chu
           </Link>
 
           <Link
             className="flex items-center justify-center gap-2 rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
             to="/payment"
           >
-            Quay lại thanh toán
+            Quay lai thanh toan
             <ArrowRight size={16} />
           </Link>
         </div>

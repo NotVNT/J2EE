@@ -9,9 +9,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class CreatePaymentRequestDTO {
-
-    private String planId;
-    private Long amount;
-    private String description;
+public class AutoRenewRequestDTO {
+    private Boolean enabled;
 }

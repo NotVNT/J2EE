@@ -21,10 +21,12 @@ public class ExpenseService {
     private final CategoryRepository categoryRepository;
     private final ExpenseRepository expenseRepository;
     private final ProfileService profileService;
+    private final SubscriptionService subscriptionService;
 
     // Adds a new expense to the database
     public ExpenseDTO addExpense(ExpenseDTO dto) {
         ProfileEntity profile = profileService.getCurrentProfile();
+        subscriptionService.ensureCanCreateTransaction(profile, dto.getDate());
         CategoryEntity category = categoryRepository.findById(dto.getCategoryId())
                 .orElseThrow(() -> new RuntimeException("Category not found"));
         ExpenseEntity newExpense = toEntity(dto, profile, category);

@@ -19,6 +19,9 @@ public class CreatePaymentResponseDTO {
     private String status;
     private String paymentLinkId;
     private String checkoutUrl;
+    private String planId;
+    private String planName;
+    private Integer cycleMonths;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

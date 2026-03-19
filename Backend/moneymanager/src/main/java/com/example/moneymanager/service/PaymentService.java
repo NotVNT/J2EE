@@ -32,6 +32,7 @@ public class PaymentService {
     private final PayOS payOS;
     private final PaymentRepository paymentRepository;
     private final ProfileService profileService;
+    private final SubscriptionService subscriptionService;
 
     @Value("${payos.return-url}")
     private String returnUrl;
@@ -47,13 +48,13 @@ public class PaymentService {
         validateRequest(requestDTO);
 
         ProfileEntity currentProfile = profileService.getCurrentProfile();
+        SubscriptionService.PlanCatalogItem plan = subscriptionService.getPlanCatalogItem(requestDTO.getPlanId());
         long orderCode = generateOrderCode();
-        String description = requestDTO.getDescription().trim();
 
         CreatePaymentLinkRequest paymentRequest = CreatePaymentLinkRequest.builder()
                 .orderCode(orderCode)
-                .amount(requestDTO.getAmount())
-                .description(description)
+                .amount(plan.amount())
+                .description(plan.paymentDescription())
                 .returnUrl(returnUrl)
                 .cancelUrl(cancelUrl)
                 .build();
@@ -68,6 +69,9 @@ public class PaymentService {
                     .status(String.valueOf(response.getStatus()))
                     .paymentLinkId(response.getPaymentLinkId())
                     .checkoutUrl(response.getCheckoutUrl())
+                    .planId(plan.id())
+                    .planName(plan.displayName())
+                    .cycleMonths(plan.cycleMonths())
                     .profile(currentProfile)
                     .build();
 
@@ -90,6 +94,7 @@ public class PaymentService {
         try {
             PaymentLink paymentLink = payOS.paymentRequests().get(orderCode);
             paymentEntity.setStatus(normalizeStatus(String.valueOf(paymentLink.getStatus())));
+            activateSubscriptionIfPaid(paymentEntity);
             paymentEntity = paymentRepository.save(paymentEntity);
             return toDTO(paymentEntity);
         } catch (Exception e) {
@@ -104,7 +109,11 @@ public class PaymentService {
 
             PaymentEntity paymentEntity = paymentRepository.findByOrderCode(webhookData.getOrderCode())
                     .orElseGet(() -> paymentRepository.findByPaymentLinkId(webhookData.getPaymentLinkId())
-                            .orElseThrow(() -> new RuntimeException("Payment not found for webhook")));
+                            .orElse(null));
+
+            if (paymentEntity == null) {
+                return;
+            }
 
             paymentEntity.setPaymentLinkId(webhookData.getPaymentLinkId());
             paymentEntity.setAmount(webhookData.getAmount());
@@ -112,6 +121,7 @@ public class PaymentService {
 
             if ("00".equals(webhookData.getCode())) {
                 paymentEntity.setStatus(STATUS_PAID);
+                activateSubscriptionIfPaid(paymentEntity);
             } else {
                 paymentEntity.setStatus(STATUS_FAILED);
             }
@@ -143,11 +153,8 @@ public class PaymentService {
         if (requestDTO == null) {
             throw new RuntimeException("Payment request is required");
         }
-        if (requestDTO.getAmount() == null || requestDTO.getAmount() <= 0) {
-            throw new RuntimeException("Amount must be greater than 0");
-        }
-        if (requestDTO.getDescription() == null || requestDTO.getDescription().trim().isEmpty()) {
-            throw new RuntimeException("Description is required");
+        if (requestDTO.getPlanId() == null || requestDTO.getPlanId().isBlank()) {
+            throw new RuntimeException("Plan is required");
         }
     }
 
@@ -184,9 +191,19 @@ public class PaymentService {
         try {
             PaymentLink paymentLink = payOS.paymentRequests().get(paymentEntity.getOrderCode());
             paymentEntity.setStatus(normalizeStatus(String.valueOf(paymentLink.getStatus())));
+            activateSubscriptionIfPaid(paymentEntity);
             paymentRepository.save(paymentEntity);
         } catch (Exception e) {
             System.err.println("Failed to auto-sync payment " + paymentEntity.getOrderCode() + ": " + e.getMessage());
+        }
+    }
+
+    private void activateSubscriptionIfPaid(PaymentEntity paymentEntity) {
+        if (STATUS_PAID.equalsIgnoreCase(paymentEntity.getStatus())
+                && paymentEntity.getProfile() != null
+                && paymentEntity.getPlanId() != null
+                && !paymentEntity.getPlanId().isBlank()) {
+            subscriptionService.activatePaidSubscription(paymentEntity.getProfile(), paymentEntity.getPlanId());
         }
     }
 
@@ -214,6 +231,9 @@ public class PaymentService {
                 .status(entity.getStatus())
                 .paymentLinkId(entity.getPaymentLinkId())
                 .checkoutUrl(entity.getCheckoutUrl())
+                .planId(entity.getPlanId())
+                .planName(entity.getPlanName())
+                .cycleMonths(entity.getCycleMonths())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .build();

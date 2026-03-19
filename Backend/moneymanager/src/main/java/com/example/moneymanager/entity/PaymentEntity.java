@@ -48,6 +48,14 @@ public class PaymentEntity {
     @Column(length = 1000)
     private String checkoutUrl;
 
+    @Column(length = 30)
+    private String planId;
+
+    @Column(length = 100)
+    private String planName;
+
+    private Integer cycleMonths;
+
     @Column(updatable = false)
     @CreationTimestamp
     private LocalDateTime createdAt;

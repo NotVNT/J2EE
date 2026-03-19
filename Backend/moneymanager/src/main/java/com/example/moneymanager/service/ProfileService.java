@@ -1,6 +1,7 @@
 package com.example.moneymanager.service;
 
 import com.example.moneymanager.dto.AuthDTO;
+import com.example.moneymanager.dto.AutoRenewRequestDTO;
 import com.example.moneymanager.dto.ProfileDTO;
 import com.example.moneymanager.entity.ProfileEntity;
 import com.example.moneymanager.repository.ProfileRepository;
@@ -27,6 +28,7 @@ public class ProfileService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
+    private final SubscriptionService subscriptionService;
 
     @Value("${app.activation.url}")
     private String activationURL;
@@ -63,6 +65,9 @@ public class ProfileService {
     }
 
     public ProfileDTO toDTO(ProfileEntity profileEntity) {
+        profileEntity = subscriptionService.refreshSubscriptionIfExpired(profileEntity);
+        SubscriptionService.PlanFeatures planFeatures = subscriptionService.getPlanFeatures(profileEntity);
+
         return ProfileDTO.builder()
                 .id(profileEntity.getId())
                 .fullName(profileEntity.getFullName())
@@ -70,6 +75,16 @@ public class ProfileService {
                 .profileImageUrl(profileEntity.getProfileImageUrl())
                 .createdAt(profileEntity.getCreatedAt())
                 .updatedAt(profileEntity.getUpdatedAt())
+                .subscriptionPlan(profileEntity.getSubscriptionPlan())
+                .subscriptionStatus(profileEntity.getSubscriptionStatus())
+                .subscriptionActivatedAt(profileEntity.getSubscriptionActivatedAt())
+                .subscriptionExpiresAt(profileEntity.getSubscriptionExpiresAt())
+                .autoRenew(profileEntity.getAutoRenew())
+                .categoryLimit(planFeatures.getCategoryLimit())
+                .monthlyTransactionLimit(planFeatures.getMonthlyTransactionLimit())
+                .historyMonths(planFeatures.getHistoryMonths())
+                .canExportReports(planFeatures.isCanExportReports())
+                .canUseAdvancedFilters(planFeatures.isCanUseAdvancedFilters())
                 .build();
     }
 
@@ -127,5 +142,12 @@ public class ProfileService {
         } catch (Exception e) {
             throw new RuntimeException("Invalid email or password");
         }
+    }
+
+    public ProfileDTO updateAutoRenew(AutoRenewRequestDTO requestDTO) {
+        ProfileEntity profile = getCurrentProfile();
+        profile.setAutoRenew(Boolean.TRUE.equals(requestDTO.getEnabled()));
+        profile = profileRepository.save(profile);
+        return toDTO(profile);
     }
 }

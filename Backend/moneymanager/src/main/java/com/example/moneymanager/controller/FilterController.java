@@ -5,6 +5,8 @@ import com.example.moneymanager.dto.FilterDTO;
 import com.example.moneymanager.dto.IncomeDTO;
 import com.example.moneymanager.service.ExpenseService;
 import com.example.moneymanager.service.IncomeService;
+import com.example.moneymanager.service.ProfileService;
+import com.example.moneymanager.service.SubscriptionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +25,8 @@ public class FilterController {
 
     private final ExpenseService expenseService;
     private final IncomeService incomeService;
+    private final ProfileService profileService;
+    private final SubscriptionService subscriptionService;
 
     @PostMapping
     public ResponseEntity<?> filterTransactions(@RequestBody FilterDTO filter) {
@@ -33,6 +37,7 @@ public class FilterController {
         String sortField = filter.getSortField() != null ? filter.getSortField() : "date";
         Sort.Direction direction = "desc".equalsIgnoreCase(filter.getSortOrder()) ? Sort.Direction.DESC : Sort.Direction.ASC;
         Sort sort = Sort.by(direction, sortField);
+        subscriptionService.ensureCanUseFilters(profileService.getCurrentProfile(), startDate);
         if ("income".equals(filter.getType())) {
             List<IncomeDTO> incomes = incomeService.filterIncomes(startDate, endDate, keyword, sort);
             return ResponseEntity.ok(incomes);

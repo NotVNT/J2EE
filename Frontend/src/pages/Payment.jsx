@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { BadgeCheck, CreditCard, House, Settings2, ShieldCheck, Sparkles, Star, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import Dashboard from "../components/Dashboard.jsx";
+import { AppContext } from "../context/AppContext.jsx";
 import { useUser } from "../hooks/useUser.jsx";
 import axiosConfig from "../util/axiosConfig.jsx";
 import { API_ENDPOINTS } from "../util/apiEndpoints.js";
@@ -11,34 +12,36 @@ const PAYMENT_STORAGE_KEY = "latestPayment";
 const PAYMENT_PLANS = [
   {
     id: "basic",
-    displayName: "Gói Cơ Bản",
+    subscriptionPlan: "BASIC",
+    displayName: "Goi Co Ban",
     amount: 2000,
     description: "Goi Co Ban",
-    badge: "Phổ biến",
-    cycleLabel: "1 tháng",
+    badge: "Pho bien",
+    cycleLabel: "1 thang",
     cycleMonths: 1,
     icon: ShieldCheck,
     accent: "from-slate-900 via-slate-800 to-slate-700",
     features: [
-      "Theo dõi giao dịch hằng ngày",
-      "Báo cáo thu chi cơ bản",
-      "Nhắc nhở thanh toán định kỳ"
+      "Theo doi giao dich hang ngay",
+      "Bao cao thu chi co ban",
+      "Nhac nho thanh toan dinh ky"
     ]
   },
   {
     id: "premium",
-    displayName: "Gói Premium",
+    subscriptionPlan: "PREMIUM",
+    displayName: "Goi Premium",
     amount: 299000,
     description: "Goi Premium",
-    badge: "Nâng cao",
-    cycleLabel: "12 tháng",
+    badge: "Nang cao",
+    cycleLabel: "12 thang",
     cycleMonths: 12,
     icon: Sparkles,
     accent: "from-amber-500 via-orange-500 to-rose-500",
     features: [
-      "Không giới hạn lịch sử giao dịch",
-      "Biểu đồ và báo cáo chuyên sâu",
-      "Ưu tiên đồng bộ trạng thái thanh toán"
+      "Khong gioi han lich su giao dich",
+      "Bieu do va bao cao chuyen sau",
+      "Uu tien dong bo trang thai thanh toan"
     ]
   }
 ];
@@ -46,6 +49,7 @@ const PAYMENT_PLANS = [
 const Payment = () => {
   useUser();
 
+  const { user, setUser } = useContext(AppContext);
   const [selectedPlanId, setSelectedPlanId] = useState(PAYMENT_PLANS[0].id);
   const [latestPayment, setLatestPayment] = useState(null);
   const [showUpgradeOptions, setShowUpgradeOptions] = useState(false);
@@ -73,27 +77,32 @@ const Payment = () => {
   }, []);
 
   const selectedPlan = PAYMENT_PLANS.find((plan) => plan.id === selectedPlanId) ?? PAYMENT_PLANS[0];
+
   const activeSubscription = useMemo(() => {
-    if (!latestPayment || latestPayment.status !== "PAID") {
-      return null;
+    if (user?.subscriptionStatus === "ACTIVE" && user?.subscriptionPlan) {
+      const matchedPlan = PAYMENT_PLANS.find((plan) => plan.subscriptionPlan === user.subscriptionPlan) ?? PAYMENT_PLANS[0];
+      return {
+        ...matchedPlan,
+        activatedAt: user.subscriptionActivatedAt,
+        expiresAt: user.subscriptionExpiresAt,
+        autoRenew: Boolean(user.autoRenew),
+        orderCode: latestPayment?.orderCode || "--"
+      };
     }
 
-    const matchedPlan = PAYMENT_PLANS.find((plan) => plan.id === latestPayment.planId)
-      ?? PAYMENT_PLANS.find((plan) => latestPayment.planName === plan.displayName)
-      ?? PAYMENT_PLANS.find((plan) => latestPayment.description?.includes(plan.description))
-      ?? PAYMENT_PLANS[0];
+    if (latestPayment?.status === "PAID") {
+      const matchedPlan = PAYMENT_PLANS.find((plan) => plan.id === latestPayment.planId) ?? PAYMENT_PLANS[0];
+      return {
+        ...matchedPlan,
+        activatedAt: latestPayment.updatedAt || latestPayment.createdAt,
+        expiresAt: addMonths(latestPayment.updatedAt || latestPayment.createdAt, matchedPlan.cycleMonths),
+        autoRenew: Boolean(latestPayment.autoRenew),
+        orderCode: latestPayment.orderCode
+      };
+    }
 
-    const activatedAt = latestPayment.updatedAt || latestPayment.createdAt || new Date().toISOString();
-
-    return {
-      ...matchedPlan,
-      orderCode: latestPayment.orderCode,
-      paymentLinkId: latestPayment.paymentLinkId,
-      activatedAt,
-      expiresAt: addMonths(activatedAt, matchedPlan.cycleMonths),
-      autoRenew: Boolean(latestPayment.autoRenew)
-    };
-  }, [latestPayment]);
+    return null;
+  }, [latestPayment, user]);
 
   const savePayment = (payment) => {
     setLatestPayment(payment);
@@ -106,8 +115,7 @@ const Payment = () => {
 
     try {
       const response = await axiosConfig.post(API_ENDPOINTS.CREATE_PAYMENT, {
-        amount: selectedPlan.amount,
-        description: selectedPlan.description
+        planId: selectedPlan.id
       });
 
       const paymentData = {
@@ -122,22 +130,29 @@ const Payment = () => {
       savePayment(paymentData);
       window.location.href = response.data.checkoutUrl;
     } catch (error) {
-      toast.error(error.response?.data?.message || "Không thể khởi tạo thanh toán");
+      toast.error(error.response?.data?.message || "Khong the khoi tao thanh toan");
     } finally {
       setIsCreating(false);
     }
   };
 
-  const handleToggleAutoRenew = () => {
+  const handleToggleAutoRenew = async () => {
     const nextValue = !autoRenew;
     setAutoRenew(nextValue);
 
     if (latestPayment) {
-      const nextPayment = {
+      savePayment({
         ...latestPayment,
         autoRenew: nextValue
-      };
-      savePayment(nextPayment);
+      });
+    }
+
+    try {
+      const response = await axiosConfig.put(API_ENDPOINTS.UPDATE_AUTO_RENEW, { enabled: nextValue });
+      setUser(response.data);
+    } catch (error) {
+      setAutoRenew(!nextValue);
+      toast.error(error.response?.data?.message || "Khong the cap nhat tu gia han");
     }
   };
 
@@ -152,11 +167,11 @@ const Payment = () => {
     <Dashboard activeMenu="Payment">
       <div className="mx-auto my-6 max-w-6xl px-4 md:px-6">
         <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-slate-900 md:text-3xl">Thanh toán</h1>
+          <h1 className="text-2xl font-semibold text-slate-900 md:text-3xl">Thanh toan</h1>
           <p className="mt-2 text-sm text-slate-500">
             {activeSubscription
-              ? "Gói của bạn đang hoạt động. Bạn có thể quản lý hoặc nâng cấp bất cứ lúc nào."
-              : "Chọn gói dịch vụ phù hợp và thanh toán nhanh qua PayOS."}
+              ? "Goi cua ban dang hoat dong. Ban co the quan ly hoac nang cap bat cu luc nao."
+              : "Chon goi dich vu phu hop va thanh toan nhanh qua PayOS."}
           </p>
         </div>
 
@@ -166,12 +181,12 @@ const Payment = () => {
               <div className={`bg-gradient-to-br ${activeSubscription.accent} px-8 py-8 text-white`}>
                 <div className="flex items-center gap-3 text-sm uppercase tracking-[0.3em] text-white/75">
                   <Star size={16} />
-                  <span>Subscription Active</span>
+                  <span>Subscription active</span>
                 </div>
 
                 <h2 className="mt-5 text-4xl font-semibold">{activeSubscription.displayName} active</h2>
                 <p className="mt-3 max-w-xl text-base leading-7 text-white/80">
-                  Bạn đã sở hữu gói này và đang dùng đầy đủ các quyền lợi của tài khoản nâng cấp.
+                  Ban da so huu goi nay va dang dung day du cac quyen loi cua tai khoan nang cap.
                 </p>
 
                 <div className="mt-8 grid gap-3 sm:grid-cols-2">
@@ -192,7 +207,7 @@ const Payment = () => {
                     type="button"
                   >
                     <Zap size={16} />
-                    Nâng cấp gói
+                    Nang cap goi
                   </button>
 
                   <button
@@ -201,7 +216,7 @@ const Payment = () => {
                     type="button"
                   >
                     <Settings2 size={16} />
-                    Quản lý gói
+                    Quan ly goi
                   </button>
 
                   <Link
@@ -209,33 +224,33 @@ const Payment = () => {
                     to="/dashboard"
                   >
                     <House size={16} />
-                    Về Dashboard
+                    Ve Dashboard
                   </Link>
                 </div>
               </div>
 
               <div className="bg-slate-50 px-8 py-8">
-                <p className="text-sm uppercase tracking-[0.25em] text-slate-500">Gói hiện tại</p>
+                <p className="text-sm uppercase tracking-[0.25em] text-slate-500">Goi hien tai</p>
                 <h3 className="mt-3 text-3xl font-semibold text-slate-900">{activeSubscription.displayName}</h3>
                 <p className="mt-2 text-sm leading-6 text-slate-500">
-                  Trạng thái tài khoản đã chuyển sang chế độ sở hữu gói, không còn ở bước thanh toán nữa.
+                  Luc nay tai khoan cua ban da o trang thai so huu goi, khong con la buoc di thanh toan nua.
                 </p>
 
                 <div className="mt-6 space-y-3">
-                  <SubscriptionRow label="Trạng thái" value="Đang hoạt động" />
-                  <SubscriptionRow label="Ngày kích hoạt" value={formatDate(activeSubscription.activatedAt)} />
-                  <SubscriptionRow label="Ngày hết hạn" value={formatDate(activeSubscription.expiresAt)} />
-                  <SubscriptionRow label="Tự gia hạn" value={autoRenew ? "Bật" : "Tắt"} />
-                  <SubscriptionRow label="Mã đơn hàng" value={activeSubscription.orderCode || "--"} />
+                  <SubscriptionRow label="Trang thai" value="Dang hoat dong" />
+                  <SubscriptionRow label="Ngay kich hoat" value={formatDate(activeSubscription.activatedAt)} />
+                  <SubscriptionRow label="Ngay het han" value={formatDate(activeSubscription.expiresAt)} />
+                  <SubscriptionRow label="Tu gia han" value={autoRenew ? "Bat" : "Tat"} />
+                  <SubscriptionRow label="Ma don hang" value={activeSubscription.orderCode || "--"} />
                 </div>
 
                 {showManagePanel ? (
                   <div className="mt-6 rounded-[28px] border border-slate-200 bg-white p-5">
                     <div className="flex items-start justify-between gap-4">
                       <div>
-                        <p className="text-base font-semibold text-slate-900">Quản lý gói</p>
+                        <p className="text-base font-semibold text-slate-900">Quan ly goi</p>
                         <p className="mt-1 text-sm text-slate-500">
-                          Điều chỉnh cách gói của bạn được duy trì sau khi hết hạn.
+                          Dieu chinh cach goi cua ban duoc duy tri sau khi het han.
                         </p>
                       </div>
 
@@ -252,8 +267,8 @@ const Payment = () => {
 
                     <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-4 text-sm text-slate-600">
                       {autoRenew
-                        ? "Tự gia hạn đang bật. Hệ thống sẽ giữ gói của bạn ở trạng thái liền mạch hơn."
-                        : "Tự gia hạn đang tắt. Bạn vẫn có thể quay lại đây để gia hạn hoặc nâng cấp bất cứ lúc nào."}
+                        ? "Tu gia han dang bat. He thong se giu goi cua ban o trang thai lien mach hon."
+                        : "Tu gia han dang tat. Ban van co the quay lai day de gia han hoac nang cap bat cu luc nao."}
                     </div>
                   </div>
                 ) : null}
@@ -265,12 +280,12 @@ const Payment = () => {
             <div className="grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
               <div>
                 <h2 className="text-xl font-semibold text-slate-900">
-                  {activeSubscription ? "Nâng cấp gói của bạn" : "Chọn gói dịch vụ"}
+                  {activeSubscription ? "Nang cap goi cua ban" : "Chon goi dich vu"}
                 </h2>
                 <p className="mt-2 text-sm text-slate-500">
                   {activeSubscription
-                    ? "Chọn gói mới để nâng cấp hoặc gia hạn tài khoản của bạn."
-                    : "Hệ thống sẽ tạo giao dịch và chuyển bạn trực tiếp đến trang checkout của PayOS."}
+                    ? "Chon goi moi de nang cap hoac gia han tai khoan cua ban."
+                    : "He thong se tao giao dich va chuyen ban truc tiep den trang checkout cua PayOS."}
                 </p>
 
                 <div className="mt-6 grid gap-4 md:grid-cols-2">
@@ -297,7 +312,7 @@ const Payment = () => {
                           <div className="flex items-center gap-2">
                             {isCurrentPlan ? (
                               <span className={`rounded-full px-3 py-1 text-xs font-semibold ${isSelected ? "bg-emerald-400/20 text-emerald-200" : "bg-emerald-100 text-emerald-700"}`}>
-                                Đang dùng
+                                Dang dung
                               </span>
                             ) : null}
                             <span
@@ -316,7 +331,7 @@ const Payment = () => {
                         </p>
 
                         <p className="mt-5 text-3xl font-semibold">
-                          {Number(plan.amount).toLocaleString("vi-VN")}đ
+                          {Number(plan.amount).toLocaleString("vi-VN")}d
                         </p>
 
                         <div className="mt-5 space-y-2">
@@ -335,27 +350,27 @@ const Payment = () => {
 
               <form className="rounded-[28px] border border-slate-200 bg-slate-50 p-6" onSubmit={handleCreatePayment}>
                 <p className="text-sm uppercase tracking-[0.25em] text-slate-500">
-                  {activeSubscription ? "Gói chuẩn bị cập nhật" : "Gói đã chọn"}
+                  {activeSubscription ? "Goi chuan bi cap nhat" : "Goi da chon"}
                 </p>
                 <h2 className="mt-3 text-2xl font-semibold text-slate-900">{selectedPlan.displayName}</h2>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
                   {activeSubscription
-                    ? "Sau khi thanh toán, gói hiện tại của bạn sẽ được cập nhật theo lựa chọn mới."
-                    : "Sau khi bấm thanh toán, bạn sẽ được chuyển ngay sang PayOS để quét mã QR hoặc chọn phương thức thanh toán phù hợp."}
+                    ? "Sau khi thanh toan, goi hien tai cua ban se duoc cap nhat theo lua chon moi."
+                    : "Sau khi bam thanh toan, ban se duoc chuyen ngay sang PayOS de quet ma QR hoac chon phuong thuc thanh toan phu hop."}
                 </p>
 
                 <div className="mt-6 rounded-3xl bg-white p-5">
                   <div className="flex items-center justify-between gap-4 border-b border-slate-100 pb-4">
-                    <span className="text-sm text-slate-500">Tổng thanh toán</span>
+                    <span className="text-sm text-slate-500">Tong thanh toan</span>
                     <span className="text-3xl font-semibold text-slate-900">
-                      {Number(selectedPlan.amount).toLocaleString("vi-VN")}đ
+                      {Number(selectedPlan.amount).toLocaleString("vi-VN")}d
                     </span>
                   </div>
 
                   <div className="mt-4 space-y-3 text-sm text-slate-600">
-                    <SubscriptionRow label="Tên gói" value={selectedPlan.displayName} />
-                    <SubscriptionRow label="Mô tả" value={selectedPlan.description} />
-                    <SubscriptionRow label="Chu kỳ" value={selectedPlan.cycleLabel} />
+                    <SubscriptionRow label="Ten goi" value={selectedPlan.displayName} />
+                    <SubscriptionRow label="Mo ta" value={selectedPlan.description} />
+                    <SubscriptionRow label="Chu ky" value={selectedPlan.cycleLabel} />
                   </div>
                 </div>
 
@@ -366,12 +381,12 @@ const Payment = () => {
                 >
                   <CreditCard size={18} />
                   {isCreating
-                    ? "Đang chuyển đến checkout..."
+                    ? "Dang chuyen den checkout..."
                     : activeSubscription
                       ? selectedPlan.id === activeSubscription.id
-                        ? "Gia hạn gói"
-                        : "Nâng cấp gói"
-                      : "Thanh toán"}
+                        ? "Gia han goi"
+                        : "Nang cap goi"
+                      : "Thanh toan"}
                 </button>
               </form>
             </div>
