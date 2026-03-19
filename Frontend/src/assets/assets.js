@@ -1,4 +1,4 @@
-import logo from "./logo.png";
+import logo from "./logo/devbot.png";
 import {Coins, FunnelPlus, LayoutDashboard, List, Wallet} from "lucide-react";
 
 export const assets = {

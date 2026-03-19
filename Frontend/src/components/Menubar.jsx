@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useContext } from "react";
 import {User, LogOut, X, Menu} from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {assets} from "../assets/assets.js";
 import {AppContext} from "../context/AppContext.jsx";
 import Sidebar from "./Sidebar.jsx";
@@ -59,10 +59,9 @@ const Menubar = ({ activeMenu }) => {
                     )}
                 </button>
 
-                <div className="flex items-center gap-2">
-                    <img src={assets.logo} alt="logo" className="h-10 w-10" />
-                    <span className="text-lg font-medium text-black truncate">Money Manager</span>
-                </div>
+                <Link to="/home" className="flex items-center gap-2" aria-label="Go to home page">
+                    <img src={assets.logo} alt="Devbot logo" className="h-10 w-auto object-contain" />
+                </Link>
             </div>
 
             {/* Right side - Avatar dropdown */}
