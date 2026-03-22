@@ -15,7 +15,7 @@ axiosConfig.interceptors.request.use(
   (config) => {
     const shouldSkipToken = excludeEndpoints.some((endpoint) => config.url?.includes(endpoint));
     if (!shouldSkipToken) {
-      const accessToken = localStorage.getItem("token");
+      const accessToken = localStorage.getItem("token") || sessionStorage.getItem("token");
       if (accessToken) {
         config.headers.Authorization = `Bearer ${accessToken}`;
       }
