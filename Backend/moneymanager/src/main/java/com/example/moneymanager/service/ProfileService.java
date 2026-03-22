@@ -127,15 +127,7 @@ public class ProfileService {
                     .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy tài khoản với email: " + email));
         }
 
-        return ProfileDTO.builder()
-                .id(currentUser.getId())
-                .fullName(currentUser.getFullName())
-                .email(currentUser.getEmail())
-                .profileImageUrl(currentUser.getProfileImageUrl())
-                .createdAt(currentUser.getCreatedAt())
-                .updatedAt(currentUser.getUpdatedAt())
-                .role(currentUser.getRole() != null ? currentUser.getRole().getName() : "user")
-                .build();
+        return toDTO(currentUser);
     }
 
     public Map<String, Object> authenticateAndGenerateToken(AuthDTO authDTO) {
