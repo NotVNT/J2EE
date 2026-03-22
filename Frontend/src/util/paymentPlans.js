@@ -2,35 +2,35 @@ export const DEFAULT_PAYMENT_PLANS = [
   {
     id: "basic",
     subscriptionPlan: "BASIC",
-    displayName: "Goi Co Ban",
+    displayName: "Gói Cơ Bản",
     amount: 2000,
-    description: "Goi cho nguoi dung moi",
-    badge: "Pho bien",
-    cycleLabel: "1 thang",
+    description: "Gói dành cho người dùng mới",
+    badge: "Phổ biến",
+    cycleLabel: "1 tháng",
     cycleMonths: 1,
     icon: "ShieldCheck",
     accent: "from-slate-900 via-slate-800 to-slate-700",
     features: [
-      "Theo doi giao dich hang ngay",
-      "Bao cao thu chi co ban",
-      "Nhac nho thanh toan dinh ky"
+      "Theo dõi giao dịch hằng ngày",
+      "Báo cáo thu chi cơ bản",
+      "Nhắc nhở thanh toán định kỳ"
     ]
   },
   {
     id: "premium",
     subscriptionPlan: "PREMIUM",
-    displayName: "Goi Premium",
+    displayName: "Gói Premium",
     amount: 299000,
-    description: "Goi mo rong tinh nang nang cao",
-    badge: "Nang cao",
-    cycleLabel: "12 thang",
+    description: "Gói mở rộng với nhiều tính năng nâng cao",
+    badge: "Nâng cao",
+    cycleLabel: "12 tháng",
     cycleMonths: 12,
     icon: "Sparkles",
     accent: "from-amber-500 via-orange-500 to-rose-500",
     features: [
-      "Khong gioi han lich su giao dich",
-      "Bieu do va bao cao chuyen sau",
-      "Uu tien dong bo trang thai thanh toan"
+      "Không giới hạn lịch sử giao dịch",
+      "Biểu đồ và báo cáo chuyên sâu",
+      "Ưu tiên đồng bộ trạng thái thanh toán"
     ]
   }
 ];
@@ -41,7 +41,7 @@ export const getPaymentPlans = () => {
     try {
       return JSON.parse(saved);
     } catch (e) {
-      console.error("Failed to load plans", e);
+      console.error("Không thể tải danh sách gói dịch vụ", e);
     }
   }
   return DEFAULT_PAYMENT_PLANS;

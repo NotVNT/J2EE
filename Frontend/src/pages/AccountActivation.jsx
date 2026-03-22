@@ -8,14 +8,14 @@ import { API_ENDPOINTS } from "../util/apiEndpoints.js";
 const AccountActivation = () => {
   const [searchParams] = useSearchParams();
   const [status, setStatus] = useState("loading");
-  const [message, setMessage] = useState("We are confirming your account now.");
+  const [message, setMessage] = useState("Chúng tôi đang xác nhận tài khoản của bạn.");
 
   useEffect(() => {
     const token = searchParams.get("token");
 
     if (!token) {
       setStatus("missing-token");
-      setMessage("This activation link is incomplete. Please use the latest link from your email.");
+      setMessage("Liên kết kích hoạt này chưa đầy đủ. Vui lòng dùng liên kết mới nhất trong email.");
       return;
     }
 
@@ -28,14 +28,14 @@ const AccountActivation = () => {
           return;
         }
         setStatus("success");
-        setMessage(response.data || "Your account has been activated successfully.");
+        setMessage(response.data || "Tài khoản của bạn đã được kích hoạt thành công.");
       } catch (error) {
         if (!isMounted) {
           return;
         }
         setStatus("error");
         setMessage(
-          error.response?.data || "This activation link is invalid, expired, or has already been used."
+          error.response?.data || "Liên kết kích hoạt không hợp lệ, đã hết hạn hoặc đã được sử dụng."
         );
       }
     };
@@ -50,29 +50,29 @@ const AccountActivation = () => {
   const statusConfig = {
     loading: {
       icon: <LoaderCircle className="animate-spin text-slate-700" size={30} />,
-      badge: "Activating Account",
-      title: "Checking your verification link",
+      badge: "Đang kích hoạt",
+      title: "Đang kiểm tra liên kết xác thực",
       description: message,
       accent: "border-slate-200 bg-slate-50 text-slate-700"
     },
     success: {
       icon: <CheckCircle2 className="text-emerald-600" size={30} />,
-      badge: "Activation Complete",
-      title: "Your account is ready",
+      badge: "Kích hoạt thành công",
+      title: "Tài khoản của bạn đã sẵn sàng",
       description: message,
       accent: "border-emerald-200 bg-emerald-50 text-emerald-700"
     },
     error: {
       icon: <TriangleAlert className="text-amber-600" size={30} />,
-      badge: "Activation Failed",
-      title: "We could not activate this account",
+      badge: "Kích hoạt thất bại",
+      title: "Chúng tôi không thể kích hoạt tài khoản này",
       description: message,
       accent: "border-amber-200 bg-amber-50 text-amber-700"
     },
     "missing-token": {
       icon: <MailWarning className="text-sky-600" size={30} />,
-      badge: "Invalid Link",
-      title: "This verification link is missing information",
+      badge: "Liên kết không hợp lệ",
+      title: "Liên kết xác thực đang thiếu thông tin",
       description: message,
       accent: "border-sky-200 bg-sky-50 text-sky-700"
     }
@@ -90,11 +90,11 @@ const AccountActivation = () => {
               {currentState.badge}
             </span>
             <h1 className="max-w-2xl text-4xl font-semibold tracking-tight md:text-5xl">
-              Secure email verification for your Money Manager account.
+              Xác thực email an toàn cho tài khoản Money Manager của bạn.
             </h1>
             <p className="max-w-xl text-base leading-7 text-slate-600">
-              This page completes the account activation flow after the user clicks the email link
-              sent through Brevo, then guides them back into the app with a clear success or error state.
+              Trang này hoàn tất bước kích hoạt tài khoản sau khi người dùng bấm vào liên kết trong email,
+              rồi hướng họ quay lại ứng dụng với trạng thái thành công hoặc lỗi thật rõ ràng.
             </p>
           </section>
 
@@ -116,7 +116,7 @@ const AccountActivation = () => {
             <div className="mt-8 space-y-3">
               {status === "success" ? (
                 <Link className="btn-primary block text-center" to="/login">
-                  Go to Login
+                  Đi tới đăng nhập
                 </Link>
               ) : null}
 
@@ -124,7 +124,7 @@ const AccountActivation = () => {
                 className="block rounded-xl border border-slate-200 px-4 py-3 text-center text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
                 to="/signup"
               >
-                Back to Signup
+                Quay lại đăng ký
               </Link>
             </div>
           </section>

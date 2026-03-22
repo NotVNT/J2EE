@@ -30,9 +30,9 @@ public class ProfileController {
     public ResponseEntity<String> activateProfile(@RequestParam String token) {
         boolean isActivated = profileService.activateProfile(token);
         if (isActivated) {
-            return ResponseEntity.ok("Profile activated successfully");
+            return ResponseEntity.ok("Kích hoạt tài khoản thành công.");
         } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Activation token not found or already used");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Liên kết kích hoạt không tồn tại hoặc đã được sử dụng.");
         }
     }
 
@@ -41,7 +41,7 @@ public class ProfileController {
         try {
             if (!profileService.isAccountActive(authDTO.getEmail())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
-                        "message", "Account is not active. Please activate your account first."
+                        "message", "Tài khoản chưa được kích hoạt. Vui lòng kích hoạt tài khoản trước."
                 ));
             }
             Map<String, Object> response = profileService.authenticateAndGenerateToken(authDTO);
@@ -64,14 +64,14 @@ public class ProfileController {
         return ResponseEntity.ok(profileService.updateAutoRenew(requestDTO));
     }
 
-    // Thêm các endpoint mới cho quên mật khẩu
+    // Các endpoint cho chức năng quên mật khẩu
 
     @PostMapping("/forgot-password")
     public ResponseEntity<Map<String, String>> forgotPassword(@RequestBody ForgotPasswordRequestDTO requestDTO) {
         try {
             profileService.forgotPassword(requestDTO);
             return ResponseEntity.ok(Map.of(
-                    "message", "Password reset link has been sent to your email"
+                    "message", "Liên kết đặt lại mật khẩu đã được gửi tới email của bạn."
             ));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
@@ -88,7 +88,7 @@ public class ProfileController {
         try {
             profileService.resetPassword(requestDTO);
             return ResponseEntity.ok(Map.of(
-                    "message", "Password has been reset successfully"
+                    "message", "Đặt lại mật khẩu thành công."
             ));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(

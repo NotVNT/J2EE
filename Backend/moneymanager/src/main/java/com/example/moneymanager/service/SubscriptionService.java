@@ -39,13 +39,13 @@ public class SubscriptionService {
 
     public PlanCatalogItem getPlanCatalogItem(String planId) {
         if (planId == null || planId.isBlank()) {
-            throw new RuntimeException("Plan is required");
+            throw new RuntimeException("Vui lòng chọn gói dịch vụ.");
         }
 
         return switch (planId.trim().toLowerCase()) {
-            case "basic" -> new PlanCatalogItem("basic", "Gói Cơ Bản", "Goi Co Ban", 2000L, 1, SubscriptionPlan.BASIC);
-            case "premium" -> new PlanCatalogItem("premium", "Gói Premium", "Goi Premium", 299000L, 12, SubscriptionPlan.PREMIUM);
-            default -> throw new RuntimeException("Invalid subscription plan");
+            case "basic" -> new PlanCatalogItem("basic", "Gói Cơ Bản", "Gói Cơ Bản", 2000L, 1, SubscriptionPlan.BASIC);
+            case "premium" -> new PlanCatalogItem("premium", "Gói Premium", "Gói Premium", 299000L, 12, SubscriptionPlan.PREMIUM);
+            default -> throw new RuntimeException("Gói dịch vụ không hợp lệ.");
         };
     }
 
@@ -57,7 +57,7 @@ public class SubscriptionService {
 
         long currentCategories = categoryRepository.countByProfileId(profile.getId());
         if (currentCategories >= features.categoryLimit) {
-            throw new RuntimeException("You have reached the category limit for your current plan. Please upgrade to add more categories.");
+            throw new RuntimeException("Bạn đã đạt đến giới hạn danh mục của gói hiện tại. Vui lòng nâng cấp để thêm nhiều danh mục hơn.");
         }
     }
 
@@ -76,7 +76,7 @@ public class SubscriptionService {
         long monthlyTransactionCount = monthlyIncomeCount + monthlyExpenseCount;
 
         if (monthlyTransactionCount >= features.monthlyTransactionLimit) {
-            throw new RuntimeException("You have reached the monthly transaction limit for your current plan. Please upgrade to continue.");
+            throw new RuntimeException("Bạn đã đạt đến giới hạn giao dịch trong tháng của gói hiện tại. Vui lòng nâng cấp để tiếp tục.");
         }
     }
 
@@ -89,14 +89,14 @@ public class SubscriptionService {
         LocalDate effectiveStartDate = startDate != null ? startDate : LocalDate.now();
         LocalDate earliestAllowedDate = LocalDate.now().minusMonths(features.historyMonths).withDayOfMonth(1);
         if (effectiveStartDate.isBefore(earliestAllowedDate)) {
-            throw new RuntimeException("Your current plan only supports filtering data within the last 3 months. Please upgrade for a longer history.");
+            throw new RuntimeException("Gói hiện tại chỉ hỗ trợ lọc dữ liệu trong 3 tháng gần nhất. Vui lòng nâng cấp để xem lịch sử dài hơn.");
         }
     }
 
     public void ensureCanExport(ProfileEntity profile) {
         PlanFeatures features = getPlanFeatures(profile);
         if (!features.canExportReports) {
-            throw new RuntimeException("Export reports are available from the Basic plan. Please upgrade to continue.");
+            throw new RuntimeException("Tính năng xuất báo cáo chỉ có từ gói Cơ Bản. Vui lòng nâng cấp để tiếp tục.");
         }
     }
 
