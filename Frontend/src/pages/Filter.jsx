@@ -35,7 +35,7 @@ const Filter = () => {
             setTransactions(response.data);
         }catch (error) {
             console.error('Failed to fetch transactions: ', error);
-            toast.error(error.message || "Failed to fetch transactions. Please try again.");
+            toast.error(error.message || "Lỗi khi tải giao dịch. Vui lòng thử lại");
         }finally {
             setLoading(false);
         }
@@ -43,50 +43,50 @@ const Filter = () => {
     }
 
     return (
-        <Dashboard activeMenu="Filters">
+        <Dashboard activeMenu="Bộ lọc">
             <div className="my-5 mx-auto">
                 <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-2xl font-semibold">Filter Transactions</h2>
+                    <h2 className="text-2xl font-semibold">Lọc giao dịch</h2>
                 </div>
                 <div className="card p-4 mb-4">
                     <div className="flex items-center justify-between mb-4">
-                        <h5 className="text-lg font-semibold">Select the filters</h5>
+                        <h5 className="text-lg font-semibold">Chọn các bộ lọc</h5>
                     </div>
                     <form className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-6 gap-4">
                         <div>
-                            <label className="block text-sm font-medium mb-1" htmlFor="type">Type</label>
+                            <label className="block text-sm font-medium mb-1" htmlFor="type">Loại</label>
                             <select value={type} id="type" className="w-full border rounded px-3 py-2" onChange={e => setType(e.target.value)}>
-                                <option value="income">Income</option>
-                                <option value="expense">Expense</option>
+                                <option value="income">Thu nhập</option>
+                                <option value="expense">Chi tiêu</option>
                             </select>
                         </div>
                         <div>
-                            <label htmlFor="startdate" className="block text-sm font-medium mb-1">Start Date</label>
+                            <label htmlFor="startdate" className="block text-sm font-medium mb-1">Từ ngày</label>
                             <input value={startDate} id="startdate" type="date" className="w-full border rounded px-3 py-2" onChange={e => setStartDate(e.target.value)}/>
                         </div>
                         <div>
-                            <label htmlFor="enddate" className="block text-sm font-medium mb-1">End Date</label>
+                            <label htmlFor="enddate" className="block text-sm font-medium mb-1">Đến ngày</label>
                             <input value={endDate} id="enddate" type="date" className="w-full border rounded px-3 py-2" onChange={e => setEndDate(e.target.value)}/>
                         </div>
                         <div>
-                            <label htmlFor="sortfield" className="block text-sm font-medium mb-1">Sort Field</label>
+                            <label htmlFor="sortfield" className="block text-sm font-medium mb-1">Sắp xếp theo</label>
                             <select value={sortField} id="sortfield" className="w-full border rounded px-3 py-2" onChange={e => setSortField(e.target.value)}>
-                                <option value="date">Date</option>
-                                <option value="amount">Amount</option>
-                                <option value="category">Category</option>
+                                <option value="date">Ngày</option>
+                                <option value="amount">Số tiền</option>
+                                <option value="category">Danh mục</option>
                             </select>
                         </div>
                         <div>
-                            <label htmlFor="sortorder" className="block text-sm font-medium mb-1">Sort Order</label>
+                            <label htmlFor="sortorder" className="block text-sm font-medium mb-1">Thứ tự</label>
                             <select value={sortOrder} id="sortorder" className="w-full border rounded px-3 py-2" onChange={e => setSortOrder(e.target.value)}>
-                                <option value="asc">Ascending</option>
-                                <option value="desc">Descending</option>
+                                <option value="asc">Tăng dần</option>
+                                <option value="desc">Giảm dần</option>
                             </select>
                         </div>
                         <div className="sm:col-span-1 md:col-span-1 flex items-end">
                             <div className="w-full">
-                                <label htmlFor="keyword" className="block text-sm font-medium mb-1">Search</label>
-                                <input value={keyword} id="keyword" type="text" placeholder="Search..." className="w-full border rounded px-3 py-2" onChange={e => setKeyword(e.target.value)} />
+                                <label htmlFor="keyword" className="block text-sm font-medium mb-1">Tìm kiếm</label>
+                                <input value={keyword} id="keyword" type="text" placeholder="Tìm kiếm..." className="w-full border rounded px-3 py-2" onChange={e => setKeyword(e.target.value)} />
                             </div>
                             <button onClick={handleSearch} className="ml-2 mb-1 p-2 bg-purple-800 hover:bg-purple-800 text-white rounded flex items-center justify-center cursor-pointer">
                                 <Search size={20} />
@@ -96,20 +96,20 @@ const Filter = () => {
                 </div>
                 <div className="card p-4">
                     <div className="flex items-center justify-between mb-4">
-                        <h5 className="text-lg font-semibold">Transactions</h5>
+                        <h5 className="text-lg font-semibold">Giao dịch</h5>
                     </div>
                     {transactions.length === 0 && !loading? (
-                        <p className="text-gray-500">Select the filters and click apply to filter the transactions</p>
+                        <p className="text-gray-500">Chọn bộ lọc và nhấn tìm kiếm để phân tích dữ liệu giao dịch</p>
                     ): ""}
                     {loading ? (
-                        <p className="text-gray-500">Loading Transactions</p>
+                        <p className="text-gray-500">Đang tải giao dịch...</p>
                     ): ("")}
                     {transactions.map((transaction) => (
                         <TransactionInfoCard
                             key={transaction.id}
                             title={transaction.name}
                             icon={transaction.icon}
-                            date={moment(transaction.date).format('Do MMM YYYY')}
+                            date={moment(transaction.date).format('DD/MM/YYYY')}
                             amount={transaction.amount}
                             type={type}
                             hideDeleteBtn

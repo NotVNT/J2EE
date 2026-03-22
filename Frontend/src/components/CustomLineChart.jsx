@@ -37,7 +37,7 @@ const CustomLineChart = ({ data }) => {
                     <hr className="my-1 border-gray-200" />
                     {/* Display the total amount for the date */}
                     <p className="text-sm text-gray-700 font-bold mb-2">
-                        Total: <span className="text-purple-800">&#8377;{addThousandsSeparator(dataPoint.totalAmount)}</span>
+                        Tổng: <span className="text-purple-800">{addThousandsSeparator(dataPoint.totalAmount)} VND</span>
                     </p>
 
                     {/* Iterate over the newly grouped categories for a consolidated view */}
@@ -47,7 +47,7 @@ const CustomLineChart = ({ data }) => {
                             {categoriesInTooltip.map((groupedItem, index) => (
                                 <div key={index} className="flex justify-between text-xs text-gray-700">
                                     <span>{groupedItem.categoryName}:</span>
-                                    <span>&#8377;{addThousandsSeparator(groupedItem.totalAmount)}</span>
+                                    <span>{addThousandsSeparator(groupedItem.totalAmount)} VND</span>
                                 </div>
                             ))}
                         </div>

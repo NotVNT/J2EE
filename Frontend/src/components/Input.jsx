@@ -14,7 +14,7 @@ const Input = ({ label, value, onChange, placeholder, type = "text", isSelect = 
               value={value}
               onChange={onChange}
             >
-              <option value="" disabled>{placeholder || "Select an option"}</option>
+              <option value="" disabled>{placeholder || "Chọn một tuỳ chọn"}</option>
               {options.map((opt) => (
                   <option key={opt.value} value={opt.value}>
                     {opt.label}

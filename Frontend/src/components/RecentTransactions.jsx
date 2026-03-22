@@ -6,10 +6,10 @@ const RecentTransactions = ({transactions, onMore}) => {
     return(
         <div className="card">
             <div className="flex items-center justify-between">
-                <h4 className="text-lg">Recent Transactions</h4>
+                <h4 className="text-lg">Giao dịch gần đây</h4>
 
                 <button className="card-btn" onClick={onMore}>
-                    More <ArrowRight className="text-base" size={15}/>
+                    Xem thêm <ArrowRight className="text-base" size={15}/>
                 </button>
             </div>
 
@@ -19,7 +19,7 @@ const RecentTransactions = ({transactions, onMore}) => {
                         key={item.id}
                         title={item.name}
                         icon={item.icon}
-                        date={moment(item.date).format("Do MMM YYYY")}
+                        date={moment(item.date).format('DD/MM/YYYY')}
                         amount={item.amount}
                         type={item.type}
                         hideDeleteBtn

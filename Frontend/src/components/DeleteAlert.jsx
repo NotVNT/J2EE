@@ -22,13 +22,9 @@ const DeleteAlert = ({content, onDelete}) => {
                     className="add-btn add-btn-fill">
                     {loading ? (
                         <>
-                            <LoaderCircle className="h-4 w-4 animated-spin" />
-                            Deleting...
-                        </>
+                            <LoaderCircle className="h-4 w-4 animated-spin" />Đang xóa...</>
                     ): (
-                        <>
-                            Delete
-                        </>
+                        <>Xóa</>
                     )}
                 </button>
             </div>
