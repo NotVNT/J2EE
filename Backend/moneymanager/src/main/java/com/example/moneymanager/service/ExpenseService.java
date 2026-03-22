@@ -1,12 +1,15 @@
 package com.example.moneymanager.service;
 
+import com.example.moneymanager.dto.BudgetStatusDTO;
 import com.example.moneymanager.dto.ExpenseDTO;
+import com.example.moneymanager.dto.ExpenseResponseDTO;
 import com.example.moneymanager.entity.CategoryEntity;
 import com.example.moneymanager.entity.ExpenseEntity;
 import com.example.moneymanager.entity.ProfileEntity;
 import com.example.moneymanager.repository.CategoryRepository;
 import com.example.moneymanager.repository.ExpenseRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
@@ -22,16 +25,34 @@ public class ExpenseService {
     private final ExpenseRepository expenseRepository;
     private final ProfileService profileService;
     private final SubscriptionService subscriptionService;
+    private final BudgetService budgetService;
 
-    // Adds a new expense to the database
-    public ExpenseDTO addExpense(ExpenseDTO dto) {
+    // Adds a new expense and checks budget status
+    public ExpenseResponseDTO addExpense(ExpenseDTO dto) {
         ProfileEntity profile = profileService.getCurrentProfile();
         subscriptionService.ensureCanCreateTransaction(profile, dto.getDate());
+
         CategoryEntity category = categoryRepository.findById(dto.getCategoryId())
                 .orElseThrow(() -> new RuntimeException("Category not found"));
+
         ExpenseEntity newExpense = toEntity(dto, profile, category);
         newExpense = expenseRepository.save(newExpense);
-        return toDTO(newExpense);
+
+        // Lấy tháng/năm của giao dịch vừa thêm
+        LocalDate expenseDate = newExpense.getDate() != null ? newExpense.getDate() : LocalDate.now();
+        int month = expenseDate.getMonthValue();
+        int year  = expenseDate.getYear();
+
+        // Kiểm tra trạng thái ngân sách
+        BudgetStatusDTO budgetStatus = budgetService.checkBudgetStatus(
+                profile.getId(), category.getId(), month, year);
+
+        // Gửi email cảnh báo bất đồng bộ nếu có cảnh báo
+        if (budgetStatus.isHasBudget() && (budgetStatus.isExceeded() || budgetStatus.isWarning())) {
+            budgetService.sendBudgetAlertEmailAsync(profile, budgetStatus);
+        }
+
+        return toResponseDTO(newExpense, budgetStatus);
     }
 
     // Retrieves all expenses for current month/based on the start date and end date
@@ -44,7 +65,7 @@ public class ExpenseService {
         return list.stream().map(this::toDTO).toList();
     }
 
-    //delete expense by id for current user
+    // Delete expense by id for current user
     public void deleteExpense(Long expenseId) {
         ProfileEntity profile = profileService.getCurrentProfile();
         ExpenseEntity entity = expenseRepository.findById(expenseId)
@@ -66,23 +87,24 @@ public class ExpenseService {
     public BigDecimal getTotalExpenseForCurrentUser() {
         ProfileEntity profile = profileService.getCurrentProfile();
         BigDecimal total = expenseRepository.findTotalExpenseByProfileId(profile.getId());
-        return total != null ? total: BigDecimal.ZERO;
+        return total != null ? total : BigDecimal.ZERO;
     }
 
-    //filter expenses
+    // Filter expenses
     public List<ExpenseDTO> filterExpenses(LocalDate startDate, LocalDate endDate, String keyword, Sort sort) {
         ProfileEntity profile = profileService.getCurrentProfile();
-        List<ExpenseEntity> list = expenseRepository.findByProfileIdAndDateBetweenAndNameContainingIgnoreCase(profile.getId(), startDate, endDate, keyword, sort);
+        List<ExpenseEntity> list = expenseRepository.findByProfileIdAndDateBetweenAndNameContainingIgnoreCase(
+                profile.getId(), startDate, endDate, keyword, sort);
         return list.stream().map(this::toDTO).toList();
     }
 
-    //Notifications
+    // Notifications
     public List<ExpenseDTO> getExpensesForUserOnDate(Long profileId, LocalDate date) {
         List<ExpenseEntity> list = expenseRepository.findByProfileIdAndDate(profileId, date);
         return list.stream().map(this::toDTO).toList();
     }
 
-    //helper methods
+    // Helper methods
     private ExpenseEntity toEntity(ExpenseDTO dto, ProfileEntity profile, CategoryEntity category) {
         return ExpenseEntity.builder()
                 .name(dto.getName())
@@ -94,17 +116,32 @@ public class ExpenseService {
                 .build();
     }
 
-    private ExpenseDTO toDTO(ExpenseEntity entity) {
+    public ExpenseDTO toDTO(ExpenseEntity entity) {
         return ExpenseDTO.builder()
                 .id(entity.getId())
                 .name(entity.getName())
                 .icon(entity.getIcon())
-                .categoryId(entity.getCategory() != null ? entity.getCategory().getId(): null)
-                .categoryName(entity.getCategory() != null ? entity.getCategory().getName(): "N/A")
+                .categoryId(entity.getCategory() != null ? entity.getCategory().getId() : null)
+                .categoryName(entity.getCategory() != null ? entity.getCategory().getName() : "N/A")
                 .amount(entity.getAmount())
                 .date(entity.getDate())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
+                .build();
+    }
+
+    private ExpenseResponseDTO toResponseDTO(ExpenseEntity entity, BudgetStatusDTO budgetStatus) {
+        return ExpenseResponseDTO.builder()
+                .id(entity.getId())
+                .name(entity.getName())
+                .icon(entity.getIcon())
+                .categoryId(entity.getCategory() != null ? entity.getCategory().getId() : null)
+                .categoryName(entity.getCategory() != null ? entity.getCategory().getName() : "N/A")
+                .amount(entity.getAmount())
+                .date(entity.getDate())
+                .createdAt(entity.getCreatedAt())
+                .updatedAt(entity.getUpdatedAt())
+                .budgetStatus(budgetStatus)
                 .build();
     }
 }

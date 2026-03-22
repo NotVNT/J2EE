@@ -20,3 +20,99 @@ body {
 .btn-primary {
   @apply w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800;
 }
+
+/* ───────────────────────────────────────────────────────────── */
+/* BUDGET STYLES                                                 */
+/* ───────────────────────────────────────────────────────────── */
+
+.budget-list {
+  @apply bg-white p-6 rounded-2xl shadow-sm border border-gray-100;
+}
+.budget-list__header {
+  @apply flex justify-between items-center mb-6;
+}
+.budget-list__title {
+  @apply text-xl font-bold text-gray-800;
+}
+.budget-list__subtitle {
+  @apply text-sm text-gray-500;
+}
+.budget-list__grid {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6;
+}
+.budget-list__empty {
+  @apply flex flex-col items-center justify-center p-12 text-center text-gray-500 bg-gray-50 rounded-xl border border-dashed border-gray-200 mt-4;
+}
+.budget-list__empty-icon {
+  @apply text-4xl mb-3 opacity-60;
+}
+.budget-list__empty-hint {
+  @apply text-xs mt-2 text-gray-400;
+}
+
+.budget-card {
+  @apply flex flex-col p-5 rounded-2xl border border-gray-100 bg-white transition-all shadow-sm hover:shadow-md relative overflow-hidden;
+}
+.budget-card--warning {
+  @apply border-orange-200 bg-orange-50/30;
+}
+.budget-card--danger {
+  @apply border-red-200 bg-red-50/50;
+}
+.budget-card__header {
+  @apply flex justify-between items-start mb-4;
+}
+.budget-card__category {
+  @apply flex items-center gap-3;
+}
+.budget-card__icon {
+  @apply flex items-center justify-center w-10 h-10 rounded-xl bg-gray-50 border border-gray-100 text-xl shadow-sm;
+}
+.budget-card__name {
+  @apply font-semibold text-gray-800 text-base leading-tight;
+}
+.budget-card__period {
+  @apply text-xs text-gray-400 mt-0.5;
+}
+.budget-card__delete {
+  @apply text-gray-300 hover:text-red-500 hover:bg-red-50 w-7 h-7 flex justify-center items-center rounded-lg transition-colors;
+}
+
+.budget-card__bar-wrap {
+  @apply h-2.5 w-full bg-gray-100 rounded-full my-3 overflow-hidden relative;
+}
+.budget-card__bar {
+  @apply h-full transition-all duration-500 ease-out;
+}
+
+.budget-card__stats {
+  @apply flex justify-between items-end mt-2;
+}
+.budget-card__label {
+  @apply text-xs text-gray-500 font-medium mb-1 uppercase tracking-wide;
+}
+.budget-card__value {
+  @apply font-bold text-gray-900;
+}
+.budget-card__status-badge {
+  @apply text-[10px] font-bold px-2 py-0.5 rounded-full border border-current opacity-80;
+}
+.budget-card__right {
+  @apply text-right;
+}
+.budget-card__percentage {
+  @apply text-right text-xs font-bold mt-1.5 opacity-90;
+}
+
+.budget-form {
+  @apply space-y-4;
+}
+.budget-form__row {
+  @apply flex gap-4;
+}
+.budget-form__half {
+  @apply flex-1;
+}
+.budget-form__actions {
+  @apply flex justify-end gap-3 mt-6 pt-4 border-t border-gray-100;
+}

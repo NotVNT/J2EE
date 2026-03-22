@@ -1,6 +1,7 @@
 package com.example.moneymanager.controller;
 
 import com.example.moneymanager.dto.ExpenseDTO;
+import com.example.moneymanager.dto.ExpenseResponseDTO;
 import com.example.moneymanager.service.ExpenseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -17,8 +18,8 @@ public class ExpenseController {
     private final ExpenseService expenseService;
 
     @PostMapping
-    public ResponseEntity<ExpenseDTO> addExpense(@RequestBody ExpenseDTO dto) {
-        ExpenseDTO saved = expenseService.addExpense(dto);
+    public ResponseEntity<ExpenseResponseDTO> addExpense(@RequestBody ExpenseDTO dto) {
+        ExpenseResponseDTO saved = expenseService.addExpense(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 

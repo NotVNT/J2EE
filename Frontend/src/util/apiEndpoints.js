@@ -48,6 +48,11 @@ export const API_ENDPOINTS = {
     APPLY_FILTERS: "/filter",
     DASHBOARD_DATA: "/dashboard",
 
+    // Budget endpoints
+    GET_BUDGETS: "/budgets",
+    SET_BUDGET: "/budgets",
+    DELETE_BUDGET: (budgetId) => `/budgets/${budgetId}`,
+
     // Admin endpoints
     ADMIN_OVERVIEW: "/admin/overview",
     ADMIN_PAYMENTS: "/admin/payments",
