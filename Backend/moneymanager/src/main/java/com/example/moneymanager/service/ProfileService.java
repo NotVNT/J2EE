@@ -41,19 +41,19 @@ public class ProfileService {
 
     public ProfileDTO registerProfile(ProfileDTO profileDTO) {
         profileRepository.findByEmail(profileDTO.getEmail()).ifPresent(profile -> {
-            throw new RuntimeException("Email already exists");
+            throw new RuntimeException("Email này đã được sử dụng.");
         });
 
         ProfileEntity newProfile = toEntity(profileDTO);
         newProfile.setActivationToken(UUID.randomUUID().toString());
         newProfile = profileRepository.save(newProfile);
-        //send activation email
+        // Gửi email kích hoạt tài khoản
         String normalizedActivationUrl = activationURL.endsWith("/")
                 ? activationURL.substring(0, activationURL.length() - 1)
                 : activationURL;
         String activationLink = normalizedActivationUrl + "/activate?token=" + newProfile.getActivationToken();
-        String subject = "Activate your Money Manager account";
-        String body = "Click on the following link to activate your account: " + activationLink;
+        String subject = "Kích hoạt tài khoản Money Manager";
+        String body = "Nhấn vào liên kết sau để kích hoạt tài khoản của bạn: " + activationLink;
         emailService.sendEmail(newProfile.getEmail(), subject, body);
         return toDTO(newProfile);
     }
@@ -115,7 +115,7 @@ public class ProfileService {
     public ProfileEntity getCurrentProfile() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return profileRepository.findByEmail(authentication.getName())
-                .orElseThrow(() -> new UsernameNotFoundException("Profile not found with email: " + authentication.getName()));
+                .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy tài khoản với email: " + authentication.getName()));
     }
 
     public ProfileDTO getPublicProfile(String email) {
@@ -124,7 +124,7 @@ public class ProfileService {
             currentUser = getCurrentProfile();
         }else {
             currentUser = profileRepository.findByEmail(email)
-                    .orElseThrow(() -> new UsernameNotFoundException("Profile not found with email: " + email));
+                    .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy tài khoản với email: " + email));
         }
 
         return ProfileDTO.builder()
@@ -141,14 +141,14 @@ public class ProfileService {
     public Map<String, Object> authenticateAndGenerateToken(AuthDTO authDTO) {
         try {
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(authDTO.getEmail(), authDTO.getPassword()));
-            //Generate JWT token
+            // Tạo JWT token
             String token = jwtUtil.generateToken(authDTO.getEmail());
             return Map.of(
                     "token", token,
                     "user", getPublicProfile(authDTO.getEmail())
             );
         } catch (Exception e) {
-            throw new RuntimeException("Invalid email or password");
+            throw new RuntimeException("Email hoặc mật khẩu không đúng.");
         }
     }
 
@@ -159,38 +159,40 @@ public class ProfileService {
         return toDTO(profile);
     }
 
-    // Thêm các phương thức mới cho quên mật khẩu
+    // Các phương thức cho chức năng quên mật khẩu
 
     public void forgotPassword(ForgotPasswordRequestDTO requestDTO) {
         ProfileEntity profile = profileRepository.findByEmail(requestDTO.getEmail())
-                .orElseThrow(() -> new RuntimeException("Email not found"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy email này."));
 
         if (!profile.getIsActive()) {
-            throw new RuntimeException("Account is not active. Please activate your account first.");
+            throw new RuntimeException("Tài khoản chưa được kích hoạt. Vui lòng kích hoạt tài khoản trước.");
         }
 
-        // Tạo token reset password
+        // Tạo token đặt lại mật khẩu
         String resetToken = UUID.randomUUID().toString();
         profile.setResetPasswordToken(resetToken);
         profile.setResetPasswordTokenExpiry(LocalDateTime.now().plusHours(24)); // Token hết hạn sau 24 giờ
 
         profileRepository.save(profile);
 
-        // Gửi email reset password
-        // Gửi email reset password
-        String resetLink = "http://localhost:3000/reset-password?token=" + resetToken;
+        // Gửi email đặt lại mật khẩu
+        String normalizedResetPasswordUrl = resetPasswordURL.endsWith("/")
+                ? resetPasswordURL.substring(0, resetPasswordURL.length() - 1)
+                : resetPasswordURL;
+        String resetLink = normalizedResetPasswordUrl + "/reset-password?token=" + resetToken;
 
-        String subject = "Reset your Money Manager password";
-        String body = "Click on the following link to reset your password: " + resetLink +
-                "\n\nThis link will expire in 24 hours.\n" +
-                "If you didn't request this, please ignore this email.";
+        String subject = "Đặt lại mật khẩu Money Manager";
+        String body = "Nhấn vào liên kết sau để đặt lại mật khẩu của bạn: " + resetLink +
+                "\n\nLiên kết này sẽ hết hạn sau 24 giờ.\n" +
+                "Nếu bạn không yêu cầu thao tác này, vui lòng bỏ qua email này.";
 
         emailService.sendEmail(profile.getEmail(), subject, body);
     }
 
     public void resetPassword(ResetPasswordRequestDTO requestDTO) {
         ProfileEntity profile = profileRepository.findByResetPasswordToken(requestDTO.getToken())
-                .orElseThrow(() -> new RuntimeException("Invalid or expired reset token"));
+                .orElseThrow(() -> new RuntimeException("Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn."));
 
         // Kiểm tra token đã hết hạn chưa
         if (profile.getResetPasswordTokenExpiry().isBefore(LocalDateTime.now())) {
@@ -198,7 +200,7 @@ public class ProfileService {
             profile.setResetPasswordToken(null);
             profile.setResetPasswordTokenExpiry(null);
             profileRepository.save(profile);
-            throw new RuntimeException("Reset token has expired");
+            throw new RuntimeException("Liên kết đặt lại mật khẩu đã hết hạn.");
         }
 
         // Cập nhật mật khẩu mới

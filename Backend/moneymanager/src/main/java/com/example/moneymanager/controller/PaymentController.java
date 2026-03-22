@@ -60,7 +60,7 @@ public class PaymentController {
         try {
             paymentService.handleWebhook(webhook);
             return ResponseEntity.ok(Map.of(
-                    "message", "Webhook processed successfully"
+                    "message", "Xử lý webhook thành công."
             ));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(

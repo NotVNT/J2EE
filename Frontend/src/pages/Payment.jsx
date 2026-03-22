@@ -12,13 +12,12 @@ import { getPaymentPlans } from "../util/paymentPlans.js";
 const PAYMENT_STORAGE_KEY = "latestPayment";
 const ICON_MAP = { ShieldCheck, Sparkles, Star, Zap };
 
-
 const Payment = () => {
   useUser();
 
   const { user, setUser } = useContext(AppContext);
   const PAYMENT_PLANS = useMemo(() => {
-    return getPaymentPlans().map(plan => ({
+    return getPaymentPlans().map((plan) => ({
       ...plan,
       icon: ICON_MAP[plan.icon] || ShieldCheck
     }));
@@ -45,7 +44,7 @@ const Payment = () => {
         setSelectedPlanId(parsedPayment.planId);
       }
     } catch (error) {
-      console.error("Failed to parse saved payment", error);
+      console.error("Không thể đọc dữ liệu thanh toán đã lưu", error);
       localStorage.removeItem(PAYMENT_STORAGE_KEY);
     }
   }, []);
@@ -54,7 +53,8 @@ const Payment = () => {
 
   const activeSubscription = useMemo(() => {
     if (user?.subscriptionStatus === "ACTIVE" && user?.subscriptionPlan) {
-      const matchedPlan = PAYMENT_PLANS.find((plan) => plan.subscriptionPlan === user.subscriptionPlan) ?? PAYMENT_PLANS[0];
+      const matchedPlan =
+        PAYMENT_PLANS.find((plan) => plan.subscriptionPlan === user.subscriptionPlan) ?? PAYMENT_PLANS[0];
       return {
         ...matchedPlan,
         activatedAt: user.subscriptionActivatedAt,
@@ -76,7 +76,7 @@ const Payment = () => {
     }
 
     return null;
-  }, [latestPayment, user]);
+  }, [latestPayment, PAYMENT_PLANS, user]);
 
   const savePayment = (payment) => {
     setLatestPayment(payment);
@@ -104,7 +104,7 @@ const Payment = () => {
       savePayment(paymentData);
       window.location.href = response.data.checkoutUrl;
     } catch (error) {
-      toast.error(error.response?.data?.message || "Không thể khởi tạo thanh toán");
+      toast.error(error.response?.data?.message || "Không thể khởi tạo thanh toán.");
     } finally {
       setIsCreating(false);
     }
@@ -126,7 +126,7 @@ const Payment = () => {
       setUser(response.data);
     } catch (error) {
       setAutoRenew(!nextValue);
-      toast.error(error.response?.data?.message || "Không thể cập nhật tự gia hạn");
+      toast.error(error.response?.data?.message || "Không thể cập nhật tùy chọn tự gia hạn.");
     }
   };
 
@@ -160,7 +160,7 @@ const Payment = () => {
 
                 <h2 className="mt-5 text-4xl font-semibold">{activeSubscription.displayName} đang hoạt động</h2>
                 <p className="mt-3 max-w-xl text-base leading-7 text-white/80">
-                  Ban da so huu goi nay va dang dung day du cac quyen loi cua tai khoan nang cap.
+                  Bạn đã sở hữu gói này và đang dùng đầy đủ các quyền lợi của tài khoản nâng cấp.
                 </p>
 
                 <div className="mt-8 grid gap-3 sm:grid-cols-2">
@@ -180,20 +180,26 @@ const Payment = () => {
                     onClick={handleUpgradePlan}
                     type="button"
                   >
-                    <Zap size={16} />Nâng cấp gói</button>
+                    <Zap size={16} />
+                    Nâng cấp gói
+                  </button>
 
                   <button
                     className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/15"
                     onClick={() => setShowManagePanel((current) => !current)}
                     type="button"
                   >
-                    <Settings2 size={16} />Quản lý gói</button>
+                    <Settings2 size={16} />
+                    Quản lý gói
+                  </button>
 
                   <Link
                     className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-transparent px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
                     to="/dashboard"
                   >
-                    <House size={16} />Về Tổng Quan</Link>
+                    <House size={16} />
+                    Về tổng quan
+                  </Link>
                 </div>
               </div>
 
@@ -201,7 +207,7 @@ const Payment = () => {
                 <p className="text-sm uppercase tracking-[0.25em] text-slate-500">Gói hiện tại</p>
                 <h3 className="mt-3 text-3xl font-semibold text-slate-900">{activeSubscription.displayName}</h3>
                 <p className="mt-2 text-sm leading-6 text-slate-500">
-                  Luc nay tai khoan cua ban da o trang thai so huu goi, khong con la buoc di thanh toan nua.
+                  Lúc này tài khoản của bạn đã ở trạng thái sở hữu gói nên không cần thanh toán lại.
                 </p>
 
                 <div className="mt-6 space-y-3">
@@ -218,7 +224,7 @@ const Payment = () => {
                       <div>
                         <p className="text-base font-semibold text-slate-900">Quản lý gói</p>
                         <p className="mt-1 text-sm text-slate-500">
-                          Dieu chinh cach goi cua ban duoc duy tri sau khi het han.
+                          Điều chỉnh cách gói của bạn được duy trì sau khi hết hạn.
                         </p>
                       </div>
 
@@ -250,11 +256,11 @@ const Payment = () => {
                 <h2 className="text-xl font-semibold text-slate-900">
                   {activeSubscription ? "Nâng cấp gói của bạn" : "Chọn gói dịch vụ"}
                 </h2>
-                <p className="mt-2 text-sm text-slate-500">
-                  {activeSubscription
-                    ? "Chọn gói mới để nâng cấp hoặc gia hạn tài khoản của bạn."
-                    : "Hệ thống sẽ chuyển bạn trực tiếp đến trang checkout của PayOS."}
-                </p>
+                {activeSubscription ? (
+                  <p className="mt-2 text-sm text-slate-500">
+                    Chọn gói mới để nâng cấp hoặc gia hạn tài khoản của bạn.
+                  </p>
+                ) : null}
 
                 <div className="mt-6 grid gap-4 md:grid-cols-2">
                   {PAYMENT_PLANS.map((plan) => {
@@ -279,7 +285,9 @@ const Payment = () => {
                           </div>
                           <div className="flex items-center gap-2">
                             {isCurrentPlan ? (
-                              <span className={`rounded-full px-3 py-1 text-xs font-semibold ${isSelected ? "bg-emerald-400/20 text-emerald-200" : "bg-emerald-100 text-emerald-700"}`}>Đang dùng</span>
+                              <span className={`rounded-full px-3 py-1 text-xs font-semibold ${isSelected ? "bg-emerald-400/20 text-emerald-200" : "bg-emerald-100 text-emerald-700"}`}>
+                                Đang dùng
+                              </span>
                             ) : null}
                             <span
                               className={`rounded-full px-3 py-1 text-xs font-semibold ${
@@ -321,13 +329,13 @@ const Payment = () => {
                 <h2 className="mt-3 text-2xl font-semibold text-slate-900">{selectedPlan.displayName}</h2>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
                   {activeSubscription
-                    ? "Sau khi thanh toán, gói hiện tại của bạn sẽ được cập nhật tĩnh."
+                    ? "Sau khi thanh toán, gói hiện tại của bạn sẽ được cập nhật tương ứng."
                     : "Sau khi bấm thanh toán, bạn sẽ được chuyển đến cổng thanh toán PayOS."}
                 </p>
 
                 <div className="mt-6 rounded-3xl bg-white p-5">
                   <div className="flex items-center justify-between gap-4 border-b border-slate-100 pb-4">
-                    <span className="text-sm text-slate-500">Tong thanh toan</span>
+                    <span className="text-sm text-slate-500">Tổng thanh toán</span>
                     <span className="text-3xl font-semibold text-slate-900">
                       {Number(selectedPlan.amount).toLocaleString("vi-VN")} VND
                     </span>
@@ -347,12 +355,12 @@ const Payment = () => {
                 >
                   <CreditCard size={18} />
                   {isCreating
-                    ? "Đang chuyển đến checkout..."
+                    ? "Đang chuyển đến trang thanh toán..."
                     : activeSubscription
                       ? selectedPlan.id === activeSubscription.id
                         ? "Gia hạn gói"
-                        : "Nang cap goi"
-                      : "Thanh toan"}
+                        : "Nâng cấp gói"
+                      : "Thanh toán"}
                 </button>
               </form>
             </div>

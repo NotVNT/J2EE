@@ -7,17 +7,31 @@ import { API_ENDPOINTS } from "../util/apiEndpoints.js";
 
 const PAYMENT_STORAGE_KEY = "latestPayment";
 
+const PAYMENT_STATUS_LABELS = {
+  PAID: "Đã thanh toán thành công",
+  PENDING: "Đang chờ thanh toán",
+  PROCESSING: "Đang xử lý",
+  FAILED: "Thanh toán thất bại",
+  CANCELLED: "Đã hủy",
+  EXPIRED: "Đã hết hạn",
+  UNDERPAID: "Thanh toán chưa đủ"
+};
+
 const PaymentCancel = () => {
   const [searchParams] = useSearchParams();
   const [isSyncing, setIsSyncing] = useState(false);
 
   const orderCode = useMemo(() => {
-    return searchParams.get("orderCode") || JSON.parse(localStorage.getItem(PAYMENT_STORAGE_KEY) || "null")?.orderCode || "";
+    return (
+      searchParams.get("orderCode") ||
+      JSON.parse(localStorage.getItem(PAYMENT_STORAGE_KEY) || "null")?.orderCode ||
+      ""
+    );
   }, [searchParams]);
 
   const handleSyncStatus = async () => {
     if (!orderCode) {
-      toast.error("Không tìm thấy mã đơn hàng");
+      toast.error("Không tìm thấy mã đơn hàng.");
       return;
     }
 
@@ -26,9 +40,11 @@ const PaymentCancel = () => {
     try {
       const response = await axiosConfig.get(API_ENDPOINTS.SYNC_PAYMENT_STATUS(orderCode));
       localStorage.setItem(PAYMENT_STORAGE_KEY, JSON.stringify(response.data));
-      toast.success(`Trạng thái thanh toán mới nhất: ${response.data.status}`);
+      toast.success(
+        `Trạng thái thanh toán mới nhất: ${PAYMENT_STATUS_LABELS[response.data.status] || response.data.status}`
+      );
     } catch (error) {
-      toast.error(error.response?.data?.message || "Không thể đồng bộ trạng thái thanh toán");
+      toast.error(error.response?.data?.message || "Không thể đồng bộ trạng thái thanh toán.");
     } finally {
       setIsSyncing(false);
     }
@@ -47,7 +63,7 @@ const PaymentCancel = () => {
             Quá trình thanh toán đã bị hủy hoặc chưa được hoàn tất.
           </h1>
           <p className="mt-3 text-slate-600">
-            Bạn có thể quay lại trang thanh toán để tạo liên kết mới, hoặc làm mới trạng thái đơn hàng hiện tại trong trường hợp thanh toán đã được hoàn tất ở tab khác.
+            Bạn có thể quay lại trang thanh toán để tạo liên kết mới, hoặc làm mới trạng thái đơn hàng hiện tại nếu việc thanh toán đã hoàn tất ở tab khác.
           </p>
         </div>
 

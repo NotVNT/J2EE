@@ -78,7 +78,7 @@ public class PaymentService {
             paymentEntity = paymentRepository.save(paymentEntity);
             return toDTO(paymentEntity);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to create PayOS payment link: " + e.getMessage(), e);
+            throw new RuntimeException("Không thể tạo liên kết thanh toán PayOS: " + e.getMessage(), e);
         }
     }
 
@@ -98,7 +98,7 @@ public class PaymentService {
             paymentEntity = paymentRepository.save(paymentEntity);
             return toDTO(paymentEntity);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to sync payment status: " + e.getMessage(), e);
+            throw new RuntimeException("Không thể đồng bộ trạng thái thanh toán: " + e.getMessage(), e);
         }
     }
 
@@ -128,7 +128,7 @@ public class PaymentService {
 
             paymentRepository.save(paymentEntity);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to process PayOS webhook: " + e.getMessage(), e);
+            throw new RuntimeException("Không thể xử lý webhook PayOS: " + e.getMessage(), e);
         }
     }
 
@@ -145,16 +145,16 @@ public class PaymentService {
         try {
             return payOS.webhooks().confirm(webhookUrl);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to confirm PayOS webhook: " + e.getMessage(), e);
+            throw new RuntimeException("Không thể xác nhận webhook PayOS: " + e.getMessage(), e);
         }
     }
 
     private void validateRequest(CreatePaymentRequestDTO requestDTO) {
         if (requestDTO == null) {
-            throw new RuntimeException("Payment request is required");
+            throw new RuntimeException("Thiếu thông tin yêu cầu thanh toán.");
         }
         if (requestDTO.getPlanId() == null || requestDTO.getPlanId().isBlank()) {
-            throw new RuntimeException("Plan is required");
+            throw new RuntimeException("Vui lòng chọn gói dịch vụ.");
         }
     }
 
@@ -169,10 +169,10 @@ public class PaymentService {
     private PaymentEntity findOwnedPayment(Long orderCode) {
         ProfileEntity currentProfile = profileService.getCurrentProfile();
         PaymentEntity paymentEntity = paymentRepository.findByOrderCode(orderCode)
-                .orElseThrow(() -> new RuntimeException("Payment not found"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy giao dịch thanh toán."));
 
         if (paymentEntity.getProfile() == null || !paymentEntity.getProfile().getId().equals(currentProfile.getId())) {
-            throw new RuntimeException("Unauthorized to access this payment");
+            throw new RuntimeException("Bạn không có quyền truy cập giao dịch thanh toán này.");
         }
 
         return paymentEntity;
@@ -180,10 +180,10 @@ public class PaymentService {
 
     private void validateWebhookUrl() {
         if (webhookUrl == null || webhookUrl.isBlank()) {
-            throw new RuntimeException("Webhook URL is required");
+            throw new RuntimeException("Thiếu URL webhook.");
         }
         if (webhookUrl.contains("your-public-domain")) {
-            throw new RuntimeException("Please update PAYOS_WEBHOOK_URL with a real public URL");
+            throw new RuntimeException("Vui lòng cập nhật PAYOS_WEBHOOK_URL bằng một URL public hợp lệ.");
         }
     }
 
@@ -194,7 +194,7 @@ public class PaymentService {
             activateSubscriptionIfPaid(paymentEntity);
             paymentRepository.save(paymentEntity);
         } catch (Exception e) {
-            System.err.println("Failed to auto-sync payment " + paymentEntity.getOrderCode() + ": " + e.getMessage());
+            System.err.println("Không thể tự động đồng bộ giao dịch " + paymentEntity.getOrderCode() + ": " + e.getMessage());
         }
     }
 
