@@ -10,6 +10,7 @@ import LandingPage from "./pages/LandingPage.jsx";
 import Payment from "./pages/Payment.jsx";
 import PaymentSuccess from "./pages/PaymentSuccess.jsx";
 import PaymentCancel from "./pages/PaymentCancel.jsx";
+import AccountActivation from "./pages/AccountActivation.jsx";
 
 const App = () => {
     return (
@@ -27,6 +28,7 @@ const App = () => {
                 <Route path="/payment/cancel" element={<PaymentCancel />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
+                <Route path="/activate" element={<AccountActivation />} />
             </Routes>
         </>
     )
