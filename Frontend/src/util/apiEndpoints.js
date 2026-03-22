@@ -48,6 +48,9 @@ export const API_ENDPOINTS = {
     APPLY_FILTERS: "/filter",
     DASHBOARD_DATA: "/dashboard",
 
+    // AI assistant endpoints
+    GEMINI_CHAT: "/gemini/chat",
+
     // Admin endpoints
     ADMIN_OVERVIEW: "/admin/overview",
     ADMIN_PAYMENTS: "/admin/payments",
