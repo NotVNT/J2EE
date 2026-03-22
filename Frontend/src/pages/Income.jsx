@@ -17,6 +17,9 @@ const Income = () => {
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(false);
 
+    const [filterType, setFilterType] = useState("current");
+    const [selectedMonth, setSelectedMonth] = useState("");
+
     const [openAddIncomeModal, setOpenAddIncomeModal] = useState(false);
     const [openDeleteAlert, setOpenDeleteAlert] = useState({
         show: false,
@@ -30,13 +33,21 @@ const Income = () => {
         setLoading(true);
 
         try {
-            const response = await axiosConfig.get(API_ENDPOINTS.GET_ALL_INCOMES);
+            let url = API_ENDPOINTS.GET_ALL_INCOMES;
+            if (filterType === "all") {
+                url += "?all=true";
+            } else if (filterType === "specific" && selectedMonth) {
+                const [year, month] = selectedMonth.split("-");
+                url += `?month=${month}&year=${year}`;
+            }
+
+            const response = await axiosConfig.get(url);
             if (response.status === 200) {
                setIncomeData(response.data);
             }
         }catch(error) {
             console.error('Failed to fetch income details:', error);
-            toast.error(error.response?.data?.message || "Failed to fetch income details");
+            toast.error(error.response?.data?.message || "Lấy chi tiết thu nhập thất bại");
         }finally {
             setLoading(false);
         }
@@ -52,7 +63,7 @@ const Income = () => {
             }
         }catch(error) {
             console.log('Failed to fetch income categories:', error);
-            toast.error(error.data?.message || "Failed to fetch income categories");
+            toast.error(error.response?.data?.message || "Lấy danh mục thu nhập thất bại");
         }
     }
 
@@ -62,17 +73,17 @@ const Income = () => {
 
         //validation
         if (!name.trim()) {
-            toast.error("Please enter a name");
+            toast.error("Vui lòng nhập tên");
             return;
         }
 
         if (!amount || isNaN(amount) || Number(amount) <= 0) {
-            toast.error("Amount should be a valid number greater than 0");
+            toast.error("Số tiền phải lớn hơn 0");
             return;
         }
 
         if (!date) {
-            toast.error("Please select a date");
+            toast.error("Vui lòng chọn ngày");
             return;
         }
 
@@ -83,7 +94,7 @@ const Income = () => {
         }
 
         if (!categoryId) {
-            toast.error("Please select a category");
+            toast.error("Vui lòng chọn danh mục");
             return;
         }
 
@@ -97,13 +108,13 @@ const Income = () => {
             })
             if (response.status === 201) {
                 setOpenAddIncomeModal(false);
-                toast.success("Income added successfully");
+                toast.success("Thêm thu nhập thành công");
                 fetchIncomeDetails();
                 fetchIncomeCategories();
             }
         }catch(error){
             console.log('Error adding income', error);
-            toast.error(error.response?.data?.message || "Failed to adding income");
+            toast.error(error.response?.data?.message || "Thêm thu nhập thất bại");
         }
     }
 
@@ -112,11 +123,11 @@ const Income = () => {
         try {
             await axiosConfig.delete(API_ENDPOINTS.DELETE_INCOME(id));
             setOpenDeleteAlert({show: false, data: null});
-            toast.success("Income deleted successfully");
+            toast.success("Xóa thu nhập thành công");
             fetchIncomeDetails();
         }catch(error) {
             console.log('Error deleting income', error);
-            toast.error(error.response?.data?.message || "Failed to delete income");
+            toast.error(error.response?.data?.message || "Xóa thu nhập thất bại");
         }
     }
 
@@ -132,7 +143,7 @@ const Income = () => {
             link.click();
             link.parentNode.removeChild(link);
             window.URL.revokeObjectURL(url);
-            toast.success("Download income details successfully");
+            toast.success("Tải xuống chi tiết thu nhập thành công");
         }catch(error) {
             console.error('Error downloading income details:', error);
             toast.error(error.response?.data?.message || "Failed to download income");
@@ -143,7 +154,7 @@ const Income = () => {
         try {
             const response = await axiosConfig.get(API_ENDPOINTS.EMAIL_INCOME);
             if (response.status === 200) {
-                toast.success("Income details emailed successfully");
+                toast.success("Gửi email chi tiết thu nhập thành công");
             }
         }catch(error) {
             console.error('Error emailing income details:', error);
@@ -152,14 +163,42 @@ const Income = () => {
     }
 
     useEffect(() => {
-        fetchIncomeDetails();
-        fetchIncomeCategories()
+        fetchIncomeCategories();
     }, []);
+
+    useEffect(() => {
+        if (filterType === "specific" && !selectedMonth) return;
+        fetchIncomeDetails();
+    }, [filterType, selectedMonth]);
 
     return (
         <Dashboard activeMenu="Income">
             <div className="my-5 mx-auto">
                 <div className="grid grid-cols-1 gap-6">
+                    {/* Time Filter UI */}
+                    <div className="flex flex-col sm:flex-row justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-gray-200/50">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-3 sm:mb-0">Khung thời gian</h3>
+                        <div className="flex gap-4 items-center">
+                            <select 
+                                value={filterType} 
+                                onChange={(e) => setFilterType(e.target.value)}
+                                className="border rounded-xl px-4 py-2 bg-gray-50 outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
+                            >
+                                <option value="current">Tháng này</option>
+                                <option value="all">Tất cả thời gian</option>
+                                <option value="specific">Chọn tháng</option>
+                            </select>
+                            {filterType === "specific" && (
+                                <input 
+                                    type="month" 
+                                    value={selectedMonth} 
+                                    onChange={(e) => setSelectedMonth(e.target.value)} 
+                                    className="border rounded-xl px-4 py-2 bg-gray-50 outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
+                                />
+                            )}
+                        </div>
+                    </div>
+
                     <div>
                         {/* overview for income with line char */}
                         <IncomeOverview transactions={incomeData} onAddIncome={() => setOpenAddIncomeModal(true)} />
@@ -176,7 +215,7 @@ const Income = () => {
                     <Modal
                         isOpen={openAddIncomeModal}
                         onClose={() => setOpenAddIncomeModal(false)}
-                        title="Add Income"
+                        title="Thêm thu nhập"
                     >
                         <AddIncomeForm
                             onAddIncome={(income) => handleAddIncome(income)}
@@ -188,10 +227,10 @@ const Income = () => {
                     <Modal
                         isOpen={openDeleteAlert.show}
                         onClose={() => setOpenDeleteAlert({show: false, data: null})}
-                        title="Delete Income"
+                        title="Xóa thu nhập"
                     >
                         <DeleteAlert
-                            content="Are you sure want to delete this income details?"
+                            content="Bạn có chắc chắn muốn xóa chi tiết thu nhập này?"
                             onDelete={() => deleteIncome(openDeleteAlert.data)}
                         />
                     </Modal>

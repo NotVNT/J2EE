@@ -22,7 +22,7 @@ const HeroSection = () => {
                         to="/signup"
                         className="w-full sm:w-auto bg-gray-100 text-gray-800 px-8 py-3 rounded-lg font-semibold text-lg hover:bg-gray-200 transition-all flex items-center justify-center gap-2"
                     >
-                        Learn More <ArrowRight className="h-5 w-5" />
+                        Learn Xem thêm <ArrowRight className="h-5 w-5" />
                     </Link>
                 </div>
             </div>

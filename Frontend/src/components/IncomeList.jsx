@@ -24,32 +24,24 @@ const IncomeList = ({transactions, onDelete, onDownload, onEmail}) => {
     return (
         <div className="card">
             <div className="flex items-center justify-between">
-                <h5 className="text-lg">Income Sources</h5>
+                <h5 className="text-lg">Nguồn thu nhập</h5>
                 <div className="flex items-center justify-end gap-2">
                     <button disabled={loading} className="card-btn" onClick={handleEmail}>
                         {loading ? (
                             <>
-                                <LoaderCircle className="w-4 h-4 animate-spin"/>
-                                Emailing...
-                            </>
+                                <LoaderCircle className="w-4 h-4 animate-spin"/>Đang gửi Email...</>
                         ): (
                             <>
-                                <Mail size={15} className="text-base" />
-                                Email
-                            </>
+                                <Mail size={15} className="text-base" />Gửi Email</>
                         )}
                     </button>
                     <button disabled={loading} className="card-btn" onClick={handleDownload}>
                         {loading ? (
                             <>
-                                <LoaderCircle className="w-4 h-4 animate-spin"/>
-                                Downloading...
-                            </>
+                                <LoaderCircle className="w-4 h-4 animate-spin"/>Đang tải xuống...</>
                         ): (
                             <>
-                                <Download size={15} className="text-base" />
-                                Download
-                            </>
+                                <Download size={15} className="text-base" />Tải xuống</>
                         )}
 
                     </button>
@@ -63,7 +55,7 @@ const IncomeList = ({transactions, onDelete, onDownload, onEmail}) => {
                         key={income.id}
                         title={income.name}
                         icon={income.icon}
-                        date={moment(income.date).format('Do MMM YYYY')}
+                        date={moment(income.date).format('DD/MM/YYYY')}
                         amount={income.amount}
                         type="income"
                         onDelete={() => onDelete(income.id)}

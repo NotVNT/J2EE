@@ -50,19 +50,19 @@ const Home = () => {
                         {/* Display the cards*/}
                         <InfoCard
                             icon={<WalletCards />}
-                            label="Total Balance"
+                            label="Tổng số dư"
                             value={addThousandsSeparator(dashboardData?.totalBalance || 0)}
                             color="bg-purple-800"
                         />
                         <InfoCard
                             icon={<Wallet />}
-                            label="Total Income"
+                            label="Tổng thu nhập"
                             value={addThousandsSeparator(dashboardData?.totalIncome || 0)}
                             color="bg-green-800"
                         />
                         <InfoCard
                             icon={<Coins />}
-                            label="Total Expense"
+                            label="Tổng chi tiêu"
                             value={addThousandsSeparator(dashboardData?.totalExpense || 0)}
                             color="bg-red-800"
                         />
@@ -86,7 +86,7 @@ const Home = () => {
                             transactions={dashboardData?.recent5Expenses || []}
                             onMore={() => navigate("/expense")}
                             type="expense"
-                            title="Recent Expenses"
+                            title="Chi tiêu gần đây"
                         />
 
                         {/* Income transactions */}
@@ -94,7 +94,7 @@ const Home = () => {
                             transactions={dashboardData?.recent5Incomes || []}
                             onMore={() => navigate("/income")}
                             type="income"
-                            title="Recent Incomes"
+                            title="Thu nhập gần đây"
                         />
                     </div>
                 </div>

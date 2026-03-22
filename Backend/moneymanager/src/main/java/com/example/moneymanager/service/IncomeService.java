@@ -33,12 +33,23 @@ public class IncomeService {
         return toDTO(newIncome);
     }
 
-    // Retrieves all incomes for current month/based on the start date and end date
+    // Wrapper for Excel/Email controllers to keep backward compatibility
     public List<IncomeDTO> getCurrentMonthIncomesForCurrentUser() {
+        return getIncomesForCurrentUser(null, null, false);
+    }
+
+    // Retrieves incomes flexibly: all, specific month/year, or defaults to current month
+    public List<IncomeDTO> getIncomesForCurrentUser(Integer month, Integer year, Boolean all) {
         ProfileEntity profile = profileService.getCurrentProfile();
+        if (Boolean.TRUE.equals(all)) {
+            List<IncomeEntity> list = incomeRepository.findByProfileIdOrderByDateDesc(profile.getId());
+            return list.stream().map(this::toDTO).toList();
+        }
         LocalDate now = LocalDate.now();
-        LocalDate startDate = now.withDayOfMonth(1);
-        LocalDate endDate = now.withDayOfMonth(now.lengthOfMonth());
+        int targetMonth = (month != null && month >= 1 && month <= 12) ? month : now.getMonthValue();
+        int targetYear = (year != null && year > 1900) ? year : now.getYear();
+        LocalDate startDate = LocalDate.of(targetYear, targetMonth, 1);
+        LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
         List<IncomeEntity> list = incomeRepository.findByProfileIdAndDateBetween(profile.getId(), startDate, endDate);
         return list.stream().map(this::toDTO).toList();
     }

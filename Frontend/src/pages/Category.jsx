@@ -61,7 +61,7 @@ const Category = () => {
         try {
             const response = await axiosConfig.post(API_ENDPOINTS.ADD_CATEGORY, {name, type, icon});
             if (response.status === 201) {
-                toast.success("Category added successfully");
+                toast.success("Thêm danh mục thành công");
                 setOpenAddCategoryModal(false);
                 fetchCategoryDetails();
             }
@@ -92,7 +92,7 @@ const Category = () => {
             await axiosConfig.put(API_ENDPOINTS.UPDATE_CATEGORY(id), {name, type, icon});
             setOpenEditCategoryModal(false);
             setSelectedCategory(null);
-            toast.success("Category updated successfully");
+            toast.success("Cập nhật danh mục thành công");
             fetchCategoryDetails();
         }catch(error) {
             console.error('Error updating category:', error.response?.data?.message || error.message);
@@ -105,13 +105,11 @@ const Category = () => {
             <div className="my-5 mx-auto">
                 {/* Add button to add category*/}
                 <div className="flex justify-between items-center mb-5">
-                    <h2 className="text-2xl font-semibold">All Categories</h2>
+                    <h2 className="text-2xl font-semibold">Tất cả danh mục</h2>
                     <button
                         onClick={() => setOpenAddCategoryModal(true)}
                         className="add-btn flex items-center gap-1">
-                        <Plus size={15} />
-                        Add Category
-                    </button>
+                        <Plus size={15} />Thêm danh mục</button>
                 </div>
 
                 {/* Category list */}
@@ -121,7 +119,7 @@ const Category = () => {
                 <Modal
                     isOpen={openAddCategoryModal}
                     onClose={() => setOpenAddCategoryModal(false)}
-                    title="Add Category"
+                    title="Thêm danh mục"
                 >
                     <AddCategoryForm onAddCategory={handleAddCategory}/>
                 </Modal>
@@ -132,7 +130,7 @@ const Category = () => {
                         setSelectedCategory(null);
                     }}
                     isOpen={openEditCategoryModal}
-                    title="Update Category"
+                    title="Cập nhật danh mục"
                 >
                     <AddCategoryForm
                         initialCategoryData={selectedCategory}

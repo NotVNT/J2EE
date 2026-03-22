@@ -60,7 +60,7 @@ const Menubar = ({ activeMenu }) => {
                     )}
                 </button>
 
-                <Link to="/home" className="flex items-center gap-2" aria-label="Go to home page">
+                <Link to="/dashboard" className="flex items-center gap-2" aria-label="Go to home page">
                     <img src={assets.logo} alt="Devbot logo" className="h-10 w-auto object-contain" />
                 </Link>
             </div>
@@ -73,7 +73,7 @@ const Menubar = ({ activeMenu }) => {
                     rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-800
                     focus:ring-offset-2"
                 >
-                    <img src={user?.profileImageUrl} alt="profile" className="w-10 h-10 rounded-full"/>
+                    <img src={user?.profileImageUrl || null} alt="profile" className="w-10 h-10 rounded-full object-cover"/>
                 </button>
 
                 {/* Dropdown Menu */}
@@ -85,7 +85,7 @@ const Menubar = ({ activeMenu }) => {
                                 <div className="flex items-center justify-center w-8 h-8 bg-gray-100 rounded-full">
                                     {user? (
                                         <>
-                                            <img src={user.profileImageUrl} alt="profile" />
+                                            <img src={user.profileImageUrl || null} alt="profile" className="w-8 h-8 rounded-full object-cover" />
                                         </>
                                     ): (
                                         <>
@@ -110,7 +110,7 @@ const Menubar = ({ activeMenu }) => {
                                  hover:bg-gray-50 transition-colors duration-150"
                             >
                                 <LogOut className="w-4 h-4 text-gray-500" />
-                                <span>Logout</span>
+                                <span>Đăng xuất</span>
                             </button>
                         </div>
                     </div>

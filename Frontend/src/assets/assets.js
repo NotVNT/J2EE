@@ -8,37 +8,37 @@ export const assets = {
 export const SIDE_BAR_DATA = [
     {
         id: "01",
-        label: "Dashboard",
+        label: "Tổng quan",
         icon: LayoutDashboard,
         path: "/dashboard",
     },
     {
         id: "02",
-        label: "Category",
+        label: "Danh mục",
         icon: List,
         path: "/category",
     },
     {
         id: "03",
-        label: "Income",
+        label: "Thu nhập",
         icon: Wallet,
         path: "/income",
     },
     {
         id: "04",
-        label: "Expense",
+        label: "Chi tiêu",
         icon: Coins,
         path: "/expense",
     },
     {
         id: "05",
-        label: "Filters",
+        label: "Bộ lọc",
         icon: FunnelPlus,
         path: "/filter",
     },
     {
         id: "06",
-        label: "Payment",
+        label: "Thanh toán",
         icon: BadgeDollarSign,
         path: "/payment",
     },
