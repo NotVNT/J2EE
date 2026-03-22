@@ -12,6 +12,8 @@ import PaymentSuccess from "./pages/PaymentSuccess.jsx";
 import PaymentCancel from "./pages/PaymentCancel.jsx";
 import ForgotPassword from "./pages/ForgotPassword"
 import ResetPassword from "./pages/ResetPassword"
+import AccountActivation from "./pages/AccountActivation.jsx";
+
 const App = () => {
     return (
         <>
@@ -30,6 +32,7 @@ const App = () => {
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
+                <Route path="/activate" element={<AccountActivation />} />
             </Routes>
         </>
     )

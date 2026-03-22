@@ -1,6 +1,4 @@
-import {API_ENDPOINTS} from "./apiEndpoints.js";
-
-const CLOUDINARY_UPLOAD_PRESET = "moneymanager";
+import {API_ENDPOINTS, CLOUDINARY_UPLOAD_PRESET} from "./apiEndpoints.js";
 
 const uploadProfileImage = async (image) => {
     const formData = new FormData();

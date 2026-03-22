@@ -1,6 +1,9 @@
 export const BASE_URL =
     import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api/v1.0";
-const CLOUDINARY_CLOUD_NAME = "dcr9ovybu";
+export const CLOUDINARY_CLOUD_NAME =
+    import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "dcr9ovybu";
+export const CLOUDINARY_UPLOAD_PRESET =
+    import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "moneymanager";
 
 export const API_ENDPOINTS = {
     // Auth endpoints
@@ -11,6 +14,7 @@ export const API_ENDPOINTS = {
     RESET_PASSWORD: "/reset-password",
 
     // User profile endpoints
+    ACTIVATE_ACCOUNT: (token) => `/activate?token=${token}`,
     GET_USER_INFO: "/profile",
     UPDATE_AUTO_RENEW: "/profile/subscription/auto-renew",
 
