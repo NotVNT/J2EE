@@ -7,50 +7,24 @@ import { AppContext } from "../context/AppContext.jsx";
 import { useUser } from "../hooks/useUser.jsx";
 import axiosConfig from "../util/axiosConfig.jsx";
 import { API_ENDPOINTS } from "../util/apiEndpoints.js";
+import { getPaymentPlans } from "../util/paymentPlans.js";
 
 const PAYMENT_STORAGE_KEY = "latestPayment";
-const PAYMENT_PLANS = [
-  {
-    id: "basic",
-    subscriptionPlan: "BASIC",
-    displayName: "Gói Cơ Bản",
-    amount: 2000,
-    description: "Gói Cơ Bản",
-    badge: "Phổ biến",
-    cycleLabel: "1 tháng",
-    cycleMonths: 1,
-    icon: ShieldCheck,
-    accent: "from-slate-900 via-slate-800 to-slate-700",
-    features: [
-      "Theo dõi giao dịch hàng ngày",
-      "Báo cáo thu chi cơ bản",
-      "Nhắc nhở thanh toán định kỳ"
-    ]
-  },
-  {
-    id: "premium",
-    subscriptionPlan: "PREMIUM",
-    displayName: "Gói Premium",
-    amount: 299000,
-    description: "Gói Premium",
-    badge: "Nâng cao",
-    cycleLabel: "12 tháng",
-    cycleMonths: 12,
-    icon: Sparkles,
-    accent: "from-amber-500 via-orange-500 to-rose-500",
-    features: [
-      "Không giới hạn lịch sử giao dịch",
-      "Biểu đồ và báo cáo chuyên sâu",
-      "Ưu tiên đồng bộ trạng thái thanh toán"
-    ]
-  }
-];
+const ICON_MAP = { ShieldCheck, Sparkles, Star, Zap };
+
 
 const Payment = () => {
   useUser();
 
   const { user, setUser } = useContext(AppContext);
-  const [selectedPlanId, setSelectedPlanId] = useState(PAYMENT_PLANS[0].id);
+  const PAYMENT_PLANS = useMemo(() => {
+    return getPaymentPlans().map(plan => ({
+      ...plan,
+      icon: ICON_MAP[plan.icon] || ShieldCheck
+    }));
+  }, []);
+
+  const [selectedPlanId, setSelectedPlanId] = useState(PAYMENT_PLANS[0]?.id || "");
   const [latestPayment, setLatestPayment] = useState(null);
   const [showUpgradeOptions, setShowUpgradeOptions] = useState(false);
   const [showManagePanel, setShowManagePanel] = useState(false);

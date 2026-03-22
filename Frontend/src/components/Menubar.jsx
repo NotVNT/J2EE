@@ -73,7 +73,12 @@ const Menubar = ({ activeMenu }) => {
                     rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-800
                     focus:ring-offset-2"
                 >
-                    <img src={user?.profileImageUrl || null} alt="profile" className="w-10 h-10 rounded-full object-cover"/>
+                    {user?.profileImageUrl ? (
+                        <img src={user.profileImageUrl} alt="profile" className="w-10 h-10 rounded-full object-cover"/>
+                    ) : (
+                        <User className="w-6 h-6 text-gray-500"/>
+                    )}
+
                 </button>
 
                 {/* Dropdown Menu */}
@@ -82,15 +87,13 @@ const Menubar = ({ activeMenu }) => {
                         {/* User info section (optional) */}
                         <div className="px-4 py-3 border-b border-gray-100">
                             <div className="flex items-center gap-3">
-                                <div className="flex items-center justify-center w-8 h-8 bg-gray-100 rounded-full">
-                                    {user? (
-                                        <>
-                                            <img src={user.profileImageUrl || null} alt="profile" className="w-8 h-8 rounded-full object-cover" />
-                                        </>
+
+                                <div className="flex items-center justify-center w-8 h-8 bg-gray-100 rounded-full overflow-hidden">
+                                    {user?.profileImageUrl ? (
+                                        <img src={user.profileImageUrl} alt="profile" className="w-full h-full object-cover" />
+
                                     ): (
-                                        <>
-                                            <User className="w-4 h-4 text-purple-600"/>
-                                        </>
+                                        <User className="w-4 h-4 text-purple-600"/>
                                     )}
                                 </div>
                                 <div className="flex-1 min-w-0">

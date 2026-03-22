@@ -1,4 +1,10 @@
-import {Navigate, Route, Routes} from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
+import AdminRoute from "./components/AdminRoute.jsx";
+import AdminLayout from "./pages/Admin/AdminLayout.jsx";
+import AdminDashboard from "./pages/Admin/AdminDashboard.jsx";
+import AdminPayments from "./pages/Admin/AdminPayments.jsx";
+import AdminSettings from "./pages/Admin/AdminSettings.jsx";
+import AdminSubscription from "./pages/Admin/AdminSubscription.jsx";
 import Home from "./pages/Home.jsx";
 import Income from "./pages/Income.jsx";
 import Expense from "./pages/Expense.jsx";
@@ -10,8 +16,8 @@ import LandingPage from "./pages/LandingPage.jsx";
 import Payment from "./pages/Payment.jsx";
 import PaymentSuccess from "./pages/PaymentSuccess.jsx";
 import PaymentCancel from "./pages/PaymentCancel.jsx";
-import ForgotPassword from "./pages/ForgotPassword"
-import ResetPassword from "./pages/ResetPassword"
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import AccountActivation from "./pages/AccountActivation.jsx";
 
 const App = () => {
@@ -33,6 +39,14 @@ const App = () => {
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/activate" element={<AccountActivation />} />
+                <Route path="/admin" element={<AdminRoute />}>
+                    <Route element={<AdminLayout />}>
+                        <Route index element={<AdminDashboard />} />
+                        <Route path="payments" element={<AdminPayments />} />
+                        <Route path="subscriptions" element={<AdminSubscription />} />
+                        <Route path="settings" element={<AdminSettings />} />
+                    </Route>
+                </Route>
             </Routes>
         </>
     )

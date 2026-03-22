@@ -44,6 +44,10 @@ public class ProfileEntity {
     private LocalDate subscriptionExpiresAt;
     private Boolean autoRenew;
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "role_id")
+    private RoleEntity role;
+
     @PrePersist
     public void prePersist() {
         if (this.isActive == null) {
@@ -57,6 +61,9 @@ public class ProfileEntity {
         }
         if (this.autoRenew == null) {
             autoRenew = false;
+        }
+        if (this.role == null) {
+            this.role = RoleEntity.builder().id(2L).name("user").build();
         }
     }
 }

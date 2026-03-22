@@ -91,6 +91,7 @@ public class ProfileService {
                 .historyMonths(planFeatures.getHistoryMonths())
                 .canExportReports(planFeatures.isCanExportReports())
                 .canUseAdvancedFilters(planFeatures.isCanUseAdvancedFilters())
+                .role(profileEntity.getRole() != null ? profileEntity.getRole().getName() : "user")
                 .build();
     }
 
@@ -133,6 +134,7 @@ public class ProfileService {
                 .profileImageUrl(currentUser.getProfileImageUrl())
                 .createdAt(currentUser.getCreatedAt())
                 .updatedAt(currentUser.getUpdatedAt())
+                .role(currentUser.getRole() != null ? currentUser.getRole().getName() : "user")
                 .build();
     }
 
