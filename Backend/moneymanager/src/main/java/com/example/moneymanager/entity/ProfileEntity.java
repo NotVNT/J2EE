@@ -34,6 +34,8 @@ public class ProfileEntity {
     private LocalDateTime updatedAt;
     private Boolean isActive;
     private String activationToken;
+    private String resetPasswordToken;
+    private LocalDateTime resetPasswordTokenExpiry;
     @Enumerated(EnumType.STRING)
     private SubscriptionPlan subscriptionPlan;
     @Enumerated(EnumType.STRING)
@@ -57,5 +59,4 @@ public class ProfileEntity {
             autoRenew = false;
         }
     }
-
 }

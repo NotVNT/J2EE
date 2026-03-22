@@ -10,6 +10,8 @@ import LandingPage from "./pages/LandingPage.jsx";
 import Payment from "./pages/Payment.jsx";
 import PaymentSuccess from "./pages/PaymentSuccess.jsx";
 import PaymentCancel from "./pages/PaymentCancel.jsx";
+import ForgotPassword from "./pages/ForgotPassword"
+import ResetPassword from "./pages/ResetPassword"
 import AccountActivation from "./pages/AccountActivation.jsx";
 
 const App = () => {
@@ -28,6 +30,8 @@ const App = () => {
                 <Route path="/payment/cancel" element={<PaymentCancel />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/activate" element={<AccountActivation />} />
             </Routes>
         </>

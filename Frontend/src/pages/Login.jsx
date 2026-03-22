@@ -27,9 +27,8 @@ const Login = () => {
   }, []);
 
   const handleForgotPassword = () => {
-    setError("Tính năng quên mật khẩu đang được cập nhật. Vui lòng thử lại sau.");
+    navigate("/forgot-password");
   };
-
   const handleGoogleLogin = () => {
     const normalizedBaseUrl = BASE_URL.replace(/\/api\/v1\.0\/?$/, "");
     const googleAuthUrl = import.meta.env.VITE_GOOGLE_AUTH_URL || `${normalizedBaseUrl}/oauth2/authorization/google`;
