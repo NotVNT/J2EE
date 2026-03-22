@@ -48,6 +48,10 @@ export const API_ENDPOINTS = {
     APPLY_FILTERS: "/filter",
     DASHBOARD_DATA: "/dashboard",
 
+    // Admin endpoints
+    ADMIN_OVERVIEW: "/admin/overview",
+    ADMIN_PAYMENTS: "/admin/payments",
+
     // Image upload
     UPLOAD_IMAGE: `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`
 }

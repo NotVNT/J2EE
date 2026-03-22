@@ -65,7 +65,11 @@ const Login = () => {
           localStorage.removeItem("rememberedEmail");
         }
         setUser(user);
-        navigate("/dashboard");
+        if (user.role === "admin") {
+          navigate("/admin");
+        } else {
+          navigate("/dashboard");
+        }
       }
     } catch (err) {
       setError(err.response?.data?.message || err.message);

@@ -33,4 +33,5 @@ public class ProfileDTO {
     private Integer historyMonths;
     private Boolean canExportReports;
     private Boolean canUseAdvancedFilters;
+    private String role;
 }
