@@ -20,6 +20,7 @@ import PaymentCancel from "./pages/PaymentCancel.jsx";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import AccountActivation from "./pages/AccountActivation.jsx";
+import ChatWidget from "./components/ChatWidget.jsx";
 
 const App = () => {
     return (
@@ -50,6 +51,7 @@ const App = () => {
                     </Route>
                 </Route>
             </Routes>
+            <ChatWidget />
         </>
     )
 }

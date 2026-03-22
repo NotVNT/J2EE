@@ -41,6 +41,7 @@ public class SecurityConfig {
                                 "/login",
                                 "/forgot-password",   // ✅ thêm
                                 "/reset-password",    // ✅ thêm
+                                "/gemini/test",
                                 "/payments/payos/webhook"
                         ).permitAll()
                         .anyRequest().authenticated())
