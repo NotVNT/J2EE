@@ -8,12 +8,18 @@ const Header = () => {
         <Link to="/home" className="inline-flex items-center" aria-label="Go to home page">
           <img src={assets.logo} alt="Devbot logo" className="h-10 w-auto object-contain" />
         </Link>
-        <nav className="flex items-center gap-5 text-sm text-slate-600">
-          <Link to="/signup" className="hover:text-slate-900">
-            Signup
+        <nav className="flex items-center gap-3 text-sm">
+          <Link
+            to="/signup"
+            className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-4 py-1.5 font-semibold text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100"
+          >
+            Đăng ký
           </Link>
-          <Link to="/login" className="hover:text-slate-900">
-            Login
+          <Link
+            to="/login"
+            className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-4 py-1.5 font-semibold text-blue-700 transition hover:border-blue-300 hover:bg-blue-100"
+          >
+            Đăng nhập
           </Link>
         </nav>
       </div>

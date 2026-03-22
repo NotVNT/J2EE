@@ -37,6 +37,7 @@ const Menubar = ({ activeMenu }) => {
 
     const handleLogout = () => {
         localStorage.clear();
+        sessionStorage.clear();
         clearUser();
         setShowDropdown(false);
         navigate("/login");

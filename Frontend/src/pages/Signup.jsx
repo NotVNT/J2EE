@@ -28,19 +28,19 @@ const Signup = () => {
 
         //basic validation
         if (!fullName.trim()) {
-            setError("Please enter your fullname");
+            setError("Vui lòng nhập họ và tên");
             setIsLoading(false);
             return;
         }
 
         if (!validateEmail(email)) {
-            setError("Please enter valid email address");
+            setError("Vui lòng nhập địa chỉ email hợp lệ");
             setIsLoading(false);
             return;
         }
 
         if (!password.trim()) {
-            setError("Please enter your password");
+            setError("Vui lòng nhập mật khẩu");
             setIsLoading(false);
             return;
         }
@@ -62,7 +62,7 @@ const Signup = () => {
                 profileImageUrl
             })
             if (response.status === 201) {
-                toast.success("Profile created successfully.");
+                toast.success("Tạo tài khoản thành công.");
                 navigate("/login");
             }
         } catch(err) {
@@ -78,16 +78,16 @@ const Signup = () => {
             <Header />
             <div className="flex-grow w-full relative flex items-center justify-center overflow-hidden">
                 {/* Background image with blur*/}
-                <img src={assets.login_bg} alt="Background" className="absolute inset-0 w-full h-full object-cover filter blur-sm" />
+                <img src={assets.login_bg} alt="Nền trang đăng ký" className="absolute inset-0 w-full h-full object-cover filter blur-sm" />
 
                 <div className="relative z-10 w-full max-w-lg px-6">
 
                     <div className="bg-white bg-opacity-95 backdrop-blur-sm rounded-lg shadow-2xl p-8 max-h-[90vh] overflow-y-auto">
                         <h3 className="text-2xl font-semibold text-black text-center mb-2">
-                            Create An Account
+                            Tạo tài khoản
                         </h3>
                         <p className="text-sm text-slate-700 text-center mb-8">
-                            Start tracking your spendings by joining with us.
+                            Bắt đầu theo dõi thu chi của bạn ngay hôm nay.
                         </p>
 
                         <form onSubmit={handleSubmit} className="space-y-4">
@@ -98,16 +98,16 @@ const Signup = () => {
                                 <Input
                                     value={fullName}
                                     onChange={(e) => setFullName(e.target.value)}
-                                    label="Full Name"
-                                    placeholder="Jhon Doe"
+                                    label="Họ và tên"
+                                    placeholder="Nguyễn Văn A"
                                     type="text"
                                 />
 
                                 <Input
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    label="Email Address"
-                                    placeholder="name@example.com"
+                                    label="Địa chỉ email"
+                                    placeholder="tenban@example.com"
                                     type="text"
                                 />
 
@@ -115,7 +115,7 @@ const Signup = () => {
                                     <Input
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
-                                        label="Password"
+                                        label="Mật khẩu"
                                         placeholder="*********"
                                         type="password"
                                     />
@@ -132,16 +132,21 @@ const Signup = () => {
                                 {isLoading ? (
                                     <>
                                         <LoaderCircle className="animate-spin w-5 h-5" />
-                                        Signing Up...
+                                        Đang đăng ký...
                                     </>
                                 ): (
-                                    "SIGN UP"
+                                    "ĐĂNG KÝ"
                                 )}
                             </button>
 
                             <p className="text-sm text-slate-800 text-center mt-6">
-                                Already have an account?
-                                <Link to="/login" className="font-medium text-primary underline hover:text-primary-dark transition-colors">Login</Link>
+                                Bạn đã có tài khoản?{" "}
+                                <Link
+                                    to="/login"
+                                    className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1 font-semibold text-blue-700 transition hover:border-blue-300 hover:bg-blue-100 hover:text-blue-800"
+                                >
+                                    Đăng nhập
+                                </Link>
                             </p>
                         </form>
                     </div>

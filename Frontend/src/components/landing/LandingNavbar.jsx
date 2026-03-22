@@ -13,13 +13,13 @@ const LandingNavbar = () => {
           to="/login"
           className="rounded-full border border-lime-300/30 px-4 py-2 font-medium text-lime-100 transition hover:border-lime-300 hover:text-lime-300"
         >
-          Login
+          Đăng Nhập
         </Link>
         <Link
           to="/signup"
           className="rounded-full bg-lime-300 px-4 py-2 font-semibold text-neutral-900 transition hover:bg-lime-200"
         >
-          Signup
+          Đăng Ký
         </Link>
       </nav>
     </header>
