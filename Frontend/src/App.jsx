@@ -8,6 +8,7 @@ import AdminSubscription from "./pages/Admin/AdminSubscription.jsx";
 import Home from "./pages/Home.jsx";
 import Income from "./pages/Income.jsx";
 import Expense from "./pages/Expense.jsx";
+import Budget from "./pages/Budget.jsx";
 import Category from "./pages/Category.jsx";
 import Filter from "./pages/Filter.jsx";
 import Login from "./pages/Login.jsx";
@@ -30,6 +31,7 @@ const App = () => {
                 <Route path="/dashboard" element={<Home />} />
                 <Route path="/income" element={<Income />} />
                 <Route path="/expense" element={<Expense />} />
+                <Route path="/budget" element={<Budget />} />
                 <Route path="/category" element={<Category />} />
                 <Route path="/filter" element={<Filter />} />
                 <Route path="/payment" element={<Payment />} />

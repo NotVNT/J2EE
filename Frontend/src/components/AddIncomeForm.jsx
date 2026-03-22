@@ -2,6 +2,7 @@ import {useEffect, useState} from "react";
 import EmojiPickerPopup from "./EmojiPickerPopup.jsx";
 import Input from "./Input.jsx";
 import {LoaderCircle} from "lucide-react";
+import { formatCurrency, parseCurrency } from "../util/helper.js";
 
 const AddIncomeForm = ({onAddIncome, categories}) => {
     const [income, setIncome] = useState({
@@ -21,6 +22,11 @@ const AddIncomeForm = ({onAddIncome, categories}) => {
     const handleChange = (key, value) => {
         setIncome({...income, [key]: value});
     }
+
+    const handleAmountChange = (e) => {
+        const rawValue = e.target.value.replace(/\D/g, "");
+        handleChange("amount", rawValue);
+    };
 
     const handleAddIncome = async () => {
         setLoading(true);
@@ -62,11 +68,11 @@ const AddIncomeForm = ({onAddIncome, categories}) => {
             />
 
             <Input
-                value={income.amount}
-                onChange={({target}) => handleChange('amount', target.value)}
+                value={formatCurrency(income.amount)}
+                onChange={handleAmountChange}
                 label="Số tiền"
                 placeholder="VD: 500.000"
-                type="number"
+                type="text"
             />
 
             <Input

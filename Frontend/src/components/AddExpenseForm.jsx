@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import EmojiPickerPopup from "./EmojiPickerPopup.jsx";
 import Input from "./Input.jsx";
+import { formatCurrency, parseCurrency } from "../util/helper.js";
 
 // Add 'categories' prop
 const AddExpenseForm = ({ onAddExpense, categories }) => {
     const [expense, setExpense] = useState({ // Renamed 'income' state to 'expense' for clarity
-        name,
+        name: "",
         categoryId: "", // Changed from 'category' to 'categoryId'
         amount: "",
         date: "",
@@ -21,6 +22,11 @@ const AddExpenseForm = ({ onAddExpense, categories }) => {
     }, [categories, expense.categoryId]);
 
     const handleChange = (key, value) => setExpense({ ...expense, [key]: value }); // Changed setIncome to setExpense
+
+    const handleAmountChange = (e) => {
+        const rawValue = e.target.value.replace(/\D/g, "");
+        handleChange("amount", rawValue);
+    };
 
     // Map categories to the format expected by the reusable Input dropdown
     const categoryOptions = categories.map((cat) => ({
@@ -54,11 +60,11 @@ const AddExpenseForm = ({ onAddExpense, categories }) => {
             />
 
             <Input
-                value={expense.amount}
-                onChange={({ target }) => handleChange("amount", target.value)}
+                value={formatCurrency(expense.amount)}
+                onChange={handleAmountChange}
                 label="Số tiền"
                 placeholder="VD: 150.000"
-                type="number"
+                type="text"
             />
 
             <Input

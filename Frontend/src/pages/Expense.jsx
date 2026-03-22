@@ -93,7 +93,7 @@ const Expense = () => {
         }
 
         try {
-            await axiosConfig.post(API_ENDPOINTS.ADD_EXPENSE, {
+            const response = await axiosConfig.post(API_ENDPOINTS.ADD_EXPENSE, {
                 name,
                 categoryId, // Pass categoryId to the API
                 amount: Number(amount), // Ensure amount is a number
@@ -103,6 +103,33 @@ const Expense = () => {
 
             setOpenAddExpenseModal(false);
             toast.success("Thêm chi tiêu thành công");
+
+            // ─── Luồng Cảnh báo: Kiểm tra budgetStatus từ response ───
+            const budgetStatus = response.data?.budgetStatus;
+            if (budgetStatus?.hasBudget) {
+                const fmt = (n) =>
+                    new Intl.NumberFormat("vi-VN", {
+                        style: "currency",
+                        currency: "VND",
+                    }).format(n);
+                const pct = (budgetStatus.usageRatio * 100).toFixed(1);
+
+                if (budgetStatus.isExceeded) {
+                    toast.error(
+                        `🚨 Vượt hạn mức "${budgetStatus.categoryName}"!\n` +
+                        `Đã chi ${fmt(budgetStatus.totalSpent)} / ${fmt(budgetStatus.amountLimit)} (${pct}%)`,
+                        { duration: 6000 }
+                    );
+                } else if (budgetStatus.isWarning) {
+                    toast(
+                        `⚠️ Sắp hết hạn mức "${budgetStatus.categoryName}"\n` +
+                        `Đã chi ${fmt(budgetStatus.totalSpent)} / ${fmt(budgetStatus.amountLimit)} (${pct}%)`,
+                        { icon: "⚠️", duration: 5000, style: { background: "#f39c12", color: "#fff" } }
+                    );
+                }
+            }
+            // ────────────────────────────────────────────────────────
+
             fetchExpenseDetails(); // Refresh expense list
             fetchExpenseCategories();
         } catch (error) {
