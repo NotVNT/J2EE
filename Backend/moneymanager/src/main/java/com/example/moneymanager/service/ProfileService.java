@@ -2,7 +2,9 @@ package com.example.moneymanager.service;
 
 import com.example.moneymanager.dto.AuthDTO;
 import com.example.moneymanager.dto.AutoRenewRequestDTO;
+import com.example.moneymanager.dto.ForgotPasswordRequestDTO;
 import com.example.moneymanager.dto.ProfileDTO;
+import com.example.moneymanager.dto.ResetPasswordRequestDTO;
 import com.example.moneymanager.entity.ProfileEntity;
 import com.example.moneymanager.repository.ProfileRepository;
 import com.example.moneymanager.util.JwtUtil;
@@ -16,6 +18,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
 
@@ -32,6 +35,9 @@ public class ProfileService {
 
     @Value("${app.activation.url}")
     private String activationURL;
+
+    @Value("${app.reset-password.url}")
+    private String resetPasswordURL;
 
     public ProfileDTO registerProfile(ProfileDTO profileDTO) {
         profileRepository.findByEmail(profileDTO.getEmail()).ifPresent(profile -> {
@@ -149,5 +155,56 @@ public class ProfileService {
         profile.setAutoRenew(Boolean.TRUE.equals(requestDTO.getEnabled()));
         profile = profileRepository.save(profile);
         return toDTO(profile);
+    }
+
+    // Thêm các phương thức mới cho quên mật khẩu
+
+    public void forgotPassword(ForgotPasswordRequestDTO requestDTO) {
+        ProfileEntity profile = profileRepository.findByEmail(requestDTO.getEmail())
+                .orElseThrow(() -> new RuntimeException("Email not found"));
+
+        if (!profile.getIsActive()) {
+            throw new RuntimeException("Account is not active. Please activate your account first.");
+        }
+
+        // Tạo token reset password
+        String resetToken = UUID.randomUUID().toString();
+        profile.setResetPasswordToken(resetToken);
+        profile.setResetPasswordTokenExpiry(LocalDateTime.now().plusHours(24)); // Token hết hạn sau 24 giờ
+
+        profileRepository.save(profile);
+
+        // Gửi email reset password
+        // Gửi email reset password
+        String resetLink = "http://localhost:3000/reset-password?token=" + resetToken;
+
+        String subject = "Reset your Money Manager password";
+        String body = "Click on the following link to reset your password: " + resetLink +
+                "\n\nThis link will expire in 24 hours.\n" +
+                "If you didn't request this, please ignore this email.";
+
+        emailService.sendEmail(profile.getEmail(), subject, body);
+    }
+
+    public void resetPassword(ResetPasswordRequestDTO requestDTO) {
+        ProfileEntity profile = profileRepository.findByResetPasswordToken(requestDTO.getToken())
+                .orElseThrow(() -> new RuntimeException("Invalid or expired reset token"));
+
+        // Kiểm tra token đã hết hạn chưa
+        if (profile.getResetPasswordTokenExpiry().isBefore(LocalDateTime.now())) {
+            // Xóa token đã hết hạn
+            profile.setResetPasswordToken(null);
+            profile.setResetPasswordTokenExpiry(null);
+            profileRepository.save(profile);
+            throw new RuntimeException("Reset token has expired");
+        }
+
+        // Cập nhật mật khẩu mới
+        profile.setPassword(passwordEncoder.encode(requestDTO.getNewPassword()));
+        // Xóa token sau khi đã sử dụng
+        profile.setResetPasswordToken(null);
+        profile.setResetPasswordTokenExpiry(null);
+
+        profileRepository.save(profile);
     }
 }
