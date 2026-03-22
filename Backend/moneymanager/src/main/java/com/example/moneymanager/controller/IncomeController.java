@@ -23,8 +23,11 @@ public class IncomeController {
     }
 
     @GetMapping
-    public ResponseEntity<List<IncomeDTO>> getIncomes() {
-        List<IncomeDTO> incomes = incomeService.getCurrentMonthIncomesForCurrentUser();
+    public ResponseEntity<List<IncomeDTO>> getIncomes(
+            @RequestParam(required = false) Integer month,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Boolean all) {
+        List<IncomeDTO> incomes = incomeService.getIncomesForCurrentUser(month, year, all);
         return ResponseEntity.ok(incomes);
     }
 

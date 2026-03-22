@@ -102,7 +102,7 @@ const Expense = () => {
             });
 
             setOpenAddExpenseModal(false);
-            toast.success("Expense added successfully");
+            toast.success("Thêm chi tiêu thành công");
             fetchExpenseDetails(); // Refresh expense list
             fetchExpenseCategories();
         } catch (error) {
@@ -200,7 +200,7 @@ const Expense = () => {
                     <Modal
                         isOpen={openAddExpenseModal}
                         onClose={() => setOpenAddExpenseModal(false)}
-                        title="Add Expense"
+                        title="Thêm chi tiêu"
                     >
                         {/* Pass the fetched expense categories to the AddExpenseForm */}
                         <AddExpenseForm
@@ -212,7 +212,7 @@ const Expense = () => {
                     <Modal
                         isOpen={openDeleteAlert.show}
                         onClose={() => setOpenDeleteAlert({ show: false, data: null })}
-                        title="Delete Expense"
+                        title="Xóa chi tiêu"
                     >
                         <DeleteAlert
                             content="Are you sure you want to delete this expense detail?"

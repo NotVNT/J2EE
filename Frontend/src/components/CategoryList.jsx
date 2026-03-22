@@ -4,14 +4,12 @@ const CategoryList = ({categories, onEditCategory}) => {
     return (
         <div className="card p-4">
             <div className="flex items-center justify-between mb-4">
-                <h4 className="text-lg font-semibold">Category Sources</h4>
+                <h4 className="text-lg font-semibold">Nguồn danh mục</h4>
             </div>
 
             {/* Category list */}
             {categories.length === 0 ? (
-                <p className="text-gray-500">
-                    No categories added yet. Add some to get started!
-                </p>
+                <p className="text-gray-500">Chưa có danh mục nào. Hãy thêm danh mục để bắt đầu!</p>
             ): (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                     {categories.map((category) => (
@@ -20,7 +18,7 @@ const CategoryList = ({categories, onEditCategory}) => {
                             className="group relative flex items-center gap-4 p-3 rounded-lg hover:bg-gray-100/60">
                             {/* Icon/Emoji disply*/}
                             <div className="w-12 h-12 flex items-center justify-center text-xl text-gray-800 bg-gray-100 rounded-full">
-                                {category.icon ? (
+                                {category.icon && category.icon.trim() !== "" ? (
                                     <span className="text-2xl">
                                         <img src={category.icon} alt={category.name} className="h-5 w-5" />
                                     </span>
@@ -38,7 +36,7 @@ const CategoryList = ({categories, onEditCategory}) => {
                                         {category.name}
                                     </p>
                                     <p className="text-sm text-gray-400 mt-1 capitalize">
-                                        {category.type}
+                                        {category.type === 'income' ? 'Thu nhập' : 'Chi tiêu'}
                                     </p>
                                 </div>
                                 {/* Action buttons*/}

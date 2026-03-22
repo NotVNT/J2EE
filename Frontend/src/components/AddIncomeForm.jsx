@@ -47,13 +47,14 @@ const AddIncomeForm = ({onAddIncome, categories}) => {
             <Input
                 value={income.name}
                 onChange={({target}) => handleChange('name', target.value)}
-                label="Income Source"
-                placeholder="e.g., Salary, Freelance, Bonus"
+                label="Tên giao dịch"
+                placeholder="VD: Lương, Bán thời gian, Thưởng"
                 type="text"
             />
 
             <Input
-                label="Category"
+                label="Danh mục"
+                placeholder={categories.length === 0 ? "Vui lòng tạo danh mục thu nhập trước" : "Chọn danh mục"}
                 value={income.categoryId}
                 onChange={({target}) => handleChange('categoryId', target.value)}
                 isSelect={true}
@@ -63,15 +64,15 @@ const AddIncomeForm = ({onAddIncome, categories}) => {
             <Input
                 value={income.amount}
                 onChange={({target}) => handleChange('amount', target.value)}
-                label="Amount"
-                placeholder="e.g., 500.00"
+                label="Số tiền"
+                placeholder="VD: 500.000"
                 type="number"
             />
 
             <Input
                 value={income.date}
                 onChange={({target}) => handleChange('date', target.value)}
-                label="Date"
+                label="Ngày"
                 placeholder=""
                 type="date"
             />
@@ -83,13 +84,9 @@ const AddIncomeForm = ({onAddIncome, categories}) => {
                     className="add-btn add-btn-fill">
                     {loading ? (
                         <>
-                            <LoaderCircle className="w-4 h-4 animate-spin"/>
-                            Adding...
-                        </>
+                            <LoaderCircle className="w-4 h-4 animate-spin"/>Đang thêm...</>
                     ): (
-                        <>
-                            Add Income
-                        </>
+                        <>Thêm thu nhập</>
                     )}
                 </button>
             </div>

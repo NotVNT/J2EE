@@ -8,7 +8,7 @@ const Transactions = ({transactions, onMore, type, title}) => {
             <div className="flex items-center justify-between">
                 <h5 className="text-lg">{title}</h5>
                 <button className="card-btn" onClick={onMore}>
-                    More <ArrowRight className="text-base" size={15} />
+                    Xem thêm <ArrowRight className="text-base" size={15} />
                 </button>
             </div>
 
@@ -18,7 +18,7 @@ const Transactions = ({transactions, onMore, type, title}) => {
                         key={item.id}
                         title={item.name}
                         icon={item.icon}
-                        date={moment(item.date).format("Do MMM YYYY")}
+                        date={moment(item.date).format('DD/MM/YYYY')}
                         amount={item.amount}
                         type={type}
                         hideDeleteBtn

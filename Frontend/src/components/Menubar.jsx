@@ -60,7 +60,7 @@ const Menubar = ({ activeMenu }) => {
                     )}
                 </button>
 
-                <Link to="/home" className="flex items-center gap-2" aria-label="Go to home page">
+                <Link to="/dashboard" className="flex items-center gap-2" aria-label="Go to home page">
                     <img src={assets.logo} alt="Devbot logo" className="h-10 w-auto object-contain" />
                 </Link>
             </div>
@@ -78,6 +78,7 @@ const Menubar = ({ activeMenu }) => {
                     ) : (
                         <User className="w-6 h-6 text-gray-500"/>
                     )}
+
                 </button>
 
                 {/* Dropdown Menu */}
@@ -86,9 +87,11 @@ const Menubar = ({ activeMenu }) => {
                         {/* User info section (optional) */}
                         <div className="px-4 py-3 border-b border-gray-100">
                             <div className="flex items-center gap-3">
+
                                 <div className="flex items-center justify-center w-8 h-8 bg-gray-100 rounded-full overflow-hidden">
                                     {user?.profileImageUrl ? (
                                         <img src={user.profileImageUrl} alt="profile" className="w-full h-full object-cover" />
+
                                     ): (
                                         <User className="w-4 h-4 text-purple-600"/>
                                     )}
@@ -110,7 +113,7 @@ const Menubar = ({ activeMenu }) => {
                                  hover:bg-gray-50 transition-colors duration-150"
                             >
                                 <LogOut className="w-4 h-4 text-gray-500" />
-                                <span>Logout</span>
+                                <span>Đăng xuất</span>
                             </button>
                         </div>
                     </div>

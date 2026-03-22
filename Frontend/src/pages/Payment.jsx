@@ -12,6 +12,7 @@ import { getPaymentPlans } from "../util/paymentPlans.js";
 const PAYMENT_STORAGE_KEY = "latestPayment";
 const ICON_MAP = { ShieldCheck, Sparkles, Star, Zap };
 
+
 const Payment = () => {
   useUser();
 
@@ -103,7 +104,7 @@ const Payment = () => {
       savePayment(paymentData);
       window.location.href = response.data.checkoutUrl;
     } catch (error) {
-      toast.error(error.response?.data?.message || "Khong the khoi tao thanh toan");
+      toast.error(error.response?.data?.message || "Không thể khởi tạo thanh toán");
     } finally {
       setIsCreating(false);
     }
@@ -125,7 +126,7 @@ const Payment = () => {
       setUser(response.data);
     } catch (error) {
       setAutoRenew(!nextValue);
-      toast.error(error.response?.data?.message || "Khong the cap nhat tu gia han");
+      toast.error(error.response?.data?.message || "Không thể cập nhật tự gia hạn");
     }
   };
 
@@ -137,14 +138,14 @@ const Payment = () => {
   };
 
   return (
-    <Dashboard activeMenu="Payment">
+    <Dashboard activeMenu="Thanh toán">
       <div className="mx-auto my-6 max-w-6xl px-4 md:px-6">
         <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-slate-900 md:text-3xl">Thanh toan</h1>
+          <h1 className="text-2xl font-semibold text-slate-900 md:text-3xl">Thanh toán</h1>
           <p className="mt-2 text-sm text-slate-500">
             {activeSubscription
-              ? "Goi cua ban dang hoat dong. Ban co the quan ly hoac nang cap bat cu luc nao."
-              : "Chon goi dich vu phu hop va thanh toan nhanh qua PayOS."}
+              ? "Gói của bạn đang hoạt động. Bạn có thể quản lý hoặc nâng cấp bất cứ lúc nào."
+              : "Chọn gói dịch vụ phù hợp và thanh toán nhanh qua PayOS."}
           </p>
         </div>
 
@@ -154,10 +155,10 @@ const Payment = () => {
               <div className={`bg-gradient-to-br ${activeSubscription.accent} px-8 py-8 text-white`}>
                 <div className="flex items-center gap-3 text-sm uppercase tracking-[0.3em] text-white/75">
                   <Star size={16} />
-                  <span>Subscription active</span>
+                  <span>Gói đang hoạt động</span>
                 </div>
 
-                <h2 className="mt-5 text-4xl font-semibold">{activeSubscription.displayName} active</h2>
+                <h2 className="mt-5 text-4xl font-semibold">{activeSubscription.displayName} đang hoạt động</h2>
                 <p className="mt-3 max-w-xl text-base leading-7 text-white/80">
                   Ban da so huu goi nay va dang dung day du cac quyen loi cua tai khoan nang cap.
                 </p>
@@ -179,49 +180,43 @@ const Payment = () => {
                     onClick={handleUpgradePlan}
                     type="button"
                   >
-                    <Zap size={16} />
-                    Nang cap goi
-                  </button>
+                    <Zap size={16} />Nâng cấp gói</button>
 
                   <button
                     className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/15"
                     onClick={() => setShowManagePanel((current) => !current)}
                     type="button"
                   >
-                    <Settings2 size={16} />
-                    Quan ly goi
-                  </button>
+                    <Settings2 size={16} />Quản lý gói</button>
 
                   <Link
                     className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-transparent px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
                     to="/dashboard"
                   >
-                    <House size={16} />
-                    Ve Dashboard
-                  </Link>
+                    <House size={16} />Về Tổng Quan</Link>
                 </div>
               </div>
 
               <div className="bg-slate-50 px-8 py-8">
-                <p className="text-sm uppercase tracking-[0.25em] text-slate-500">Goi hien tai</p>
+                <p className="text-sm uppercase tracking-[0.25em] text-slate-500">Gói hiện tại</p>
                 <h3 className="mt-3 text-3xl font-semibold text-slate-900">{activeSubscription.displayName}</h3>
                 <p className="mt-2 text-sm leading-6 text-slate-500">
                   Luc nay tai khoan cua ban da o trang thai so huu goi, khong con la buoc di thanh toan nua.
                 </p>
 
                 <div className="mt-6 space-y-3">
-                  <SubscriptionRow label="Trang thai" value="Dang hoat dong" />
-                  <SubscriptionRow label="Ngay kich hoat" value={formatDate(activeSubscription.activatedAt)} />
-                  <SubscriptionRow label="Ngay het han" value={formatDate(activeSubscription.expiresAt)} />
-                  <SubscriptionRow label="Tu gia han" value={autoRenew ? "Bat" : "Tat"} />
-                  <SubscriptionRow label="Ma don hang" value={activeSubscription.orderCode || "--"} />
+                  <SubscriptionRow label="Trạng thái" value="Đang hoạt động" />
+                  <SubscriptionRow label="Ngày kích hoạt" value={formatDate(activeSubscription.activatedAt)} />
+                  <SubscriptionRow label="Ngày hết hạn" value={formatDate(activeSubscription.expiresAt)} />
+                  <SubscriptionRow label="Tự gia hạn" value={autoRenew ? "Bật" : "Tắt"} />
+                  <SubscriptionRow label="Mã đơn hàng" value={activeSubscription.orderCode || "--"} />
                 </div>
 
                 {showManagePanel ? (
                   <div className="mt-6 rounded-[28px] border border-slate-200 bg-white p-5">
                     <div className="flex items-start justify-between gap-4">
                       <div>
-                        <p className="text-base font-semibold text-slate-900">Quan ly goi</p>
+                        <p className="text-base font-semibold text-slate-900">Quản lý gói</p>
                         <p className="mt-1 text-sm text-slate-500">
                           Dieu chinh cach goi cua ban duoc duy tri sau khi het han.
                         </p>
@@ -240,8 +235,8 @@ const Payment = () => {
 
                     <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-4 text-sm text-slate-600">
                       {autoRenew
-                        ? "Tu gia han dang bat. He thong se giu goi cua ban o trang thai lien mach hon."
-                        : "Tu gia han dang tat. Ban van co the quay lai day de gia han hoac nang cap bat cu luc nao."}
+                        ? "Tự gia hạn đang bật. Hệ thống sẽ giữ gói của bạn luôn liền mạch."
+                        : "Tự gia hạn đang tắt. Bạn vẫn có thể quay lại đây để gia hạn hoặc nâng cấp bất cứ lúc nào."}
                     </div>
                   </div>
                 ) : null}
@@ -253,12 +248,12 @@ const Payment = () => {
             <div className="grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
               <div>
                 <h2 className="text-xl font-semibold text-slate-900">
-                  {activeSubscription ? "Nang cap goi cua ban" : "Chon goi dich vu"}
+                  {activeSubscription ? "Nâng cấp gói của bạn" : "Chọn gói dịch vụ"}
                 </h2>
                 <p className="mt-2 text-sm text-slate-500">
                   {activeSubscription
-                    ? "Chon goi moi de nang cap hoac gia han tai khoan cua ban."
-                    : "He thong se tao giao dich va chuyen ban truc tiep den trang checkout cua PayOS."}
+                    ? "Chọn gói mới để nâng cấp hoặc gia hạn tài khoản của bạn."
+                    : "Hệ thống sẽ chuyển bạn trực tiếp đến trang checkout của PayOS."}
                 </p>
 
                 <div className="mt-6 grid gap-4 md:grid-cols-2">
@@ -284,9 +279,7 @@ const Payment = () => {
                           </div>
                           <div className="flex items-center gap-2">
                             {isCurrentPlan ? (
-                              <span className={`rounded-full px-3 py-1 text-xs font-semibold ${isSelected ? "bg-emerald-400/20 text-emerald-200" : "bg-emerald-100 text-emerald-700"}`}>
-                                Dang dung
-                              </span>
+                              <span className={`rounded-full px-3 py-1 text-xs font-semibold ${isSelected ? "bg-emerald-400/20 text-emerald-200" : "bg-emerald-100 text-emerald-700"}`}>Đang dùng</span>
                             ) : null}
                             <span
                               className={`rounded-full px-3 py-1 text-xs font-semibold ${
@@ -304,7 +297,7 @@ const Payment = () => {
                         </p>
 
                         <p className="mt-5 text-3xl font-semibold">
-                          {Number(plan.amount).toLocaleString("vi-VN")}d
+                          {Number(plan.amount).toLocaleString("vi-VN")} VND
                         </p>
 
                         <div className="mt-5 space-y-2">
@@ -323,27 +316,27 @@ const Payment = () => {
 
               <form className="rounded-[28px] border border-slate-200 bg-slate-50 p-6" onSubmit={handleCreatePayment}>
                 <p className="text-sm uppercase tracking-[0.25em] text-slate-500">
-                  {activeSubscription ? "Goi chuan bi cap nhat" : "Goi da chon"}
+                  {activeSubscription ? "Gói chuẩn bị cập nhật" : "Gói đã chọn"}
                 </p>
                 <h2 className="mt-3 text-2xl font-semibold text-slate-900">{selectedPlan.displayName}</h2>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
                   {activeSubscription
-                    ? "Sau khi thanh toan, goi hien tai cua ban se duoc cap nhat theo lua chon moi."
-                    : "Sau khi bam thanh toan, ban se duoc chuyen ngay sang PayOS de quet ma QR hoac chon phuong thuc thanh toan phu hop."}
+                    ? "Sau khi thanh toán, gói hiện tại của bạn sẽ được cập nhật tĩnh."
+                    : "Sau khi bấm thanh toán, bạn sẽ được chuyển đến cổng thanh toán PayOS."}
                 </p>
 
                 <div className="mt-6 rounded-3xl bg-white p-5">
                   <div className="flex items-center justify-between gap-4 border-b border-slate-100 pb-4">
                     <span className="text-sm text-slate-500">Tong thanh toan</span>
                     <span className="text-3xl font-semibold text-slate-900">
-                      {Number(selectedPlan.amount).toLocaleString("vi-VN")}d
+                      {Number(selectedPlan.amount).toLocaleString("vi-VN")} VND
                     </span>
                   </div>
 
                   <div className="mt-4 space-y-3 text-sm text-slate-600">
-                    <SubscriptionRow label="Ten goi" value={selectedPlan.displayName} />
-                    <SubscriptionRow label="Mo ta" value={selectedPlan.description} />
-                    <SubscriptionRow label="Chu ky" value={selectedPlan.cycleLabel} />
+                    <SubscriptionRow label="Tên gói" value={selectedPlan.displayName} />
+                    <SubscriptionRow label="Mô tả" value={selectedPlan.description} />
+                    <SubscriptionRow label="Chu kỳ" value={selectedPlan.cycleLabel} />
                   </div>
                 </div>
 
@@ -354,10 +347,10 @@ const Payment = () => {
                 >
                   <CreditCard size={18} />
                   {isCreating
-                    ? "Dang chuyen den checkout..."
+                    ? "Đang chuyển đến checkout..."
                     : activeSubscription
                       ? selectedPlan.id === activeSubscription.id
-                        ? "Gia han goi"
+                        ? "Gia hạn gói"
                         : "Nang cap goi"
                       : "Thanh toan"}
                 </button>

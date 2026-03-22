@@ -17,17 +17,14 @@ const ExpenseOverview = ({transactions, onExpenseIncome}) => {
         <div className="card">
             <div className="flex items-center justify-between">
                 <div className="">
-                    <h5 className="text-lg">Expense Overview</h5>
+                    <h5 className="text-lg">Tổng quan chi tiêu</h5>
                     <p className="text-xs text-gray-400 mt-0.5">
-                        Track your spending trends over time and gain insights into where
-                        your money goes.
+                        Theo dõi chi tiêu và xem chi tiết tiền của bạn đi đâu.
                     </p>
                 </div>
 
                 <button className="add-btn" onClick={onExpenseIncome}>
-                    <Plus size={15} className="text-lg" />
-                    Add Expense
-                </button>
+                    <Plus size={15} className="text-lg" />Thêm chi tiêu</button>
             </div>
 
             <div className="mt-10">
