@@ -1,6 +1,6 @@
 import Dashboard from "../components/Dashboard.jsx";
 import {useUser} from "../hooks/useUser.jsx";
-import {useEffect, useState} from "react";
+import {useContext, useEffect, useState} from "react";
 import axiosConfig from "../util/axiosConfig.jsx";
 import {API_ENDPOINTS} from "../util/apiEndpoints.js";
 import toast from "react-hot-toast";
@@ -10,9 +10,11 @@ import {Plus} from "lucide-react";
 import AddIncomeForm from "../components/AddIncomeForm.jsx";
 import DeleteAlert from "../components/DeleteAlert.jsx";
 import IncomeOverview from "../components/IncomeOverview.jsx";
+import { AppContext } from "../context/AppContext.jsx";
 
 const Income = () => {
     useUser();
+    const { user } = useContext(AppContext);
     const [incomeData, setIncomeData] = useState([]);
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -25,6 +27,8 @@ const Income = () => {
         show: false,
         data: null,
     });
+    const exportUpgradeMessage = "Tinh nang xuat bao cao chi co tu goi Co Ban. Vui long nang cap de tiep tuc.";
+    const exportLocked = user?.canExportReports === false;
 
     // Fetch income details from the API
     const fetchIncomeDetails = async () => {
@@ -132,6 +136,11 @@ const Income = () => {
     }
 
     const handleDownloadIncomeDetails = async() => {
+        if (exportLocked) {
+            toast.error(exportUpgradeMessage);
+            return;
+        }
+
         try {
             const response = await axiosConfig.get(API_ENDPOINTS.INCOME_EXCEL_DOWNLOAD, {responseType: "blob"});
             let filename = "income_details.xlsx";
@@ -151,6 +160,11 @@ const Income = () => {
     }
 
     const handleEmailIncomeDetails = async () => {
+        if (exportLocked) {
+            toast.error(exportUpgradeMessage);
+            return;
+        }
+
         try {
             const response = await axiosConfig.get(API_ENDPOINTS.EMAIL_INCOME);
             if (response.status === 200) {
@@ -209,6 +223,8 @@ const Income = () => {
                         onDelete={(id) => setOpenDeleteAlert({show: true, data: id})}
                         onDownload={handleDownloadIncomeDetails}
                         onEmail={handleEmailIncomeDetails}
+                        disableExportActions={exportLocked}
+                        disabledMessage={exportUpgradeMessage}
                     />
 
                     {/* Add Income Modal */}

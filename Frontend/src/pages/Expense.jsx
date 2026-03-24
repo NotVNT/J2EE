@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useContext, useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { AppContext } from "../context/AppContext.jsx";
 import {useUser} from "../hooks/useUser.jsx";
 import axiosConfig from "../util/axiosConfig.jsx";
 import {API_ENDPOINTS} from "../util/apiEndpoints.js";
@@ -13,7 +13,7 @@ import DeleteAlert from "../components/DeleteAlert.jsx";
 
 const Expense = () => {
     useUser();
-    const navigate = useNavigate();
+    const { user } = useContext(AppContext);
     const [expenseData, setExpenseData] = useState([]);
     const [categories, setCategories] = useState([]); // New state for expense categories
     const [loading, setLoading] = useState(false);
@@ -22,6 +22,8 @@ const Expense = () => {
         show: false,
         data: null,
     });
+    const exportUpgradeMessage = "Tinh nang xuat bao cao chi co tu goi Co Ban. Vui long nang cap de tiep tuc.";
+    const exportLocked = user?.canExportReports === false;
 
     // Get All Expense Details
     const fetchExpenseDetails = async () => {
@@ -159,6 +161,11 @@ const Expense = () => {
     };
 
     const handleDownloadExpenseDetails = async () => {
+        if (exportLocked) {
+            toast.error(exportUpgradeMessage);
+            return;
+        }
+
         try {
             const response = await axiosConfig.get(
                 API_ENDPOINTS.EXPENSE_EXCEL_DOWNLOAD, // Ensure this path is correct, e.g., "/download/income"
@@ -183,11 +190,16 @@ const Expense = () => {
             toast.success("Expense details downloaded successfully!");
         } catch (error) {
             console.error("Error downloading expense details:", error);
-            toast.error("Failed to download expense details. Please try again.");
+            toast.error(error.response?.data?.message || "Failed to download expense details. Please try again.");
         }
     };
 
     const handleEmailExpenseDetails = async () => {
+        if (exportLocked) {
+            toast.error(exportUpgradeMessage);
+            return;
+        }
+
         try {
             const response = await axiosConfig.get(API_ENDPOINTS.EMAIL_EXPENSE);
             if(response.status === 200) {
@@ -195,7 +207,7 @@ const Expense = () => {
             }
         }catch (e) {
             console.error("Error emailing expense details:", e);
-            toast.error("Failed to email expense details. Please try again.");
+            toast.error(e.response?.data?.message || "Failed to email expense details. Please try again.");
         }
     }
 
@@ -222,6 +234,8 @@ const Expense = () => {
                         }}
                         onDownload={handleDownloadExpenseDetails}
                         onEmail={handleEmailExpenseDetails}
+                        disableExportActions={exportLocked}
+                        disabledMessage={exportUpgradeMessage}
                     />
 
                     <Modal
