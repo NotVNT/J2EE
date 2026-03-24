@@ -4,6 +4,7 @@ import com.example.moneymanager.dto.AuthDTO;
 import com.example.moneymanager.dto.AutoRenewRequestDTO;
 import com.example.moneymanager.dto.ForgotPasswordRequestDTO;
 import com.example.moneymanager.dto.ProfileDTO;
+import com.example.moneymanager.dto.ProfileUpdateDTO;
 import com.example.moneymanager.dto.ResetPasswordRequestDTO;
 import com.example.moneymanager.entity.ProfileEntity;
 import com.example.moneymanager.repository.ProfileRepository;
@@ -128,6 +129,60 @@ public class ProfileService {
         }
 
         return toDTO(currentUser);
+    }
+
+    public Map<String, Object> updateProfile(ProfileUpdateDTO requestDTO) {
+        ProfileEntity profile = getCurrentProfile();
+
+        String fullName = requestDTO.getFullName() != null ? requestDTO.getFullName().trim() : "";
+        String email = requestDTO.getEmail() != null ? requestDTO.getEmail().trim() : "";
+
+        if (fullName.isBlank()) {
+            throw new RuntimeException("Họ và tên không được để trống.");
+        }
+
+        if (email.isBlank()) {
+            throw new RuntimeException("Email không được để trống.");
+        }
+
+        if (!email.equalsIgnoreCase(profile.getEmail()) && profileRepository.existsByEmail(email)) {
+            throw new RuntimeException("Email này đã được sử dụng.");
+        }
+
+        boolean wantsPasswordChange =
+                (requestDTO.getCurrentPassword() != null && !requestDTO.getCurrentPassword().isBlank())
+                        || (requestDTO.getNewPassword() != null && !requestDTO.getNewPassword().isBlank());
+
+        if (wantsPasswordChange) {
+            if (requestDTO.getCurrentPassword() == null || requestDTO.getCurrentPassword().isBlank()) {
+                throw new RuntimeException("Vui lòng nhập mật khẩu hiện tại để đổi mật khẩu.");
+            }
+
+            if (requestDTO.getNewPassword() == null || requestDTO.getNewPassword().isBlank()) {
+                throw new RuntimeException("Vui lòng nhập mật khẩu mới.");
+            }
+
+            if (!passwordEncoder.matches(requestDTO.getCurrentPassword(), profile.getPassword())) {
+                throw new RuntimeException("Mật khẩu hiện tại không chính xác.");
+            }
+
+            if (requestDTO.getNewPassword().trim().length() < 6) {
+                throw new RuntimeException("Mật khẩu mới phải có ít nhất 6 ký tự.");
+            }
+
+            profile.setPassword(passwordEncoder.encode(requestDTO.getNewPassword().trim()));
+        }
+
+        profile.setFullName(fullName);
+        profile.setEmail(email);
+        profile.setProfileImageUrl(requestDTO.getProfileImageUrl());
+
+        profile = profileRepository.save(profile);
+
+        return Map.of(
+                "token", jwtUtil.generateToken(profile.getEmail()),
+                "user", toDTO(profile)
+        );
     }
 
     public Map<String, Object> authenticateAndGenerateToken(AuthDTO authDTO) {

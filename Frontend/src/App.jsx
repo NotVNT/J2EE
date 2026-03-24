@@ -21,6 +21,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import AccountActivation from "./pages/AccountActivation.jsx";
 import ChatWidget from "./components/ChatWidget.jsx";
+import Profile from "./pages/Profile.jsx";
 
 const App = () => {
     return (
@@ -37,6 +38,7 @@ const App = () => {
                 <Route path="/payment" element={<Payment />} />
                 <Route path="/payment/success" element={<PaymentSuccess />} />
                 <Route path="/payment/cancel" element={<PaymentCancel />} />
+                <Route path="/profile" element={<Profile />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />

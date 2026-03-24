@@ -16,6 +16,7 @@ export const API_ENDPOINTS = {
     // User profile endpoints
     ACTIVATE_ACCOUNT: (token) => `/activate?token=${token}`,
     GET_USER_INFO: "/profile",
+    UPDATE_PROFILE: "/profile",
     UPDATE_AUTO_RENEW: "/profile/subscription/auto-renew",
 
     // Payment endpoints

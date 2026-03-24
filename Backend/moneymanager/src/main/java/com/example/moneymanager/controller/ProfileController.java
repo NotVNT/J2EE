@@ -4,6 +4,7 @@ import com.example.moneymanager.dto.AuthDTO;
 import com.example.moneymanager.dto.AutoRenewRequestDTO;
 import com.example.moneymanager.dto.ForgotPasswordRequestDTO;
 import com.example.moneymanager.dto.ProfileDTO;
+import com.example.moneymanager.dto.ProfileUpdateDTO;
 import com.example.moneymanager.dto.ResetPasswordRequestDTO;
 import com.example.moneymanager.service.ProfileService;
 import lombok.RequiredArgsConstructor;
@@ -57,6 +58,11 @@ public class ProfileController {
     public ResponseEntity<ProfileDTO> getPublicProfile() {
         ProfileDTO profileDTO = profileService.getPublicProfile(null);
         return ResponseEntity.ok(profileDTO);
+    }
+
+    @PutMapping("/profile")
+    public ResponseEntity<Map<String, Object>> updateProfile(@RequestBody ProfileUpdateDTO requestDTO) {
+        return ResponseEntity.ok(profileService.updateProfile(requestDTO));
     }
 
     @PutMapping("/profile/subscription/auto-renew")
