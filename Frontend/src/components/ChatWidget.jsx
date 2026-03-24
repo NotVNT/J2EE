@@ -1,6 +1,6 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { Bot, MessageCircle, SendHorizontal, Sparkles, X } from "lucide-react";
+import { MessageCircle, SendHorizontal, Sparkles, X } from "lucide-react";
 import axiosConfig from "../util/axiosConfig.jsx";
 import { API_ENDPOINTS } from "../util/apiEndpoints.js";
 import { AppContext } from "../context/AppContext.jsx";
@@ -258,10 +258,6 @@ const ChatWidget = () => {
         <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/12">
           {isOpen ? <X size={20} /> : <MessageCircle size={22} />}
         </span>
-        <Bot
-          size={15}
-          className="absolute translate-x-5 -translate-y-5 text-emerald-300 transition group-hover:text-white"
-        />
       </button>
     </div>
   );
