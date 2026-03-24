@@ -1,7 +1,7 @@
 import Dashboard from "../components/Dashboard.jsx";
 import {useUser} from "../hooks/useUser.jsx";
 import InfoCard from "../components/InfoCard.jsx";
-import {Coins, Wallet, WalletCards} from "lucide-react";
+import {Coins, PiggyBank, Target, Wallet, WalletCards} from "lucide-react";
 import {addThousandsSeparator} from "../util/util.js";
 import {useNavigate} from "react-router-dom";
 import {useEffect, useState} from "react";
@@ -65,6 +65,28 @@ const Home = () => {
                             label="Tổng chi tiêu"
                             value={addThousandsSeparator(dashboardData?.totalExpense || 0)}
                             color="bg-red-800"
+                        />
+                    </div>
+
+                    {/* Saving Goals Summary */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+                        <InfoCard
+                            icon={<Target />}
+                            label="Mục tiêu đang chạy"
+                            value={dashboardData?.savingGoalActiveCount || 0}
+                            color="bg-indigo-700"
+                        />
+                        <InfoCard
+                            icon={<PiggyBank />}
+                            label="Đã tích luỹ"
+                            value={addThousandsSeparator(dashboardData?.savingGoalTotalSaved || 0)}
+                            color="bg-emerald-700"
+                        />
+                        <InfoCard
+                            icon={<Target />}
+                            label="Mục tiêu hoàn thành"
+                            value={dashboardData?.savingGoalCompletedCount || 0}
+                            color="bg-teal-700"
                         />
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">

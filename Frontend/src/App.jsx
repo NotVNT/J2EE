@@ -22,6 +22,7 @@ import ResetPassword from "./pages/ResetPassword";
 import AccountActivation from "./pages/AccountActivation.jsx";
 import ChatWidget from "./components/ChatWidget.jsx";
 import Profile from "./pages/Profile.jsx";
+import SavingGoals from "./pages/SavingGoals.jsx";
 
 const App = () => {
     return (
@@ -33,6 +34,7 @@ const App = () => {
                 <Route path="/income" element={<Income />} />
                 <Route path="/expense" element={<Expense />} />
                 <Route path="/budget" element={<Budget />} />
+                <Route path="/saving-goals" element={<SavingGoals />} />
                 <Route path="/category" element={<Category />} />
                 <Route path="/filter" element={<Filter />} />
                 <Route path="/payment" element={<Payment />} />
