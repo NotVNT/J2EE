@@ -62,6 +62,15 @@ export const API_ENDPOINTS = {
     ADMIN_OVERVIEW: "/admin/overview",
     ADMIN_PAYMENTS: "/admin/payments",
 
+    // Saving Goal endpoints
+    GET_SAVING_GOALS: "/saving-goals",
+    ADD_SAVING_GOAL: "/saving-goals",
+    SAVING_GOAL_DETAIL: (id) => `/saving-goals/${id}`,
+    UPDATE_SAVING_GOAL: (id) => `/saving-goals/${id}`,
+    DELETE_SAVING_GOAL: (id) => `/saving-goals/${id}`,
+    SAVING_GOAL_CONTRIBUTIONS: (id) => `/saving-goals/${id}/contributions`,
+    ADD_SAVING_GOAL_CONTRIBUTION: (id) => `/saving-goals/${id}/contributions`,
+
     // Image upload
     UPLOAD_IMAGE: `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`
 }

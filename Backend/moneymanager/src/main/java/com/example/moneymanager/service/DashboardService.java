@@ -21,6 +21,7 @@ public class DashboardService {
     private final IncomeService incomeService;
     private final ExpenseService expenseService;
     private final ProfileService profileService;
+    private final SavingGoalService savingGoalService;
 
     public Map<String, Object> getDashboardData() {
         ProfileEntity profile = profileService.getCurrentProfile();
@@ -66,6 +67,13 @@ public class DashboardService {
         returnValue.put("recent5Expenses", latestExpenses);
         returnValue.put("recent5Incomes", latestIncomes);
         returnValue.put("recentTransactions", recentTransactions);
+
+        // Saving Goals summary
+        Map<String, Object> savingGoalSummary = savingGoalService.getSavingGoalSummary();
+        returnValue.put("savingGoalActiveCount", savingGoalSummary.get("activeCount"));
+        returnValue.put("savingGoalCompletedCount", savingGoalSummary.get("completedCount"));
+        returnValue.put("savingGoalTotalSaved", savingGoalSummary.get("totalSaved"));
+
         return returnValue;
     }
 
