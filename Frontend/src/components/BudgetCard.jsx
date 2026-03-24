@@ -1,4 +1,4 @@
-import {Layers2} from "lucide-react";
+import {hasDisplayImage, hideBrokenImageWrapper} from "../util/imageDisplay.js";
 
 /**
  * BudgetCard – Hiển thị 1 hạn mức ngân sách với thanh tiến trình
@@ -40,13 +40,16 @@ const BudgetCard = ({ budget, onDelete }) => {
         <div className={`budget-card ${isExceeded ? "budget-card--danger" : isWarning ? "budget-card--warning" : ""}`}>
             <div className="budget-card__header">
                 <div className="budget-card__category">
-                    <span className="budget-card__icon">
-                        {categoryIcon && categoryIcon.trim() !== "" ? (
-                            <img src={categoryIcon} alt={categoryName} className="h-5 w-5" />
-                        ) : (
-                            <Layers2 className="text-purple-800" size={20} />
-                        )}
-                    </span>
+                    {hasDisplayImage(categoryIcon) ? (
+                        <span data-image-wrapper="true" className="budget-card__icon">
+                            <img
+                                src={categoryIcon}
+                                alt={categoryName}
+                                className="h-5 w-5 object-contain"
+                                onError={hideBrokenImageWrapper}
+                            />
+                        </span>
+                    ) : null}
                     <div>
                         <p className="budget-card__name">{categoryName}</p>
                         <p className="budget-card__period">
