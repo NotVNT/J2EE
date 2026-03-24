@@ -1,4 +1,5 @@
-import {Layers2, Pencil} from "lucide-react";
+import {Pencil} from "lucide-react";
+import {hasDisplayImage, hideBrokenImageWrapper} from "../util/imageDisplay.js";
 
 const CategoryList = ({categories, onEditCategory}) => {
     return (
@@ -16,16 +17,19 @@ const CategoryList = ({categories, onEditCategory}) => {
                         <div
                             key={category.id}
                             className="group relative flex items-center gap-4 p-3 rounded-lg hover:bg-gray-100/60">
-                            {/* Icon/Emoji disply*/}
-                            <div className="w-12 h-12 flex items-center justify-center text-xl text-gray-800 bg-gray-100 rounded-full">
-                                {category.icon && category.icon.trim() !== "" ? (
-                                    <span className="text-2xl">
-                                        <img src={category.icon} alt={category.name} className="h-5 w-5" />
-                                    </span>
-                                ): (
-                                    <Layers2 className="text-purple-800" size={24} />
-                                )}
-                            </div>
+                            {hasDisplayImage(category.icon) ? (
+                                <div
+                                    data-image-wrapper="true"
+                                    className="w-12 h-12 flex shrink-0 items-center justify-center text-xl text-gray-800 bg-gray-100 rounded-full"
+                                >
+                                    <img
+                                        src={category.icon}
+                                        alt={category.name}
+                                        className="h-5 w-5 object-contain"
+                                        onError={hideBrokenImageWrapper}
+                                    />
+                                </div>
+                            ) : null}
 
 
                             {/* Category Details*/}

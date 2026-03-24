@@ -1,18 +1,26 @@
-import {Trash2, TrendingDown, TrendingUp, UtensilsCrossed} from "lucide-react";
-import income from "../pages/Income.jsx";
+import {Trash2, TrendingDown, TrendingUp} from "lucide-react";
 import {addThousandsSeparator} from "../util/util.js";
+import {hasDisplayImage, hideBrokenImageWrapper} from "../util/imageDisplay.js";
 
 const TransactionInfoCard = ({icon, title, date, amount, type, hideDeleteBtn, onDelete, category}) => {
     const getAmountStyles = () => type === 'income'? 'bg-green-50  text-green-800': 'bg-red-50 text-red-800';
+    const shouldShowImage = hasDisplayImage(icon);
+
     return (
         <div className="group relative flex items-center gap-4 mt-2 p-3 rounded-lg hover:bg-gray-100/60">
-            <div className="w-12 h-12 flex items-center justify-center text-xl text-gray-800 bg-gray-100 rounded-full">
-                {icon && icon.trim() !== "" ? (
-                    <img src={icon} alt={title} className="w-6 h-6" />
-                ): (
-                    <UtensilsCrossed className="text-purple-800" />
-                )}
-            </div>
+            {shouldShowImage ? (
+                <div
+                    data-image-wrapper="true"
+                    className="w-12 h-12 flex shrink-0 items-center justify-center text-xl text-gray-800 bg-gray-100 rounded-full"
+                >
+                    <img
+                        src={icon}
+                        alt={title}
+                        className="w-6 h-6 object-contain"
+                        onError={hideBrokenImageWrapper}
+                    />
+                </div>
+            ) : null}
 
             <div className="flex-1 flex items-center justify-between">
                 <div>
