@@ -20,6 +20,8 @@ export const API_ENDPOINTS = {
     UPDATE_AUTO_RENEW: "/profile/subscription/auto-renew",
 
     // Payment endpoints
+    REQUEST_PAYMENT_OTP: "/payments/otp/request",
+    VERIFY_PAYMENT_OTP: "/payments/otp/verify",
     CREATE_PAYMENT: "/payments/payos/create",
     CONFIRM_PAYMENT_WEBHOOK: "/payments/payos/confirm-webhook",
     GET_PAYMENT_BY_ORDER_CODE: (orderCode) => `/payments/${orderCode}`,
