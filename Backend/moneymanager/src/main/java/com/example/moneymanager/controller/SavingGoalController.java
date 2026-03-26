@@ -1,5 +1,6 @@
 package com.example.moneymanager.controller;
 
+import com.example.moneymanager.dto.RewardClaimDTO;
 import com.example.moneymanager.dto.SavingGoalContributionDTO;
 import com.example.moneymanager.dto.SavingGoalDTO;
 import com.example.moneymanager.service.SavingGoalService;
@@ -48,6 +49,13 @@ public class SavingGoalController {
     public ResponseEntity<SavingGoalContributionDTO> addContribution(
             @PathVariable Long id, @RequestBody SavingGoalContributionDTO dto) {
         SavingGoalContributionDTO created = savingGoalService.addContribution(id, dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
+    @PostMapping("/{id}/claim-reward")
+    public ResponseEntity<SavingGoalContributionDTO> claimEarlyReward(
+            @PathVariable Long id, @RequestBody RewardClaimDTO dto) {
+        SavingGoalContributionDTO created = savingGoalService.claimEarlyReward(id, dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 

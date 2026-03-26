@@ -70,6 +70,7 @@ export const API_ENDPOINTS = {
     DELETE_SAVING_GOAL: (id) => `/saving-goals/${id}`,
     SAVING_GOAL_CONTRIBUTIONS: (id) => `/saving-goals/${id}/contributions`,
     ADD_SAVING_GOAL_CONTRIBUTION: (id) => `/saving-goals/${id}/contributions`,
+    CLAIM_SAVING_GOAL_REWARD: (id) => `/saving-goals/${id}/claim-reward`,
 
     // Image upload
     UPLOAD_IMAGE: `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`

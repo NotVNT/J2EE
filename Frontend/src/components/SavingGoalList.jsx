@@ -19,7 +19,19 @@ const quickTips = [
     },
 ];
 
-const SavingGoalList = ({ goals, loading, onAddClick, onEdit, onDelete, onContribute }) => {
+const fmtCurrency = (n) =>
+    new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(Number(n) || 0);
+
+const SavingGoalList = ({
+    goals,
+    loading,
+    onAddClick,
+    onEdit,
+    onDelete,
+    onContribute,
+    onClaimReward,
+    totalRewardExchanged,
+}) => {
     return (
         <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
             <div className="space-y-5">
@@ -33,6 +45,12 @@ const SavingGoalList = ({ goals, loading, onAddClick, onEdit, onDelete, onContri
                             <p className="mt-2 text-sm text-slate-500">
                                 Theo dõi từng mục tiêu, biết còn thiếu bao nhiêu và giữ nhịp đóng góp ổn định mỗi tháng.
                             </p>
+                            <div className="mt-3 inline-flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2">
+                                <span className="text-xs text-slate-500">Tổng tiền đã đổi tự thưởng:</span>
+                                <span className="text-sm font-semibold text-emerald-700">
+                                    {fmtCurrency(totalRewardExchanged)}
+                                </span>
+                            </div>
                         </div>
 
                         <button
@@ -62,6 +80,7 @@ const SavingGoalList = ({ goals, loading, onAddClick, onEdit, onDelete, onContri
                             onEdit={() => onEdit(goal)}
                             onDelete={() => onDelete(goal.id)}
                             onContribute={() => onContribute(goal)}
+                            onClaimReward={() => onClaimReward(goal)}
                         />
                     ))}
                 </div>

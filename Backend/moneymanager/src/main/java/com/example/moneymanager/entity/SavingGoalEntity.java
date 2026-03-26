@@ -46,6 +46,11 @@ public class SavingGoalEntity {
     @Column(nullable = false)
     private GoalStatus status;
 
+    private LocalDate completedAt;
+
+    @Builder.Default
+    private BigDecimal rewardSpent = BigDecimal.ZERO;
+
     @Column(updatable = false)
     @CreationTimestamp
     private LocalDateTime createdAt;

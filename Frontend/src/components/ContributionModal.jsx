@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import axiosConfig from "../util/axiosConfig.jsx";
 import { API_ENDPOINTS } from "../util/apiEndpoints.js";
 import Modal from "./Modal.jsx";
-import { HandCoins, History } from "lucide-react";
+import { HandCoins, History, Gift } from "lucide-react";
 
 const fmt = (n) =>
     new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(n);
@@ -157,10 +157,21 @@ const ContributionModal = ({ goal, onClose, onContribute }) => {
                             {contributions.map((c) => (
                                 <div key={c.id} className="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3">
                                     <div>
-                                        <p className="text-sm font-medium text-gray-800">
-                                            + {fmt(c.amount)}
-                                        </p>
+                                        {c.type === "REWARD" ? (
+                                            <p className="text-sm font-medium text-amber-700 flex items-center gap-1.5">
+                                                <Gift size={14} /> - {fmt(c.amount)}
+                                            </p>
+                                        ) : (
+                                            <p className="text-sm font-medium text-gray-800">
+                                                + {fmt(c.amount)}
+                                            </p>
+                                        )}
                                         {c.note && <p className="text-xs text-gray-400">{c.note}</p>}
+                                        {c.type === "REWARD" && (
+                                            <p className="text-[11px] text-amber-600 mt-0.5">
+                                                {c.rewardType === "PHONE_CARD" ? "Card điện thoại" : "Thẻ game"}
+                                            </p>
+                                        )}
                                     </div>
                                     <p className="text-xs text-gray-400">{formatDate(c.contributionDate)}</p>
                                 </div>

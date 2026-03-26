@@ -26,7 +26,12 @@ public class SavingGoalDTO {
     private Boolean isBehindSchedule;
     private LocalDate startDate;
     private LocalDate targetDate;
+    private LocalDate completedAt;
     private String status;
+    private Boolean eligibleForEarlyReward;
+    private Boolean rewardClaimed;
+    private BigDecimal rewardSpent;
+    private BigDecimal savingFundBalance;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

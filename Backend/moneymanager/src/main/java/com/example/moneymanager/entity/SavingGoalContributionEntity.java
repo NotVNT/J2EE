@@ -29,6 +29,12 @@ public class SavingGoalContributionEntity {
     @Column(nullable = false)
     private LocalDate contributionDate;
 
+    @Enumerated(EnumType.STRING)
+    private SavingGoalContributionType type;
+
+    @Enumerated(EnumType.STRING)
+    private RewardType rewardType;
+
     private String note;
 
     @Column(updatable = false)

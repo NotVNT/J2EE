@@ -7,19 +7,14 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class SavingGoalContributionDTO {
-    private Long id;
-    private Long goalId;
+public class RewardClaimDTO {
+    private String rewardType; // GAME_CARD | PHONE_CARD
     private BigDecimal amount;
-    private LocalDate contributionDate;
-    private String type;
-    private String rewardType;
+    private LocalDate claimDate;
     private String note;
-    private LocalDateTime createdAt;
 }

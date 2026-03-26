@@ -1,9 +1,18 @@
-import { Pencil, Trash2, HandCoins, TrendingUp, TrendingDown, CheckCircle2, XCircle } from "lucide-react";
+import {
+    Pencil,
+    Trash2,
+    HandCoins,
+    TrendingUp,
+    TrendingDown,
+    CheckCircle2,
+    XCircle,
+    Gift,
+} from "lucide-react";
 
 const fmt = (n) =>
     new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(n);
 
-const SavingGoalCard = ({ goal, onEdit, onDelete, onContribute }) => {
+const SavingGoalCard = ({ goal, onEdit, onDelete, onContribute, onClaimReward }) => {
     const {
         name,
         targetAmount,
@@ -16,7 +25,12 @@ const SavingGoalCard = ({ goal, onEdit, onDelete, onContribute }) => {
         isBehindSchedule,
         startDate,
         targetDate,
+        completedAt,
         status,
+        eligibleForEarlyReward,
+        rewardClaimed,
+        rewardSpent,
+        savingFundBalance,
     } = goal;
 
     const isCompleted = status === "COMPLETED";
@@ -141,6 +155,25 @@ const SavingGoalCard = ({ goal, onEdit, onDelete, onContribute }) => {
                 </div>
             )}
 
+            {isCompleted && (
+                <div className="mb-4 rounded-xl border border-emerald-100 bg-emerald-50/70 p-3">
+                    <div className="flex items-center justify-between text-xs">
+                        <span className="text-slate-500">Hoàn thành ngày</span>
+                        <span className="font-semibold text-emerald-700">{formatDate(completedAt)}</span>
+                    </div>
+                    <div className="mt-1 flex items-center justify-between text-xs">
+                        <span className="text-slate-500">Quỹ còn lại</span>
+                        <span className="font-semibold text-emerald-700">{fmt(savingFundBalance ?? currentAmount)}</span>
+                    </div>
+                    {rewardClaimed && (
+                        <div className="mt-1 flex items-center justify-between text-xs">
+                            <span className="text-slate-500">Đã tự thưởng</span>
+                            <span className="font-semibold text-indigo-700">{fmt(rewardSpent ?? 0)}</span>
+                        </div>
+                    )}
+                </div>
+            )}
+
             {/* Actions */}
             {isActive && (
                 <div className="flex gap-2">
@@ -164,6 +197,21 @@ const SavingGoalCard = ({ goal, onEdit, onDelete, onContribute }) => {
                     >
                         <Trash2 size={16} />
                     </button>
+                </div>
+            )}
+
+            {isCompleted && eligibleForEarlyReward && (
+                <button
+                    onClick={onClaimReward}
+                    className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-medium transition-colors"
+                >
+                    <Gift size={16} /> Tự thưởng thẻ game/card điện thoại
+                </button>
+            )}
+
+            {isCompleted && rewardClaimed && (
+                <div className="text-center rounded-xl bg-indigo-50 text-indigo-700 text-xs py-2 font-medium">
+                    Bạn đã nhận thưởng cho mục tiêu này
                 </div>
             )}
         </div>

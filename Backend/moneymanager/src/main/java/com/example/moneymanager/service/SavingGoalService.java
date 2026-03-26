@@ -1,8 +1,14 @@
 package com.example.moneymanager.service;
 
+import com.example.moneymanager.dto.RewardClaimDTO;
 import com.example.moneymanager.dto.SavingGoalContributionDTO;
 import com.example.moneymanager.dto.SavingGoalDTO;
-import com.example.moneymanager.entity.*;
+import com.example.moneymanager.entity.GoalStatus;
+import com.example.moneymanager.entity.ProfileEntity;
+import com.example.moneymanager.entity.RewardType;
+import com.example.moneymanager.entity.SavingGoalContributionEntity;
+import com.example.moneymanager.entity.SavingGoalContributionType;
+import com.example.moneymanager.entity.SavingGoalEntity;
 import com.example.moneymanager.repository.SavingGoalContributionRepository;
 import com.example.moneymanager.repository.SavingGoalRepository;
 import lombok.RequiredArgsConstructor;
@@ -31,20 +37,27 @@ public class SavingGoalService {
         ProfileEntity profile = profileService.getCurrentProfile();
         validateGoalInput(dto);
 
+        BigDecimal initialAmount = dto.getCurrentAmount() != null ? dto.getCurrentAmount() : BigDecimal.ZERO;
         BigDecimal monthlyTarget = computeMonthlyTarget(
                 dto.getTargetAmount(),
-                dto.getCurrentAmount() != null ? dto.getCurrentAmount() : BigDecimal.ZERO,
+                initialAmount,
                 dto.getStartDate(),
                 dto.getTargetDate());
+
+        GoalStatus status = initialAmount.compareTo(dto.getTargetAmount()) >= 0
+                ? GoalStatus.COMPLETED
+                : GoalStatus.ACTIVE;
 
         SavingGoalEntity entity = SavingGoalEntity.builder()
                 .name(dto.getName())
                 .targetAmount(dto.getTargetAmount())
-                .currentAmount(dto.getCurrentAmount() != null ? dto.getCurrentAmount() : BigDecimal.ZERO)
+                .currentAmount(initialAmount)
                 .startDate(dto.getStartDate())
                 .targetDate(dto.getTargetDate())
                 .monthlyTarget(monthlyTarget)
-                .status(GoalStatus.ACTIVE)
+                .status(status)
+                .completedAt(status == GoalStatus.COMPLETED ? dto.getStartDate() : null)
+                .rewardSpent(BigDecimal.ZERO)
                 .profile(profile)
                 .build();
 
@@ -80,16 +93,17 @@ public class SavingGoalService {
             entity.setTargetDate(dto.getTargetDate());
         }
 
+        if (entity.getTargetDate().isBefore(entity.getStartDate())) {
+            throw new RuntimeException("Hạn chót phải lớn hơn hoặc bằng ngày bắt đầu");
+        }
+
         entity.setMonthlyTarget(computeMonthlyTarget(
                 entity.getTargetAmount(),
                 entity.getCurrentAmount(),
                 entity.getStartDate(),
                 entity.getTargetDate()));
 
-        // Auto-complete check
-        if (entity.getCurrentAmount().compareTo(entity.getTargetAmount()) >= 0) {
-            entity.setStatus(GoalStatus.COMPLETED);
-        }
+        reconcileGoalStatus(entity, LocalDate.now());
 
         entity = goalRepository.save(entity);
         return toDTO(entity);
@@ -117,9 +131,12 @@ public class SavingGoalService {
             throw new RuntimeException("Số tiền đóng góp phải lớn hơn 0");
         }
 
+        LocalDate contributionDate = dto.getContributionDate() != null ? dto.getContributionDate() : LocalDate.now();
+
         SavingGoalContributionEntity contribution = SavingGoalContributionEntity.builder()
                 .amount(dto.getAmount())
-                .contributionDate(dto.getContributionDate() != null ? dto.getContributionDate() : LocalDate.now())
+                .contributionDate(contributionDate)
+                .type(SavingGoalContributionType.CONTRIBUTION)
                 .note(dto.getNote())
                 .goal(goal)
                 .build();
@@ -128,12 +145,63 @@ public class SavingGoalService {
 
         // Update goal current amount
         goal.setCurrentAmount(goal.getCurrentAmount().add(dto.getAmount()));
-        if (goal.getCurrentAmount().compareTo(goal.getTargetAmount()) >= 0) {
-            goal.setStatus(GoalStatus.COMPLETED);
-        }
+        reconcileGoalStatus(goal, contributionDate);
         goalRepository.save(goal);
 
         return toContributionDTO(contribution);
+    }
+
+    // ─── CLAIM EARLY REWARD ──────────────────────────────────────
+    @Transactional
+    public SavingGoalContributionDTO claimEarlyReward(Long goalId, RewardClaimDTO dto) {
+        SavingGoalEntity goal = findGoalForCurrentUser(goalId);
+        if (dto == null) {
+            throw new RuntimeException("Dữ liệu nhận thưởng không hợp lệ");
+        }
+
+        if (goal.getStatus() != GoalStatus.COMPLETED) {
+            throw new RuntimeException("Chỉ có thể tự thưởng khi mục tiêu đã hoàn thành");
+        }
+        if (goal.getCompletedAt() == null || !goal.getCompletedAt().isBefore(goal.getTargetDate())) {
+            throw new RuntimeException("Chỉ có thể tự thưởng khi hoàn thành mục tiêu trước thời hạn");
+        }
+        if (contributionRepository.existsByGoalIdAndType(goal.getId(), SavingGoalContributionType.REWARD)) {
+            throw new RuntimeException("Mục tiêu này đã nhận thưởng trước đó");
+        }
+
+        if (dto.getAmount() == null || dto.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("Mệnh giá thẻ thưởng phải lớn hơn 0");
+        }
+
+        RewardType rewardType = parseRewardType(dto.getRewardType());
+
+        BigDecimal rewardSpent = goal.getRewardSpent() != null ? goal.getRewardSpent() : BigDecimal.ZERO;
+        BigDecimal savingFundBalance = goal.getCurrentAmount().subtract(rewardSpent);
+        if (dto.getAmount().compareTo(savingFundBalance) > 0) {
+            throw new RuntimeException("Số tiền thưởng vượt quá quỹ tiết kiệm còn lại");
+        }
+
+        LocalDate claimDate = dto.getClaimDate() != null ? dto.getClaimDate() : LocalDate.now();
+
+        String defaultNote = rewardType == RewardType.GAME_CARD
+                ? "Tự thưởng thẻ game từ quỹ tiết kiệm"
+                : "Tự thưởng card điện thoại từ quỹ tiết kiệm";
+
+        SavingGoalContributionEntity reward = SavingGoalContributionEntity.builder()
+                .amount(dto.getAmount())
+                .contributionDate(claimDate)
+                .type(SavingGoalContributionType.REWARD)
+                .rewardType(rewardType)
+                .note(dto.getNote() != null && !dto.getNote().isBlank() ? dto.getNote().trim() : defaultNote)
+                .goal(goal)
+                .build();
+
+        reward = contributionRepository.save(reward);
+
+        goal.setRewardSpent(rewardSpent.add(dto.getAmount()));
+        goalRepository.save(goal);
+
+        return toContributionDTO(reward);
     }
 
     // ─── GET CONTRIBUTIONS ───────────────────────────────────────
@@ -206,19 +274,49 @@ public class SavingGoalService {
                 .divide(target, 2, RoundingMode.HALF_UP).doubleValue();
     }
 
+    private void reconcileGoalStatus(SavingGoalEntity entity, LocalDate completionDate) {
+        if (entity.getCurrentAmount().compareTo(entity.getTargetAmount()) >= 0) {
+            entity.setStatus(GoalStatus.COMPLETED);
+            if (entity.getCompletedAt() == null) {
+                entity.setCompletedAt(completionDate);
+            }
+            return;
+        }
+
+        if (entity.getStatus() == GoalStatus.COMPLETED) {
+            entity.setStatus(GoalStatus.ACTIVE);
+            entity.setCompletedAt(null);
+        }
+    }
+
+    private RewardType parseRewardType(String rewardTypeRaw) {
+        if (rewardTypeRaw == null || rewardTypeRaw.isBlank()) {
+            throw new RuntimeException("Loại thẻ thưởng không được để trống");
+        }
+
+        try {
+            return RewardType.valueOf(rewardTypeRaw.trim().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            throw new RuntimeException("Loại thẻ thưởng không hợp lệ. Chỉ hỗ trợ GAME_CARD hoặc PHONE_CARD");
+        }
+    }
+
     private SavingGoalDTO toDTO(SavingGoalEntity entity) {
         BigDecimal remaining = entity.getTargetAmount().subtract(entity.getCurrentAmount());
-        if (remaining.compareTo(BigDecimal.ZERO) < 0) remaining = BigDecimal.ZERO;
+        if (remaining.compareTo(BigDecimal.ZERO) < 0) {
+            remaining = BigDecimal.ZERO;
+        }
 
         double progressPercent = computeProgressPercent(entity.getCurrentAmount(), entity.getTargetAmount());
 
-        // Monthly progress
+        // Monthly progress (chỉ tính đóng góp thực)
         LocalDate now = LocalDate.now();
         LocalDate monthStart = now.withDayOfMonth(1);
         LocalDate monthEnd = now.withDayOfMonth(now.lengthOfMonth());
         List<SavingGoalContributionEntity> monthContributions =
                 contributionRepository.findByGoalIdAndContributionDateBetween(entity.getId(), monthStart, monthEnd);
         BigDecimal monthlyContributed = monthContributions.stream()
+                .filter(c -> c.getType() == null || c.getType() == SavingGoalContributionType.CONTRIBUTION)
                 .map(SavingGoalContributionEntity::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
@@ -228,6 +326,18 @@ public class SavingGoalService {
                 : 0.0;
 
         boolean isBehindSchedule = entity.getStatus() == GoalStatus.ACTIVE && monthlyProgressPercent < 100.0;
+
+        BigDecimal rewardSpent = entity.getRewardSpent() != null ? entity.getRewardSpent() : BigDecimal.ZERO;
+        BigDecimal savingFundBalance = entity.getCurrentAmount().subtract(rewardSpent);
+        if (savingFundBalance.compareTo(BigDecimal.ZERO) < 0) {
+            savingFundBalance = BigDecimal.ZERO;
+        }
+
+        boolean completedEarly = entity.getStatus() == GoalStatus.COMPLETED
+                && entity.getCompletedAt() != null
+                && entity.getCompletedAt().isBefore(entity.getTargetDate());
+
+        boolean rewardClaimed = rewardSpent.compareTo(BigDecimal.ZERO) > 0;
 
         return SavingGoalDTO.builder()
                 .id(entity.getId())
@@ -242,7 +352,12 @@ public class SavingGoalService {
                 .isBehindSchedule(isBehindSchedule)
                 .startDate(entity.getStartDate())
                 .targetDate(entity.getTargetDate())
+                .completedAt(entity.getCompletedAt())
                 .status(entity.getStatus().name())
+                .eligibleForEarlyReward(completedEarly && !rewardClaimed)
+                .rewardClaimed(rewardClaimed)
+                .rewardSpent(rewardSpent)
+                .savingFundBalance(savingFundBalance)
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .build();
@@ -254,6 +369,8 @@ public class SavingGoalService {
                 .goalId(entity.getGoal().getId())
                 .amount(entity.getAmount())
                 .contributionDate(entity.getContributionDate())
+                .type(entity.getType() != null ? entity.getType().name() : SavingGoalContributionType.CONTRIBUTION.name())
+                .rewardType(entity.getRewardType() != null ? entity.getRewardType().name() : null)
                 .note(entity.getNote())
                 .createdAt(entity.getCreatedAt())
                 .build();

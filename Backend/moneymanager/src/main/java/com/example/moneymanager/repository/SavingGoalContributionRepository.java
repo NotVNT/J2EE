@@ -1,6 +1,7 @@
 package com.example.moneymanager.repository;
 
 import com.example.moneymanager.entity.SavingGoalContributionEntity;
+import com.example.moneymanager.entity.SavingGoalContributionType;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDate;
@@ -11,4 +12,6 @@ public interface SavingGoalContributionRepository extends JpaRepository<SavingGo
     List<SavingGoalContributionEntity> findByGoalIdOrderByContributionDateDesc(Long goalId);
 
     List<SavingGoalContributionEntity> findByGoalIdAndContributionDateBetween(Long goalId, LocalDate start, LocalDate end);
+
+    boolean existsByGoalIdAndType(Long goalId, SavingGoalContributionType type);
 }

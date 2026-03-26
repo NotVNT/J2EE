@@ -7,6 +7,7 @@ import Dashboard from "../components/Dashboard.jsx";
 import SavingGoalList from "../components/SavingGoalList.jsx";
 import SavingGoalForm from "../components/SavingGoalForm.jsx";
 import ContributionModal from "../components/ContributionModal.jsx";
+import RewardModal from "../components/RewardModal.jsx";
 import Modal from "../components/Modal.jsx";
 import DeleteAlert from "../components/DeleteAlert.jsx";
 
@@ -19,6 +20,11 @@ const SavingGoals = () => {
     const [editGoal, setEditGoal] = useState(null);
     const [deleteAlert, setDeleteAlert] = useState({ show: false, id: null });
     const [contributionGoal, setContributionGoal] = useState(null);
+    const [rewardGoal, setRewardGoal] = useState(null);
+
+    const totalRewardExchanged = goals.reduce((sum, goal) => {
+        return sum + Number(goal.rewardSpent || 0);
+    }, 0);
 
     // ─── Fetch ───────────────────────────────────────────────────
     const fetchGoals = async () => {
@@ -91,6 +97,20 @@ const SavingGoals = () => {
         }
     };
 
+    // ─── Claim reward ────────────────────────────────────────────
+    const handleClaimReward = async (goalId, dto) => {
+        try {
+            await axiosConfig.post(API_ENDPOINTS.CLAIM_SAVING_GOAL_REWARD(goalId), dto);
+            toast.success("Nhận thưởng thành công!");
+            fetchGoals();
+            return true;
+        } catch (err) {
+            console.error("Lỗi nhận thưởng:", err);
+            toast.error(err.response?.data?.message || "Không thể nhận thưởng.");
+            return false;
+        }
+    };
+
     return (
         <Dashboard activeMenu="SavingGoals">
             <div className="my-5 mx-auto">
@@ -102,6 +122,8 @@ const SavingGoals = () => {
                         onEdit={(goal) => setEditGoal(goal)}
                         onDelete={(id) => setDeleteAlert({ show: true, id })}
                         onContribute={(goal) => setContributionGoal(goal)}
+                        onClaimReward={(goal) => setRewardGoal(goal)}
+                        totalRewardExchanged={totalRewardExchanged}
                     />
 
                     {/* Modal tạo mới */}
@@ -145,6 +167,15 @@ const SavingGoals = () => {
                             goal={contributionGoal}
                             onClose={() => setContributionGoal(null)}
                             onContribute={handleContribute}
+                        />
+                    )}
+
+                    {/* Modal tự thưởng */}
+                    {rewardGoal && (
+                        <RewardModal
+                            goal={rewardGoal}
+                            onClose={() => setRewardGoal(null)}
+                            onClaim={handleClaimReward}
                         />
                     )}
                 </div>
