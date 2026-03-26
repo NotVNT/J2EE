@@ -3,53 +3,91 @@ import TransactionInfoCard from "./TransactionInfoCard.jsx";
 import moment from "moment";
 import {useState} from "react";
 
-const IncomeList = ({transactions, onDelete, onDownload, onEmail}) => {
-    const [loading, setLoading] = useState(false);
+const IncomeList = ({
+    transactions,
+    onDelete,
+    onDownload,
+    onEmail,
+    disableExportActions = false,
+    disabledMessage = "",
+}) => {
+    const [loadingAction, setLoadingAction] = useState(null);
+    const isBusy = loadingAction !== null;
+
     const handleEmail = async () => {
-        setLoading(true);
+        if (disableExportActions) {
+            return;
+        }
+
+        setLoadingAction("email");
         try {
             await onEmail();
-        }finally {
-            setLoading(false);
+        } finally {
+            setLoadingAction(null);
         }
-    }
+    };
+
     const handleDownload = async () => {
-        setLoading(true);
+        if (disableExportActions) {
+            return;
+        }
+
+        setLoadingAction("download");
         try {
             await onDownload();
-        }finally {
-            setLoading(false);
+        } finally {
+            setLoadingAction(null);
         }
-    }
+    };
+
     return (
         <div className="card">
             <div className="flex items-center justify-between">
-                <h5 className="text-lg">Nguồn thu nhập</h5>
-                <div className="flex items-center justify-end gap-2">
-                    <button disabled={loading} className="card-btn" onClick={handleEmail}>
-                        {loading ? (
-                            <>
-                                <LoaderCircle className="w-4 h-4 animate-spin"/>Đang gửi Email...</>
-                        ): (
-                            <>
-                                <Mail size={15} className="text-base" />Gửi Email</>
-                        )}
-                    </button>
-                    <button disabled={loading} className="card-btn" onClick={handleDownload}>
-                        {loading ? (
-                            <>
-                                <LoaderCircle className="w-4 h-4 animate-spin"/>Đang tải xuống...</>
-                        ): (
-                            <>
-                                <Download size={15} className="text-base" />Tải xuống</>
-                        )}
-
-                    </button>
+                <h5 className="text-lg">Nguon thu nhap</h5>
+                <div className="flex flex-col items-end gap-2">
+                    <div className="flex items-center justify-end gap-2">
+                        <button
+                            disabled={isBusy || disableExportActions}
+                            className={`card-btn ${isBusy || disableExportActions ? "cursor-not-allowed opacity-60" : ""}`}
+                            onClick={handleEmail}
+                            title={disableExportActions ? disabledMessage : ""}
+                            type="button"
+                        >
+                            {loadingAction === "email" ? (
+                                <>
+                                    <LoaderCircle className="w-4 h-4 animate-spin"/>Dang gui Email...
+                                </>
+                            ) : (
+                                <>
+                                    <Mail size={15} className="text-base" />Gui Email
+                                </>
+                            )}
+                        </button>
+                        <button
+                            disabled={isBusy || disableExportActions}
+                            className={`card-btn ${isBusy || disableExportActions ? "cursor-not-allowed opacity-60" : ""}`}
+                            onClick={handleDownload}
+                            title={disableExportActions ? disabledMessage : ""}
+                            type="button"
+                        >
+                            {loadingAction === "download" ? (
+                                <>
+                                    <LoaderCircle className="w-4 h-4 animate-spin"/>Dang tai xuong...
+                                </>
+                            ) : (
+                                <>
+                                    <Download size={15} className="text-base" />Tai xuong
+                                </>
+                            )}
+                        </button>
+                    </div>
+                    {disableExportActions && disabledMessage ? (
+                        <p className="max-w-xs text-right text-xs text-amber-600">{disabledMessage}</p>
+                    ) : null}
                 </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2">
-                {/* display the incomes */}
                 {transactions?.map((income) => (
                     <TransactionInfoCard
                         key={income.id}
@@ -63,7 +101,7 @@ const IncomeList = ({transactions, onDelete, onDownload, onEmail}) => {
                 ))}
             </div>
         </div>
-    )
-}
+    );
+};
 
 export default IncomeList;
