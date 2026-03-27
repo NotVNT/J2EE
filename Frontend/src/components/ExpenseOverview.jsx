@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import {Plus} from "lucide-react";
+import {ImageUp, LoaderCircle, Plus} from "lucide-react";
 import CustomLineChart from "./CustomLineChart.jsx";
 import {prepareIncomeLineChartData} from "../util/util.js";
 
-const ExpenseOverview = ({transactions, onExpenseIncome}) => {
+const ExpenseOverview = ({transactions, onExpenseIncome, onImportReceipt, isImportingReceipt = false}) => {
     const [chartData, setChartData] = useState([]);
 
     useEffect(() => {
@@ -23,8 +23,27 @@ const ExpenseOverview = ({transactions, onExpenseIncome}) => {
                     </p>
                 </div>
 
-                <button className="add-btn" onClick={onExpenseIncome}>
-                    <Plus size={15} className="text-lg" />Thêm chi tiêu</button>
+                <div className="flex items-center gap-2">
+                    <button
+                        className="add-btn disabled:opacity-60 disabled:cursor-not-allowed"
+                        onClick={onImportReceipt}
+                        disabled={!onImportReceipt || isImportingReceipt}
+                        type="button"
+                    >
+                        {isImportingReceipt ? (
+                            <>
+                                <LoaderCircle size={15} className="text-lg animate-spin" />Đang quét hóa đơn...
+                            </>
+                        ) : (
+                            <>
+                                <ImageUp size={15} className="text-lg" />Kiểm tra hóa đơn
+                            </>
+                        )}
+                    </button>
+                    <button className="add-btn" onClick={onExpenseIncome}>
+                        <Plus size={15} className="text-lg" />Thêm chi tiêu
+                    </button>
+                </div>
             </div>
 
             <div className="mt-10">

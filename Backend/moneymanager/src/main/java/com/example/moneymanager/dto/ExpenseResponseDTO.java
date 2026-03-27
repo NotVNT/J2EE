@@ -18,6 +18,7 @@ public class ExpenseResponseDTO {
     private Long id;
     private String name;
     private String icon;
+    private String receiptLocation;
     private String categoryName;
     private Long categoryId;
     private BigDecimal amount;
