@@ -129,6 +129,8 @@ public class IncomeService {
             throw new RuntimeException("Ban khong co quyen xoa thu nhap nay.");
         }
         return entity;
+    }
+
     public List<IncomeDTO> getIncomesByMonthForCurrentUser(int year, int monthValue) {
         ProfileEntity profile = profileService.getCurrentProfile();
 
