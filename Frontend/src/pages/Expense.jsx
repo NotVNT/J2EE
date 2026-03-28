@@ -54,7 +54,6 @@ const Expense = () => {
     const [openReceiptPreviewModal, setOpenReceiptPreviewModal] = useState(false);
     const [receiptPreview, setReceiptPreview] = useState(null);
     const receiptFileInputRef = useRef(null);
-    const exportUpgradeMessage = "Nâng cấp gói để sử dụng tính năng này  ";
     const exportLocked = user?.canExportReports === false;
     const receiptImportLocked = user?.canImportReceipt === false;
     const receiptImportUpgradeMessage = "Tính năng kiểm tra hoá đơn bằng ảnh chỉ có ở gói Premium. Vui long nang cap de tiep tuc";
