@@ -172,6 +172,8 @@ public class ExpenseService {
             throw new RuntimeException("Ban khong co quyen xoa chi tieu nay.");
         }
         return entity;
+    }
+
     public List<ExpenseDTO> getExpensesByMonthForCurrentUser(int year, int monthValue) {
         ProfileEntity profile = profileService.getCurrentProfile();
 
