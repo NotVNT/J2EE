@@ -2,8 +2,8 @@
 FROM maven:3.9.6-eclipse-temurin-21 AS build
 WORKDIR /app
 # Copy file cấu hình maven và source code vào container
-COPY pom.xml .
-COPY src ./src
+COPY Backend/moneymanager/pom.xml .
+COPY Backend/moneymanager/src ./src
 # Chạy lệnh build (bỏ qua test để deploy nhanh hơn)
 RUN mvn clean package -DskipTests
 
