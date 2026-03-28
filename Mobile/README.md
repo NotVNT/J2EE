@@ -16,8 +16,8 @@
 
 - `src/context/AuthContext.js`: quản lý đăng nhập, token, user session.
 - `src/services/http.js`: axios client + interceptor Bearer token.
-- `src/navigation/AppNavigator.js`: `Auth stack` + `Bottom tabs`.
-- `src/screens/*`: các màn hình mẫu `Login`, `Dashboard`, `Expense`, `AddExpense`.
+- `src/navigation/AppNavigator.js`: `Auth stack` + `Bottom tabs` + stack mở rộng.
+- `src/screens/*`: đầy đủ màn hình cho `Auth`, `Dashboard`, `Expense`, `Income`, `Budget`, `Saving Goal`, `Category`, `Filter`, `Payment`, `Profile`.
 
 ## 3) Mapping từ web sang mobile
 
@@ -26,10 +26,22 @@
 - Routing web (`react-router-dom`) chuyển sang `React Navigation`.
 - UI component web/Tailwind chuyển dần sang RN styles (StyleSheet).
 
-## 4) Lộ trình đề xuất
+## 4) Chức năng đã có trên mobile
 
-1. Hoàn thiện luồng Auth (đăng ký/quên mật khẩu/activate).
-2. Port các màn hình cốt lõi: Dashboard, Expense, Income, Budget.
-3. Tối ưu UX mobile (pull-to-refresh, skeleton, offline handling).
-4. Bổ sung upload ảnh hóa đơn bằng camera/gallery (`expo-image-picker`).
+1. Auth: đăng nhập, đăng ký, quên mật khẩu.
+2. Dashboard: tổng quan thu chi + số dư + điều hướng nhanh.
+3. Expense/Income: danh sách, thêm mới, xóa.
+4. Budget: tạo/xóa ngân sách theo danh mục + tiến độ sử dụng.
+5. Saving Goal: tạo mục tiêu, đóng góp, xóa.
+6. Category: tạo và xem danh mục thu/chi.
+7. Filter: lọc giao dịch theo loại/ngày/từ khóa/sắp xếp.
+8. Payment: OTP thanh toán, tạo link PayOS, đồng bộ trạng thái.
+9. Profile: cập nhật hồ sơ, đổi mật khẩu, auto-renew.
+
+## 5) Việc nên làm tiếp theo
+
+1. Bổ sung import hóa đơn bằng ảnh (`expo-image-picker`).
+2. Thêm biểu đồ chuyên sâu tương đương web (line/pie chart).
+3. Hoàn thiện luồng OTP giao dịch cho add/delete income/expense.
+4. Tách service + hooks để tối ưu maintainability.
 5. Đóng gói release Android/iOS.

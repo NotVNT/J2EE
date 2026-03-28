@@ -5,11 +5,11 @@ import http from "../services/http";
 import { API_ENDPOINTS } from "../constants/api";
 import { formatDate, formatMoney, getApiErrorMessage } from "../utils/format";
 
-function ExpenseItem({ item, onDelete }) {
+function IncomeItem({ item, onDelete }) {
   return (
     <View style={styles.item}>
       <View style={styles.itemLeft}>
-        <Text style={styles.itemName}>{item?.name || "Chi tiêu"}</Text>
+        <Text style={styles.itemName}>{item?.name || "Thu nhập"}</Text>
         <Text style={styles.itemDate}>{formatDate(item?.date)}</Text>
       </View>
       <View style={styles.itemRight}>
@@ -22,45 +22,38 @@ function ExpenseItem({ item, onDelete }) {
   );
 }
 
-export default function ExpenseScreen() {
+export default function IncomeScreen() {
   const navigation = useNavigation();
-  const [expenses, setExpenses] = useState([]);
+  const [incomes, setIncomes] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
 
-  const fetchExpenses = useCallback(async () => {
-    const response = await http.get(API_ENDPOINTS.GET_ALL_EXPENSE);
-    setExpenses(Array.isArray(response.data) ? response.data : []);
+  const fetchIncomes = useCallback(async () => {
+    const response = await http.get(API_ENDPOINTS.GET_ALL_INCOMES, {
+      params: { all: true }
+    });
+    setIncomes(Array.isArray(response.data) ? response.data : []);
   }, []);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
-      await fetchExpenses();
+      await fetchIncomes();
     } catch (error) {
-      Alert.alert("Lỗi", getApiErrorMessage(error, "Không tải được danh sách chi tiêu"));
+      Alert.alert("Lỗi", getApiErrorMessage(error, "Không tải được danh sách thu nhập"));
     } finally {
       setRefreshing(false);
     }
-  }, [fetchExpenses]);
+  }, [fetchIncomes]);
 
   const onDelete = async (id) => {
     if (!id) return;
 
-    Alert.alert("Xác nhận", "Bạn có chắc muốn xóa khoản chi này?", [
-      { text: "Hủy", style: "cancel" },
-      {
-        text: "Xóa",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            await http.delete(API_ENDPOINTS.DELETE_EXPENSE(id));
-            await fetchExpenses();
-          } catch (error) {
-            Alert.alert("Xóa thất bại", getApiErrorMessage(error, "Không thể xóa khoản chi này"));
-          }
-        }
-      }
-    ]);
+    try {
+      await http.delete(API_ENDPOINTS.DELETE_INCOME(id));
+      await fetchIncomes();
+    } catch (error) {
+      Alert.alert("Xóa thất bại", getApiErrorMessage(error, "Không thể xóa khoản thu này"));
+    }
   };
 
   useFocusEffect(
@@ -71,17 +64,17 @@ export default function ExpenseScreen() {
 
   return (
     <View style={styles.container}>
-      <Pressable style={styles.addButton} onPress={() => navigation.navigate("AddExpense")}>
-        <Text style={styles.addButtonText}>+ Thêm chi tiêu</Text>
+      <Pressable style={styles.addButton} onPress={() => navigation.navigate("AddIncome")}>
+        <Text style={styles.addButtonText}>+ Thêm thu nhập</Text>
       </Pressable>
 
       <FlatList
-        data={expenses}
+        data={incomes}
         keyExtractor={(item) => String(item?.id)}
-        renderItem={({ item }) => <ExpenseItem item={item} onDelete={onDelete} />}
+        renderItem={({ item }) => <IncomeItem item={item} onDelete={onDelete} />}
         contentContainerStyle={styles.listContent}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        ListEmptyComponent={<Text style={styles.emptyText}>Chưa có dữ liệu chi tiêu</Text>}
+        ListEmptyComponent={<Text style={styles.emptyText}>Chưa có dữ liệu thu nhập</Text>}
       />
     </View>
   );
@@ -94,7 +87,7 @@ const styles = StyleSheet.create({
     padding: 16
   },
   addButton: {
-    backgroundColor: "#0f766e",
+    backgroundColor: "#15803d",
     borderRadius: 12,
     paddingVertical: 12,
     alignItems: "center",
@@ -134,7 +127,7 @@ const styles = StyleSheet.create({
     alignItems: "flex-end"
   },
   itemAmount: {
-    color: "#b91c1c",
+    color: "#15803d",
     fontWeight: "700"
   },
   deleteText: {

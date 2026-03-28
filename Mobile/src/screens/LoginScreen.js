@@ -1,16 +1,25 @@
 import React, { useContext, useEffect, useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 import { AuthContext } from "../context/AuthContext";
 import { API_ENDPOINTS, BASE_URL } from "../constants/api";
 import http from "../services/http";
 import { getApiErrorMessage } from "../utils/format";
 
 export default function LoginScreen() {
+  const navigation = useNavigation();
   const { signIn } = useContext(AuthContext);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [backendReady, setBackendReady] = useState(null);
+
+  const sanitizeAuthMessage = (message) => {
+    if (!message) return "Vui lòng kiểm tra lại tài khoản.";
+    return /otp|xac\s*thuc|xác\s*thực|kich\s*hoat|kích\s*hoạt|activate|verification|email/i.test(message)
+      ? "Vui lòng kiểm tra lại tài khoản."
+      : message;
+  };
 
   useEffect(() => {
     let active = true;
@@ -46,7 +55,8 @@ export default function LoginScreen() {
     try {
       await signIn({ email: normalizedEmail, password });
     } catch (error) {
-      Alert.alert("Đăng nhập thất bại", getApiErrorMessage(error, "Vui lòng kiểm tra lại tài khoản."));
+      const message = getApiErrorMessage(error, "Vui lòng kiểm tra lại tài khoản.");
+      Alert.alert("Đăng nhập thất bại", sanitizeAuthMessage(message));
     } finally {
       setLoading(false);
     }
@@ -86,6 +96,15 @@ export default function LoginScreen() {
       <Pressable style={[styles.button, loading && styles.buttonDisabled]} onPress={onSubmit} disabled={loading}>
         <Text style={styles.buttonText}>{loading ? "Đang đăng nhập..." : "Đăng nhập"}</Text>
       </Pressable>
+
+      <View style={styles.actionsRow}>
+        <Pressable onPress={() => navigation.navigate("Signup")}>
+          <Text style={styles.actionText}>Tạo tài khoản</Text>
+        </Pressable>
+        <Pressable onPress={() => navigation.navigate("ForgotPassword")}>
+          <Text style={styles.actionText}>Quên mật khẩu</Text>
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -143,5 +162,14 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "#fff",
     fontWeight: "700"
+  },
+  actionsRow: {
+    marginTop: 16,
+    flexDirection: "row",
+    justifyContent: "space-between"
+  },
+  actionText: {
+    color: "#0f766e",
+    fontWeight: "600"
   }
 });
