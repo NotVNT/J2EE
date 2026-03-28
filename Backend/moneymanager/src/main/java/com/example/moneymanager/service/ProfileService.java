@@ -92,6 +92,7 @@ public class ProfileService {
                 .historyMonths(planFeatures.getHistoryMonths())
                 .canExportReports(planFeatures.isCanExportReports())
                 .canUseAdvancedFilters(planFeatures.isCanUseAdvancedFilters())
+                .canImportReceipt(planFeatures.isCanImportReceipt())
                 .role(profileEntity.getRole() != null ? profileEntity.getRole().getName() : "user")
                 .build();
     }

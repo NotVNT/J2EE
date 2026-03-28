@@ -25,6 +25,8 @@ public class ExpenseEntity {
     private Long id;
     private String name;
     private String icon;
+    @Column(length = 255)
+    private String receiptLocation;
     private LocalDate date;
     private BigDecimal amount;
 

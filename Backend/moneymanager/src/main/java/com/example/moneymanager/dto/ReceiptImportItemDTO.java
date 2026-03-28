@@ -7,22 +7,16 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ExpenseDTO {
-    private Long id;
+public class ReceiptImportItemDTO {
     private String name;
-    private String icon;
-    private String receiptLocation;
-    private String categoryName;
-    private Long categoryId;
     private BigDecimal amount;
+    private Long categoryId;
+    private String categoryHint;
+    private String icon;
     private LocalDate date;
-    private String transactionAuthorizationToken;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
 }

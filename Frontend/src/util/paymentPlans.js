@@ -30,6 +30,7 @@ export const DEFAULT_PAYMENT_PLANS = [
     features: [
       "Không giới hạn lịch sử giao dịch",
       "Biểu đồ và báo cáo chuyên sâu",
+      "Import hóa đơn bằng ảnh để tự động tạo chi tiêu",
       "Ưu tiên đồng bộ trạng thái thanh toán"
     ]
   }
