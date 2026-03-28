@@ -154,4 +154,24 @@ public class ExpenseService {
                 .budgetStatus(budgetStatus)
                 .build();
     }
+
+    public List<ExpenseDTO> getExpensesByMonthForCurrentUser(int year, int monthValue) {
+        ProfileEntity profile = profileService.getCurrentProfile();
+
+        // Tạo ngày bắt đầu và kết thúc của tháng cần lấy
+        LocalDate startDate = LocalDate.of(year, monthValue, 1);
+        LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
+
+        // Lấy danh sách chi tiêu trong khoảng thời gian đó
+        List<ExpenseEntity> expenses = expenseRepository.findByProfileIdAndDateBetween(
+                profile.getId(),
+                startDate,
+                endDate
+        );
+
+        // Chuyển đổi sang DTO và trả về
+        return expenses.stream()
+                .map(this::toDTO)
+                .collect(java.util.stream.Collectors.toList());
+    }
 }
