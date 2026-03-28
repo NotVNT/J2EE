@@ -4,7 +4,7 @@ import {hasDisplayImage, hideBrokenImageWrapper} from "../util/imageDisplay.js";
 const CategoryList = ({categories, onEditCategory}) => {
     return (
         <div className="card p-4">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between text-slate-900 mb-4 border-b border-gray-200 pb-2">
                 <h4 className="text-lg font-semibold">Nguồn danh mục</h4>
             </div>
 

@@ -1,25 +1,33 @@
 import Menubar from "./Menubar.jsx";
 import Sidebar from "./Sidebar.jsx";
-import {useContext} from "react";
-import {AppContext} from "../context/AppContext.jsx";
+import { useContext, useMemo } from "react";
+import { AppContext } from "../context/AppContext.jsx";
 
-const Dashboard = ({children, activeMenu}) => {
-    const {user} = useContext(AppContext);
+const Dashboard = ({ children, activeMenu }) => {
+  const { user } = useContext(AppContext);
+
+  const isVip = useMemo(() => {
     return (
-        <div>
-            <Menubar activeMenu={activeMenu} />
+      user?.subscriptionPlan === "PREMIUM" &&
+      user?.subscriptionStatus === "ACTIVE"
+    );
+  }, [user?.subscriptionPlan, user?.subscriptionStatus]);
 
-            {user && (
-                <div className="flex">
-                    <div className="max-[1080px]:hidden">
-                        <Sidebar activeMenu={activeMenu}/>
-                    </div>
+  return (
+    <div className={isVip ? "vip" : ""}>
+      <Menubar activeMenu={activeMenu} isVip={isVip} />
 
-                    <div className="grow mx-5">{children}</div>
-                </div>
-            )}
+      {user && (
+        <div className="flex">
+          <div className="max-[1080px]:hidden">
+            <Sidebar activeMenu={activeMenu} isVip={isVip} />
+          </div>
+
+          <div className="grow mx-5">{children}</div>
         </div>
-    )
-}
+      )}
+    </div>
+  );
+};
 
 export default Dashboard;
