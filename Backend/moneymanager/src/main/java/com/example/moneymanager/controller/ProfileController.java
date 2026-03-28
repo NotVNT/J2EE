@@ -22,8 +22,12 @@ public class ProfileController {
     private final ProfileService profileService;
 
     @PostMapping("/register")
-    public ResponseEntity<ProfileDTO> registerProfile(@RequestBody ProfileDTO profileDTO) {
-        ProfileDTO registeredProfile = profileService.registerProfile(profileDTO);
+    public ResponseEntity<ProfileDTO> registerProfile(
+            @RequestBody ProfileDTO profileDTO,
+            @RequestHeader(value = "X-Client-Platform", required = false) String clientPlatform
+    ) {
+        boolean isMobileClient = "mobile".equalsIgnoreCase(clientPlatform);
+        ProfileDTO registeredProfile = profileService.registerProfile(profileDTO, isMobileClient);
         return ResponseEntity.status(HttpStatus.CREATED).body(registeredProfile);
     }
 
@@ -38,9 +42,14 @@ public class ProfileController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<Map<String, Object>> login(@RequestBody AuthDTO authDTO) {
+        public ResponseEntity<Map<String, Object>> login(
+            @RequestBody AuthDTO authDTO,
+            @RequestHeader(value = "X-Client-Platform", required = false) String clientPlatform
+        ) {
         try {
-            if (!profileService.isAccountActive(authDTO.getEmail())) {
+            boolean isMobileClient = "mobile".equalsIgnoreCase(clientPlatform);
+
+            if (!isMobileClient && !profileService.isAccountActive(authDTO.getEmail())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
                         "message", "Tài khoản chưa được kích hoạt. Vui lòng kích hoạt tài khoản trước."
                 ));

@@ -6,10 +6,11 @@ const publicEndpoints = ["/login", "/register", "/activate", "/forgot-password",
 
 const http = axios.create({
   baseURL: BASE_URL,
-  timeout: 20000,
+  timeout: 70000,
   headers: {
     "Content-Type": "application/json",
-    Accept: "application/json"
+    Accept: "application/json",
+    "X-Client-Platform": "mobile"
   }
 });
 

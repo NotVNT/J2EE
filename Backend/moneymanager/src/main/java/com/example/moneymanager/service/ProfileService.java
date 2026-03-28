@@ -41,21 +41,36 @@ public class ProfileService {
     private String resetPasswordURL;
 
     public ProfileDTO registerProfile(ProfileDTO profileDTO) {
+        return registerProfile(profileDTO, false);
+    }
+
+    public ProfileDTO registerProfile(ProfileDTO profileDTO, boolean skipActivationForMobile) {
         profileRepository.findByEmail(profileDTO.getEmail()).ifPresent(profile -> {
             throw new RuntimeException("Email này đã được sử dụng.");
         });
 
         ProfileEntity newProfile = toEntity(profileDTO);
-        newProfile.setActivationToken(UUID.randomUUID().toString());
+
+        if (skipActivationForMobile) {
+            newProfile.setIsActive(true);
+            newProfile.setActivationToken(null);
+        } else {
+            newProfile.setActivationToken(UUID.randomUUID().toString());
+        }
+
         newProfile = profileRepository.save(newProfile);
-        // Gửi email kích hoạt tài khoản
-        String normalizedActivationUrl = activationURL.endsWith("/")
-                ? activationURL.substring(0, activationURL.length() - 1)
-                : activationURL;
-        String activationLink = normalizedActivationUrl + "/activate?token=" + newProfile.getActivationToken();
-        String subject = "Kích hoạt tài khoản Money Manager";
-        String body = "Nhấn vào liên kết sau để kích hoạt tài khoản của bạn: " + activationLink;
-        emailService.sendEmail(newProfile.getEmail(), subject, body);
+
+        if (!skipActivationForMobile) {
+            // Gửi email kích hoạt tài khoản
+            String normalizedActivationUrl = activationURL.endsWith("/")
+                    ? activationURL.substring(0, activationURL.length() - 1)
+                    : activationURL;
+            String activationLink = normalizedActivationUrl + "/activate?token=" + newProfile.getActivationToken();
+            String subject = "Kích hoạt tài khoản Money Manager";
+            String body = "Nhấn vào liên kết sau để kích hoạt tài khoản của bạn: " + activationLink;
+            emailService.sendEmail(newProfile.getEmail(), subject, body);
+        }
+
         return toDTO(newProfile);
     }
 
