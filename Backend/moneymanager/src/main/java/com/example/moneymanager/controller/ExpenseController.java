@@ -2,11 +2,16 @@ package com.example.moneymanager.controller;
 
 import com.example.moneymanager.dto.ExpenseDTO;
 import com.example.moneymanager.dto.ExpenseResponseDTO;
+import com.example.moneymanager.dto.ReceiptImportAnalyzeResponseDTO;
+import com.example.moneymanager.dto.ReceiptImportConfirmRequestDTO;
+import com.example.moneymanager.dto.ReceiptImportResponseDTO;
 import com.example.moneymanager.service.ExpenseService;
+import com.example.moneymanager.service.ReceiptImportService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -16,6 +21,7 @@ import java.util.List;
 public class ExpenseController {
 
     private final ExpenseService expenseService;
+    private final ReceiptImportService receiptImportService;
 
     @PostMapping
     public ResponseEntity<ExpenseResponseDTO> addExpense(@RequestBody ExpenseDTO dto) {
@@ -25,7 +31,7 @@ public class ExpenseController {
 
     @GetMapping
     public ResponseEntity<List<ExpenseDTO>> getExpenses() {
-        List<ExpenseDTO> expenses = expenseService.getCurrentMonthExpensesForCurrentUser();
+        List<ExpenseDTO> expenses = expenseService.getAllExpensesForCurrentUser();
         return ResponseEntity.ok(expenses);
     }
 
@@ -33,5 +39,26 @@ public class ExpenseController {
     public ResponseEntity<Void> deleteExpense(@PathVariable Long id) {
         expenseService.deleteExpense(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping(value = "/import-receipt", consumes = "multipart/form-data")
+    public ResponseEntity<ReceiptImportResponseDTO> importReceipt(
+            @RequestPart("file") MultipartFile file
+    ) {
+        return ResponseEntity.ok(receiptImportService.importReceipt(file));
+    }
+
+    @PostMapping(value = "/import-receipt/analyze", consumes = "multipart/form-data")
+    public ResponseEntity<ReceiptImportAnalyzeResponseDTO> analyzeReceipt(
+            @RequestPart("file") MultipartFile file
+    ) {
+        return ResponseEntity.ok(receiptImportService.analyzeReceipt(file));
+    }
+
+    @PostMapping("/import-receipt/confirm")
+    public ResponseEntity<ReceiptImportResponseDTO> confirmReceiptImport(
+            @RequestBody ReceiptImportConfirmRequestDTO requestDTO
+    ) {
+        return ResponseEntity.ok(receiptImportService.confirmImport(requestDTO));
     }
 }

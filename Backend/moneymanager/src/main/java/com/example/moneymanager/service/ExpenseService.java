@@ -65,6 +65,13 @@ public class ExpenseService {
         return list.stream().map(this::toDTO).toList();
     }
 
+    // Retrieves all expenses for current user
+    public List<ExpenseDTO> getAllExpensesForCurrentUser() {
+        ProfileEntity profile = profileService.getCurrentProfile();
+        List<ExpenseEntity> list = expenseRepository.findByProfileIdOrderByDateDesc(profile.getId());
+        return list.stream().map(this::toDTO).toList();
+    }
+
     // Delete expense by id for current user
     public void deleteExpense(Long expenseId) {
         ProfileEntity profile = profileService.getCurrentProfile();
@@ -109,6 +116,7 @@ public class ExpenseService {
         return ExpenseEntity.builder()
                 .name(dto.getName())
                 .icon(dto.getIcon())
+                .receiptLocation(dto.getReceiptLocation())
                 .amount(dto.getAmount())
                 .date(dto.getDate())
                 .profile(profile)
@@ -121,6 +129,7 @@ public class ExpenseService {
                 .id(entity.getId())
                 .name(entity.getName())
                 .icon(entity.getIcon())
+            .receiptLocation(entity.getReceiptLocation())
                 .categoryId(entity.getCategory() != null ? entity.getCategory().getId() : null)
                 .categoryName(entity.getCategory() != null ? entity.getCategory().getName() : "N/A")
                 .amount(entity.getAmount())
@@ -135,6 +144,7 @@ public class ExpenseService {
                 .id(entity.getId())
                 .name(entity.getName())
                 .icon(entity.getIcon())
+            .receiptLocation(entity.getReceiptLocation())
                 .categoryId(entity.getCategory() != null ? entity.getCategory().getId() : null)
                 .categoryName(entity.getCategory() != null ? entity.getCategory().getName() : "N/A")
                 .amount(entity.getAmount())

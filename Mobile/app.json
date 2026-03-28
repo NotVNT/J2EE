@@ -1,0 +1,23 @@
+{
+  "expo": {
+    "name": "MoneyManager Mobile",
+    "slug": "moneymanager-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "jsEngine": "hermes",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "android": {
+      "package": "com.moneymanager.mobile"
+    },
+    "ios": {
+      "bundleIdentifier": "com.moneymanager.mobile"
+    }
+  }
+}

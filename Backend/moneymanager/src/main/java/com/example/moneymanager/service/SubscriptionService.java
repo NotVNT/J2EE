@@ -31,9 +31,9 @@ public class SubscriptionService {
                 : SubscriptionPlan.FREE;
 
         return switch (effectivePlan) {
-            case BASIC -> new PlanFeatures(SubscriptionPlan.BASIC, 30, 1000, 12, true, true, true);
-            case PREMIUM -> new PlanFeatures(SubscriptionPlan.PREMIUM, -1, -1, -1, true, true, true);
-            case FREE -> new PlanFeatures(SubscriptionPlan.FREE, 10, 100, 3, false, false, false);
+            case BASIC -> new PlanFeatures(SubscriptionPlan.BASIC, 30, 1000, 12, true, true, true, false);
+            case PREMIUM -> new PlanFeatures(SubscriptionPlan.PREMIUM, -1, -1, -1, true, true, true, true);
+            case FREE -> new PlanFeatures(SubscriptionPlan.FREE, 10, 100, 3, false, false, false, false);
         };
     }
 
@@ -100,6 +100,13 @@ public class SubscriptionService {
         }
     }
 
+    public void ensureCanImportReceipt(ProfileEntity profile) {
+        PlanFeatures features = getPlanFeatures(profile);
+        if (!features.canImportReceipt) {
+            throw new RuntimeException("Tính năng import hóa đơn bằng ảnh chỉ có ở gói Premium. Vui lòng nâng cấp để sử dụng.");
+        }
+    }
+
     @Transactional
     public ProfileEntity activatePaidSubscription(ProfileEntity profile, String planId) {
         PlanCatalogItem plan = getPlanCatalogItem(planId);
@@ -140,6 +147,7 @@ public class SubscriptionService {
         private final boolean canExportReports;
         private final boolean canUseAdvancedFilters;
         private final boolean canEmailReports;
+        private final boolean canImportReceipt;
 
         public PlanFeatures(
                 SubscriptionPlan plan,
@@ -148,7 +156,8 @@ public class SubscriptionService {
                 int historyMonths,
                 boolean canExportReports,
                 boolean canUseAdvancedFilters,
-                boolean canEmailReports
+                boolean canEmailReports,
+                boolean canImportReceipt
         ) {
             this.plan = plan;
             this.categoryLimit = categoryLimit;
@@ -157,6 +166,7 @@ public class SubscriptionService {
             this.canExportReports = canExportReports;
             this.canUseAdvancedFilters = canUseAdvancedFilters;
             this.canEmailReports = canEmailReports;
+            this.canImportReceipt = canImportReceipt;
         }
     }
 
