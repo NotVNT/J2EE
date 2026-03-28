@@ -1,4 +1,4 @@
-const fallbackBaseUrl = "http://10.0.2.2:8080/api/v1.0";
+const fallbackBaseUrl = "https://money-manager-ln9d.onrender.com/api/v1.0";
 
 export const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || fallbackBaseUrl;
 
