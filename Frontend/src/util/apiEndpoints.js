@@ -1,8 +1,22 @@
 const FALLBACK_LOCAL_API_URL = "http://localhost:8080/api/v1.0";
 const FALLBACK_PROD_API_URL = "https://money-manager-ln9d.onrender.com/api/v1.0";
 
-export const BASE_URL = import.meta.env.VITE_API_BASE_URL ||
-    (import.meta.env.PROD ? FALLBACK_PROD_API_URL : FALLBACK_LOCAL_API_URL);
+const resolveApiBaseUrl = () => {
+    const envApiUrl = import.meta.env.VITE_API_BASE_URL?.trim();
+    const isEnvLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?(\/|$)/i.test(envApiUrl || "");
+
+    // On deployed domains, ignore accidental localhost env values.
+    const hostname = typeof window !== "undefined" ? window.location.hostname : "";
+    const isBrowserLocalhost = hostname === "localhost" || hostname === "127.0.0.1";
+
+    if (envApiUrl && (isBrowserLocalhost || !isEnvLocalhost)) {
+        return envApiUrl;
+    }
+
+    return isBrowserLocalhost ? FALLBACK_LOCAL_API_URL : FALLBACK_PROD_API_URL;
+};
+
+export const BASE_URL = resolveApiBaseUrl();
 export const CLOUDINARY_CLOUD_NAME =
     import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "dcr9ovybu";
 export const CLOUDINARY_UPLOAD_PRESET =
