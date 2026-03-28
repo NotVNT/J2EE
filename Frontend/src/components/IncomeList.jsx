@@ -96,7 +96,7 @@ const IncomeList = ({
                         date={moment(income.date).format('DD/MM/YYYY')}
                         amount={income.amount}
                         type="income"
-                        onDelete={() => onDelete(income.id)}
+                        onDelete={() => onDelete(income)}
                     />
                 ))}
             </div>

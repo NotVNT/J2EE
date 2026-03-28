@@ -2,6 +2,11 @@ package com.example.moneymanager.controller;
 
 import com.example.moneymanager.dto.CreatePaymentRequestDTO;
 import com.example.moneymanager.dto.CreatePaymentResponseDTO;
+import com.example.moneymanager.dto.PaymentOtpRequestDTO;
+import com.example.moneymanager.dto.PaymentOtpRequestResponseDTO;
+import com.example.moneymanager.dto.PaymentOtpVerifyRequestDTO;
+import com.example.moneymanager.dto.PaymentOtpVerifyResponseDTO;
+import com.example.moneymanager.service.PaymentOtpService;
 import com.example.moneymanager.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -18,6 +23,31 @@ import java.util.Map;
 public class PaymentController {
 
     private final PaymentService paymentService;
+    private final PaymentOtpService paymentOtpService;
+
+    @PostMapping("/otp/request")
+    public ResponseEntity<?> requestPaymentOtp(@RequestBody PaymentOtpRequestDTO requestDTO) {
+        try {
+            PaymentOtpRequestResponseDTO responseDTO = paymentOtpService.requestOtp(requestDTO);
+            return ResponseEntity.ok(responseDTO);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                    "message", e.getMessage()
+            ));
+        }
+    }
+
+    @PostMapping("/otp/verify")
+    public ResponseEntity<?> verifyPaymentOtp(@RequestBody PaymentOtpVerifyRequestDTO requestDTO) {
+        try {
+            PaymentOtpVerifyResponseDTO responseDTO = paymentOtpService.verifyOtp(requestDTO);
+            return ResponseEntity.ok(responseDTO);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                    "message", e.getMessage()
+            ));
+        }
+    }
 
     @PostMapping("/payos/create")
     public ResponseEntity<?> createPaymentLink(@RequestBody CreatePaymentRequestDTO requestDTO) {

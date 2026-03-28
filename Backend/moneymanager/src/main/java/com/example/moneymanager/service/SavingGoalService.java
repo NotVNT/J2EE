@@ -24,6 +24,7 @@ public class SavingGoalService {
     private final SavingGoalRepository goalRepository;
     private final SavingGoalContributionRepository contributionRepository;
     private final ProfileService profileService;
+    private final TransactionOtpService transactionOtpService;
 
     // ─── CREATE ──────────────────────────────────────────────────
     @Transactional
@@ -110,12 +111,27 @@ public class SavingGoalService {
     public SavingGoalContributionDTO addContribution(Long goalId, SavingGoalContributionDTO dto) {
         SavingGoalEntity goal = findGoalForCurrentUser(goalId);
 
+        if (dto == null) {
+            throw new RuntimeException("Thieu du lieu dong gop tiet kiem.");
+        }
+
         if (goal.getStatus() != GoalStatus.ACTIVE) {
             throw new RuntimeException("Không thể đóng góp vào mục tiêu đã hoàn thành hoặc đã huỷ");
         }
         if (dto.getAmount() == null || dto.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
             throw new RuntimeException("Số tiền đóng góp phải lớn hơn 0");
         }
+
+        if (dto.getContributionDate() == null) {
+            dto.setContributionDate(LocalDate.now());
+        }
+
+        String payloadHash = transactionOtpService.buildSavingGoalContributionPayloadHash(goal, dto);
+        transactionOtpService.ensureValidAuthorization(
+                dto.getTransactionAuthorizationToken(),
+                TransactionOtpService.ACTION_SAVING_GOAL_CONTRIBUTION,
+                payloadHash
+        );
 
         SavingGoalContributionEntity contribution = SavingGoalContributionEntity.builder()
                 .amount(dto.getAmount())
@@ -132,6 +148,7 @@ public class SavingGoalService {
             goal.setStatus(GoalStatus.COMPLETED);
         }
         goalRepository.save(goal);
+        transactionOtpService.markAuthorizationConsumed(dto.getTransactionAuthorizationToken());
 
         return toContributionDTO(contribution);
     }

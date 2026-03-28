@@ -9,10 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class CreatePaymentRequestDTO {
+public class PaymentOtpRequestDTO {
 
     private String planId;
-    private Long amount;
-    private String description;
-    private String paymentAuthorizationToken;
 }

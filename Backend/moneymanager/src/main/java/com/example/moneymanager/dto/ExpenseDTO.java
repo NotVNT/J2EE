@@ -22,6 +22,7 @@ public class ExpenseDTO {
     private Long categoryId;
     private BigDecimal amount;
     private LocalDate date;
+    private String transactionAuthorizationToken;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
