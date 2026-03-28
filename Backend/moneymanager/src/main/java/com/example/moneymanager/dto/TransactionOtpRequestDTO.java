@@ -7,18 +7,20 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class SavingGoalContributionDTO {
-    private Long id;
+public class TransactionOtpRequestDTO {
+
+    private String actionType;
+    private Long expenseId;
+    private Long incomeId;
     private Long goalId;
+    private String name;
+    private Long categoryId;
     private BigDecimal amount;
-    private LocalDate contributionDate;
+    private LocalDate date;
     private String note;
-    private String transactionAuthorizationToken;
-    private LocalDateTime createdAt;
 }

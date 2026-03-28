@@ -33,6 +33,7 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final ProfileService profileService;
     private final SubscriptionService subscriptionService;
+    private final PaymentOtpService paymentOtpService;
 
     @Value("${payos.return-url}")
     private String returnUrl;
@@ -46,6 +47,7 @@ public class PaymentService {
     @Transactional
     public CreatePaymentResponseDTO createPaymentLink(CreatePaymentRequestDTO requestDTO) {
         validateRequest(requestDTO);
+        paymentOtpService.ensureValidAuthorization(requestDTO.getPaymentAuthorizationToken(), requestDTO.getPlanId());
 
         ProfileEntity currentProfile = profileService.getCurrentProfile();
         SubscriptionService.PlanCatalogItem plan = subscriptionService.getPlanCatalogItem(requestDTO.getPlanId());
@@ -75,6 +77,7 @@ public class PaymentService {
                     .profile(currentProfile)
                     .build();
 
+            paymentOtpService.markAuthorizationConsumed(requestDTO.getPaymentAuthorizationToken());
             paymentEntity = paymentRepository.save(paymentEntity);
             return toDTO(paymentEntity);
         } catch (Exception e) {
@@ -155,6 +158,9 @@ public class PaymentService {
         }
         if (requestDTO.getPlanId() == null || requestDTO.getPlanId().isBlank()) {
             throw new RuntimeException("Vui lòng chọn gói dịch vụ.");
+        }
+        if (requestDTO.getPaymentAuthorizationToken() == null || requestDTO.getPaymentAuthorizationToken().isBlank()) {
+            throw new RuntimeException("Vui lòng xác thực OTP trước khi thanh toán.");
         }
     }
 

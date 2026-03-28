@@ -1,6 +1,7 @@
 package com.example.moneymanager.service;
 
 import com.example.moneymanager.dto.IncomeDTO;
+import com.example.moneymanager.dto.IncomeDeleteRequestDTO;
 import com.example.moneymanager.entity.CategoryEntity;
 import com.example.moneymanager.entity.IncomeEntity;
 import com.example.moneymanager.entity.ProfileEntity;
@@ -21,15 +22,22 @@ public class IncomeService {
     private final IncomeRepository incomeRepository;
     private final ProfileService profileService;
     private final SubscriptionService subscriptionService;
+    private final TransactionOtpService transactionOtpService;
 
     // Adds a new income to the database
     public IncomeDTO addIncome(IncomeDTO dto) {
         ProfileEntity profile = profileService.getCurrentProfile();
         subscriptionService.ensureCanCreateTransaction(profile, dto.getDate());
+        transactionOtpService.ensureValidAuthorization(
+                dto.getTransactionAuthorizationToken(),
+                "INCOME",
+                transactionOtpService.buildIncomePayloadHash(dto)
+        );
         CategoryEntity category = categoryRepository.findById(dto.getCategoryId())
                 .orElseThrow(() -> new RuntimeException("Category not found"));
         IncomeEntity newIncome = toEntity(dto, profile, category);
         newIncome = incomeRepository.save(newIncome);
+        transactionOtpService.markAuthorizationConsumed(dto.getTransactionAuthorizationToken());
         return toDTO(newIncome);
     }
 
@@ -55,14 +63,15 @@ public class IncomeService {
     }
 
     //delete income by id for current user
-    public void deleteIncome(Long incomeId) {
-        ProfileEntity profile = profileService.getCurrentProfile();
-        IncomeEntity entity = incomeRepository.findById(incomeId)
-                .orElseThrow(() -> new RuntimeException("Income not found"));
-        if (!entity.getProfile().getId().equals(profile.getId())) {
-            throw new RuntimeException("Unauthorized to delete this income");
-        }
+    public void deleteIncome(Long incomeId, IncomeDeleteRequestDTO requestDTO) {
+        IncomeEntity entity = getOwnedIncome(incomeId);
+        transactionOtpService.ensureValidAuthorization(
+                requestDTO != null ? requestDTO.getTransactionAuthorizationToken() : null,
+                TransactionOtpService.ACTION_DELETE_INCOME,
+                transactionOtpService.buildDeleteIncomePayloadHash(entity)
+        );
         incomeRepository.delete(entity);
+        transactionOtpService.markAuthorizationConsumed(requestDTO != null ? requestDTO.getTransactionAuthorizationToken() : null);
     }
 
     // Get latest 5 incomes for current user
@@ -110,5 +119,15 @@ public class IncomeService {
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .build();
+    }
+
+    public IncomeEntity getOwnedIncome(Long incomeId) {
+        ProfileEntity profile = profileService.getCurrentProfile();
+        IncomeEntity entity = incomeRepository.findById(incomeId)
+                .orElseThrow(() -> new RuntimeException("Khong tim thay thu nhap."));
+        if (entity.getProfile() == null || !entity.getProfile().getId().equals(profile.getId())) {
+            throw new RuntimeException("Ban khong co quyen xoa thu nhap nay.");
+        }
+        return entity;
     }
 }

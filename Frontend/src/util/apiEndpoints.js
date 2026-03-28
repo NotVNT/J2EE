@@ -27,6 +27,10 @@ export const API_ENDPOINTS = {
     GET_PAYMENT_BY_ORDER_CODE: (orderCode) => `/payments/${orderCode}`,
     SYNC_PAYMENT_STATUS: (orderCode) => `/payments/${orderCode}/status`,
 
+    // Transaction OTP endpoints
+    REQUEST_TRANSACTION_OTP: "/transactions/otp/request",
+    VERIFY_TRANSACTION_OTP: "/transactions/otp/verify",
+
     // Category endpoints
     GET_ALL_CATEGORIES: "/categories",
     ADD_CATEGORY: "/categories",

@@ -1,6 +1,7 @@
 package com.example.moneymanager.service;
 
 import com.example.moneymanager.dto.BudgetStatusDTO;
+import com.example.moneymanager.dto.ExpenseDeleteRequestDTO;
 import com.example.moneymanager.dto.ExpenseDTO;
 import com.example.moneymanager.dto.ExpenseResponseDTO;
 import com.example.moneymanager.entity.CategoryEntity;
@@ -26,11 +27,17 @@ public class ExpenseService {
     private final ProfileService profileService;
     private final SubscriptionService subscriptionService;
     private final BudgetService budgetService;
+    private final TransactionOtpService transactionOtpService;
 
     // Adds a new expense and checks budget status
     public ExpenseResponseDTO addExpense(ExpenseDTO dto) {
         ProfileEntity profile = profileService.getCurrentProfile();
         subscriptionService.ensureCanCreateTransaction(profile, dto.getDate());
+        transactionOtpService.ensureValidAuthorization(
+                dto.getTransactionAuthorizationToken(),
+                "EXPENSE",
+                transactionOtpService.buildExpensePayloadHash(dto)
+        );
 
         CategoryEntity category = categoryRepository.findById(dto.getCategoryId())
                 .orElseThrow(() -> new RuntimeException("Category not found"));
@@ -52,6 +59,7 @@ public class ExpenseService {
             budgetService.sendBudgetAlertEmailAsync(profile, budgetStatus);
         }
 
+        transactionOtpService.markAuthorizationConsumed(dto.getTransactionAuthorizationToken());
         return toResponseDTO(newExpense, budgetStatus);
     }
 
@@ -66,14 +74,15 @@ public class ExpenseService {
     }
 
     // Delete expense by id for current user
-    public void deleteExpense(Long expenseId) {
-        ProfileEntity profile = profileService.getCurrentProfile();
-        ExpenseEntity entity = expenseRepository.findById(expenseId)
-                .orElseThrow(() -> new RuntimeException("Expense not found"));
-        if (!entity.getProfile().getId().equals(profile.getId())) {
-            throw new RuntimeException("Unauthorized to delete this expense");
-        }
+    public void deleteExpense(Long expenseId, ExpenseDeleteRequestDTO requestDTO) {
+        ExpenseEntity entity = getOwnedExpense(expenseId);
+        transactionOtpService.ensureValidAuthorization(
+                requestDTO != null ? requestDTO.getTransactionAuthorizationToken() : null,
+                TransactionOtpService.ACTION_DELETE_EXPENSE,
+                transactionOtpService.buildDeleteExpensePayloadHash(entity)
+        );
         expenseRepository.delete(entity);
+        transactionOtpService.markAuthorizationConsumed(requestDTO != null ? requestDTO.getTransactionAuthorizationToken() : null);
     }
 
     // Get latest 5 expenses for current user
@@ -143,5 +152,15 @@ public class ExpenseService {
                 .updatedAt(entity.getUpdatedAt())
                 .budgetStatus(budgetStatus)
                 .build();
+    }
+
+    public ExpenseEntity getOwnedExpense(Long expenseId) {
+        ProfileEntity profile = profileService.getCurrentProfile();
+        ExpenseEntity entity = expenseRepository.findById(expenseId)
+                .orElseThrow(() -> new RuntimeException("Khong tim thay chi tieu."));
+        if (entity.getProfile() == null || !entity.getProfile().getId().equals(profile.getId())) {
+            throw new RuntimeException("Ban khong co quyen xoa chi tieu nay.");
+        }
+        return entity;
     }
 }
