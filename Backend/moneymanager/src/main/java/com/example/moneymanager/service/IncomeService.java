@@ -111,4 +111,24 @@ public class IncomeService {
                 .updatedAt(entity.getUpdatedAt())
                 .build();
     }
+
+    public List<IncomeDTO> getIncomesByMonthForCurrentUser(int year, int monthValue) {
+        ProfileEntity profile = profileService.getCurrentProfile();
+
+        // Tạo ngày bắt đầu và kết thúc của tháng cần lấy
+        LocalDate startDate = LocalDate.of(year, monthValue, 1);
+        LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
+
+        // Lấy danh sách thu nhập trong khoảng thời gian đó
+        List<IncomeEntity> incomes = incomeRepository.findByProfileIdAndDateBetween(
+                profile.getId(),
+                startDate,
+                endDate
+        );
+
+        // Chuyển đổi sang DTO và trả về
+        return incomes.stream()
+                .map(this::toDTO)
+                .collect(java.util.stream.Collectors.toList());
+    }
 }
