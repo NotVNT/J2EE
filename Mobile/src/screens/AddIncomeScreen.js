@@ -4,6 +4,7 @@ import { useNavigation } from "@react-navigation/native";
 import http from "../services/http";
 import { API_ENDPOINTS } from "../constants/api";
 import { getApiErrorMessage, todayIso } from "../utils/format";
+import { PickDateField } from "../utils/pickDate";
 
 export default function AddIncomeScreen() {
   const navigation = useNavigation();
@@ -83,8 +84,7 @@ export default function AddIncomeScreen() {
         placeholder="Ví dụ: 15000000"
       />
 
-      <Text style={styles.label}>Ngày (YYYY-MM-DD)</Text>
-      <TextInput style={styles.input} value={date} onChangeText={setDate} placeholder="2026-03-27" />
+      <PickDateField label="Ngày" value={date} onChange={setDate} />
 
       <Text style={styles.label}>Danh mục</Text>
       <View style={styles.categoryContainer}>

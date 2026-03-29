@@ -1,10 +1,12 @@
-import React, { useContext } from "react";
-import { NavigationContainer } from "@react-navigation/native";
+﻿import React, { useContext, useEffect, useState } from "react";
+import { NavigationContainer, useNavigation } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Text } from "react-native";
-import { AuthContext } from "../context/AuthContext";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { AuthContext } from "../components/AuthContext";
 import LoadingScreen from "../components/LoadingScreen";
+import FloatingQuickMenu, { FloatingTabButton } from "./FloatingQuickMenu";
 import LoginScreen from "../screens/LoginScreen";
 import SignupScreen from "../screens/SignupScreen";
 import ForgotPasswordScreen from "../screens/ForgotPasswordScreen";
@@ -20,72 +22,100 @@ import CategoryScreen from "../screens/CategoryScreen";
 import FilterScreen from "../screens/FilterScreen";
 import PaymentScreen from "../screens/PaymentScreen";
 import ProfileScreen from "../screens/ProfileScreen";
+import EditProfileScreen from "../screens/EditProfileScreen";
+import OnboardingScreen, { ONBOARDING_KEY } from "../screens/OnboardingScreen";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-function MainTabs() {
-  return (
-    <Tab.Navigator
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: "#0f766e"
-      }}
-    >
-      <Tab.Screen
-        name="Dashboard"
-        component={DashboardScreen}
-        options={{
-          tabBarIcon: ({ color }) => <Text style={{ color }}>📊</Text>
-        }}
-      />
-      <Tab.Screen
-        name="Expense"
-        component={ExpenseScreen}
-        options={{
-          tabBarIcon: ({ color }) => <Text style={{ color }}>💸</Text>
-        }}
-      />
-      <Tab.Screen
-        name="Income"
-        component={IncomeScreen}
-        options={{
-          tabBarIcon: ({ color }) => <Text style={{ color }}>💰</Text>
-        }}
-      />
-      <Tab.Screen
-        name="Budget"
-        component={BudgetScreen}
-        options={{
-          tabBarIcon: ({ color }) => <Text style={{ color }}>🎯</Text>
-        }}
-      />
-      <Tab.Screen
-        name="Goal"
-        component={SavingGoalScreen}
-        options={{
-          title: "Goals",
-          tabBarIcon: ({ color }) => <Text style={{ color }}>🏦</Text>
-        }}
-      />
-      <Tab.Screen
-        name="More"
-        component={MoreScreen}
-        options={{
-          tabBarIcon: ({ color }) => <Text style={{ color }}>☰</Text>
-        }}
-      />
-    </Tab.Navigator>
-  );
+function EmptyScreen() {
+  return null;
 }
 
-function AuthStack() {
+function MainTabs() {
+  const navigation = useNavigation();
+  const [isQuickMenuVisible, setIsQuickMenuVisible] = useState(false);
+
+  const openExtraScreen = (routeName) => {
+    setIsQuickMenuVisible(false);
+    navigation.navigate(routeName);
+  };
+
   return (
-    <Stack.Navigator>
-      <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="Signup" component={SignupScreen} options={{ title: "Đăng ký" }} />
-      <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ title: "Quên mật khẩu" }} />
-    </Stack.Navigator>
+    <>
+      <Tab.Navigator
+        screenOptions={{
+          headerShown: false,
+          tabBarActiveTintColor: "#22c55e",
+          tabBarInactiveTintColor: "#7b8a82",
+          tabBarLabelStyle: {
+            fontSize: 11,
+            fontWeight: "600",
+            marginBottom: 4
+          },
+          tabBarStyle: {
+            height: 66,
+            backgroundColor: "#060a09",
+            borderTopColor: "#143225"
+          },
+          tabBarItemStyle: {
+            flex: 1
+          }
+        }}
+      >
+        <Tab.Screen
+          name="Home"
+          component={DashboardScreen}
+          options={{
+            tabBarLabel: "Trang chủ",
+            tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 17, marginTop: 4 }}>🏠</Text>
+          }}
+        />
+
+        <Tab.Screen
+          name="CategoryTab"
+          component={CategoryScreen}
+          options={{
+            tabBarLabel: "Danh mục",
+            tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 17, marginTop: 4 }}>📂</Text>
+          }}
+        />
+
+        <Tab.Screen
+          name="QuickActions"
+          component={EmptyScreen}
+          options={{
+            tabBarLabel: "",
+            tabBarIcon: () => null,
+            tabBarButton: () => <FloatingTabButton onPress={() => setIsQuickMenuVisible(true)} />
+          }}
+        />
+
+        <Tab.Screen
+          name="ExpenseTab"
+          component={ExpenseScreen}
+          options={{
+            tabBarLabel: "Chi tiêu",
+            tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 17, marginTop: 4 }}>💸</Text>
+          }}
+        />
+
+        <Tab.Screen
+          name="SettingTab"
+          component={MoreScreen}
+          options={{
+            tabBarLabel: "Hồ sơ",
+            tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 17, marginTop: 4 }}>👤</Text>
+          }}
+        />
+      </Tab.Navigator>
+
+      <FloatingQuickMenu
+        visible={isQuickMenuVisible}
+        onClose={() => setIsQuickMenuVisible(false)}
+        onSelectRoute={openExtraScreen}
+      />
+    </>
   );
 }
 
@@ -93,34 +123,93 @@ function AppStack() {
   return (
     <Stack.Navigator>
       <Stack.Screen name="Main" component={MainTabs} options={{ headerShown: false }} />
-      <Stack.Screen
-        name="AddExpense"
-        component={AddExpenseScreen}
-        options={{
-          title: "Thêm chi tiêu"
-        }}
-      />
-      <Stack.Screen
-        name="AddIncome"
-        component={AddIncomeScreen}
-        options={{
-          title: "Thêm thu nhập"
-        }}
-      />
+      <Stack.Screen name="AddExpense" component={AddExpenseScreen} options={{ title: "Thêm chi tiêu" }} />
+      <Stack.Screen name="AddIncome" component={AddIncomeScreen} options={{ title: "Thêm thu nhập" }} />
+      <Stack.Screen name="Income" component={IncomeScreen} options={{ title: "Thu nhập" }} />
+      <Stack.Screen name="Budget" component={BudgetScreen} options={{ title: "Ngân sách" }} />
+      <Stack.Screen name="SavingGoal" component={SavingGoalScreen} options={{ title: "Mục tiêu tiết kiệm" }} />
+      <Stack.Screen name="More" component={MoreScreen} options={{ title: "Tiện ích khác" }} />
       <Stack.Screen name="Category" component={CategoryScreen} options={{ title: "Danh mục" }} />
       <Stack.Screen name="Filter" component={FilterScreen} options={{ title: "Lọc giao dịch" }} />
       <Stack.Screen name="Payment" component={PaymentScreen} options={{ title: "Thanh toán" }} />
       <Stack.Screen name="Profile" component={ProfileScreen} options={{ title: "Hồ sơ" }} />
+      <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: "Chỉnh sửa hồ sơ" }} />
+    </Stack.Navigator>
+  );
+}
+
+function AuthStack({ shouldShowOnboarding }) {
+  return (
+    <Stack.Navigator>
+      {shouldShowOnboarding ? (
+        <Stack.Screen name="Onboarding" component={OnboardingScreen} options={{ headerShown: false }} />
+      ) : null}
+      <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+      <Stack.Screen
+        name="Signup"
+        component={SignupScreen}
+        options={{
+          title: "",
+          headerTransparent: true,
+          headerShadowVisible: false,
+          headerBackTitleVisible: false,
+          headerTintColor: "#e8f6ea"
+        }}
+      />
+      <Stack.Screen
+        name="ForgotPassword"
+        component={ForgotPasswordScreen}
+        options={{
+          title: "",
+          headerTransparent: true,
+          headerShadowVisible: false,
+          headerBackTitleVisible: false,
+          headerTintColor: "#e8f6ea"
+        }}
+      />
     </Stack.Navigator>
   );
 }
 
 export default function AppNavigator() {
   const { user, isBootstrapping } = useContext(AuthContext);
+  const [isOnboardingResolved, setIsOnboardingResolved] = useState(false);
+  const [shouldShowOnboarding, setShouldShowOnboarding] = useState(false);
 
-  if (isBootstrapping) {
+  useEffect(() => {
+    let active = true;
+
+    const resolveOnboarding = async () => {
+      try {
+        const onboardingDone = await AsyncStorage.getItem(ONBOARDING_KEY);
+        if (active) {
+          setShouldShowOnboarding(onboardingDone !== "1");
+        }
+      } catch {
+        if (active) {
+          setShouldShowOnboarding(true);
+        }
+      } finally {
+        if (active) {
+          setIsOnboardingResolved(true);
+        }
+      }
+    };
+
+    resolveOnboarding();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  if (isBootstrapping || !isOnboardingResolved) {
     return <LoadingScreen text="Đang khởi tạo phiên đăng nhập..." />;
   }
 
-  return <NavigationContainer>{user ? <AppStack /> : <AuthStack />}</NavigationContainer>;
+  return (
+    <NavigationContainer>
+      {user ? <AppStack /> : <AuthStack shouldShowOnboarding={shouldShowOnboarding} />}
+    </NavigationContainer>
+  );
 }

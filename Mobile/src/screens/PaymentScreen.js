@@ -75,26 +75,11 @@ export default function PaymentScreen() {
         );
       })}
 
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Bước 1 - Tạo thanh toán</Text>
         <Pressable style={styles.button} onPress={createPayment} disabled={loading}>
           <Text style={styles.buttonText}>{loading ? "Đang xử lý..." : "Tạo link thanh toán"}</Text>
         </Pressable>
-      </View>
 
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Bước 2 - Đồng bộ trạng thái</Text>
-        <TextInput
-          style={styles.input}
-          value={orderCode}
-          onChangeText={setOrderCode}
-          placeholder="orderCode"
-          keyboardType="numeric"
-        />
-        <Pressable style={styles.button} onPress={syncStatus} disabled={loading}>
-          <Text style={styles.buttonText}>Đồng bộ trạng thái</Text>
-        </Pressable>
-      </View>
+
     </ScrollView>
   );
 }

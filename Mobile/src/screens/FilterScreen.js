@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import { Alert, FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import http from "../services/http";
 import { API_ENDPOINTS } from "../constants/api";
 import { formatDate, formatMoney, getApiErrorMessage, todayIso } from "../utils/format";
+import { PickDateField } from "../utils/pickDate";
 
 function TransactionItem({ item, type }) {
   return (
@@ -75,9 +76,10 @@ export default function FilterScreen() {
           </Pressable>
         </View>
 
-        <TextInput style={styles.input} value={startDate} onChangeText={setStartDate} placeholder="Từ ngày YYYY-MM-DD" />
-        <TextInput style={styles.input} value={endDate} onChangeText={setEndDate} placeholder="Đến ngày YYYY-MM-DD" />
-        <TextInput style={styles.input} value={keyword} onChangeText={setKeyword} placeholder="Từ khóa" />
+        <PickDateField label="Từ ngày" value={startDate} onChange={setStartDate} maximumDate={endDate} />
+        <PickDateField label="Đến ngày" value={endDate} onChange={setEndDate} minimumDate={startDate} />
+
+        <TextInput style={styles.input} value={keyword} onChangeText={setKeyword} placeholder="Từ khóa" placeholderTextColor="#98a2b3" />
 
         <View style={styles.row}>
           <Pressable
@@ -154,7 +156,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 11,
-    marginBottom: 10
+    marginBottom: 10,
+    color: "#101828"
   },
   row: { flexDirection: "row", gap: 8, marginBottom: 10, flexWrap: "wrap" },
   typeButton: {

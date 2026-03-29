@@ -6,7 +6,7 @@ const publicEndpoints = ["/login", "/register", "/activate", "/forgot-password",
 
 const http = axios.create({
   baseURL: BASE_URL,
-  timeout: 70000,
+  timeout: 120000,
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",

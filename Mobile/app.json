@@ -18,6 +18,9 @@
     },
     "ios": {
       "bundleIdentifier": "com.moneymanager.mobile"
-    }
+    },
+    "plugins": [
+      "@react-native-community/datetimepicker"
+    ]
   }
 }
