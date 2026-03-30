@@ -1,11 +1,13 @@
-﻿import React, { useCallback, useContext, useEffect, useState } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import React, { useCallback, useContext, useEffect, useState } from "react";
+import * as ImagePicker from "expo-image-picker";
+import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { AuthContext } from "../components/AuthContext";
 import http from "../services/http";
 import { API_ENDPOINTS } from "../constants/api";
 import { SUCCESS_ALERT_MESSAGES, SUCCESS_ALERT_TITLE } from "../constants/alertMessages";
 import { tokenStorage } from "../storage/tokenStorage";
 import { getApiErrorMessage } from "../utils/format";
+import uploadProfileImage from "../utils/uploadProfileImage";
 
 function validateEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || "").trim());
@@ -15,6 +17,8 @@ export default function EditProfileScreen() {
   const { user, refreshUser } = useContext(AuthContext);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
+  const [currentImageUrl, setCurrentImageUrl] = useState("");
+  const [profilePhoto, setProfilePhoto] = useState(null);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -24,7 +28,33 @@ export default function EditProfileScreen() {
   useEffect(() => {
     setFullName(user?.fullName || "");
     setEmail(user?.email || "");
+    setCurrentImageUrl(user?.profileImageUrl || "");
+    setProfilePhoto(null);
   }, [user]);
+
+  const onPickImage = useCallback(async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert("Permission to access media library is required to choose a profile photo.");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.85
+    });
+
+    if (!result.canceled && result.assets?.length) {
+      setProfilePhoto(result.assets[0]);
+    }
+  }, []);
+
+  const onRemoveImage = useCallback(() => {
+    setProfilePhoto(null);
+    setCurrentImageUrl("");
+  }, []);
 
   const onSave = useCallback(async () => {
     if (!fullName.trim()) {
@@ -43,20 +73,26 @@ export default function EditProfileScreen() {
         return;
       }
       if (!newPassword.trim() || newPassword.trim().length < 6) {
-        Alert.alert("Mật khẩu mới chưa hợp lệ", "Mật khẩu mới phải có ít nhất 6 ký tự.");
+        Alert.alert("Mật khẩu mới không hợp lệ", "Mật khẩu mới phải có ít nhất 6 ký tự.");
         return;
       }
       if (newPassword !== confirmPassword) {
-        Alert.alert("Xác nhận mật khẩu", "Mật khẩu xác nhận chưa khớp.");
+        Alert.alert("Xác nhận mật khẩu", "Mật khẩu xác nhận không khớp.");
         return;
       }
     }
 
     setSaving(true);
     try {
+      let profileImageUrl = currentImageUrl;
+      if (profilePhoto?.uri) {
+        profileImageUrl = await uploadProfileImage(profilePhoto);
+      }
+
       const response = await http.put(API_ENDPOINTS.UPDATE_PROFILE, {
         fullName: fullName.trim(),
         email: email.trim(),
+        profileImageUrl,
         currentPassword: showPasswordFields ? currentPassword.trim() : "",
         newPassword: showPasswordFields ? newPassword.trim() : ""
       });
@@ -67,6 +103,7 @@ export default function EditProfileScreen() {
       }
 
       await refreshUser();
+      setProfilePhoto(null);
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
@@ -77,13 +114,49 @@ export default function EditProfileScreen() {
     } finally {
       setSaving(false);
     }
-  }, [confirmPassword, currentPassword, email, fullName, newPassword, refreshUser, showPasswordFields]);
+  }, [
+    confirmPassword,
+    currentImageUrl,
+    currentPassword,
+    email,
+    fullName,
+    newPassword,
+    profilePhoto,
+    refreshUser,
+    showPasswordFields
+  ]);
+
+  const previewUri = profilePhoto?.uri || currentImageUrl;
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.card}>
         <Text style={styles.title}>Chỉnh sửa hồ sơ</Text>
         <Text style={styles.subtitle}>Cập nhật thông tin cá nhân và mật khẩu theo nhu cầu của bạn.</Text>
+
+        <View style={styles.avatarSection}>
+          <View style={styles.avatarWrap}>
+            <View style={styles.avatarFrame}>
+              {previewUri ? (
+                <Image source={{ uri: previewUri }} style={styles.avatarImage} />
+              ) : (
+                <View style={styles.avatarPlaceholder}>
+                  <Text style={styles.avatarPlaceholderText}>{(fullName || "U").slice(0, 1).toUpperCase()}</Text>
+                </View>
+              )}
+            </View>
+
+            <Pressable style={styles.avatarEditButton} onPress={onPickImage}>
+              <Text style={styles.avatarEditButtonText}>✎</Text>
+            </Pressable>
+          </View>
+
+          {previewUri ? (
+            <Pressable style={styles.removeAvatarButton} onPress={onRemoveImage}>
+              <Text style={styles.removeAvatarButtonText}>Xóa ảnh hiện tại</Text>
+            </Pressable>
+          ) : null}
+        </View>
 
         <Text style={styles.label}>Họ và tên</Text>
         <TextInput
@@ -155,6 +228,73 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#e2e8f0",
     padding: 14
+  },
+  avatarSection: {
+    alignItems: "center",
+    marginBottom: 10
+  },
+  avatarWrap: {
+    position: "relative"
+  },
+  avatarFrame: {
+    width: 108,
+    height: 108,
+    borderRadius: 999,
+    padding: 6,
+    backgroundColor: "#eff6ff",
+    borderWidth: 1,
+    borderColor: "#bfdbfe"
+  },
+  avatarImage: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 999,
+    borderWidth: 2,
+    borderColor: "#dbeafe",
+    backgroundColor: "#e2e8f0",
+    overflow: "hidden"
+  },
+  avatarPlaceholder: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 999,
+    borderWidth: 2,
+    borderColor: "#dbeafe",
+    backgroundColor: "#e2e8f0",
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden"
+  },
+  avatarPlaceholderText: {
+    color: "#334155",
+    fontWeight: "800",
+    fontSize: 28
+  },
+  avatarEditButton: {
+    position: "absolute",
+    right: -6,
+    bottom: -2,
+    minWidth: 34,
+    height: 30,
+    borderRadius: 999,
+    backgroundColor: "#ffffff",
+    borderWidth: 1,
+    borderColor: "#93c5fd",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 8
+  },
+  avatarEditButtonText: {
+    color: "#1d4ed8",
+    fontWeight: "700",
+    fontSize: 12
+  },
+  removeAvatarButton: {
+    marginTop: 8
+  },
+  removeAvatarButtonText: {
+    color: "#b91c1c",
+    fontWeight: "600"
   },
   title: {
     color: "#0f172a",

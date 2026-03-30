@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { Alert, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import http from "../services/http";
 import { API_ENDPOINTS } from "../constants/api";
 import { getApiErrorMessage } from "../utils/format";
+import devbotLogo from "../assets/devbot.png";
 
 export default function ForgotPasswordScreen() {
   const navigation = useNavigation();
@@ -30,57 +31,140 @@ export default function ForgotPasswordScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Quên mật khẩu</Text>
-      <Text style={styles.subtitle}>Nhập email để nhận liên kết đặt lại mật khẩu.</Text>
+    <View style={styles.screen}>
+      <View style={styles.bgGlowTop} />
+      <View style={styles.bgGlowBottom} />
 
-      <TextInput
-        style={styles.input}
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-        placeholder="Email"
-        placeholderTextColor="#94a3b8"
-      />
+      <ScrollView
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.brandRow}>
+          <Image source={devbotLogo} style={styles.brandLogo} resizeMode="contain" />
+        </View>
 
-      <Pressable style={[styles.button, loading && styles.buttonDisabled]} onPress={onSend} disabled={loading}>
-        <Text style={styles.buttonText}>{loading ? "Đang gửi..." : "Gửi yêu cầu"}</Text>
-      </Pressable>
+        <Text style={styles.title}>Quên mật khẩu</Text>
+        <Text style={styles.subtitle}>Nhập email để nhận liên kết đặt lại mật khẩu.</Text>
 
-      <Pressable onPress={() => navigation.navigate("Login")}>
-        <Text style={styles.link}>Quay lại đăng nhập</Text>
-      </Pressable>
+        <View style={styles.formCard}>
+          <View style={styles.inputWrap}>
+            <TextInput
+              style={styles.input}
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              placeholder="Nhập email"
+              placeholderTextColor="#7f9085"
+            />
+          </View>
+
+          <Pressable style={[styles.actionButton, loading && styles.actionButtonDisabled]} onPress={onSend} disabled={loading}>
+            <Text style={styles.actionButtonText}>{loading ? "Đang gửi..." : "Gửi yêu cầu"}</Text>
+          </Pressable>
+
+          <Pressable style={styles.backButton} onPress={() => navigation.navigate("Login")}>
+            <Text style={styles.backButtonText}>Quay lại đăng nhập</Text>
+          </Pressable>
+        </View>
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
-    backgroundColor: "#f8fafc",
-    padding: 16,
-    justifyContent: "center"
+    backgroundColor: "#05070b"
   },
-  title: { fontSize: 28, fontWeight: "700", color: "#0f172a", marginBottom: 8 },
-  subtitle: { color: "#475569", marginBottom: 16 },
-  input: {
-    backgroundColor: "#fff",
+  bgGlowTop: {
+    position: "absolute",
+    top: -120,
+    left: -100,
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    backgroundColor: "rgba(58, 255, 98, 0.24)"
+  },
+  bgGlowBottom: {
+    position: "absolute",
+    right: -140,
+    bottom: -120,
+    width: 320,
+    height: 320,
+    borderRadius: 160,
+    backgroundColor: "rgba(58, 255, 98, 0.18)"
+  },
+  content: {
+    flexGrow: 1,
+    justifyContent: "center",
+    paddingHorizontal: 16,
+    paddingTop: 70,
+    paddingBottom: 30
+  },
+  brandRow: {
+    alignSelf: "center",
+    marginBottom: 20
+  },
+  brandLogo: {
+    width: 220,
+    height: 72
+  },
+  title: {
+    color: "#f3faf4",
+    fontSize: 24,
+    fontWeight: "700",
+    textAlign: "center"
+  },
+  subtitle: {
+    marginTop: 8,
+    color: "#9ca9a1",
+    fontSize: 13,
+    textAlign: "center"
+  },
+  formCard: {
+    marginTop: 24,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    marginBottom: 12,
-    color: "#0f172a"
+    borderColor: "rgba(57, 220, 61, 0.2)",
+    backgroundColor: "rgba(7, 12, 10, 0.84)",
+    padding: 14
   },
-  button: {
-    backgroundColor: "#0f766e",
-    borderRadius: 12,
-    paddingVertical: 13,
+  inputWrap: {
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#1f2b23",
+    backgroundColor: "#0d1512",
+    marginBottom: 10
+  },
+  input: {
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    color: "#f0f5f2"
+  },
+  actionButton: {
+    marginTop: 4,
+    borderRadius: 10,
+    backgroundColor: "#39dc3d",
+    paddingVertical: 12,
     alignItems: "center"
   },
-  buttonDisabled: { opacity: 0.6 },
-  buttonText: { color: "#fff", fontWeight: "700" },
-  link: { textAlign: "center", marginTop: 12, color: "#0f766e", fontWeight: "600" }
+  actionButtonDisabled: {
+    opacity: 0.7
+  },
+  actionButtonText: {
+    color: "#082209",
+    fontSize: 15,
+    fontWeight: "800"
+  },
+  backButton: {
+    marginTop: 12,
+    alignItems: "center"
+  },
+  backButtonText: {
+    color: "#39dc3d",
+    fontSize: 12,
+    fontWeight: "700"
+  }
 });

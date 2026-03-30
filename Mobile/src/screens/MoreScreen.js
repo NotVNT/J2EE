@@ -13,12 +13,9 @@ function UserAvatar({ fullName }) {
   );
 }
 
-function MenuCard({ title, description, tag, onPress }) {
+function MenuCard({ title, description, onPress }) {
   return (
     <Pressable style={styles.menuCard} onPress={onPress}>
-      <View style={styles.menuTagWrap}>
-        <Text style={styles.menuTagText}>{tag}</Text>
-      </View>
 
       <View style={styles.menuBody}>
         <Text style={styles.menuTitle}>{title}</Text>
@@ -40,25 +37,17 @@ export default function MoreScreen() {
       </View>
 
       <MenuCard
-        tag="TK"
         title="Hồ sơ cá nhân"
         description="Xem chi tiết thông tin tài khoản của bạn"
         onPress={() => navigation.navigate("Profile")}
       />
 
       <MenuCard
-        tag="GOI"
         title="Thanh toán"
         description="Nâng cấp gói và kiểm tra trạng thái giao dịch"
         onPress={() => navigation.navigate("Payment")}
       />
 
-      <MenuCard
-        tag="SUA"
-        title="Chỉnh sửa hồ sơ"
-        description="Cập nhật tên, email, ảnh và mật khẩu"
-        onPress={() => navigation.navigate("EditProfile")}
-      />
      
     </ScrollView>
   );
@@ -144,21 +133,6 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     flexDirection: "row",
     alignItems: "center"
-  },
-  menuTagWrap: {
-    width: 42,
-    height: 42,
-    borderRadius: 12,
-    backgroundColor: "#e8fff4",
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "#bbf7d0"
-  },
-  menuTagText: {
-    color: "#047857",
-    fontSize: 11,
-    fontWeight: "800"
   },
   menuBody: {
     flex: 1,

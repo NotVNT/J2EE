@@ -55,13 +55,14 @@ public class CategoryService {
         return toDTO(existingCategory);
     }
 
-    public void deleteCategory(Long categoryId) {
+    public CategoryDTO updateCategoryIcon(Long categoryId, String icon) {
         ProfileEntity profile = profileService.getCurrentProfile();
         CategoryEntity existingCategory = categoryRepository.findByIdAndProfileId(categoryId, profile.getId())
                 .orElseThrow(() -> new RuntimeException("Category not found or not accessible"));
-        categoryRepository.delete(existingCategory);
+        existingCategory.setIcon(icon);
+        existingCategory = categoryRepository.save(existingCategory);
+        return toDTO(existingCategory);
     }
-
     //helper methods
     private CategoryEntity toEntity(CategoryDTO categoryDTO, ProfileEntity profile) {
         return CategoryEntity.builder()

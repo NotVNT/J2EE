@@ -20,7 +20,7 @@ const TYPE_META = {
   }
 };
 
-function CategoryItem({ item, onEditIcon, onDelete }) {
+function CategoryItem({ item, onEditCategory }) {
   const normalizedType = String(item?.type || "").toLowerCase();
   const meta = TYPE_META[normalizedType] || {
     label: (item?.type || "-").toString().toUpperCase(),
@@ -43,11 +43,8 @@ function CategoryItem({ item, onEditIcon, onDelete }) {
         </View>
 
         <View style={styles.itemActionRow}>
-          <Pressable style={styles.itemEditBtn} onPress={() => onEditIcon(item)}>
-            <Text style={styles.itemEditText}>Sửa icon</Text>
-          </Pressable>
-          <Pressable style={styles.itemDeleteBtn} onPress={() => onDelete(item)}>
-            <Text style={styles.itemDeleteText}>Xóa</Text>
+          <Pressable style={styles.itemEditBtn} onPress={() => onEditCategory(item)}>
+            <Text style={styles.itemEditText}>🔄 Chỉnh sửa</Text>
           </Pressable>
         </View>
       </View>
@@ -66,15 +63,13 @@ export default function CategoryScreen() {
   const [isIconDropdownOpen, setIsIconDropdownOpen] = useState(false);
 
   const [editingCategory, setEditingCategory] = useState(null);
+  const [editName, setEditName] = useState("");
+  const [editType, setEditType] = useState("income");
   const [editIcon, setEditIcon] = useState(getFirstCategoryIcon("income"));
-  const [editingIconSaving, setEditingIconSaving] = useState(false);
+  const [editingCategorySaving, setEditingCategorySaving] = useState(false);
 
   const iconOptions = useMemo(() => getCategoryIconPresets(type), [type]);
-  const editIconOptions = useMemo(() => {
-    const editType = String(editingCategory?.type || "").toLowerCase();
-    if (!editType) return [];
-    return getCategoryIconPresets(editType);
-  }, [editingCategory]);
+  const editIconOptions = useMemo(() => getCategoryIconPresets(editType), [editType]);
 
   useEffect(() => {
     const hasSelectedIcon = iconOptions.some((option) => option.value === selectedIcon);
@@ -148,95 +143,63 @@ export default function CategoryScreen() {
     }
   };
 
-  const onOpenEditIcon = (category) => {
+  const onOpenEditCategory = (category) => {
     if (!category?.id) return;
+    const normalizedType = String(category.type || "income").toLowerCase() === "expense" ? "expense" : "income";
     setEditingCategory(category);
-    setEditIcon(String(category.icon || getFirstCategoryIcon(String(category.type || "expense").toLowerCase())));
+    setEditName(String(category.name || ""));
+    setEditType(normalizedType);
+    setEditIcon(String(category.icon || getFirstCategoryIcon(normalizedType)));
   };
 
-  const onCloseEditIcon = () => {
+  const onCloseEditCategory = () => {
     setEditingCategory(null);
+    setEditName("");
+    setEditType("income");
     setEditIcon(getFirstCategoryIcon("income"));
-    setEditingIconSaving(false);
+    setEditingCategorySaving(false);
   };
 
-  const onUpdateCategoryIcon = async () => {
+  useEffect(() => {
     if (!editingCategory?.id) return;
-    setEditingIconSaving(true);
+    const iconExists = editIconOptions.some((option) => option.value === editIcon);
+    if (!iconExists) {
+      setEditIcon(getFirstCategoryIcon(editType));
+    }
+  }, [editIcon, editIconOptions, editType, editingCategory]);
+
+  const onUpdateCategory = async () => {
+    if (!editingCategory?.id) return;
+    const normalizedName = editName.trim();
+    if (!normalizedName) {
+      Alert.alert("Thiếu dữ liệu", "Vui lòng nhập tên danh mục.");
+      return;
+    }
+
+    const isDuplicate = categories.some((category) => {
+      const sameName = String(category?.name || "").trim().toLowerCase() === normalizedName.toLowerCase();
+      const notCurrentCategory = Number(category?.id) !== Number(editingCategory.id);
+      return sameName && notCurrentCategory;
+    });
+    if (isDuplicate) {
+      Alert.alert("Trùng danh mục", "Tên danh mục đã tồn tại.");
+      return;
+    }
+
+    setEditingCategorySaving(true);
     try {
       await http.put(API_ENDPOINTS.UPDATE_CATEGORY(editingCategory.id), {
-        name: editingCategory.name,
-        type: editingCategory.type,
+        name: normalizedName,
+        type: editType,
         icon: editIcon
       });
       await fetchCategories();
-      onCloseEditIcon();
-      Alert.alert(SUCCESS_ALERT_TITLE, "Đã cập nhật icon danh mục thành công.");
+      onCloseEditCategory();
+      Alert.alert(SUCCESS_ALERT_TITLE, SUCCESS_ALERT_MESSAGES.update.category);
     } catch (error) {
-      Alert.alert("Cập nhật thất bại", getApiErrorMessage(error, "Không thể cập nhật icon danh mục"));
-      setEditingIconSaving(false);
+      Alert.alert("Cập nhật thất bại", getApiErrorMessage(error, "Không thể cập nhật danh mục"));
+      setEditingCategorySaving(false);
     }
-  };
-
-  const deleteRelatedByCategory = async (category) => {
-    const categoryId = Number(category?.id);
-    const normalizedType = String(category?.type || "").toLowerCase();
-
-    if (!Number.isFinite(categoryId)) return;
-
-    if (normalizedType === "expense") {
-      const expenseRes = await http.get(API_ENDPOINTS.GET_ALL_EXPENSE);
-      const expenses = Array.isArray(expenseRes.data) ? expenseRes.data : [];
-      const targetExpenses = expenses.filter((item) => Number(item?.categoryId) === categoryId);
-
-      for (const expense of targetExpenses) {
-        await http.delete(API_ENDPOINTS.DELETE_EXPENSE(expense.id));
-      }
-
-      const budgetRes = await http.get(API_ENDPOINTS.GET_BUDGETS);
-      const budgets = Array.isArray(budgetRes.data) ? budgetRes.data : [];
-      const targetBudgets = budgets.filter((item) => Number(item?.categoryId) === categoryId);
-
-      for (const budget of targetBudgets) {
-        await http.delete(API_ENDPOINTS.DELETE_BUDGET(budget.id));
-      }
-    }
-
-    if (normalizedType === "income") {
-      const incomeRes = await http.get(API_ENDPOINTS.GET_ALL_INCOMES);
-      const incomes = Array.isArray(incomeRes.data) ? incomeRes.data : [];
-      const targetIncomes = incomes.filter((item) => Number(item?.categoryId) === categoryId);
-
-      for (const income of targetIncomes) {
-        await http.delete(API_ENDPOINTS.DELETE_INCOME(income.id));
-      }
-    }
-  };
-
-  const onDeleteCategory = (category) => {
-    if (!category?.id) return;
-
-    Alert.alert(
-      "Xác nhận xóa",
-      "Hệ thống sẽ xóa giao dịch liên quan trước, sau đó xóa danh mục. Bạn muốn tiếp tục?",
-      [
-        { text: "Hủy", style: "cancel" },
-        {
-          text: "Xóa",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await deleteRelatedByCategory(category);
-              await http.delete(API_ENDPOINTS.DELETE_CATEGORY(category.id));
-              await fetchCategories();
-              Alert.alert(SUCCESS_ALERT_TITLE, "Đã xóa danh mục thành công.");
-            } catch (error) {
-              Alert.alert("Xóa thất bại", getApiErrorMessage(error, "Không thể xóa danh mục"));
-            }
-          }
-        }
-      ]
-    );
   };
 
   return (
@@ -334,7 +297,7 @@ export default function CategoryScreen() {
       <FlatList
         data={categories}
         keyExtractor={(item) => String(item?.id)}
-        renderItem={({ item }) => <CategoryItem item={item} onEditIcon={onOpenEditIcon} onDelete={onDeleteCategory} />}
+        renderItem={({ item }) => <CategoryItem item={item} onEditCategory={onOpenEditCategory} />}
         contentContainerStyle={styles.listContent}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         ListHeaderComponent={
@@ -354,11 +317,36 @@ export default function CategoryScreen() {
         }
       />
 
-      <Modal visible={Boolean(editingCategory)} transparent animationType="slide" onRequestClose={onCloseEditIcon}>
+      <Modal visible={Boolean(editingCategory)} transparent animationType="slide" onRequestClose={onCloseEditCategory}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Sửa icon danh mục</Text>
-            <Text style={styles.modalSubTitle}>{editingCategory?.name}</Text>
+            <Text style={styles.modalTitle}>Chỉnh sửa danh mục</Text>
+            <Text style={styles.modalSubTitle}>Cập nhật tên, loại và icon</Text>
+
+            <Text style={styles.inputLabel}>Tên danh mục</Text>
+            <TextInput
+              style={styles.input}
+              value={editName}
+              onChangeText={setEditName}
+              placeholder="Ví dụ: Ăn uống"
+              placeholderTextColor="#98a2b3"
+            />
+
+            <Text style={styles.inputLabel}>Loại danh mục</Text>
+            <View style={styles.typeRow}>
+              <Pressable
+                style={[styles.typeButton, styles.typeButtonLeft, editType === "income" && styles.typeButtonActiveIncome]}
+                onPress={() => setEditType("income")}
+              >
+                <Text style={[styles.typeText, editType === "income" && styles.typeTextActive]}>Thu nhập</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.typeButton, editType === "expense" && styles.typeButtonActiveExpense]}
+                onPress={() => setEditType("expense")}
+              >
+                <Text style={[styles.typeText, editType === "expense" && styles.typeTextActive]}>Chi tiêu</Text>
+              </Pressable>
+            </View>
 
             <View style={styles.modalIconPreview}>
               <CategoryVectorIcon iconValue={editIcon} size={24} />
@@ -383,15 +371,15 @@ export default function CategoryScreen() {
             />
 
             <View style={styles.modalActions}>
-              <Pressable style={styles.modalCancelBtn} onPress={onCloseEditIcon} disabled={editingIconSaving}>
+              <Pressable style={styles.modalCancelBtn} onPress={onCloseEditCategory} disabled={editingCategorySaving}>
                 <Text style={styles.modalCancelText}>Hủy</Text>
               </Pressable>
               <Pressable
-                style={[styles.modalSaveBtn, editingIconSaving && styles.saveButtonDisabled]}
-                onPress={onUpdateCategoryIcon}
-                disabled={editingIconSaving}
+                style={[styles.modalSaveBtn, editingCategorySaving && styles.saveButtonDisabled]}
+                onPress={onUpdateCategory}
+                disabled={editingCategorySaving}
               >
-                <Text style={styles.modalSaveText}>{editingIconSaving ? "Đang lưu..." : "Lưu icon"}</Text>
+                <Text style={styles.modalSaveText}>{editingCategorySaving ? "Đang lưu..." : "Lưu thay đổi"}</Text>
               </Pressable>
             </View>
           </View>
@@ -596,19 +584,9 @@ const styles = StyleSheet.create({
     borderColor: "#dbe8ff",
     borderRadius: 999,
     paddingHorizontal: 10,
-    paddingVertical: 4,
-    marginRight: 6
-  },
-  itemEditText: { color: "#175cd3", fontSize: 12, fontWeight: "700" },
-  itemDeleteBtn: {
-    backgroundColor: "#fef3f2",
-    borderWidth: 1,
-    borderColor: "#fecdca",
-    borderRadius: 999,
-    paddingHorizontal: 10,
     paddingVertical: 4
   },
-  itemDeleteText: { color: "#b42318", fontSize: 12, fontWeight: "700" },
+  itemEditText: { color: "#175cd3", fontSize: 12, fontWeight: "700" },
   emptyState: { alignItems: "center", marginTop: 44, paddingHorizontal: 24 },
   emptyIcon: { fontSize: 36, marginBottom: 8 },
   emptyTitle: { fontSize: 16, fontWeight: "800", color: "#101828", marginBottom: 6 },

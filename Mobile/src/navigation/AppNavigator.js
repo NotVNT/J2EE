@@ -166,6 +166,7 @@ function AuthStack({ shouldShowOnboarding }) {
           title: "",
           headerTransparent: true,
           headerShadowVisible: false,
+          headerBackVisible: false,
           headerBackTitleVisible: false,
           headerTintColor: "#e8f6ea"
         }}
@@ -177,6 +178,7 @@ function AuthStack({ shouldShowOnboarding }) {
           title: "",
           headerTransparent: true,
           headerShadowVisible: false,
+          headerBackVisible: false,
           headerBackTitleVisible: false,
           headerTintColor: "#e8f6ea"
         }}

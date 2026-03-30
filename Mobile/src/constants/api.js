@@ -1,6 +1,8 @@
 const FALLBACK_PROD_API_URL = "https://money-manager-ln9d.onrender.com/api/v1.0";
 
 export const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || FALLBACK_PROD_API_URL;
+export const CLOUDINARY_CLOUD_NAME = process.env.EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME || "dcr9ovybu";
+export const CLOUDINARY_UPLOAD_PRESET = process.env.EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "moneymanager";
 
 export const API_ENDPOINTS = {
   // Health
@@ -59,5 +61,8 @@ export const API_ENDPOINTS = {
   VERIFY_PAYMENT_OTP: "/payments/otp/verify",
   CREATE_PAYMENT: "/payments/payos/create",
   GET_PAYMENT_BY_ORDER_CODE: (orderCode) => `/payments/${orderCode}`,
-  SYNC_PAYMENT_STATUS: (orderCode) => `/payments/${orderCode}/status`
+  SYNC_PAYMENT_STATUS: (orderCode) => `/payments/${orderCode}/status`,
+
+  // Image upload
+  UPLOAD_IMAGE: `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`
 };
