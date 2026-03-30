@@ -3,6 +3,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 
 import { AuthContext } from "../components/AuthContext";
 import http from "../services/http";
 import { API_ENDPOINTS } from "../constants/api";
+import { SUCCESS_ALERT_MESSAGES, SUCCESS_ALERT_TITLE } from "../constants/alertMessages";
 import { tokenStorage } from "../storage/tokenStorage";
 import { getApiErrorMessage } from "../utils/format";
 
@@ -70,7 +71,7 @@ export default function EditProfileScreen() {
       setNewPassword("");
       setConfirmPassword("");
       setShowPasswordFields(false);
-      Alert.alert("Thành công", "Đã cập nhật hồ sơ.");
+      Alert.alert(SUCCESS_ALERT_TITLE, SUCCESS_ALERT_MESSAGES.update.profile);
     } catch (error) {
       Alert.alert("Cập nhật thất bại", getApiErrorMessage(error, "Không thể cập nhật hồ sơ."));
     } finally {

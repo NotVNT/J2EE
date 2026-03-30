@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import http from "../services/http";
 import { API_ENDPOINTS } from "../constants/api";
+import { SUCCESS_ALERT_MESSAGES, SUCCESS_ALERT_TITLE } from "../constants/alertMessages";
 import { getApiErrorMessage, todayIso } from "../utils/format";
 import { PickDateField } from "../utils/pickDate";
 
@@ -62,7 +63,12 @@ export default function AddExpenseScreen() {
         icon: "💸"
       });
 
-      navigation.goBack();
+      Alert.alert(SUCCESS_ALERT_TITLE, SUCCESS_ALERT_MESSAGES.create.expense, [
+        {
+          text: "OK",
+          onPress: () => navigation.goBack()
+        }
+      ]);
     } catch (error) {
       Alert.alert("Lưu thất bại", getApiErrorMessage(error, "Không thể tạo khoản chi"));
     } finally {
@@ -134,23 +140,27 @@ const styles = StyleSheet.create({
   categoryContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
+    justifyContent: "space-between",
     marginBottom: 16
   },
   categoryChip: {
+    width: "48%",
     borderWidth: 1,
     borderColor: "#cbd5e1",
-    borderRadius: 999,
-    paddingHorizontal: 12,
+    borderRadius: 12,
+    paddingHorizontal: 10,
     paddingVertical: 8,
-    backgroundColor: "#fff"
+    backgroundColor: "#fff",
+    marginBottom: 8,
+    alignItems: "center"
   },
   categoryChipActive: {
     borderColor: "#0f766e",
     backgroundColor: "#ccfbf1"
   },
   categoryText: {
-    color: "#334155"
+    color: "#334155",
+    textAlign: "center"
   },
   categoryTextActive: {
     color: "#115e59",

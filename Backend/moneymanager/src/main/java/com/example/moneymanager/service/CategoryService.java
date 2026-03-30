@@ -55,6 +55,13 @@ public class CategoryService {
         return toDTO(existingCategory);
     }
 
+    public void deleteCategory(Long categoryId) {
+        ProfileEntity profile = profileService.getCurrentProfile();
+        CategoryEntity existingCategory = categoryRepository.findByIdAndProfileId(categoryId, profile.getId())
+                .orElseThrow(() -> new RuntimeException("Category not found or not accessible"));
+        categoryRepository.delete(existingCategory);
+    }
+
     //helper methods
     private CategoryEntity toEntity(CategoryDTO categoryDTO, ProfileEntity profile) {
         return CategoryEntity.builder()

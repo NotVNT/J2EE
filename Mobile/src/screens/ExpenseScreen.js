@@ -3,6 +3,7 @@ import { Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } fr
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import http from "../services/http";
 import { API_ENDPOINTS } from "../constants/api";
+import { SUCCESS_ALERT_MESSAGES, SUCCESS_ALERT_TITLE } from "../constants/alertMessages";
 import { formatDate, formatMoney, getApiErrorMessage } from "../utils/format";
 
 function ExpenseItem({ item, onDelete }) {
@@ -68,6 +69,7 @@ export default function ExpenseScreen() {
           try {
             await http.delete(API_ENDPOINTS.DELETE_EXPENSE(id));
             await fetchExpenses();
+            Alert.alert(SUCCESS_ALERT_TITLE, SUCCESS_ALERT_MESSAGES.delete.expense);
           } catch (error) {
             Alert.alert("Xóa thất bại", getApiErrorMessage(error, "Không thể xóa khoản chi này"));
           }

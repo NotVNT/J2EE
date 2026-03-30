@@ -1,15 +1,11 @@
-﻿import React, { useCallback, useMemo, useState } from "react";
-import { Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from "react-native";
+﻿import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Alert, FlatList, Modal, Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import http from "../services/http";
 import { API_ENDPOINTS } from "../constants/api";
+import { SUCCESS_ALERT_MESSAGES, SUCCESS_ALERT_TITLE } from "../constants/alertMessages";
 import { getApiErrorMessage } from "../utils/format";
-
-const DEFAULT_ICON = "📁";
-const ICON_PRESETS = {
-  income: ["💵", "💼", "🎁", "🏦", "📈"],
-  expense: ["🍜", "🛒", "🚗", "🏠", "💊"]
-};
+import { CategoryVectorIcon, getCategoryIconPresets, getFirstCategoryIcon, getIconLabel } from "../utils/VectorIcons";
 
 const TYPE_META = {
   expense: {
@@ -24,7 +20,7 @@ const TYPE_META = {
   }
 };
 
-function CategoryItem({ item }) {
+function CategoryItem({ item, onEditIcon, onDelete }) {
   const normalizedType = String(item?.type || "").toLowerCase();
   const meta = TYPE_META[normalizedType] || {
     label: (item?.type || "-").toString().toUpperCase(),
@@ -36,13 +32,24 @@ function CategoryItem({ item }) {
     <View style={styles.itemCard}>
       <View style={styles.itemLeft}>
         <View style={styles.itemIconBubble}>
-          <Text style={styles.itemIconText}>{item?.icon || DEFAULT_ICON}</Text>
+          <CategoryVectorIcon iconValue={item?.icon} size={18} style={styles.itemIconText} />
         </View>
         <Text style={styles.itemName}>{item?.name || "Chưa đặt tên"}</Text>
       </View>
 
-      <View style={[styles.typeChip, { backgroundColor: meta.chipBg }]}>
-        <Text style={[styles.typeChipText, { color: meta.chipText }]}>{meta.label}</Text>
+      <View style={styles.itemRight}>
+        <View style={[styles.typeChip, { backgroundColor: meta.chipBg }]}>
+          <Text style={[styles.typeChipText, { color: meta.chipText }]}>{meta.label}</Text>
+        </View>
+
+        <View style={styles.itemActionRow}>
+          <Pressable style={styles.itemEditBtn} onPress={() => onEditIcon(item)}>
+            <Text style={styles.itemEditText}>Sửa icon</Text>
+          </Pressable>
+          <Pressable style={styles.itemDeleteBtn} onPress={() => onDelete(item)}>
+            <Text style={styles.itemDeleteText}>Xóa</Text>
+          </Pressable>
+        </View>
       </View>
     </View>
   );
@@ -54,9 +61,27 @@ export default function CategoryScreen() {
   const [saving, setSaving] = useState(false);
 
   const [name, setName] = useState("");
-  const [icon, setIcon] = useState(DEFAULT_ICON);
   const [type, setType] = useState("income");
+  const [selectedIcon, setSelectedIcon] = useState(getFirstCategoryIcon("income"));
   const [isIconDropdownOpen, setIsIconDropdownOpen] = useState(false);
+
+  const [editingCategory, setEditingCategory] = useState(null);
+  const [editIcon, setEditIcon] = useState(getFirstCategoryIcon("income"));
+  const [editingIconSaving, setEditingIconSaving] = useState(false);
+
+  const iconOptions = useMemo(() => getCategoryIconPresets(type), [type]);
+  const editIconOptions = useMemo(() => {
+    const editType = String(editingCategory?.type || "").toLowerCase();
+    if (!editType) return [];
+    return getCategoryIconPresets(editType);
+  }, [editingCategory]);
+
+  useEffect(() => {
+    const hasSelectedIcon = iconOptions.some((option) => option.value === selectedIcon);
+    if (!hasSelectedIcon) {
+      setSelectedIcon(getFirstCategoryIcon(type));
+    }
+  }, [iconOptions, selectedIcon, type]);
 
   const formHint = useMemo(() => {
     if (type === "income") {
@@ -64,7 +89,6 @@ export default function CategoryScreen() {
     }
     return "Gợi ý: Ăn uống, Di chuyển, Giải trí...";
   }, [type]);
-  const currentIconPresets = ICON_PRESETS[type] || ICON_PRESETS.expense;
 
   const fetchCategories = useCallback(async () => {
     const response = await http.get(API_ENDPOINTS.GET_ALL_CATEGORIES);
@@ -107,20 +131,112 @@ export default function CategoryScreen() {
     try {
       await http.post(API_ENDPOINTS.ADD_CATEGORY, {
         name: normalizedName,
-        icon: icon.trim() || DEFAULT_ICON,
+        icon: selectedIcon,
         type
       });
 
       setName("");
-      setIcon(DEFAULT_ICON);
       setType("income");
+      setSelectedIcon(getFirstCategoryIcon("income"));
       setIsIconDropdownOpen(false);
       await fetchCategories();
+      Alert.alert(SUCCESS_ALERT_TITLE, SUCCESS_ALERT_MESSAGES.create.category);
     } catch (error) {
       Alert.alert("Lưu thất bại", getApiErrorMessage(error, "Không thể thêm danh mục"));
     } finally {
       setSaving(false);
     }
+  };
+
+  const onOpenEditIcon = (category) => {
+    if (!category?.id) return;
+    setEditingCategory(category);
+    setEditIcon(String(category.icon || getFirstCategoryIcon(String(category.type || "expense").toLowerCase())));
+  };
+
+  const onCloseEditIcon = () => {
+    setEditingCategory(null);
+    setEditIcon(getFirstCategoryIcon("income"));
+    setEditingIconSaving(false);
+  };
+
+  const onUpdateCategoryIcon = async () => {
+    if (!editingCategory?.id) return;
+    setEditingIconSaving(true);
+    try {
+      await http.put(API_ENDPOINTS.UPDATE_CATEGORY(editingCategory.id), {
+        name: editingCategory.name,
+        type: editingCategory.type,
+        icon: editIcon
+      });
+      await fetchCategories();
+      onCloseEditIcon();
+      Alert.alert(SUCCESS_ALERT_TITLE, "Đã cập nhật icon danh mục thành công.");
+    } catch (error) {
+      Alert.alert("Cập nhật thất bại", getApiErrorMessage(error, "Không thể cập nhật icon danh mục"));
+      setEditingIconSaving(false);
+    }
+  };
+
+  const deleteRelatedByCategory = async (category) => {
+    const categoryId = Number(category?.id);
+    const normalizedType = String(category?.type || "").toLowerCase();
+
+    if (!Number.isFinite(categoryId)) return;
+
+    if (normalizedType === "expense") {
+      const expenseRes = await http.get(API_ENDPOINTS.GET_ALL_EXPENSE);
+      const expenses = Array.isArray(expenseRes.data) ? expenseRes.data : [];
+      const targetExpenses = expenses.filter((item) => Number(item?.categoryId) === categoryId);
+
+      for (const expense of targetExpenses) {
+        await http.delete(API_ENDPOINTS.DELETE_EXPENSE(expense.id));
+      }
+
+      const budgetRes = await http.get(API_ENDPOINTS.GET_BUDGETS);
+      const budgets = Array.isArray(budgetRes.data) ? budgetRes.data : [];
+      const targetBudgets = budgets.filter((item) => Number(item?.categoryId) === categoryId);
+
+      for (const budget of targetBudgets) {
+        await http.delete(API_ENDPOINTS.DELETE_BUDGET(budget.id));
+      }
+    }
+
+    if (normalizedType === "income") {
+      const incomeRes = await http.get(API_ENDPOINTS.GET_ALL_INCOMES);
+      const incomes = Array.isArray(incomeRes.data) ? incomeRes.data : [];
+      const targetIncomes = incomes.filter((item) => Number(item?.categoryId) === categoryId);
+
+      for (const income of targetIncomes) {
+        await http.delete(API_ENDPOINTS.DELETE_INCOME(income.id));
+      }
+    }
+  };
+
+  const onDeleteCategory = (category) => {
+    if (!category?.id) return;
+
+    Alert.alert(
+      "Xác nhận xóa",
+      "Hệ thống sẽ xóa giao dịch liên quan trước, sau đó xóa danh mục. Bạn muốn tiếp tục?",
+      [
+        { text: "Hủy", style: "cancel" },
+        {
+          text: "Xóa",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await deleteRelatedByCategory(category);
+              await http.delete(API_ENDPOINTS.DELETE_CATEGORY(category.id));
+              await fetchCategories();
+              Alert.alert(SUCCESS_ALERT_TITLE, "Đã xóa danh mục thành công.");
+            } catch (error) {
+              Alert.alert("Xóa thất bại", getApiErrorMessage(error, "Không thể xóa danh mục"));
+            }
+          }
+        }
+      ]
+    );
   };
 
   return (
@@ -138,45 +254,12 @@ export default function CategoryScreen() {
           placeholderTextColor="#98a2b3"
         />
 
-        <Text style={styles.inputLabel}>Biểu tượng</Text>
-        <Pressable style={styles.dropdownTrigger} onPress={() => setIsIconDropdownOpen((prev) => !prev)}>
-          <View style={styles.dropdownTriggerLeft}>
-            <View style={styles.selectedIconBubble}>
-              <Text style={styles.selectedIconText}>{icon || DEFAULT_ICON}</Text>
-            </View>
-            <Text style={styles.dropdownSelectedText}>Chọn biểu tượng</Text>
-          </View>
-          <Text style={styles.dropdownArrow}>{isIconDropdownOpen ? "▲" : "▼"}</Text>
-        </Pressable>
-
-        {isIconDropdownOpen ? (
-          <View style={styles.dropdownMenu}>
-            {currentIconPresets.map((quickIcon) => {
-              const active = quickIcon === icon;
-              return (
-                <Pressable
-                  key={quickIcon}
-                  onPress={() => {
-                    setIcon(quickIcon);
-                    setIsIconDropdownOpen(false);
-                  }}
-                  style={[styles.dropdownItem, active && styles.dropdownItemActive]}
-                >
-                  <Text style={styles.dropdownItemIcon}>{quickIcon}</Text>
-                  <Text style={[styles.dropdownItemText, active && styles.dropdownItemTextActive]}>Biểu tượng {quickIcon}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        ) : null}
-
         <Text style={styles.inputLabel}>Loại danh mục</Text>
         <View style={styles.typeRow}>
           <Pressable
             style={[styles.typeButton, styles.typeButtonLeft, type === "income" && styles.typeButtonActiveIncome]}
             onPress={() => {
               setType("income");
-              setIcon((prev) => (ICON_PRESETS.income.includes(prev) ? prev : ICON_PRESETS.income[0]));
             }}
           >
             <Text style={[styles.typeText, type === "income" && styles.typeTextActive]}>Thu nhập</Text>
@@ -185,7 +268,6 @@ export default function CategoryScreen() {
             style={[styles.typeButton, type === "expense" && styles.typeButtonActiveExpense]}
             onPress={() => {
               setType("expense");
-              setIcon((prev) => (ICON_PRESETS.expense.includes(prev) ? prev : ICON_PRESETS.expense[0]));
             }}
           >
             <Text style={[styles.typeText, type === "expense" && styles.typeTextActive]}>Chi tiêu</Text>
@@ -193,6 +275,56 @@ export default function CategoryScreen() {
         </View>
 
         <Text style={styles.hintText}>{formHint}</Text>
+
+        <Text style={styles.inputLabel}>Icon</Text>
+        <View style={styles.iconSelectorWrapper}>
+          <Pressable
+            style={styles.iconDropdownTrigger}
+            onPress={() => {
+              setIsIconDropdownOpen((prev) => !prev);
+            }}
+          >
+            <View style={styles.iconTriggerLeft}>
+              <View style={styles.iconPreviewBubble}>
+                <CategoryVectorIcon iconValue={selectedIcon} size={20} />
+              </View>
+              <Text style={styles.iconTriggerText}>{getIconLabel(selectedIcon)}</Text>
+            </View>
+            <Text style={styles.iconTriggerChevron}>{isIconDropdownOpen ? "▲" : "▼"}</Text>
+          </Pressable>
+
+          {isIconDropdownOpen ? (
+            <View style={styles.iconDropdownList}>
+              <FlatList
+                data={iconOptions}
+                keyExtractor={(item) => item.value}
+                nestedScrollEnabled
+                style={styles.iconDropdownScroll}
+                contentContainerStyle={styles.iconDropdownContent}
+                renderItem={({ item }) => {
+                  const isActive = item.value === selectedIcon;
+                  return (
+                    <Pressable
+                      style={[styles.iconOption, isActive && styles.iconOptionActive]}
+                      onPress={() => {
+                        setSelectedIcon(item.value);
+                        setIsIconDropdownOpen(false);
+                      }}
+                    >
+                      <View style={styles.iconOptionLeft}>
+                        <View style={styles.iconOptionBubble}>
+                          <CategoryVectorIcon iconValue={item.value} size={18} />
+                        </View>
+                        <Text style={styles.iconOptionLabel}>{item.label}</Text>
+                      </View>
+                      {isActive ? <Text style={styles.iconOptionCheck}>✓</Text> : null}
+                    </Pressable>
+                  );
+                }}
+              />
+            </View>
+          ) : null}
+        </View>
 
         <Pressable style={[styles.saveButton, saving && styles.saveButtonDisabled]} onPress={onSave} disabled={saving}>
           <Text style={styles.saveButtonText}>{saving ? "Đang lưu..." : "Thêm danh mục"}</Text>
@@ -202,7 +334,7 @@ export default function CategoryScreen() {
       <FlatList
         data={categories}
         keyExtractor={(item) => String(item?.id)}
-        renderItem={({ item }) => <CategoryItem item={item} />}
+        renderItem={({ item }) => <CategoryItem item={item} onEditIcon={onOpenEditIcon} onDelete={onDeleteCategory} />}
         contentContainerStyle={styles.listContent}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         ListHeaderComponent={
@@ -221,13 +353,58 @@ export default function CategoryScreen() {
           </View>
         }
       />
+
+      <Modal visible={Boolean(editingCategory)} transparent animationType="slide" onRequestClose={onCloseEditIcon}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Sửa icon danh mục</Text>
+            <Text style={styles.modalSubTitle}>{editingCategory?.name}</Text>
+
+            <View style={styles.modalIconPreview}>
+              <CategoryVectorIcon iconValue={editIcon} size={24} />
+              <Text style={styles.modalIconLabel}>{getIconLabel(editIcon)}</Text>
+            </View>
+
+            <FlatList
+              data={editIconOptions}
+              keyExtractor={(item) => item.value}
+              numColumns={3}
+              style={styles.modalIconList}
+              columnWrapperStyle={styles.modalIconRow}
+              renderItem={({ item }) => {
+                const active = item.value === editIcon;
+                return (
+                  <Pressable style={[styles.modalIconItem, active && styles.modalIconItemActive]} onPress={() => setEditIcon(item.value)}>
+                    <CategoryVectorIcon iconValue={item.value} size={20} />
+                    <Text style={styles.modalIconItemLabel}>{item.label}</Text>
+                  </Pressable>
+                );
+              }}
+            />
+
+            <View style={styles.modalActions}>
+              <Pressable style={styles.modalCancelBtn} onPress={onCloseEditIcon} disabled={editingIconSaving}>
+                <Text style={styles.modalCancelText}>Hủy</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.modalSaveBtn, editingIconSaving && styles.saveButtonDisabled]}
+                onPress={onUpdateCategoryIcon}
+                disabled={editingIconSaving}
+              >
+                <Text style={styles.modalSaveText}>{editingIconSaving ? "Đang lưu..." : "Lưu icon"}</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, 
-    backgroundColor: "#f2f4f7", 
+  container: {
+    flex: 1,
+    backgroundColor: "#f2f4f7",
     padding: 16,
     paddingTop: 50
   },
@@ -257,76 +434,6 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     color: "#101828"
   },
-  dropdownTrigger: {
-    borderWidth: 1,
-    borderColor: "#d0d5dd",
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    backgroundColor: "#fff",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 8
-  },
-  dropdownTriggerLeft: {
-    flexDirection: "row",
-    alignItems: "center"
-  },
-  selectedIconBubble: {
-    width: 42,
-    height: 42,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#d0d5dd",
-    backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center"
-  },
-  selectedIconText: {
-    fontSize: 20
-  },
-  dropdownSelectedText: {
-    marginLeft: 10,
-    color: "#344054",
-    fontWeight: "700"
-  },
-  dropdownArrow: {
-    color: "#344054",
-    fontWeight: "700",
-    fontSize: 12
-  },
-  dropdownMenu: {
-    borderWidth: 1,
-    borderColor: "#d0d5dd",
-    borderRadius: 12,
-    backgroundColor: "#fff",
-    marginBottom: 10,
-    overflow: "hidden"
-  },
-  dropdownItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 10,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f2f4f7"
-  },
-  dropdownItemActive: {
-    backgroundColor: "#ecfdf3"
-  },
-  dropdownItemIcon: {
-    fontSize: 18,
-    marginRight: 10
-  },
-  dropdownItemText: {
-    color: "#344054",
-    fontWeight: "600"
-  },
-  dropdownItemTextActive: {
-    color: "#067647",
-    fontWeight: "700"
-  },
   typeRow: {
     flexDirection: "row",
     marginBottom: 8
@@ -353,6 +460,73 @@ const styles = StyleSheet.create({
   typeText: { color: "#344054", fontWeight: "700" },
   typeTextActive: { color: "#101828" },
   hintText: { color: "#667085", marginBottom: 12, fontSize: 12 },
+  iconSelectorWrapper: { marginBottom: 12 },
+  iconDropdownTrigger: {
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#d0d5dd",
+    backgroundColor: "#f9fafb",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between"
+  },
+  iconTriggerLeft: {
+    flexDirection: "row",
+    alignItems: "center"
+  },
+  iconPreviewBubble: {
+    width: 30,
+    height: 30,
+    borderRadius: 8,
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#e4e7ec",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 10
+  },
+  iconTriggerText: {
+    color: "#344054",
+    fontWeight: "600"
+  },
+  iconTriggerChevron: { color: "#667085", fontSize: 12, fontWeight: "800" },
+  iconDropdownList: {
+    marginTop: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#d0d5dd",
+    backgroundColor: "#fff",
+    maxHeight: 220
+  },
+  iconDropdownScroll: { maxHeight: 220 },
+  iconDropdownContent: { paddingVertical: 6 },
+  iconOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    marginHorizontal: 6,
+    borderRadius: 10
+  },
+  iconOptionActive: { backgroundColor: "#ecfdf3" },
+  iconOptionLeft: {
+    flexDirection: "row",
+    alignItems: "center"
+  },
+  iconOptionBubble: {
+    width: 30,
+    height: 30,
+    borderRadius: 8,
+    backgroundColor: "#f2f4f7",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 10
+  },
+  iconOptionLabel: { color: "#101828", fontWeight: "600" },
+  iconOptionCheck: { color: "#067647", fontWeight: "800" },
   saveButton: {
     backgroundColor: "#0f766e",
     borderRadius: 12,
@@ -410,18 +584,90 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginRight: 10
   },
-  itemIconText: {
-    fontSize: 18
-  },
+  itemIconText: { fontSize: 18 },
   itemName: { color: "#0f172a", fontWeight: "700", fontSize: 15, flexShrink: 1 },
-  typeChip: {
-    borderRadius: 999,
-    paddingVertical: 5,
-    paddingHorizontal: 10
-  },
+  itemRight: { alignItems: "flex-end" },
+  typeChip: { borderRadius: 999, paddingVertical: 5, paddingHorizontal: 10 },
   typeChipText: { fontWeight: "800", fontSize: 12 },
+  itemActionRow: { flexDirection: "row", marginTop: 8 },
+  itemEditBtn: {
+    backgroundColor: "#eef4ff",
+    borderWidth: 1,
+    borderColor: "#dbe8ff",
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    marginRight: 6
+  },
+  itemEditText: { color: "#175cd3", fontSize: 12, fontWeight: "700" },
+  itemDeleteBtn: {
+    backgroundColor: "#fef3f2",
+    borderWidth: 1,
+    borderColor: "#fecdca",
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 4
+  },
+  itemDeleteText: { color: "#b42318", fontSize: 12, fontWeight: "700" },
   emptyState: { alignItems: "center", marginTop: 44, paddingHorizontal: 24 },
   emptyIcon: { fontSize: 36, marginBottom: 8 },
   emptyTitle: { fontSize: 16, fontWeight: "800", color: "#101828", marginBottom: 6 },
-  emptyText: { textAlign: "center", color: "#667085", lineHeight: 19 }
+  emptyText: { textAlign: "center", color: "#667085", lineHeight: 19 },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(15, 23, 42, 0.35)",
+    justifyContent: "center",
+    padding: 16
+  },
+  modalCard: {
+    backgroundColor: "#fff",
+    borderRadius: 14,
+    padding: 14,
+    maxHeight: "80%"
+  },
+  modalTitle: { color: "#0f172a", fontWeight: "800", fontSize: 18 },
+  modalSubTitle: { color: "#667085", marginTop: 2, marginBottom: 10 },
+  modalIconPreview: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10
+  },
+  modalIconLabel: { marginLeft: 8, color: "#344054", fontWeight: "600" },
+  modalIconList: { maxHeight: 300 },
+  modalIconRow: { justifyContent: "space-between" },
+  modalIconItem: {
+    width: "32%",
+    borderWidth: 1,
+    borderColor: "#d0d5dd",
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 6,
+    alignItems: "center",
+    marginBottom: 8,
+    backgroundColor: "#fff"
+  },
+  modalIconItemActive: { borderColor: "#12b76a", backgroundColor: "#ecfdf3" },
+  modalIconItemLabel: {
+    marginTop: 4,
+    fontSize: 11,
+    color: "#344054",
+    textAlign: "center"
+  },
+  modalActions: { marginTop: 8, flexDirection: "row", justifyContent: "flex-end" },
+  modalCancelBtn: {
+    borderWidth: 1,
+    borderColor: "#d0d5dd",
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    marginRight: 8
+  },
+  modalCancelText: { color: "#344054", fontWeight: "700" },
+  modalSaveBtn: {
+    backgroundColor: "#0f766e",
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 14
+  },
+  modalSaveText: { color: "#fff", fontWeight: "700" }
 });

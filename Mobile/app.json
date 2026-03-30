@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "MoneyManager Mobile",
+    "name": "DevBot",
     "slug": "moneymanager-mobile",
     "scheme": "moneymanager",
     "version": "1.0.0",
@@ -21,7 +21,8 @@
       "bundleIdentifier": "com.moneymanager.mobile"
     },
     "plugins": [
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      "expo-asset"
     ]
   }
 }

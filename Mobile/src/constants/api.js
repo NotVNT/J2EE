@@ -25,6 +25,7 @@ export const API_ENDPOINTS = {
   GET_ALL_CATEGORIES: "/categories",
   ADD_CATEGORY: "/categories",
   UPDATE_CATEGORY: (categoryId) => `/categories/${categoryId}`,
+  DELETE_CATEGORY: (categoryId) => `/categories/${categoryId}`,
   CATEGORY_BY_TYPE: (type) => `/categories/type/${type}`,
 
   // Expenses
