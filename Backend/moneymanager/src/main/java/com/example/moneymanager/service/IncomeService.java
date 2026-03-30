@@ -23,21 +23,26 @@ public class IncomeService {
     private final ProfileService profileService;
     private final SubscriptionService subscriptionService;
     private final TransactionOtpService transactionOtpService;
+    private final ClientPlatformService clientPlatformService;
 
     // Adds a new income to the database
     public IncomeDTO addIncome(IncomeDTO dto) {
         ProfileEntity profile = profileService.getCurrentProfile();
         subscriptionService.ensureCanCreateTransaction(profile, dto.getDate());
-        transactionOtpService.ensureValidAuthorization(
-                dto.getTransactionAuthorizationToken(),
-                "INCOME",
-                transactionOtpService.buildIncomePayloadHash(dto)
-        );
+        if (!clientPlatformService.isMobileClient()) {
+            transactionOtpService.ensureValidAuthorization(
+                    dto.getTransactionAuthorizationToken(),
+                    "INCOME",
+                    transactionOtpService.buildIncomePayloadHash(dto)
+            );
+        }
         CategoryEntity category = categoryRepository.findById(dto.getCategoryId())
                 .orElseThrow(() -> new RuntimeException("Category not found"));
         IncomeEntity newIncome = toEntity(dto, profile, category);
         newIncome = incomeRepository.save(newIncome);
-        transactionOtpService.markAuthorizationConsumed(dto.getTransactionAuthorizationToken());
+        if (!clientPlatformService.isMobileClient()) {
+            transactionOtpService.markAuthorizationConsumed(dto.getTransactionAuthorizationToken());
+        }
         return toDTO(newIncome);
     }
 
@@ -65,13 +70,17 @@ public class IncomeService {
     //delete income by id for current user
     public void deleteIncome(Long incomeId, IncomeDeleteRequestDTO requestDTO) {
         IncomeEntity entity = getOwnedIncome(incomeId);
-        transactionOtpService.ensureValidAuthorization(
-                requestDTO != null ? requestDTO.getTransactionAuthorizationToken() : null,
-                TransactionOtpService.ACTION_DELETE_INCOME,
-                transactionOtpService.buildDeleteIncomePayloadHash(entity)
-        );
+        if (!clientPlatformService.isMobileClient()) {
+            transactionOtpService.ensureValidAuthorization(
+                    requestDTO != null ? requestDTO.getTransactionAuthorizationToken() : null,
+                    TransactionOtpService.ACTION_DELETE_INCOME,
+                    transactionOtpService.buildDeleteIncomePayloadHash(entity)
+            );
+        }
         incomeRepository.delete(entity);
-        transactionOtpService.markAuthorizationConsumed(requestDTO != null ? requestDTO.getTransactionAuthorizationToken() : null);
+        if (!clientPlatformService.isMobileClient()) {
+            transactionOtpService.markAuthorizationConsumed(requestDTO != null ? requestDTO.getTransactionAuthorizationToken() : null);
+        }
     }
 
     // Get latest 5 incomes for current user
