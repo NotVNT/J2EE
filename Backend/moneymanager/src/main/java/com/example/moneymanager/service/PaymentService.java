@@ -42,6 +42,12 @@ public class PaymentService {
     @Value("${payos.cancel-url}")
     private String cancelUrl;
 
+    @Value("${payos.mobile-return-url:moneymanager://payment/success}")
+    private String mobileReturnUrl;
+
+    @Value("${payos.mobile-cancel-url:moneymanager://payment/cancel}")
+    private String mobileCancelUrl;
+
     @Value("${payos.webhook-url}")
     private String webhookUrl;
 
@@ -63,8 +69,8 @@ public class PaymentService {
                 .orderCode(orderCode)
                 .amount(plan.amount())
                 .description(plan.paymentDescription())
-                .returnUrl(returnUrl)
-                .cancelUrl(cancelUrl)
+                .returnUrl(resolveReturnUrl())
+                .cancelUrl(resolveCancelUrl())
                 .build();
 
         try {
@@ -201,6 +207,20 @@ public class PaymentService {
         if (webhookUrl.contains("your-public-domain")) {
             throw new RuntimeException("Vui long cap nhat PAYOS_WEBHOOK_URL bang mot URL public hop le.");
         }
+    }
+
+    private String resolveReturnUrl() {
+        if (clientPlatformService.isMobileClient()) {
+            return mobileReturnUrl;
+        }
+        return returnUrl;
+    }
+
+    private String resolveCancelUrl() {
+        if (clientPlatformService.isMobileClient()) {
+            return mobileCancelUrl;
+        }
+        return cancelUrl;
     }
 
     private void syncPaymentStatusSilently(PaymentEntity paymentEntity) {
