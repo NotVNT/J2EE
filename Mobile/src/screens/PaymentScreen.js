@@ -23,12 +23,12 @@ export default function PaymentScreen() {
       const response = await http.post(API_ENDPOINTS.CREATE_PAYMENT, {
         planId: selectedPlan.id,
         amount: selectedPlan.amount,
-        description: `Thanh toan ${selectedPlan.displayName}`
+        description: `Thanh toán ${selectedPlan.displayName}`
       });
 
       const checkoutUrl = response?.data?.checkoutUrl;
       if (!checkoutUrl) {
-        Alert.alert("Tao lien ket thanh cong", "Khong tim thay checkoutUrl de mo cong thanh toan.");
+        Alert.alert("Tạo liên kết thành công", "Không tìm thấy liên kết để mở cổng thanh toán.");
         return;
       }
 
@@ -38,7 +38,7 @@ export default function PaymentScreen() {
         planName: selectedPlan.displayName
       });
     } catch (error) {
-      Alert.alert("Tao thanh toan that bai", getApiErrorMessage(error, "Khong the tao lien ket thanh toan."));
+      Alert.alert("Tạo thanh toán thất bại", getApiErrorMessage(error, "Không thể tạo liên kết thanh toán."));
     } finally {
       setLoading(false);
     }
@@ -46,9 +46,9 @@ export default function PaymentScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Nang cap goi dich vu</Text>
+      <Text style={styles.title}>Nâng cấp gói dịch vụ</Text>
       <Text style={styles.subtitle}>
-        Cong thanh toan se duoc nhung ngay trong app. Sau khi thanh toan xong, ung dung se chuyen thang den man hinh ket qua.
+        Cổng thanh toán sẽ được nhúng ngay trong app. Sau khi thanh toán xong, ứng dụng sẽ chuyển thẳng đến màn hình kết quả.
       </Text>
 
       {PAYMENT_PLANS.map((plan) => {
@@ -64,7 +64,7 @@ export default function PaymentScreen() {
       })}
 
       <Pressable style={[styles.button, loading && styles.buttonDisabled]} onPress={createPayment} disabled={loading}>
-        <Text style={styles.buttonText}>{loading ? "Dang xu ly..." : "Mo cong thanh toan trong app"}</Text>
+        <Text style={styles.buttonText}>{loading ? "Đang xử lý..." : "Thanh toán"}</Text>
       </Pressable>
     </ScrollView>
   );

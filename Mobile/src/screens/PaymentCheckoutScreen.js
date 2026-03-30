@@ -21,9 +21,9 @@ export default function PaymentCheckoutScreen() {
 
   const title = useMemo(() => {
     if (planName) {
-      return `Thanh toan ${planName}`;
+      return `Thanh toán ${planName}`;
     }
-    return "Thanh toan";
+    return "Thanh toán";
   }, [planName]);
 
   const deriveResultFromUrl = (parsedUrl, rawUrl) => {
@@ -95,7 +95,7 @@ export default function PaymentCheckoutScreen() {
       await Linking.openURL(url);
       return true;
     } catch {
-      Alert.alert("Khong mo duoc lien ket", "Ung dung khong the mo lien ket thanh toan ben ngoai.");
+      Alert.alert("Không mở được liên kết", "Ứng dụng không thể mở liên kết thanh toán bên ngoài.");
       return true;
     }
   };
@@ -115,7 +115,7 @@ export default function PaymentCheckoutScreen() {
     const isExternalScheme = !lowerUrl.startsWith("http://") && !lowerUrl.startsWith("https://") && !lowerUrl.startsWith("about:blank");
     if (isExternalScheme) {
       Linking.openURL(url).catch(() => {
-        Alert.alert("Khong mo duoc lien ket", "Ung dung khong the mo lien ket thanh toan ben ngoai.");
+        Alert.alert("Không mở được liên kết", "Ứng dụng không thể mở liên kết thanh toán bên ngoài.");
       });
       return false;
     }
@@ -126,10 +126,10 @@ export default function PaymentCheckoutScreen() {
   if (!checkoutUrl) {
     return (
       <View style={styles.fallbackContainer}>
-        <Text style={styles.fallbackTitle}>Khong tim thay lien ket thanh toan</Text>
-        <Text style={styles.fallbackText}>Hay quay lai va tao giao dich moi.</Text>
+        <Text style={styles.fallbackTitle}>Không tìm thấy liên kết thanh toán</Text>
+        <Text style={styles.fallbackText}>Hãy quay lại và tạo giao dịch mới.</Text>
         <Pressable style={styles.primaryButton} onPress={() => navigation.replace("Payment")}>
-          <Text style={styles.primaryButtonText}>Quay lai thanh toan</Text>
+          <Text style={styles.primaryButtonText}>Quay lại thanh toán</Text>
         </Pressable>
       </View>
     );
@@ -140,11 +140,11 @@ export default function PaymentCheckoutScreen() {
       <View style={styles.header}>
         <View style={styles.headerTextWrap}>
           <Text style={styles.headerTitle}>{title}</Text>
-          <Text style={styles.headerSubtitle}>Ban co the thanh toan ngay trong app. Neu can mo app ngan hang, ung dung se bat lien ket ngoai.</Text>
+          <Text style={styles.headerSubtitle}>Bạn có thể thanh toán ngay trong app. Nếu cần mở app ngân hàng, ứng dụng sẽ bật liên kết ngoài.</Text>
         </View>
         {canGoBack ? (
           <Pressable style={styles.secondaryButton} onPress={() => webViewRef.current?.goBack()}>
-            <Text style={styles.secondaryButtonText}>Lui</Text>
+            <Text style={styles.secondaryButtonText}>Lùi</Text>
           </Pressable>
         ) : null}
       </View>
@@ -152,7 +152,7 @@ export default function PaymentCheckoutScreen() {
       {isPageLoading ? (
         <View style={styles.loadingOverlay}>
           <ActivityIndicator size="large" color="#2563eb" />
-          <Text style={styles.loadingText}>Dang tai cong thanh toan...</Text>
+          <Text style={styles.loadingText}>Đang tải cổng thanh toán...</Text>
         </View>
       ) : null}
 
@@ -173,7 +173,7 @@ export default function PaymentCheckoutScreen() {
         onShouldStartLoadWithRequest={handleShouldStartLoad}
         onError={() => {
           setIsPageLoading(false);
-          Alert.alert("Tai trang that bai", "Khong the tai cong thanh toan. Ban vui long thu lai.");
+          Alert.alert("Tải trang thất bại", "Không thể tải cổng thanh toán. Bạn vui lòng thử lại.");
         }}
       />
     </View>
