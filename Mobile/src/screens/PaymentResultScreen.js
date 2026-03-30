@@ -1,0 +1,180 @@
+import React, { useContext, useEffect, useMemo, useState } from "react";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import { AuthContext } from "../components/AuthContext";
+import { API_ENDPOINTS } from "../constants/api";
+import http from "../services/http";
+import { formatMoney, getApiErrorMessage } from "../utils/format";
+
+const PAYMENT_STATUS_LABELS = {
+  PAID: "Đã thanh toán thành công",
+  PENDING: "Đang chờ thanh toán",
+  PROCESSING: "Đang xử lý",
+  FAILED: "Thanh toán thất bại",
+  CANCELLED: "Đã hủy",
+  EXPIRED: "Đã hết hạn",
+  UNDERPAID: "Thanh toán chưa đủ"
+};
+
+export default function PaymentResultScreen() {
+  const navigation = useNavigation();
+  const route = useRoute();
+  const { refreshUser } = useContext(AuthContext);
+
+  const result = String(route.params?.result || "").toLowerCase();
+  const orderCode = route.params?.orderCode ? String(route.params.orderCode) : "";
+  const returnedStatus = String(route.params?.status || "").toUpperCase();
+  const [payment, setPayment] = useState(null);
+  const [error, setError] = useState("");
+
+  const displayStatus = useMemo(() => {
+    if (returnedStatus === "PAID") {
+      return "PAID";
+    }
+    if (payment?.status) {
+      return String(payment.status).toUpperCase();
+    }
+    if (result === "cancel") {
+      return "CANCELLED";
+    }
+    return "PENDING";
+  }, [payment?.status, result, returnedStatus]);
+
+  useEffect(() => {
+    let active = true;
+
+    const syncPaymentStatus = async () => {
+      if (!orderCode) {
+        return;
+      }
+
+      try {
+        const response = await http.get(API_ENDPOINTS.SYNC_PAYMENT_STATUS(orderCode));
+        if (!active) {
+          return;
+        }
+
+        const nextPayment = response.data || null;
+        setPayment(nextPayment);
+
+        const nextStatus = String(nextPayment?.status || returnedStatus || "").toUpperCase();
+        if (nextStatus === "PAID") {
+          await refreshUser();
+        }
+      } catch (syncError) {
+        if (active) {
+          setError(getApiErrorMessage(syncError, "Không thể đồng bộ trạng thái thanh toán."));
+        }
+      }
+    };
+
+    syncPaymentStatus();
+
+    return () => {
+      active = false;
+    };
+  }, [orderCode, refreshUser, returnedStatus]);
+
+  return (
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <View style={styles.statusCard}>
+        <Text style={styles.sectionTitle}>Trạng thái hiện tại</Text>
+        <Text style={[styles.statusValue, displayStatus === "PAID" ? styles.statusPaid : styles.statusNormal]}>
+          {PAYMENT_STATUS_LABELS[displayStatus] || displayStatus}
+        </Text>
+
+        <View style={styles.detailRow}>
+          <Text style={styles.detailLabel}>Mã đơn hàng</Text>
+          <Text style={styles.detailValue}>{orderCode || "--"}</Text>
+        </View>
+
+        <View style={styles.detailRow}>
+          <Text style={styles.detailLabel}>Số tiền</Text>
+          <Text style={styles.detailValue}>{payment?.amount ? formatMoney(payment.amount) : "--"}</Text>
+        </View>
+
+        <View style={styles.detailRow}>
+          <Text style={styles.detailLabel}>Gói dịch vụ</Text>
+          <Text style={styles.detailValue}>{payment?.planName || "--"}</Text>
+        </View>
+      </View>
+
+      {error ? (
+        <View style={styles.errorBox}>
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      ) : null}
+
+      <Pressable style={styles.homeButton} onPress={() => navigation.navigate("Main")}>
+        <Text style={styles.homeButtonText}>Về trang chủ</Text>
+      </Pressable>
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#f8fafc"
+  },
+  content: {
+    padding: 16,
+    gap: 14
+  },
+  statusCard: {
+    backgroundColor: "#ffffff",
+    borderRadius: 18,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    gap: 12
+  },
+  sectionTitle: {
+    color: "#334155",
+    fontWeight: "600"
+  },
+  statusValue: {
+    fontSize: 20,
+    fontWeight: "700"
+  },
+  statusPaid: {
+    color: "#15803d"
+  },
+  statusNormal: {
+    color: "#1e293b"
+  },
+  detailRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 12
+  },
+  detailLabel: {
+    color: "#64748b"
+  },
+  detailValue: {
+    flex: 1,
+    textAlign: "right",
+    color: "#0f172a",
+    fontWeight: "600"
+  },
+  errorBox: {
+    backgroundColor: "#fef2f2",
+    borderWidth: 1,
+    borderColor: "#fecaca",
+    borderRadius: 14,
+    padding: 14
+  },
+  errorText: {
+    color: "#b91c1c"
+  },
+  homeButton: {
+    backgroundColor: "#2563eb",
+    borderRadius: 12,
+    paddingVertical: 13,
+    alignItems: "center"
+  },
+  homeButtonText: {
+    color: "#ffffff",
+    fontWeight: "700"
+  }
+});

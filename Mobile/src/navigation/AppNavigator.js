@@ -1,4 +1,4 @@
-﻿import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { NavigationContainer, useNavigation } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
@@ -21,12 +21,24 @@ import MoreScreen from "../screens/MoreScreen";
 import CategoryScreen from "../screens/CategoryScreen";
 import FilterScreen from "../screens/FilterScreen";
 import PaymentScreen from "../screens/PaymentScreen";
+import PaymentCheckoutScreen from "../screens/PaymentCheckoutScreen";
+import PaymentResultScreen from "../screens/PaymentResultScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import EditProfileScreen from "../screens/EditProfileScreen";
 import OnboardingScreen, { ONBOARDING_KEY } from "../screens/OnboardingScreen";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
+
+const linking = {
+  prefixes: ["moneymanager://"],
+  config: {
+    screens: {
+      Payment: "payment",
+      PaymentResult: "payment/:result"
+    }
+  }
+};
 
 function EmptyScreen() {
   return null;
@@ -132,6 +144,8 @@ function AppStack() {
       <Stack.Screen name="Category" component={CategoryScreen} options={{ title: "Danh mục" }} />
       <Stack.Screen name="Filter" component={FilterScreen} options={{ title: "Lọc giao dịch" }} />
       <Stack.Screen name="Payment" component={PaymentScreen} options={{ title: "Thanh toán" }} />
+      <Stack.Screen name="PaymentCheckout" component={PaymentCheckoutScreen} options={{ title: "Cổng thanh toán" }} />
+      <Stack.Screen name="PaymentResult" component={PaymentResultScreen} options={{ title: "Kết quả thanh toán" }} />
       <Stack.Screen name="Profile" component={ProfileScreen} options={{ title: "Hồ sơ" }} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: "Chỉnh sửa hồ sơ" }} />
     </Stack.Navigator>
@@ -208,7 +222,7 @@ export default function AppNavigator() {
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer linking={linking}>
       {user ? <AppStack /> : <AuthStack shouldShowOnboarding={shouldShowOnboarding} />}
     </NavigationContainer>
   );

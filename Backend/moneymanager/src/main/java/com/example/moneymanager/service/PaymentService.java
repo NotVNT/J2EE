@@ -11,9 +11,9 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.payos.PayOS;
-import vn.payos.model.v2.paymentRequests.PaymentLink;
 import vn.payos.model.v2.paymentRequests.CreatePaymentLinkRequest;
 import vn.payos.model.v2.paymentRequests.CreatePaymentLinkResponse;
+import vn.payos.model.v2.paymentRequests.PaymentLink;
 import vn.payos.model.webhooks.ConfirmWebhookResponse;
 import vn.payos.model.webhooks.Webhook;
 import vn.payos.model.webhooks.WebhookData;
@@ -34,6 +34,7 @@ public class PaymentService {
     private final ProfileService profileService;
     private final SubscriptionService subscriptionService;
     private final PaymentOtpService paymentOtpService;
+    private final ClientPlatformService clientPlatformService;
 
     @Value("${payos.return-url}")
     private String returnUrl;
@@ -41,13 +42,24 @@ public class PaymentService {
     @Value("${payos.cancel-url}")
     private String cancelUrl;
 
+    @Value("${payos.mobile-return-url:moneymanager://payment/success}")
+    private String mobileReturnUrl;
+
+    @Value("${payos.mobile-cancel-url:moneymanager://payment/cancel}")
+    private String mobileCancelUrl;
+
     @Value("${payos.webhook-url}")
     private String webhookUrl;
 
     @Transactional
     public CreatePaymentResponseDTO createPaymentLink(CreatePaymentRequestDTO requestDTO) {
         validateRequest(requestDTO);
-        paymentOtpService.ensureValidAuthorization(requestDTO.getPaymentAuthorizationToken(), requestDTO.getPlanId());
+        if (!clientPlatformService.isMobileClient()) {
+            paymentOtpService.ensureValidAuthorization(
+                    requestDTO.getPaymentAuthorizationToken(),
+                    requestDTO.getPlanId()
+            );
+        }
 
         ProfileEntity currentProfile = profileService.getCurrentProfile();
         SubscriptionService.PlanCatalogItem plan = subscriptionService.getPlanCatalogItem(requestDTO.getPlanId());
@@ -57,8 +69,8 @@ public class PaymentService {
                 .orderCode(orderCode)
                 .amount(plan.amount())
                 .description(plan.paymentDescription())
-                .returnUrl(returnUrl)
-                .cancelUrl(cancelUrl)
+                .returnUrl(resolveReturnUrl())
+                .cancelUrl(resolveCancelUrl())
                 .build();
 
         try {
@@ -77,11 +89,14 @@ public class PaymentService {
                     .profile(currentProfile)
                     .build();
 
-            paymentOtpService.markAuthorizationConsumed(requestDTO.getPaymentAuthorizationToken());
+            if (!clientPlatformService.isMobileClient()) {
+                paymentOtpService.markAuthorizationConsumed(requestDTO.getPaymentAuthorizationToken());
+            }
+
             paymentEntity = paymentRepository.save(paymentEntity);
             return toDTO(paymentEntity);
         } catch (Exception e) {
-            throw new RuntimeException("Không thể tạo liên kết thanh toán PayOS: " + e.getMessage(), e);
+            throw new RuntimeException("Khong the tao lien ket thanh toan PayOS: " + e.getMessage(), e);
         }
     }
 
@@ -101,7 +116,7 @@ public class PaymentService {
             paymentEntity = paymentRepository.save(paymentEntity);
             return toDTO(paymentEntity);
         } catch (Exception e) {
-            throw new RuntimeException("Không thể đồng bộ trạng thái thanh toán: " + e.getMessage(), e);
+            throw new RuntimeException("Khong the dong bo trang thai thanh toan: " + e.getMessage(), e);
         }
     }
 
@@ -131,7 +146,7 @@ public class PaymentService {
 
             paymentRepository.save(paymentEntity);
         } catch (Exception e) {
-            throw new RuntimeException("Không thể xử lý webhook PayOS: " + e.getMessage(), e);
+            throw new RuntimeException("Khong the xu ly webhook PayOS: " + e.getMessage(), e);
         }
     }
 
@@ -148,19 +163,20 @@ public class PaymentService {
         try {
             return payOS.webhooks().confirm(webhookUrl);
         } catch (Exception e) {
-            throw new RuntimeException("Không thể xác nhận webhook PayOS: " + e.getMessage(), e);
+            throw new RuntimeException("Khong the xac nhan webhook PayOS: " + e.getMessage(), e);
         }
     }
 
     private void validateRequest(CreatePaymentRequestDTO requestDTO) {
         if (requestDTO == null) {
-            throw new RuntimeException("Thiếu thông tin yêu cầu thanh toán.");
+            throw new RuntimeException("Thieu thong tin yeu cau thanh toan.");
         }
         if (requestDTO.getPlanId() == null || requestDTO.getPlanId().isBlank()) {
-            throw new RuntimeException("Vui lòng chọn gói dịch vụ.");
+            throw new RuntimeException("Vui long chon goi dich vu.");
         }
-        if (requestDTO.getPaymentAuthorizationToken() == null || requestDTO.getPaymentAuthorizationToken().isBlank()) {
-            throw new RuntimeException("Vui lòng xác thực OTP trước khi thanh toán.");
+        if (!clientPlatformService.isMobileClient()
+                && (requestDTO.getPaymentAuthorizationToken() == null || requestDTO.getPaymentAuthorizationToken().isBlank())) {
+            throw new RuntimeException("Vui long xac thuc OTP truoc khi thanh toan.");
         }
     }
 
@@ -175,10 +191,10 @@ public class PaymentService {
     private PaymentEntity findOwnedPayment(Long orderCode) {
         ProfileEntity currentProfile = profileService.getCurrentProfile();
         PaymentEntity paymentEntity = paymentRepository.findByOrderCode(orderCode)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy giao dịch thanh toán."));
+                .orElseThrow(() -> new RuntimeException("Khong tim thay giao dich thanh toan."));
 
         if (paymentEntity.getProfile() == null || !paymentEntity.getProfile().getId().equals(currentProfile.getId())) {
-            throw new RuntimeException("Bạn không có quyền truy cập giao dịch thanh toán này.");
+            throw new RuntimeException("Ban khong co quyen truy cap giao dich thanh toan nay.");
         }
 
         return paymentEntity;
@@ -186,11 +202,25 @@ public class PaymentService {
 
     private void validateWebhookUrl() {
         if (webhookUrl == null || webhookUrl.isBlank()) {
-            throw new RuntimeException("Thiếu URL webhook.");
+            throw new RuntimeException("Thieu URL webhook.");
         }
         if (webhookUrl.contains("your-public-domain")) {
-            throw new RuntimeException("Vui lòng cập nhật PAYOS_WEBHOOK_URL bằng một URL public hợp lệ.");
+            throw new RuntimeException("Vui long cap nhat PAYOS_WEBHOOK_URL bang mot URL public hop le.");
         }
+    }
+
+    private String resolveReturnUrl() {
+        if (clientPlatformService.isMobileClient()) {
+            return mobileReturnUrl;
+        }
+        return returnUrl;
+    }
+
+    private String resolveCancelUrl() {
+        if (clientPlatformService.isMobileClient()) {
+            return mobileCancelUrl;
+        }
+        return cancelUrl;
     }
 
     private void syncPaymentStatusSilently(PaymentEntity paymentEntity) {
@@ -200,7 +230,7 @@ public class PaymentService {
             activateSubscriptionIfPaid(paymentEntity);
             paymentRepository.save(paymentEntity);
         } catch (Exception e) {
-            System.err.println("Không thể tự động đồng bộ giao dịch " + paymentEntity.getOrderCode() + ": " + e.getMessage());
+            System.err.println("Khong the tu dong dong bo giao dich " + paymentEntity.getOrderCode() + ": " + e.getMessage());
         }
     }
 
