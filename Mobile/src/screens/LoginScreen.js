@@ -1,4 +1,4 @@
-﻿import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import {
   Alert,
   Image,
@@ -13,6 +13,7 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { AuthContext } from "../components/AuthContext";
 import { getApiErrorMessage } from "../utils/format";
+import { tokenStorage } from "../storage/tokenStorage";
 import devbotLogo from "../assets/devbot.png";
 
 export default function LoginScreen() {
@@ -22,6 +23,38 @@ export default function LoginScreen() {
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadRememberPreference = async () => {
+      try {
+        const remember = await tokenStorage.getRememberPreference();
+        if (active) {
+          setRememberMe(remember);
+        }
+      } catch {
+        if (active) {
+          setRememberMe(false);
+        }
+      }
+    };
+
+    loadRememberPreference();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const onToggleRemember = async (value) => {
+    setRememberMe(value);
+    try {
+      await tokenStorage.setRememberPreference(value);
+    } catch {
+      // Ignore preference write errors and continue login flow.
+    }
+  };
 
   const onSubmit = async () => {
     const normalizedEmail = email.trim();
@@ -33,7 +66,7 @@ export default function LoginScreen() {
 
     setLoading(true);
     try {
-      await signIn({ email: normalizedEmail, password });
+      await signIn({ email: normalizedEmail, password, rememberMe });
     } catch (error) {
       const isTimeout = error?.code === "ECONNABORTED";
       const isNetworkError = !error?.response && /network|timeout|socket|failed/i.test(String(error?.message || ""));
@@ -101,7 +134,7 @@ export default function LoginScreen() {
             <View style={styles.rememberRow}>
               <Switch
                 value={rememberMe}
-                onValueChange={setRememberMe}
+                onValueChange={onToggleRemember}
                 thumbColor={rememberMe ? "#3aec43" : "#9ca3af"}
                 trackColor={{ false: "#374151", true: "#14532d" }}
                 style={styles.switch}
@@ -308,4 +341,3 @@ const styles = StyleSheet.create({
     fontWeight: "700"
   }
 });
-

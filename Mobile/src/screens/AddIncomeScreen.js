@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import http from "../services/http";
 import { API_ENDPOINTS } from "../constants/api";
+import { SUCCESS_ALERT_MESSAGES, SUCCESS_ALERT_TITLE } from "../constants/alertMessages";
 import { getApiErrorMessage, todayIso } from "../utils/format";
 import { PickDateField } from "../utils/pickDate";
 
@@ -62,7 +63,12 @@ export default function AddIncomeScreen() {
         icon: "💰"
       });
 
-      navigation.goBack();
+      Alert.alert(SUCCESS_ALERT_TITLE, SUCCESS_ALERT_MESSAGES.create.income, [
+        {
+          text: "OK",
+          onPress: () => navigation.goBack()
+        }
+      ]);
     } catch (error) {
       Alert.alert("Lưu thất bại", getApiErrorMessage(error, "Không thể tạo khoản thu"));
     } finally {

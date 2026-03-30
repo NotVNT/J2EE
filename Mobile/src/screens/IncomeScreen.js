@@ -3,6 +3,7 @@ import { Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, TextInput
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import http from "../services/http";
 import { API_ENDPOINTS } from "../constants/api";
+import { SUCCESS_ALERT_MESSAGES, SUCCESS_ALERT_TITLE } from "../constants/alertMessages";
 import { formatDate, formatMoney, getApiErrorMessage } from "../utils/format";
 
 const FILTER_TYPES = {
@@ -95,6 +96,7 @@ export default function IncomeScreen() {
           try {
             await http.delete(API_ENDPOINTS.DELETE_INCOME(id));
             await fetchIncomes();
+            Alert.alert(SUCCESS_ALERT_TITLE, SUCCESS_ALERT_MESSAGES.delete.income);
           } catch (error) {
             Alert.alert("Xóa thất bại", getApiErrorMessage(error, "Không thể xóa khoản thu này"));
           }

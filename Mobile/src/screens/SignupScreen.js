@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   Alert,
   Image,
@@ -9,10 +9,12 @@ import {
   TextInput,
   View
 } from "react-native";
+import * as ImagePicker from "expo-image-picker";
 import { useNavigation } from "@react-navigation/native";
 import http from "../services/http";
 import { API_ENDPOINTS } from "../constants/api";
 import { getApiErrorMessage } from "../utils/format";
+import uploadProfileImage from "../utils/uploadProfileImage";
 import devbotLogo from "../assets/devbot.png";
 
 export default function SignupScreen() {
@@ -20,6 +22,7 @@ export default function SignupScreen() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [profilePhoto, setProfilePhoto] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const sanitizeAuthMessage = (message) => {
@@ -28,6 +31,25 @@ export default function SignupScreen() {
       ? "Không thể tạo tài khoản. Vui lòng thử lại sau."
       : message;
   };
+
+  const onPickProfileImage = useCallback(async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert("Thiếu quyền truy cập", "Vui lòng cho phép ứng dụng truy cập thư viện ảnh.");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.85
+    });
+
+    if (!result.canceled && result.assets?.length) {
+      setProfilePhoto(result.assets[0]);
+    }
+  }, []);
 
   const onSignup = async () => {
     const normalizedName = fullName.trim();
@@ -45,10 +67,16 @@ export default function SignupScreen() {
 
     setLoading(true);
     try {
+      let profileImageUrl = "";
+      if (profilePhoto?.uri) {
+        profileImageUrl = await uploadProfileImage(profilePhoto);
+      }
+
       await http.post(API_ENDPOINTS.REGISTER, {
         fullName: normalizedName,
         email: normalizedEmail,
-        password
+        password,
+        ...(profileImageUrl ? { profileImageUrl } : {})
       });
 
       Alert.alert("Tạo tài khoản thành công", "Tài khoản đã sẵn sàng. Bạn có thể đăng nhập ngay.", [
@@ -83,9 +111,13 @@ export default function SignupScreen() {
         <Text style={styles.subtitle}>Bắt đầu quản lý tài chính thông minh hơn với botdev.</Text>
 
         <View style={styles.formCard}>
-          <View style={styles.avatarPlaceholder}>
-            <Text style={styles.avatarText}>+</Text>
-          </View>
+          <Pressable style={styles.avatarPlaceholder} onPress={onPickProfileImage}>
+            {profilePhoto?.uri ? (
+              <Image source={{ uri: profilePhoto.uri }} style={styles.avatarImage} />
+            ) : (
+              <Text style={styles.avatarText}>+</Text>
+            )}
+          </Pressable>
 
           <View style={styles.inputWrap}>
             <TextInput
@@ -204,7 +236,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     alignSelf: "center",
-    marginBottom: 14
+    marginBottom: 14,
+    overflow: "hidden"
+  },
+  avatarImage: {
+    width: "100%",
+    height: "100%"
   },
   avatarText: {
     color: "#58f05d",
@@ -254,4 +291,3 @@ const styles = StyleSheet.create({
     fontWeight: "700"
   }
 });
-

@@ -1,5 +1,5 @@
-﻿import React, { useContext } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import React, { useContext } from "react";
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { AuthContext } from "../components/AuthContext";
 
@@ -19,13 +19,18 @@ export default function ProfileScreen() {
   const fullName = user?.fullName || "Người dùng";
   const email = user?.email || "Chưa có email";
   const initial = fullName.slice(0, 1).toUpperCase();
+  const profileImageUrl = user?.profileImageUrl || "";
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.heroCard}>
-        <View style={styles.avatarWrap}>
-          <Text style={styles.avatarText}>{initial}</Text>
-        </View>
+        {profileImageUrl ? (
+          <Image source={{ uri: profileImageUrl }} style={styles.avatarImage} />
+        ) : (
+          <View style={styles.avatarWrap}>
+            <Text style={styles.avatarText}>{initial}</Text>
+          </View>
+        )}
 
         <View style={styles.heroInfo}>
           <Text style={styles.heroName}>{fullName}</Text>
@@ -51,11 +56,6 @@ export default function ProfileScreen() {
       <Pressable style={styles.primaryButton} onPress={() => navigation.navigate("EditProfile")}>
         <Text style={styles.primaryButtonText}>Chỉnh sửa hồ sơ</Text>
       </Pressable>
-
-      <Pressable style={styles.secondaryButton} onPress={() => navigation.navigate("Payment")}>
-        <Text style={styles.secondaryButtonText}>Quản lý thanh toán</Text>
-      </Pressable>
-
       <Pressable style={styles.logoutButton} onPress={signOut}>
         <Text style={styles.logoutText}>Đăng xuất</Text>
       </Pressable>
@@ -90,6 +90,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#0f766e",
     alignItems: "center",
     justifyContent: "center"
+  },
+  avatarImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 18,
+    backgroundColor: "#e2e8f0"
   },
   avatarText: {
     color: "#ffffff",

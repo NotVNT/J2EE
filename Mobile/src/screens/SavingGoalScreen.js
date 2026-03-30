@@ -3,6 +3,7 @@ import { Alert, FlatList, Modal, Pressable, RefreshControl, StyleSheet, Text, Te
 import { useFocusEffect } from "@react-navigation/native";
 import http from "../services/http";
 import { API_ENDPOINTS } from "../constants/api";
+import { SUCCESS_ALERT_MESSAGES, SUCCESS_ALERT_TITLE } from "../constants/alertMessages";
 import { formatDate, formatMoney, getApiErrorMessage, todayIso } from "../utils/format";
 import { PickDateField } from "../utils/pickDate";
 
@@ -52,7 +53,7 @@ function GoalCard({ item, onContribute, onDelete }) {
       <View style={styles.goalHeader}>
         <View style={styles.goalHeaderLeft}>
           <Text style={styles.goalName} numberOfLines={1}>{item?.name || "Mục tiêu"}</Text>
-          <Text style={styles.goalPeriod}>{formatDate(item?.startDate)} -> {formatDate(item?.targetDate)}</Text>
+          <Text style={styles.goalPeriod}>{formatDate(item?.startDate)} {'>'} {formatDate(item?.targetDate)}</Text>
         </View>
 
         <View style={[styles.statusBadge, { backgroundColor: visual.bg, borderColor: visual.border }]}>
@@ -199,6 +200,7 @@ export default function SavingGoalScreen() {
       setStartDate(todayIso());
       setTargetDate(todayIso());
       await fetchGoals();
+      Alert.alert(SUCCESS_ALERT_TITLE, SUCCESS_ALERT_MESSAGES.create.savingGoal);
     } catch (error) {
       Alert.alert("Thất bại", getApiErrorMessage(error, "Không thể tạo mục tiêu"));
     } finally {
@@ -218,6 +220,7 @@ export default function SavingGoalScreen() {
           try {
             await http.delete(API_ENDPOINTS.DELETE_SAVING_GOAL(id));
             await fetchGoals();
+            Alert.alert(SUCCESS_ALERT_TITLE, SUCCESS_ALERT_MESSAGES.delete.savingGoal);
           } catch (error) {
             Alert.alert("Xóa thất bại", getApiErrorMessage(error, "Không thể xóa mục tiêu"));
           }
@@ -255,6 +258,7 @@ export default function SavingGoalScreen() {
 
       closeContributionModal();
       await fetchGoals();
+      Alert.alert(SUCCESS_ALERT_TITLE, SUCCESS_ALERT_MESSAGES.contribute.savingGoal);
     } catch (error) {
       Alert.alert("Thất bại", getApiErrorMessage(error, "Không thể đóng góp cho mục tiêu"));
     }

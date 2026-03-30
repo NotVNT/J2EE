@@ -3,6 +3,7 @@ import { Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, TextInput
 import { useFocusEffect } from "@react-navigation/native";
 import http from "../services/http";
 import { API_ENDPOINTS } from "../constants/api";
+import { SUCCESS_ALERT_MESSAGES, SUCCESS_ALERT_TITLE } from "../constants/alertMessages";
 import { formatMoney, getApiErrorMessage } from "../utils/format";
 
 function getBudgetVisual(progressRatio) {
@@ -203,6 +204,7 @@ export default function BudgetScreen() {
 
       setAmountLimit("");
       await fetchData();
+      Alert.alert(SUCCESS_ALERT_TITLE, SUCCESS_ALERT_MESSAGES.update.budget);
     } catch (error) {
       Alert.alert("Lưu thất bại", getApiErrorMessage(error, "Không thể cập nhật ngân sách"));
     } finally {
@@ -222,6 +224,7 @@ export default function BudgetScreen() {
           try {
             await http.delete(API_ENDPOINTS.DELETE_BUDGET(id));
             await fetchData();
+            Alert.alert(SUCCESS_ALERT_TITLE, SUCCESS_ALERT_MESSAGES.delete.budget);
           } catch (error) {
             Alert.alert("Xóa thất bại", getApiErrorMessage(error, "Không thể xóa ngân sách"));
           }
