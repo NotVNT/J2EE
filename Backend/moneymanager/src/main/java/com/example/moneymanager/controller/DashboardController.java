@@ -3,6 +3,7 @@ package com.example.moneymanager.controller;
 import com.example.moneymanager.entity.ProfileEntity;
 import com.example.moneymanager.service.DashboardService;
 import com.example.moneymanager.service.ProfileService;
+import com.example.moneymanager.service.SubscriptionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
