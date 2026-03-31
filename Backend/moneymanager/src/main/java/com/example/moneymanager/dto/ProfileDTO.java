@@ -34,5 +34,6 @@ public class ProfileDTO {
     private Boolean canExportReports;
     private Boolean canUseAdvancedFilters;
     private Boolean canImportReceipt;
+    private Boolean canUseDetailedAi;
     private String role;
 }

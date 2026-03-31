@@ -166,6 +166,11 @@ const Profile = () => {
                                     <BadgeCheck size={16} className="text-emerald-300" />
                                     {user?.subscriptionPlan || "FREE"}
                                 </p>
+                                {user?.subscriptionExpiresAt && (
+                                    <p className="mt-1 text-[10px] text-white/50">
+                                        Hết hạn: {new Date(user.subscriptionExpiresAt).toLocaleDateString('vi-VN')}
+                                    </p>
+                                )}
                             </div>
                         </div>
                     </section>

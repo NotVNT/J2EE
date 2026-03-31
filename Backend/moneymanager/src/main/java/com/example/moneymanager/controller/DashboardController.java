@@ -21,6 +21,7 @@ public class DashboardController {
 
     private final DashboardService dashboardService;
     private final ProfileService profileService;
+    private final SubscriptionService subscriptionService;
 
     @GetMapping
     public ResponseEntity<Map<String, Object>> getDashboardData() {
@@ -75,6 +76,9 @@ public class DashboardController {
             }
 
             log.info("User found: {}", currentProfile.getEmail());
+
+            // 1.5 Kiểm tra quyền truy cập tính năng AI chuyên sâu
+            subscriptionService.ensureCanUseDetailedAi(currentProfile);
 
             // 2. Lấy dashboard data
             Map<String, Object> dashboardData = dashboardService.getDashboardData();

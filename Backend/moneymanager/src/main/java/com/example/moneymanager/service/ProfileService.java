@@ -93,6 +93,7 @@ public class ProfileService {
                 .canExportReports(planFeatures.isCanExportReports())
                 .canUseAdvancedFilters(planFeatures.isCanUseAdvancedFilters())
                 .canImportReceipt(planFeatures.isCanImportReceipt())
+                .canUseDetailedAi(planFeatures.isCanUseDetailedAi())
                 .role(profileEntity.getRole() != null ? profileEntity.getRole().getName() : "user")
                 .build();
     }

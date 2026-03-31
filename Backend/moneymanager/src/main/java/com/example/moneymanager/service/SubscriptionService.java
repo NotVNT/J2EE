@@ -31,9 +31,9 @@ public class SubscriptionService {
                 : SubscriptionPlan.FREE;
 
         return switch (effectivePlan) {
-            case BASIC -> new PlanFeatures(SubscriptionPlan.BASIC, 30, 1000, 12, true, true, true, false);
-            case PREMIUM -> new PlanFeatures(SubscriptionPlan.PREMIUM, -1, -1, -1, true, true, true, true);
-            case FREE -> new PlanFeatures(SubscriptionPlan.FREE, 10, 100, 3, false, false, false, false);
+            case BASIC -> new PlanFeatures(SubscriptionPlan.BASIC, 30, 1000, 12, true, true, true, false, true);
+            case PREMIUM -> new PlanFeatures(SubscriptionPlan.PREMIUM, -1, -1, -1, true, true, true, true, true);
+            case FREE -> new PlanFeatures(SubscriptionPlan.FREE, 10, 100, 3, false, false, false, false, false);
         };
     }
 
@@ -107,6 +107,13 @@ public class SubscriptionService {
         }
     }
 
+    public void ensureCanUseDetailedAi(ProfileEntity profile) {
+        PlanFeatures features = getPlanFeatures(profile);
+        if (!features.canUseDetailedAi) {
+            throw new RuntimeException("Tính năng phân tích tài chính chuyên sâu bằng AI chỉ dành cho gói trả phí. Vui lòng nâng cấp để tiếp tục.");
+        }
+    }
+
     @Transactional
     public ProfileEntity activatePaidSubscription(ProfileEntity profile, String planId) {
         PlanCatalogItem plan = getPlanCatalogItem(planId);
@@ -148,6 +155,7 @@ public class SubscriptionService {
         private final boolean canUseAdvancedFilters;
         private final boolean canEmailReports;
         private final boolean canImportReceipt;
+        private final boolean canUseDetailedAi;
 
         public PlanFeatures(
                 SubscriptionPlan plan,
@@ -157,7 +165,8 @@ public class SubscriptionService {
                 boolean canExportReports,
                 boolean canUseAdvancedFilters,
                 boolean canEmailReports,
-                boolean canImportReceipt
+                boolean canImportReceipt,
+                boolean canUseDetailedAi
         ) {
             this.plan = plan;
             this.categoryLimit = categoryLimit;
@@ -167,6 +176,7 @@ public class SubscriptionService {
             this.canUseAdvancedFilters = canUseAdvancedFilters;
             this.canEmailReports = canEmailReports;
             this.canImportReceipt = canImportReceipt;
+            this.canUseDetailedAi = canUseDetailedAi;
         }
     }
 

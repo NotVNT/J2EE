@@ -136,9 +136,17 @@ const Home = () => {
         }
     };
 
+    const { user } = useContext(AppContext);
+
     const toggleDetailedInsight = () => {
-        if (!showDetailedInsight && !detailedInsight && !detailedLoading) {
-            fetchDetailedInsight();
+        if (!showDetailedInsight) {
+            if (user?.canUseDetailedAi === false) {
+                toast.error("Tính năng phân tích chuyên sâu chỉ dành cho hội viên. Vui lòng nâng cấp tài khoản!");
+                return;
+            }
+            if (!detailedInsight && !detailedLoading) {
+                fetchDetailedInsight();
+            }
         }
         setShowDetailedInsight(!showDetailedInsight);
     };
