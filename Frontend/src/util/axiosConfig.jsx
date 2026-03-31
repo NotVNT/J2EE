@@ -9,7 +9,7 @@ const axiosConfig = axios.create({
   }
 });
 
-const excludeEndpoints = ["/login", "/register", "/status", "/activate", "/health"];
+const excludeEndpoints = ["/login", "/register", "/status", "/activate", "/health", "/forgot-password", "/reset-password"];
 
 axiosConfig.interceptors.request.use(
   (config) => {

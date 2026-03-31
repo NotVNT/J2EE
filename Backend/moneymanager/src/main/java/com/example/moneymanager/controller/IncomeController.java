@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -17,9 +18,13 @@ public class IncomeController {
     private final IncomeService incomeService;
 
     @PostMapping
-    public ResponseEntity<IncomeDTO> addIncome(@RequestBody IncomeDTO dto) {
-        IncomeDTO saved = incomeService.addIncome(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+    public ResponseEntity<?> addIncome(@RequestBody IncomeDTO dto) {
+        try {
+            IncomeDTO saved = incomeService.addIncome(dto);
+            return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", e.getMessage()));
+        }
     }
 
     @GetMapping

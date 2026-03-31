@@ -8,6 +8,7 @@ import com.example.moneymanager.dto.ProfileUpdateDTO;
 import com.example.moneymanager.dto.ResetPasswordRequestDTO;
 import com.example.moneymanager.service.ProfileService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -85,9 +86,15 @@ public class ProfileController {
             ));
         }
     }
+    @Value("${money.manager.frontend.url}")
+    private String frontendUrl;
+
     @GetMapping("/reset-password")
     public void redirectToFrontend(@RequestParam String token, HttpServletResponse response) throws IOException {
-        response.sendRedirect("http://localhost:3000/reset-password?token=" + token);
+        String normalizedUrl = frontendUrl.endsWith("/")
+                ? frontendUrl.substring(0, frontendUrl.length() - 1)
+                : frontendUrl;
+        response.sendRedirect(normalizedUrl + "/reset-password?token=" + token);
     }
     @PostMapping("/reset-password")
     public ResponseEntity<Map<String, String>> resetPassword(@RequestBody ResetPasswordRequestDTO requestDTO) {
