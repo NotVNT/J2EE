@@ -92,9 +92,16 @@ const Menubar = ({ activeMenu }) => {
                                     )}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium text-gray-900 truncate">
-                                        {user?.fullName || "Người dùng"}
-                                    </p>
+                                    <div className="flex items-center gap-1.5 min-w-0">
+                                        <p className="text-sm font-medium text-gray-900 truncate">
+                                            {user?.fullName || "Người dùng"}
+                                        </p>
+                                        {user?.subscriptionPlan === "PREMIUM" && (
+                                            <span className="flex-shrink-0 px-1 py-0.5 text-[8px] font-bold text-white bg-amber-500 rounded uppercase">
+                                                PRO
+                                            </span>
+                                        )}
+                                    </div>
                                     <p className="text-xs text-gray-500 truncate">{user?.email || ""}</p>
                                 </div>
                             </div>

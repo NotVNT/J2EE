@@ -17,7 +17,14 @@ const Sidebar = ({activeMenu}) => {
                 ): (
                     <User className="w-20 h-20 text-xl" />
                 )}
-                <h5 className="text-gray-950 font-medium leading-6">{user.fullName || ""}</h5>
+                <div className="flex items-center">
+                    <h5 className="text-gray-950 font-medium leading-6">{user.fullName || ""}</h5>
+                    {user?.subscriptionPlan === "PREMIUM" && (
+                        <span className="ml-2 px-1.5 py-0.5 text-[9px] font-bold text-white bg-gradient-to-r from-yellow-400 to-amber-600 rounded-md shadow-sm uppercase tracking-tighter">
+                            PRO
+                        </span>
+                    )}
+                </div>
             </div>
             {SIDE_BAR_DATA.map((item, index) => (
                 <button
