@@ -48,7 +48,6 @@ public class CategoryController {
 
     @PutMapping("/{categoryId}/icon")
     public ResponseEntity<CategoryDTO> updateCategoryIcon(
-        ) {
             @PathVariable Long categoryId,
             @RequestBody CategoryDTO categoryDTO
     ) {
