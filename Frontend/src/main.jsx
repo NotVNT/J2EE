@@ -6,15 +6,12 @@ import { AppContextProvider } from "./context/AppContext.jsx";
 import "./index.css";
 
 // Polyfill for mgt.clearMarks is not a function
-// Create global mgt object with dummy methods
-if (!window.mgt) {
-  window.mgt = {
-    clearMarks: () => {},
-    clearMeasures: () => {},
-    mark: () => {},
-    measure: () => {},
-  };
-}
+// Ensure global mgt object exists with all required methods
+window.mgt = window.mgt || {};
+window.mgt.clearMarks = window.mgt.clearMarks || (() => {});
+window.mgt.clearMeasures = window.mgt.clearMeasures || (() => {});
+window.mgt.mark = window.mgt.mark || (() => {});
+window.mgt.measure = window.mgt.measure || (() => {});
 
 // Wrap performance API methods to prevent errors if they don't exist
 if (window.performance) {
