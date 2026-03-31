@@ -12,7 +12,8 @@ export const DEFAULT_PAYMENT_PLANS = [
     accent: "from-slate-900 via-slate-800 to-slate-700",
     features: [
       "Theo dõi giao dịch hằng ngày",
-      "Báo cáo thu chi cơ bản",
+      "Phân tích tài chính cơ bản bằng AI",
+      "Báo cáo thu chi hàng tháng",
       "Nhắc nhở thanh toán định kỳ"
     ]
   },
@@ -29,9 +30,10 @@ export const DEFAULT_PAYMENT_PLANS = [
     accent: "from-amber-500 via-orange-500 to-rose-500",
     features: [
       "Không giới hạn lịch sử giao dịch",
-      "Biểu đồ và báo cáo chuyên sâu",
-      "Import hóa đơn bằng ảnh để tự động tạo chi tiêu",
-      "Ưu tiên đồng bộ trạng thái thanh toán"
+      "Phân tích tài chính chuyên sâu bằng AI",
+      "Import hóa đơn bằng ảnh tự động",
+      "Xuất báo cáo Excel & PDF",
+      "Ưu tiên hỗ trợ kỹ thuật"
     ]
   }
 ];
