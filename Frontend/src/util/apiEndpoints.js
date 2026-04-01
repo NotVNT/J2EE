@@ -37,16 +37,12 @@ export const API_ENDPOINTS = {
     UPDATE_AUTO_RENEW: "/profile/subscription/auto-renew",
 
     // Payment endpoints
-    REQUEST_PAYMENT_OTP: "/payments/otp/request",
-    VERIFY_PAYMENT_OTP: "/payments/otp/verify",
     CREATE_PAYMENT: "/payments/payos/create",
     CONFIRM_PAYMENT_WEBHOOK: "/payments/payos/confirm-webhook",
     GET_PAYMENT_BY_ORDER_CODE: (orderCode) => `/payments/${orderCode}`,
     SYNC_PAYMENT_STATUS: (orderCode) => `/payments/${orderCode}/status`,
 
-    // Transaction OTP endpoints
-    REQUEST_TRANSACTION_OTP: "/transactions/otp/request",
-    VERIFY_TRANSACTION_OTP: "/transactions/otp/verify",
+
 
     // Category endpoints
     GET_ALL_CATEGORIES: "/categories",

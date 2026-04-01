@@ -11,7 +11,7 @@ import ExpenseList from "../components/ExpenseList.jsx";
 import Modal from "../components/Modal.jsx";
 import AddExpenseForm from "../components/AddExpenseForm.jsx";
 import DeleteAlert from "../components/DeleteAlert.jsx";
-import TransactionOtpModal from "../components/TransactionOtpModal.jsx";
+
 
 const Expense = () => {
     useUser();
@@ -20,33 +20,10 @@ const Expense = () => {
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(false);
     const [openAddExpenseModal, setOpenAddExpenseModal] = useState(false);
-    const [openExpenseOtpModal, setOpenExpenseOtpModal] = useState(false);
-    const [openDeleteExpenseOtpModal, setOpenDeleteExpenseOtpModal] = useState(false);
     const [openDeleteAlert, setOpenDeleteAlert] = useState({
         show: false,
         data: null,
     });
-
-    const [pendingExpense, setPendingExpense] = useState(null);
-    const [pendingDeleteExpense, setPendingDeleteExpense] = useState(null);
-
-    const [addOtpRequestId, setAddOtpRequestId] = useState(null);
-    const [addOtpMeta, setAddOtpMeta] = useState(null);
-    const [addOtpCode, setAddOtpCode] = useState("");
-    const [addOtpStatusMessage, setAddOtpStatusMessage] = useState("");
-    const [addOtpError, setAddOtpError] = useState("");
-    const [isRequestingAddOtp, setIsRequestingAddOtp] = useState(false);
-    const [isSubmittingAddWithOtp, setIsSubmittingAddWithOtp] = useState(false);
-
-    const [deleteOtpRequestId, setDeleteOtpRequestId] = useState(null);
-    const [deleteOtpMeta, setDeleteOtpMeta] = useState(null);
-    const [deleteOtpCode, setDeleteOtpCode] = useState("");
-    const [deleteOtpStatusMessage, setDeleteOtpStatusMessage] = useState("");
-    const [deleteOtpError, setDeleteOtpError] = useState("");
-    const [isRequestingDeleteOtp, setIsRequestingDeleteOtp] = useState(false);
-    const [isSubmittingDeleteWithOtp, setIsSubmittingDeleteWithOtp] = useState(false);
-
-    const [now, setNow] = useState(Date.now());
 
     const exportUpgradeMessage = "Tinh nang xuat bao cao chi co tu goi Co Ban. Vui long nang cap de tiep tuc.";
     const [isImportingReceipt, setIsImportingReceipt] = useState(false);
@@ -58,10 +35,7 @@ const Expense = () => {
     const receiptImportLocked = user?.canImportReceipt === false;
     const receiptImportUpgradeMessage = "Tính năng kiểm tra hoá đơn bằng ảnh chỉ có ở gói Premium. Vui long nang cap de tiep tuc";
 
-    useEffect(() => {
-        const intervalId = window.setInterval(() => setNow(Date.now()), 1000);
-        return () => window.clearInterval(intervalId);
-    }, []);
+
 
     const fetchExpenseDetails = async () => {
         if (loading) return;
@@ -132,77 +106,10 @@ const Expense = () => {
             icon,
         };
 
-        setPendingExpense(normalizedExpense);
-        await requestExpenseOtp(normalizedExpense);
-    };
-
-    const requestExpenseOtp = async (expensePayload = pendingExpense) => {
-        if (!expensePayload) {
-            toast.error("Khong co du lieu chi tieu de xac thuc OTP.");
-            return;
-        }
-
-        setIsRequestingAddOtp(true);
-        setAddOtpError("");
-        setAddOtpStatusMessage("");
-
         try {
-            const response = await axiosConfig.post(API_ENDPOINTS.REQUEST_TRANSACTION_OTP, {
-                actionType: "EXPENSE",
-                name: expensePayload.name,
-                categoryId: expensePayload.categoryId,
-                amount: expensePayload.amount,
-                date: expensePayload.date,
-            });
-
-            setAddOtpRequestId(response.data.otpRequestId);
-            setAddOtpMeta(response.data);
-            setAddOtpCode("");
-            setAddOtpStatusMessage(response.data.message || "Ma OTP da duoc gui toi email cua ban.");
+            const response = await axiosConfig.post(API_ENDPOINTS.ADD_EXPENSE, normalizedExpense);
+            
             setOpenAddExpenseModal(false);
-            setOpenExpenseOtpModal(true);
-            toast.success(response.data.message || "Da gui OTP xac nhan.");
-        } catch (error) {
-            const message = error.response?.data?.message || "Khong the gui OTP chi tieu.";
-            setAddOtpError(message);
-            toast.error(message);
-        } finally {
-            setIsRequestingAddOtp(false);
-        }
-    };
-
-    const submitExpenseWithOtp = async () => {
-        if (!pendingExpense) {
-            setAddOtpError("Khong co du lieu chi tieu dang cho xac nhan.");
-            return;
-        }
-
-        if (!addOtpRequestId) {
-            setAddOtpError("Vui long yeu cau OTP truoc.");
-            return;
-        }
-
-        if (!addOtpCode.trim()) {
-            setAddOtpError("Vui long nhap ma OTP.");
-            return;
-        }
-
-        setIsSubmittingAddWithOtp(true);
-        setAddOtpError("");
-
-        try {
-            const verifyResponse = await axiosConfig.post(API_ENDPOINTS.VERIFY_TRANSACTION_OTP, {
-                otpRequestId: addOtpRequestId,
-                otpCode: addOtpCode.trim(),
-            });
-
-            const response = await axiosConfig.post(API_ENDPOINTS.ADD_EXPENSE, {
-                ...pendingExpense,
-                transactionAuthorizationToken: verifyResponse.data.transactionAuthorizationToken,
-            });
-
-            setOpenExpenseOtpModal(false);
-            resetAddOtpState();
             toast.success("Them chi tieu thanh cong");
 
             const budgetStatus = response.data?.budgetStatus;
@@ -230,11 +137,7 @@ const Expense = () => {
             fetchExpenseDetails();
             fetchExpenseCategories();
         } catch (error) {
-            const message = error.response?.data?.message || "Khong the them chi tieu.";
-            setAddOtpError(message);
-            toast.error(message);
-        } finally {
-            setIsSubmittingAddWithOtp(false);
+            toast.error(error.response?.data?.message || "Khong the them chi tieu.");
         }
     };
 
@@ -242,84 +145,14 @@ const Expense = () => {
         setOpenDeleteAlert({ show: true, data: expense });
     };
 
-    const requestDeleteExpenseOtp = async (expensePayload = pendingDeleteExpense) => {
-        if (!expensePayload?.id) {
-            toast.error("Khong tim thay chi tieu can xoa.");
-            return;
-        }
-
-        setIsRequestingDeleteOtp(true);
-        setDeleteOtpError("");
-        setDeleteOtpStatusMessage("");
-
+    const handleDeleteExpense = async () => {
         try {
-            const response = await axiosConfig.post(API_ENDPOINTS.REQUEST_TRANSACTION_OTP, {
-                actionType: "DELETE_EXPENSE",
-                expenseId: expensePayload.id,
-            });
-
-            setDeleteOtpRequestId(response.data.otpRequestId);
-            setDeleteOtpMeta(response.data);
-            setDeleteOtpCode("");
-            setDeleteOtpStatusMessage(response.data.message || "Ma OTP da duoc gui toi email cua ban.");
+            await axiosConfig.delete(API_ENDPOINTS.DELETE_EXPENSE(openDeleteAlert.data.id));
             setOpenDeleteAlert({ show: false, data: null });
-            setOpenDeleteExpenseOtpModal(true);
-            toast.success(response.data.message || "Da gui OTP xac nhan xoa.");
-        } catch (error) {
-            const message = error.response?.data?.message || "Khong the gui OTP xoa chi tieu.";
-            setDeleteOtpError(message);
-            toast.error(message);
-        } finally {
-            setIsRequestingDeleteOtp(false);
-        }
-    };
-
-    const prepareDeleteExpenseOtp = async (expensePayload) => {
-        setPendingDeleteExpense(expensePayload);
-        await requestDeleteExpenseOtp(expensePayload);
-    };
-
-    const deleteExpenseWithOtp = async () => {
-        if (!pendingDeleteExpense?.id) {
-            setDeleteOtpError("Khong tim thay chi tieu dang cho xoa.");
-            return;
-        }
-
-        if (!deleteOtpRequestId) {
-            setDeleteOtpError("Vui long yeu cau OTP truoc.");
-            return;
-        }
-
-        if (!deleteOtpCode.trim()) {
-            setDeleteOtpError("Vui long nhap ma OTP.");
-            return;
-        }
-
-        setIsSubmittingDeleteWithOtp(true);
-        setDeleteOtpError("");
-
-        try {
-            const verifyResponse = await axiosConfig.post(API_ENDPOINTS.VERIFY_TRANSACTION_OTP, {
-                otpRequestId: deleteOtpRequestId,
-                otpCode: deleteOtpCode.trim(),
-            });
-
-            await axiosConfig.delete(API_ENDPOINTS.DELETE_EXPENSE(pendingDeleteExpense.id), {
-                data: {
-                    transactionAuthorizationToken: verifyResponse.data.transactionAuthorizationToken,
-                },
-            });
-
-            setOpenDeleteExpenseOtpModal(false);
-            resetDeleteOtpState();
             toast.success("Xoa chi tieu thanh cong");
             fetchExpenseDetails();
         } catch (error) {
-            const message = error.response?.data?.message || "Khong the xoa chi tieu.";
-            setDeleteOtpError(message);
-            toast.error(message);
-        } finally {
-            setIsSubmittingDeleteWithOtp(false);
+            toast.error(error.response?.data?.message || "Khong the xoa chi tieu.");
         }
     };
 
@@ -368,23 +201,7 @@ const Expense = () => {
         }
     };
 
-    const resetAddOtpState = () => {
-        setPendingExpense(null);
-        setAddOtpRequestId(null);
-        setAddOtpMeta(null);
-        setAddOtpCode("");
-        setAddOtpStatusMessage("");
-        setAddOtpError("");
-    };
 
-    const resetDeleteOtpState = () => {
-        setPendingDeleteExpense(null);
-        setDeleteOtpRequestId(null);
-        setDeleteOtpMeta(null);
-        setDeleteOtpCode("");
-        setDeleteOtpStatusMessage("");
-        setDeleteOtpError("");
-    };
 
     const handleOpenReceiptPicker = () => {
         if (receiptImportLocked) {
@@ -587,59 +404,11 @@ const Expense = () => {
                     >
                         <DeleteAlert
                             content="Ban co chac chan muon xoa chi tieu nay khong?"
-                            onDelete={() => prepareDeleteExpenseOtp(openDeleteAlert.data)}
+                            onDelete={handleDeleteExpense}
                         />
                     </Modal>
 
-                    <TransactionOtpModal
-                        isOpen={openExpenseOtpModal}
-                        onClose={() => {
-                            setOpenExpenseOtpModal(false);
-                            resetAddOtpState();
-                        }}
-                        title="Xac thuc OTP chi tieu"
-                        actionLabel="them chi tieu"
-                        maskedEmail={addOtpMeta?.maskedEmail || user?.email}
-                        transactionName={pendingExpense?.name}
-                        transactionAmount={pendingExpense?.amount ? `${Number(pendingExpense.amount).toLocaleString("vi-VN")} VND` : "--"}
-                        transactionDate={pendingExpense?.date || "--"}
-                        otpCode={addOtpCode}
-                        onOtpChange={setAddOtpCode}
-                        onRequestOtp={() => requestExpenseOtp()}
-                        onConfirm={submitExpenseWithOtp}
-                        isRequestingOtp={isRequestingAddOtp}
-                        isConfirming={isSubmittingAddWithOtp}
-                        otpRequestId={addOtpRequestId}
-                        otpResendCountdown={getRemainingSeconds(addOtpMeta?.resendAvailableAt, now)}
-                        otpExpiryCountdown={getRemainingSeconds(addOtpMeta?.otpExpiresAt, now)}
-                        statusMessage={addOtpStatusMessage}
-                        errorMessage={addOtpError}
-                    />
 
-                    <TransactionOtpModal
-                        isOpen={openDeleteExpenseOtpModal}
-                        onClose={() => {
-                            setOpenDeleteExpenseOtpModal(false);
-                            resetDeleteOtpState();
-                        }}
-                        title="Xac thuc OTP xoa chi tieu"
-                        actionLabel="xoa chi tieu"
-                        maskedEmail={deleteOtpMeta?.maskedEmail || user?.email}
-                        transactionName={pendingDeleteExpense?.name}
-                        transactionAmount={pendingDeleteExpense?.amount ? `${Number(pendingDeleteExpense.amount).toLocaleString("vi-VN")} VND` : "--"}
-                        transactionDate={pendingDeleteExpense?.date || "--"}
-                        otpCode={deleteOtpCode}
-                        onOtpChange={setDeleteOtpCode}
-                        onRequestOtp={() => requestDeleteExpenseOtp()}
-                        onConfirm={deleteExpenseWithOtp}
-                        isRequestingOtp={isRequestingDeleteOtp}
-                        isConfirming={isSubmittingDeleteWithOtp}
-                        otpRequestId={deleteOtpRequestId}
-                        otpResendCountdown={getRemainingSeconds(deleteOtpMeta?.resendAvailableAt, now)}
-                        otpExpiryCountdown={getRemainingSeconds(deleteOtpMeta?.otpExpiresAt, now)}
-                        statusMessage={deleteOtpStatusMessage}
-                        errorMessage={deleteOtpError}
-                    />
                     <Modal
                         isOpen={openReceiptPreviewModal}
                         onClose={handleCloseReceiptPreview}
@@ -768,17 +537,6 @@ const Expense = () => {
     );
 };
 
-const getRemainingSeconds = (value, now) => {
-    if (!value) {
-        return 0;
-    }
 
-    const targetTime = new Date(value).getTime();
-    if (Number.isNaN(targetTime)) {
-        return 0;
-    }
-
-    return Math.max(0, Math.ceil((targetTime - now) / 1000));
-};
 
 export default Expense;

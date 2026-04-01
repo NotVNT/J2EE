@@ -8,16 +8,6 @@ import Dashboard from "../components/Dashboard.jsx";
 import SavingGoalList from "../components/SavingGoalList.jsx";
 import SavingGoalForm from "../components/SavingGoalForm.jsx";
 import ContributionModal from "../components/ContributionModal.jsx";
-import TransactionOtpModal from "../components/TransactionOtpModal.jsx";
-import Modal from "../components/Modal.jsx";
-import DeleteAlert from "../components/DeleteAlert.jsx";
-
-const getRemainingSeconds = (targetTime, now) => {
-  if (!targetTime) return 0;
-
-  const diff = new Date(targetTime).getTime() - now;
-  return diff > 0 ? Math.ceil(diff / 1000) : 0;
-};
 
 const SavingGoals = () => {
   useUser();
@@ -29,22 +19,6 @@ const SavingGoals = () => {
   const [editGoal, setEditGoal] = useState(null);
   const [deleteAlert, setDeleteAlert] = useState({ show: false, id: null });
   const [contributionGoal, setContributionGoal] = useState(null);
-  const [openContributionOtpModal, setOpenContributionOtpModal] = useState(false);
-
-  const [pendingContribution, setPendingContribution] = useState(null);
-  const [contributionOtpRequestId, setContributionOtpRequestId] = useState(null);
-  const [contributionOtpMeta, setContributionOtpMeta] = useState(null);
-  const [contributionOtpCode, setContributionOtpCode] = useState("");
-  const [contributionOtpStatusMessage, setContributionOtpStatusMessage] = useState("");
-  const [contributionOtpError, setContributionOtpError] = useState("");
-  const [isRequestingContributionOtp, setIsRequestingContributionOtp] = useState(false);
-  const [isSubmittingContributionWithOtp, setIsSubmittingContributionWithOtp] = useState(false);
-  const [now, setNow] = useState(Date.now());
-
-  useEffect(() => {
-    const intervalId = window.setInterval(() => setNow(Date.now()), 1000);
-    return () => window.clearInterval(intervalId);
-  }, []);
 
   const fetchGoals = async () => {
     setLoading(true);
@@ -101,48 +75,6 @@ const SavingGoals = () => {
     }
   };
 
-  const requestContributionOtp = async (
-    goal = pendingContribution?.goal,
-    contributionPayload = pendingContribution?.dto
-  ) => {
-    if (!goal?.id || !contributionPayload) {
-      toast.error("Không có dữ liệu đóng góp để xác thực OTP.");
-      return false;
-    }
-
-    setIsRequestingContributionOtp(true);
-    setContributionOtpError("");
-    setContributionOtpStatusMessage("");
-
-    try {
-      const response = await axiosConfig.post(API_ENDPOINTS.REQUEST_TRANSACTION_OTP, {
-        actionType: "SAVING_GOAL_CONTRIBUTION",
-        goalId: goal.id,
-        amount: contributionPayload.amount,
-        date: contributionPayload.contributionDate,
-        note: contributionPayload.note,
-      });
-
-      setContributionOtpRequestId(response.data.otpRequestId);
-      setContributionOtpMeta(response.data);
-      setContributionOtpCode("");
-      setContributionOtpStatusMessage(
-        response.data.message || "Mã OTP đã được gửi tới email của bạn."
-      );
-      setContributionGoal(null);
-      setOpenContributionOtpModal(true);
-      toast.success(response.data.message || "Đã gửi OTP xác nhận đóng góp.");
-      return true;
-    } catch (error) {
-      const message = error.response?.data?.message || "Không thể gửi OTP đóng góp tiết kiệm.";
-      setContributionOtpError(message);
-      toast.error(message);
-      return false;
-    } finally {
-      setIsRequestingContributionOtp(false);
-    }
-  };
-
   const handleContribute = async (goal, dto) => {
     const normalizedContribution = {
       amount: Number(dto.amount),
@@ -150,67 +82,18 @@ const SavingGoals = () => {
       note: dto.note?.trim() || null,
     };
 
-    setPendingContribution({
-      goal,
-      dto: normalizedContribution,
-    });
-
-    return requestContributionOtp(goal, normalizedContribution);
-  };
-
-  const submitContributionWithOtp = async () => {
-    if (!pendingContribution?.goal?.id || !pendingContribution?.dto) {
-      setContributionOtpError("Không tìm thấy dữ liệu đóng góp đang chờ xác nhận.");
-      return;
-    }
-
-    if (!contributionOtpRequestId) {
-      setContributionOtpError("Vui lòng yêu cầu OTP trước.");
-      return;
-    }
-
-    if (!contributionOtpCode.trim()) {
-      setContributionOtpError("Vui lòng nhập mã OTP.");
-      return;
-    }
-
-    setIsSubmittingContributionWithOtp(true);
-    setContributionOtpError("");
-
     try {
-      const verifyResponse = await axiosConfig.post(API_ENDPOINTS.VERIFY_TRANSACTION_OTP, {
-        otpRequestId: contributionOtpRequestId,
-        otpCode: contributionOtpCode.trim(),
-      });
-
       await axiosConfig.post(
-        API_ENDPOINTS.ADD_SAVING_GOAL_CONTRIBUTION(pendingContribution.goal.id),
-        {
-          ...pendingContribution.dto,
-          transactionAuthorizationToken: verifyResponse.data.transactionAuthorizationToken,
-        }
+        API_ENDPOINTS.ADD_SAVING_GOAL_CONTRIBUTION(goal.id),
+        normalizedContribution
       );
 
-      setOpenContributionOtpModal(false);
-      resetContributionOtpState();
+      setContributionGoal(null);
       toast.success("Đóng góp tiết kiệm thành công.");
       fetchGoals();
     } catch (error) {
-      const message = error.response?.data?.message || "Không thể đóng góp tiết kiệm.";
-      setContributionOtpError(message);
-      toast.error(message);
-    } finally {
-      setIsSubmittingContributionWithOtp(false);
+      toast.error(error.response?.data?.message || "Không thể đóng góp tiết kiệm.");
     }
-  };
-
-  const resetContributionOtpState = () => {
-    setPendingContribution(null);
-    setContributionOtpRequestId(null);
-    setContributionOtpMeta(null);
-    setContributionOtpCode("");
-    setContributionOtpStatusMessage("");
-    setContributionOtpError("");
   };
 
   return (
@@ -265,35 +148,6 @@ const SavingGoals = () => {
               onContribute={handleContribute}
             />
           ) : null}
-
-          <TransactionOtpModal
-            isOpen={openContributionOtpModal}
-            onClose={() => {
-              setOpenContributionOtpModal(false);
-              resetContributionOtpState();
-            }}
-            title="Xác thực OTP đóng góp tiết kiệm"
-            actionLabel="đóng góp tiết kiệm"
-            maskedEmail={contributionOtpMeta?.maskedEmail || user?.email}
-            transactionName={pendingContribution?.goal?.name}
-            transactionAmount={
-              pendingContribution?.dto?.amount
-                ? `${Number(pendingContribution.dto.amount).toLocaleString("vi-VN")} VND`
-                : "--"
-            }
-            transactionDate={pendingContribution?.dto?.contributionDate || "--"}
-            otpCode={contributionOtpCode}
-            onOtpChange={setContributionOtpCode}
-            onRequestOtp={() => requestContributionOtp()}
-            onConfirm={submitContributionWithOtp}
-            isRequestingOtp={isRequestingContributionOtp}
-            isConfirming={isSubmittingContributionWithOtp}
-            otpRequestId={contributionOtpRequestId}
-            otpResendCountdown={getRemainingSeconds(contributionOtpMeta?.resendAvailableAt, now)}
-            otpExpiryCountdown={getRemainingSeconds(contributionOtpMeta?.otpExpiresAt, now)}
-            statusMessage={contributionOtpStatusMessage}
-            errorMessage={contributionOtpError}
-          />
         </div>
       </div>
     </Dashboard>

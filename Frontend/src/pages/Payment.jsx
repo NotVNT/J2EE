@@ -26,7 +26,7 @@ const ICON_MAP = { ShieldCheck, Sparkles, Star, Zap };
 const Payment = () => {
   useUser();
 
-  const { user, setUser } = useContext(AppContext);
+  const { user } = useContext(AppContext);
   const PAYMENT_PLANS = useMemo(() => {
     return getPaymentPlans().map((plan) => ({
       ...plan,
@@ -40,21 +40,7 @@ const Payment = () => {
   const [showManagePanel, setShowManagePanel] = useState(false);
   const [autoRenew, setAutoRenew] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
-  const [isRequestingOtp, setIsRequestingOtp] = useState(false);
-  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
-  const [otpRequestId, setOtpRequestId] = useState(null);
-  const [otpCode, setOtpCode] = useState("");
-  const [otpMeta, setOtpMeta] = useState(null);
-  const [paymentAuthorizationToken, setPaymentAuthorizationToken] = useState("");
-  const [authorizationExpiresAt, setAuthorizationExpiresAt] = useState("");
-  const [otpStatusMessage, setOtpStatusMessage] = useState("");
-  const [otpError, setOtpError] = useState("");
-  const [now, setNow] = useState(Date.now());
-
-  useEffect(() => {
-    const intervalId = window.setInterval(() => setNow(Date.now()), 1000);
-    return () => window.clearInterval(intervalId);
-  }, []);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const savedPayment = localStorage.getItem(PAYMENT_STORAGE_KEY);
@@ -75,17 +61,7 @@ const Payment = () => {
     }
   }, []);
 
-  useEffect(() => {
-    resetOtpState();
-  }, [selectedPlanId]);
 
-  useEffect(() => {
-    if (paymentAuthorizationToken && isDateExpired(authorizationExpiresAt, now)) {
-      setPaymentAuthorizationToken("");
-      setAuthorizationExpiresAt("");
-      setOtpStatusMessage("Phiên xác thực OTP đã hết hạn. Vui lòng yêu cầu mã mới để tiếp tục.");
-    }
-  }, [authorizationExpiresAt, now, paymentAuthorizationToken]);
 
   const selectedPlan = PAYMENT_PLANS.find((plan) => plan.id === selectedPlanId) ?? PAYMENT_PLANS[0];
 
@@ -115,109 +91,14 @@ const Payment = () => {
 
     return null;
   }, [latestPayment, PAYMENT_PLANS, user]);
-
-  const otpResendCountdown = getRemainingSeconds(otpMeta?.resendAvailableAt, now);
-  const otpExpiryCountdown = getRemainingSeconds(otpMeta?.otpExpiresAt, now);
-  const authorizationCountdown = getRemainingSeconds(authorizationExpiresAt, now);
-  const isOtpVerified = Boolean(paymentAuthorizationToken) && authorizationCountdown > 0;
-
-  const savePayment = (payment) => {
-    setLatestPayment(payment);
-    localStorage.setItem(PAYMENT_STORAGE_KEY, JSON.stringify(payment));
-  };
-
-  function resetOtpState() {
-    setOtpRequestId(null);
-    setOtpCode("");
-    setOtpMeta(null);
-    setPaymentAuthorizationToken("");
-    setAuthorizationExpiresAt("");
-    setOtpStatusMessage("");
-    setOtpError("");
-  }
-
-  const handleRequestOtp = async () => {
-    if (!selectedPlan?.id) {
-      toast.error("Vui lòng chọn gói dịch vụ trước khi lấy OTP.");
-      return;
-    }
-
-    setIsRequestingOtp(true);
-    setOtpError("");
-    setOtpStatusMessage("");
-
-    try {
-      const response = await axiosConfig.post(API_ENDPOINTS.REQUEST_PAYMENT_OTP, {
-        planId: selectedPlan.id
-      });
-
-      setOtpRequestId(response.data.otpRequestId);
-      setOtpMeta(response.data);
-      setOtpCode("");
-      setPaymentAuthorizationToken("");
-      setAuthorizationExpiresAt("");
-      setOtpStatusMessage(response.data.message || "Mã OTP đã được gửi tới email của bạn.");
-      toast.success(response.data.message || "Đã gửi OTP xác nhận thanh toán.");
-    } catch (error) {
-      const message = error.response?.data?.message || "Không thể gửi OTP thanh toán.";
-      setOtpError(message);
-      toast.error(message);
-    } finally {
-      setIsRequestingOtp(false);
-    }
-  };
-
-  const handleVerifyOtp = async () => {
-    if (!otpRequestId) {
-      setOtpError("Vui lòng yêu cầu OTP trước khi xác minh.");
-      return;
-    }
-
-    if (!otpCode.trim()) {
-      setOtpError("Vui lòng nhập mã OTP.");
-      return;
-    }
-
-    setIsVerifyingOtp(true);
-    setOtpError("");
-
-    try {
-      const response = await axiosConfig.post(API_ENDPOINTS.VERIFY_PAYMENT_OTP, {
-        otpRequestId,
-        otpCode: otpCode.trim()
-      });
-
-      setPaymentAuthorizationToken(response.data.paymentAuthorizationToken || "");
-      setAuthorizationExpiresAt(response.data.authorizationExpiresAt || "");
-      setOtpStatusMessage(response.data.message || "Xác thực OTP thành công.");
-      toast.success(response.data.message || "Xác thực OTP thành công.");
-    } catch (error) {
-      const message = error.response?.data?.message || "Không thể xác thực OTP.";
-      setOtpError(message);
-      toast.error(message);
-    } finally {
-      setIsVerifyingOtp(false);
-    }
-  };
-
   const handleCreatePayment = async (event) => {
     event.preventDefault();
 
-    if (!isOtpVerified) {
-      const message = paymentAuthorizationToken
-        ? "Phiên OTP đã hết hạn. Vui lòng xác thực lại."
-        : "Vui lòng xác thực OTP trước khi thanh toán.";
-      setOtpError(message);
-      toast.error(message);
-      return;
-    }
-
     setIsCreating(true);
-
+    
     try {
       const response = await axiosConfig.post(API_ENDPOINTS.CREATE_PAYMENT, {
-        planId: selectedPlan.id,
-        paymentAuthorizationToken
+        planId: selectedPlan.id
       });
 
       const paymentData = {
@@ -233,7 +114,7 @@ const Payment = () => {
       window.location.href = response.data.checkoutUrl;
     } catch (error) {
       const message = error.response?.data?.message || "Không thể khởi tạo thanh toán.";
-      setOtpError(message);
+      setError(message);
       toast.error(message);
     } finally {
       setIsCreating(false);
@@ -460,7 +341,7 @@ const Payment = () => {
                 <p className="mt-2 text-sm leading-6 text-slate-600">
                   {activeSubscription
                     ? "Sau khi thanh toán, gói hiện tại của bạn sẽ được cập nhật tương ứng."
-                    : "Sau khi xác thực OTP, bạn sẽ được chuyển đến cổng thanh toán PayOS."}
+                    : "Sau khi nhấn thanh toán, bạn sẽ được chuyển đến cổng thanh toán PayOS."}
                 </p>
 
                 <div className="mt-6 rounded-3xl bg-white p-5">
@@ -478,115 +359,19 @@ const Payment = () => {
                   </div>
                 </div>
 
-                <div className="mt-6 rounded-[28px] border border-slate-200 bg-white p-5">
-                  <div className="flex items-start gap-3">
-                    <div className="rounded-2xl bg-emerald-50 p-3 text-emerald-600">
-                      <ShieldCheck size={20} />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <h3 className="text-base font-semibold text-slate-900">Xác thực OTP trước khi thanh toán</h3>
-                      <p className="mt-1 text-sm leading-6 text-slate-500">
-                        Hệ thống sẽ gửi mã OTP về email tài khoản để xác nhận giao dịch PayOS cho gói đã chọn.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="mt-5 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4 text-sm text-slate-600">
-                    <div className="flex items-center gap-2 font-medium text-slate-700">
-                      <Mail size={16} />
-                      <span>{otpMeta?.maskedEmail || user?.email || "Email tài khoản"}</span>
-                    </div>
-                    <p className="mt-2">
-                      OTP dùng để xác nhận bạn thực sự muốn thanh toán gói <strong>{selectedPlan.displayName}</strong>.
-                    </p>
-                  </div>
-
-                  <div className="mt-5 flex flex-wrap gap-3">
-                    <button
-                      type="button"
-                      onClick={handleRequestOtp}
-                      disabled={isRequestingOtp || otpResendCountdown > 0}
-                      className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {isRequestingOtp ? (
-                        <>
-                          <LoaderCircle size={16} className="animate-spin" />
-                          Đang gửi OTP...
-                        </>
-                      ) : otpRequestId ? (
-                        otpResendCountdown > 0 ? `Gửi lại sau ${otpResendCountdown}s` : "Gửi lại OTP"
-                      ) : (
-                        "Nhận OTP xác nhận"
-                      )}
-                    </button>
-
-                    {isOtpVerified ? (
-                      <span className="inline-flex items-center rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
-                        OTP đã xác minh, còn hiệu lực {authorizationCountdown}s
-                      </span>
-                    ) : null}
-                  </div>
-
-                  {otpRequestId ? (
-                    <div className="mt-5 space-y-4">
-                      <div className="space-y-2">
-                        <label className="block text-sm font-medium text-slate-700">Mã OTP</label>
-                        <input
-                          type="text"
-                          value={otpCode}
-                          onChange={(event) => setOtpCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
-                          placeholder="Nhập 6 chữ số"
-                          className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-slate-400 focus:ring-1 focus:ring-slate-400"
-                        />
-                      </div>
-
-                      <div className="flex flex-wrap gap-3 text-xs text-slate-500">
-                        {otpExpiryCountdown > 0 ? (
-                          <span>Mã OTP hết hạn sau {otpExpiryCountdown}s</span>
-                        ) : (
-                          <span>Mã OTP hiện tại đã hết hạn, vui lòng yêu cầu mã mới.</span>
-                        )}
-                        {otpMeta?.otpExpiresAt ? <span>Hạn đến: {formatDateTime(otpMeta.otpExpiresAt)}</span> : null}
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={handleVerifyOtp}
-                        disabled={isVerifyingOtp || otpExpiryCountdown <= 0 || !otpCode.trim()}
-                        className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:bg-slate-300"
-                      >
-                        {isVerifyingOtp ? (
-                          <>
-                            <LoaderCircle size={16} className="animate-spin" />
-                            Đang xác thực OTP...
-                          </>
-                        ) : (
-                          "Xác thực OTP"
-                        )}
-                      </button>
-                    </div>
-                  ) : null}
-
-                  {otpStatusMessage ? (
-                    <p className="mt-4 rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{otpStatusMessage}</p>
-                  ) : null}
-
-                  {otpError ? (
-                    <p className="mt-4 rounded-2xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{otpError}</p>
-                  ) : null}
-                </div>
+                {error ? (
+                  <p className="mt-4 rounded-2xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p>
+                ) : null}
 
                 <button
                   className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={isCreating || !isOtpVerified}
+                  disabled={isCreating}
                   type="submit"
                 >
                   <CreditCard size={18} />
                   {isCreating
                     ? "Đang chuyển đến trang thanh toán..."
-                    : !isOtpVerified
-                      ? "Xác thực OTP để tiếp tục"
-                      : activeSubscription
+                    : activeSubscription
                         ? selectedPlan.id === activeSubscription.id
                           ? "Gia hạn gói"
                           : "Nâng cấp gói"
@@ -635,49 +420,6 @@ const formatDate = (value) => {
   }).format(date);
 };
 
-const formatDateTime = (value) => {
-  if (!value) {
-    return "--";
-  }
 
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return new Intl.DateTimeFormat("vi-VN", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit"
-  }).format(date);
-};
-
-const getRemainingSeconds = (value, now) => {
-  if (!value) {
-    return 0;
-  }
-
-  const targetTime = new Date(value).getTime();
-  if (Number.isNaN(targetTime)) {
-    return 0;
-  }
-
-  return Math.max(0, Math.ceil((targetTime - now) / 1000));
-};
-
-const isDateExpired = (value, now) => {
-  if (!value) {
-    return false;
-  }
-
-  const targetTime = new Date(value).getTime();
-  if (Number.isNaN(targetTime)) {
-    return false;
-  }
-
-  return targetTime <= now;
-};
 
 export default Payment;
