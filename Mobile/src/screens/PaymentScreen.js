@@ -15,6 +15,7 @@ export default function PaymentScreen() {
 
   const createPayment = async () => {
     if (!selectedPlan) {
+      Alert.alert("Thiếu thông tin", "Vui lòng chọn gói dịch vụ trước khi thanh toán.");
       return;
     }
 

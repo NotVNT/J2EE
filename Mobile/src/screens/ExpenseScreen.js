@@ -1,10 +1,11 @@
-﻿import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import http from "../services/http";
 import { API_ENDPOINTS } from "../constants/api";
 import { SUCCESS_ALERT_MESSAGES, SUCCESS_ALERT_TITLE } from "../constants/alertMessages";
 import { formatDate, formatMoney, getApiErrorMessage } from "../utils/format";
+import IncomeExpenseChart from "../components/IncomeExpenseChart";
 
 function ExpenseItem({ item, onDelete }) {
   const amount = Number(item?.amount || 0);
@@ -106,8 +107,11 @@ export default function ExpenseScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         ListHeaderComponent={
           expenses.length ? (
-            <View style={styles.listHeader}>
-              <Text style={styles.listTitle}>Danh sách chi tiêu</Text>
+            <View>
+              <IncomeExpenseChart data={expenses} title="Tổng quan chi tiêu" colorPrimary="#b42318" />
+              <View style={styles.listHeader}>
+                <Text style={styles.listTitle}>Danh sách chi tiêu</Text>
+              </View>
             </View>
           ) : null
         }

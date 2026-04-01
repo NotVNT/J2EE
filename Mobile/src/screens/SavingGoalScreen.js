@@ -1,10 +1,10 @@
-﻿import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { Alert, FlatList, Modal, Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import http from "../services/http";
 import { API_ENDPOINTS } from "../constants/api";
 import { SUCCESS_ALERT_MESSAGES, SUCCESS_ALERT_TITLE } from "../constants/alertMessages";
-import { formatDate, formatMoney, getApiErrorMessage, todayIso } from "../utils/format";
+import { formatCurrencyInput, formatDate, formatMoney, getApiErrorMessage, parseCurrencyInput, todayIso } from "../utils/format";
 import { PickDateField } from "../utils/pickDate";
 
 function getGoalVisual(goal) {
@@ -169,10 +169,15 @@ export default function SavingGoalScreen() {
   );
 
   const onCreate = async () => {
-    const amount = Number(targetAmount);
+    const amount = parseCurrencyInput(targetAmount);
 
     if (!name.trim()) {
-      Alert.alert("Thiếu tên", "Vui lòng nhập tên mục tiêu.");
+      Alert.alert("Thiếu thông tin", "Vui lòng nhập Tên mục tiêu.");
+      return;
+    }
+
+    if (!targetAmount.trim()) {
+      Alert.alert("Thiếu thông tin", "Vui lòng nhập Số tiền mục tiêu.");
       return;
     }
 
@@ -243,7 +248,12 @@ export default function SavingGoalScreen() {
   const onContribute = async () => {
     if (!selectedGoal?.id) return;
 
-    const amount = Number(contributionAmount);
+    const amount = parseCurrencyInput(contributionAmount);
+    if (!contributionAmount.trim()) {
+      Alert.alert("Thiếu thông tin", "Vui lòng nhập Số tiền.");
+      return;
+    }
+
     if (!Number.isFinite(amount) || amount <= 0) {
       Alert.alert("Sai dữ liệu", "Vui lòng nhập số tiền đóng góp hợp lệ.");
       return;
@@ -295,11 +305,11 @@ export default function SavingGoalScreen() {
         <Text style={styles.label}>Số tiền mục tiêu</Text>
         <TextInput
           style={styles.input}
-          placeholder="Ví dụ: 30000000"
+          placeholder="Ví dụ: 30.000.000"
           placeholderTextColor="#98a2b3"
           keyboardType="numeric"
           value={targetAmount}
-          onChangeText={setTargetAmount}
+          onChangeText={(value) => setTargetAmount(formatCurrencyInput(value))}
         />
 
         <View style={styles.dateRow}>
@@ -347,11 +357,11 @@ export default function SavingGoalScreen() {
             <Text style={styles.label}>Số tiền</Text>
             <TextInput
               style={styles.input}
-              placeholder="Ví dụ: 1000000"
+              placeholder="Ví dụ: 1.000.000"
               placeholderTextColor="#98a2b3"
               keyboardType="numeric"
               value={contributionAmount}
-              onChangeText={setContributionAmount}
+              onChangeText={(value) => setContributionAmount(formatCurrencyInput(value))}
             />
 
             <PickDateField label="Ngày đóng góp" value={contributionDate} onChange={setContributionDate} />

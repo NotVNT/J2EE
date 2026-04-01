@@ -10,6 +10,35 @@ export const formatMoney = (value = 0) => {
   }
 };
 
+export const normalizeCurrencyInput = (value = "") => {
+  return String(value || "").replace(/[^\d]/g, "");
+};
+
+export const formatCurrencyInput = (value = "") => {
+  const digits = normalizeCurrencyInput(value);
+  if (!digits) {
+    return "";
+  }
+
+  try {
+    return new Intl.NumberFormat("vi-VN", {
+      maximumFractionDigits: 0
+    }).format(Number(digits));
+  } catch {
+    return digits;
+  }
+};
+
+export const parseCurrencyInput = (value = "") => {
+  const digits = normalizeCurrencyInput(value);
+  if (!digits) {
+    return 0;
+  }
+
+  const amount = Number(digits);
+  return Number.isFinite(amount) ? amount : 0;
+};
+
 export const getApiErrorMessage = (error, fallback = "Đã có lỗi xảy ra") => {
   return error?.response?.data?.message || error?.message || fallback;
 };

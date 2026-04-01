@@ -1,10 +1,11 @@
-﻿import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from "react-native";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import http from "../services/http";
 import { API_ENDPOINTS } from "../constants/api";
 import { SUCCESS_ALERT_MESSAGES, SUCCESS_ALERT_TITLE } from "../constants/alertMessages";
 import { formatDate, formatMoney, getApiErrorMessage } from "../utils/format";
+import IncomeExpenseChart from "../components/IncomeExpenseChart";
 
 const FILTER_TYPES = {
   current: "current",
@@ -173,8 +174,11 @@ export default function IncomeScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         ListHeaderComponent={
           incomes.length ? (
-            <View style={styles.listHeader}>
-              <Text style={styles.listTitle}>Danh sách thu nhập</Text>
+            <View>
+              <IncomeExpenseChart data={incomes} title="Tổng quan thu nhập" colorPrimary="#15803d" />
+              <View style={styles.listHeader}>
+                <Text style={styles.listTitle}>Danh sách thu nhập</Text>
+              </View>
             </View>
           ) : null
         }

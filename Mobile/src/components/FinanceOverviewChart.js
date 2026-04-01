@@ -1,0 +1,667 @@
+import React, { useMemo, useState, useCallback, useEffect } from "react";
+import { View, Text, StyleSheet, Dimensions, Pressable } from "react-native";
+import Svg, { Path, G, Defs, LinearGradient, Stop, Text as SvgText } from "react-native-svg";
+import { buildRecentMonthKeys, formatMonthKeyLabel, formatMonthShortLabel, toMonthKey } from "../utils/financeStats";
+import { formatMoney } from "../utils/format";
+
+const screenWidth = Dimensions.get("window").width;
+
+const SLICE_COLORS = {
+  income: "#22c55e",
+  expense: "#f97316",
+  balance: "#3b82f6",
+};
+
+const VALUE_COLORS = {
+  income: "#15803d",
+  expense: "#dc2626",
+  balance: "#2563eb",
+};
+
+const SLICE_GRADIENTS = {
+  income: ["#34d399", "#059669"],
+  expense: ["#fb923c", "#ea580c"],
+  balance: ["#60a5fa", "#2563eb"],
+};
+
+const VALUE_GRADIENTS = {
+  income: ["#34d399", "#059669"],
+  expense: ["#fb923c", "#ea580c"],
+  balance: ["#60a5fa", "#2563eb"],
+};
+
+const CENTER_GRADIENT = ["#2563eb", "#059669"];
+const SLICE_GAP_ANGLE = 1.2;
+
+// ─── Helpers ─────────────────────────────────────────────────────
+function polarToCartesian(cx, cy, r, angleDeg) {
+  const rad = ((angleDeg - 90) * Math.PI) / 180;
+  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+}
+
+function describeArc(cx, cy, outerR, innerR, startAngle, endAngle) {
+  // Clamp so a full 360° slice works
+  const sweep = Math.min(endAngle - startAngle, 359.999);
+  const end = startAngle + sweep;
+  const largeArc = sweep > 180 ? 1 : 0;
+
+  const oStart = polarToCartesian(cx, cy, outerR, startAngle);
+  const oEnd = polarToCartesian(cx, cy, outerR, end);
+  const iStart = polarToCartesian(cx, cy, innerR, end);
+  const iEnd = polarToCartesian(cx, cy, innerR, startAngle);
+
+  return [
+    `M ${oStart.x} ${oStart.y}`,
+    `A ${outerR} ${outerR} 0 ${largeArc} 1 ${oEnd.x} ${oEnd.y}`,
+    `L ${iStart.x} ${iStart.y}`,
+    `A ${innerR} ${innerR} 0 ${largeArc} 0 ${iEnd.x} ${iEnd.y}`,
+    "Z",
+  ].join(" ");
+}
+
+function formatShortMoney(val) {
+  const abs = Math.abs(val);
+  if (abs >= 1_000_000_000) return `${(abs / 1_000_000_000).toFixed(1)}B`;
+  if (abs >= 1_000_000) return `${Math.round(abs / 1_000_000)}M`;
+  if (abs >= 1_000) return `${Math.round(abs / 1_000)}K`;
+  return String(abs);
+}
+
+function normalizeMonthlySeries(series = []) {
+  return series
+    .filter((item) => item?.monthKey)
+    .map((item) => ({
+      monthKey: String(item.monthKey),
+      income: Math.max(0, Number(item?.income || 0)),
+      expense: Math.max(0, Number(item?.expense || 0)),
+      balance: Number(item?.balance ?? Number(item?.income || 0) - Number(item?.expense || 0))
+    }))
+    .sort((a, b) => a.monthKey.localeCompare(b.monthKey));
+}
+
+function buildFallbackMonthlySeries(income = 0, expense = 0) {
+  const keys = buildRecentMonthKeys(6);
+  const currentKey = toMonthKey(new Date());
+
+  return keys.map((monthKey) => {
+    const isCurrent = monthKey === currentKey;
+    const monthIncome = isCurrent ? Math.max(0, Number(income || 0)) : 0;
+    const monthExpense = isCurrent ? Math.max(0, Number(expense || 0)) : 0;
+    return {
+      monthKey,
+      income: monthIncome,
+      expense: monthExpense,
+      balance: monthIncome - monthExpense
+    };
+  });
+}
+
+// ─── Legend ──────────────────────────────────────────────────────
+function LegendItem({ color, label, value, valueColor, valueGradient }) {
+  return (
+    <View style={styles.legendItem}>
+      <View style={[styles.legendDot, { backgroundColor: color }]} />
+      <Text style={styles.legendLabel}>{label}</Text>
+      <Svg width={128} height={18} style={styles.legendValueSvg}>
+        <Defs>
+          <LinearGradient id="legendValueGradient" x1="0" y1="0" x2="1" y2="0">
+            <Stop offset="0" stopColor={valueGradient?.[0] || valueColor} />
+            <Stop offset="1" stopColor={valueGradient?.[1] || valueColor} />
+          </LinearGradient>
+        </Defs>
+        <SvgText
+          x={126}
+          y={13}
+          textAnchor="end"
+          fontSize="13"
+          fontWeight="700"
+          fill="url(#legendValueGradient)"
+        >
+          {value}
+        </SvgText>
+      </Svg>
+    </View>
+  );
+}
+
+// ─── Tooltip ─────────────────────────────────────────────────────
+function SliceTooltip({ slice, cx, cy, outerR }) {
+  if (!slice) return null;
+
+  const midAngle = (slice.startAngle + slice.endAngle) / 2;
+  const rad = ((midAngle - 90) * Math.PI) / 180;
+
+  // Position popup along the outer radius + offset
+  const popupDistance = outerR + 14;
+  const px = cx + popupDistance * Math.cos(rad);
+  const py = cy + popupDistance * Math.sin(rad);
+
+  // Align tooltip box relative to the point
+  const tooltipW = 140;
+  const tooltipH = 52;
+  let left = px - tooltipW / 2;
+  let top = py - tooltipH / 2;
+
+  // Clamp so it stays inside the SVG viewBox area
+  const svgSize = (outerR + 30) * 2;
+  if (left < 4) left = 4;
+  if (left + tooltipW > svgSize - 4) left = svgSize - tooltipW - 4;
+  if (top < 4) top = 4;
+  if (top + tooltipH > svgSize - 4) top = svgSize - tooltipH - 4;
+
+  return (
+    <View
+      style={[
+        styles.tooltip,
+        {
+          left,
+          top,
+          width: tooltipW,
+          minHeight: tooltipH,
+        },
+      ]}
+      pointerEvents="none"
+    >
+      <View style={styles.tooltipHeader}>
+        <View style={[styles.tooltipDot, { backgroundColor: slice.color }]} />
+        <Text style={styles.tooltipName}>{slice.name}</Text>
+      </View>
+      <Text style={[styles.tooltipAmount, { color: slice.valueColor }]}>
+        {slice.sign}{formatMoney(slice.rawAmount)}
+      </Text>
+      <Text style={styles.tooltipPercent}>
+        {slice.percent.toFixed(1)}% tổng tiền
+      </Text>
+    </View>
+  );
+}
+
+function MonthSwitcher({ label, canPrev, canNext, onPrev, onNext }) {
+  return (
+    <View style={styles.monthSwitcherRow}>
+      <Pressable style={[styles.monthNavBtn, !canPrev && styles.monthNavBtnDisabled]} onPress={onPrev} disabled={!canPrev}>
+        <Text style={[styles.monthNavText, !canPrev && styles.monthNavTextDisabled]}>◀</Text>
+      </Pressable>
+      <Text style={styles.monthYearText}>{label}</Text>
+      <Pressable style={[styles.monthNavBtn, !canNext && styles.monthNavBtnDisabled]} onPress={onNext} disabled={!canNext}>
+        <Text style={[styles.monthNavText, !canNext && styles.monthNavTextDisabled]}>▶</Text>
+      </Pressable>
+    </View>
+  );
+}
+
+// ─── Monthly Bar Chart ────────────────────────────────────────────
+function MonthlyBarsPlaceholder({ monthlySeries = [] }) {
+  if (!monthlySeries.length) return null;
+
+  const barH = 90;
+  const barW = (screenWidth - 80) / monthlySeries.length;
+  const maxValue = Math.max(
+    1,
+    ...monthlySeries.map((item) => Math.max(item.income, item.expense))
+  );
+
+  return (
+    <View style={styles.monthlySection}>
+      <Text style={styles.monthlyTitle}>So sánh các tháng</Text>
+      <View style={styles.monthlyBarRow}>
+        {monthlySeries.map((item, idx) => {
+          const incomeHeight = Math.max(6, (item.income / maxValue) * barH);
+          const expenseHeight = Math.max(6, (item.expense / maxValue) * barH);
+
+          return (
+            <View key={idx} style={[styles.monthlyBarCol, { width: barW }]}>
+              <View style={styles.monthlyBarPair}>
+                <View style={{ height: barH, justifyContent: "flex-end", alignItems: "center" }}>
+                  <View
+                    style={{
+                      width: 10,
+                      height: incomeHeight,
+                      borderRadius: 4,
+                      backgroundColor: "#22c55e",
+                      opacity: 0.8,
+                    }}
+                  />
+                </View>
+                <View
+                  style={{
+                    height: barH,
+                    justifyContent: "flex-end",
+                    alignItems: "center",
+                  }}
+                >
+                  <View
+                    style={{
+                      width: 10,
+                      height: expenseHeight,
+                      borderRadius: 4,
+                      backgroundColor: "#f97316",
+                      opacity: 0.8,
+                    }}
+                  />
+                </View>
+              </View>
+              <Text style={styles.monthlyBarLabel}>{formatMonthShortLabel(item.monthKey)}</Text>
+            </View>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+// ─── Main Component ──────────────────────────────────────────────
+const FinanceOverviewChart = ({ totalBalance, totalIncome, totalExpense, monthlySeries = [] }) => {
+  const fallbackIncome = Number(totalIncome || 0);
+  const fallbackExpense = Number(totalExpense || 0);
+  const fallbackBalance = Number(totalBalance || 0);
+
+  const [selectedIdx, setSelectedIdx] = useState(null);
+  const [selectedMonthIndex, setSelectedMonthIndex] = useState(0);
+
+  const monthSeries = useMemo(() => {
+    const normalized = normalizeMonthlySeries(monthlySeries);
+    if (normalized.length) return normalized;
+
+    const fallback = buildFallbackMonthlySeries(fallbackIncome, fallbackExpense);
+    const currentKey = toMonthKey(new Date());
+    return fallback.map((item) => (
+      item.monthKey === currentKey
+        ? { ...item, balance: fallbackBalance }
+        : item
+    ));
+  }, [fallbackBalance, fallbackExpense, fallbackIncome, monthlySeries]);
+
+  useEffect(() => {
+    if (!monthSeries.length) return;
+    setSelectedMonthIndex(monthSeries.length - 1);
+  }, [monthSeries]);
+
+  useEffect(() => {
+    setSelectedIdx(null);
+  }, [selectedMonthIndex]);
+
+  const activeMonth = monthSeries[selectedMonthIndex] || monthSeries[monthSeries.length - 1] || {
+    monthKey: toMonthKey(new Date()),
+    income: fallbackIncome,
+    expense: fallbackExpense,
+    balance: fallbackBalance
+  };
+
+  const income = Number(activeMonth?.income || 0);
+  const expense = Number(activeMonth?.expense || 0);
+  const balance = Number(activeMonth?.balance || 0);
+  const monthYearLabel = formatMonthKeyLabel(activeMonth?.monthKey || "");
+
+  // Build slices
+  const slices = useMemo(() => {
+    const raw = [
+      { key: "income", name: "Thu nhập", rawAmount: income, color: SLICE_COLORS.income, valueColor: VALUE_COLORS.income, sign: "+" },
+      { key: "expense", name: "Chi tiêu", rawAmount: expense, color: SLICE_COLORS.expense, valueColor: VALUE_COLORS.expense, sign: "-" },
+      { key: "balance", name: "Số dư", rawAmount: Math.abs(balance), color: SLICE_COLORS.balance, valueColor: VALUE_COLORS.balance, sign: "" },
+    ].filter((s) => s.rawAmount > 0);
+
+    const total = raw.reduce((sum, s) => sum + s.rawAmount, 0);
+    if (total === 0) return [];
+
+    let currentAngle = 0;
+    return raw.map((s) => {
+      const percent = (s.rawAmount / total) * 100;
+      const sweep = (s.rawAmount / total) * 360;
+      const baseStartAngle = currentAngle;
+      const baseEndAngle = currentAngle + sweep;
+      const halfSweep = sweep / 2;
+      const inset = Math.min(SLICE_GAP_ANGLE, halfSweep);
+      const startAngle = baseStartAngle + inset;
+      const endAngle = baseEndAngle - inset;
+      currentAngle = baseEndAngle;
+      return { ...s, percent, startAngle, endAngle };
+    });
+  }, [income, expense, balance]);
+
+  const total = useMemo(
+    () => slices.reduce((sum, s) => sum + s.rawAmount, 0),
+    [slices]
+  );
+
+  const handleSliceTap = useCallback(
+    (idx) => {
+      setSelectedIdx((prev) => (prev === idx ? null : idx));
+    },
+    []
+  );
+
+  // Chart dimensions
+  const outerR = 90;
+  const innerR = 58;
+  const padding = 30;
+  const svgSize = (outerR + padding) * 2;
+  const cx = svgSize / 2;
+  const cy = svgSize / 2;
+
+  const selectedSlice = selectedIdx !== null ? slices[selectedIdx] : null;
+  const hasChartData = slices.length > 0;
+  const isCurrentMonth = selectedMonthIndex === monthSeries.length - 1;
+
+  return (
+    <View style={styles.container}>
+      <MonthSwitcher
+        label={monthYearLabel}
+        canPrev={selectedMonthIndex > 0}
+        canNext={selectedMonthIndex < monthSeries.length - 1}
+        onPrev={() => setSelectedMonthIndex((prev) => Math.max(0, prev - 1))}
+        onNext={() => setSelectedMonthIndex((prev) => Math.min(monthSeries.length - 1, prev + 1))}
+      />
+
+      {/* Legend */}
+            <View style={styles.legendContainer}>
+        <LegendItem
+          color={SLICE_COLORS.income}
+          label="Thu nhập"
+          value={`+${formatMoney(income)}`}
+          valueColor={VALUE_COLORS.income}
+          valueGradient={VALUE_GRADIENTS.income}
+        />
+        <LegendItem
+          color={SLICE_COLORS.expense}
+          label="Chi tiêu"
+          value={`-${formatMoney(expense)}`}
+          valueColor={VALUE_COLORS.expense}
+          valueGradient={VALUE_GRADIENTS.expense}
+        />
+        <LegendItem
+          color={SLICE_COLORS.balance}
+          label="Số dư"
+          value={formatMoney(balance)}
+          valueColor={VALUE_COLORS.balance}
+          valueGradient={VALUE_GRADIENTS.balance}
+        />
+      </View>
+
+      {/* Custom SVG Donut Chart */}
+      {hasChartData ? (
+        <Pressable
+          style={styles.chartWrapper}
+          onPress={() => setSelectedIdx(null)}
+        >
+          <View style={{ width: svgSize, height: svgSize }}>
+            <Svg width={svgSize} height={svgSize} viewBox={`0 0 ${svgSize} ${svgSize}`}>
+              <Defs>
+                <LinearGradient id="slice-income" x1="0" y1="0" x2="1" y2="1">
+                  <Stop offset="0" stopColor={SLICE_GRADIENTS.income[0]} />
+                  <Stop offset="1" stopColor={SLICE_GRADIENTS.income[1]} />
+                </LinearGradient>
+                <LinearGradient id="slice-expense" x1="0" y1="0" x2="1" y2="1">
+                  <Stop offset="0" stopColor={SLICE_GRADIENTS.expense[0]} />
+                  <Stop offset="1" stopColor={SLICE_GRADIENTS.expense[1]} />
+                </LinearGradient>
+                <LinearGradient id="slice-balance" x1="0" y1="0" x2="1" y2="1">
+                  <Stop offset="0" stopColor={SLICE_GRADIENTS.balance[0]} />
+                  <Stop offset="1" stopColor={SLICE_GRADIENTS.balance[1]} />
+                </LinearGradient>
+                <LinearGradient id="center-total-gradient" x1="0" y1="0" x2="1" y2="0">
+                  <Stop offset="0" stopColor={CENTER_GRADIENT[0]} />
+                  <Stop offset="1" stopColor={CENTER_GRADIENT[1]} />
+                </LinearGradient>
+              </Defs>
+              <G>
+                {slices.map((slice, idx) => {
+                  const isSelected = selectedIdx === idx;
+                  const scale = isSelected ? 1.06 : 1;
+                  const sOuterR = outerR * scale;
+                  const sInnerR = innerR * scale;
+
+                  const d = describeArc(cx, cy, sOuterR, sInnerR, slice.startAngle, slice.endAngle);
+
+                  return (
+                    <Path
+                      key={slice.key}
+                      d={d}
+                      fill={`url(#slice-${slice.key})`}
+                      opacity={selectedIdx !== null && !isSelected ? 0.45 : 1}
+                      onPress={() => handleSliceTap(idx)}
+                    />
+                  );
+                })}
+
+                <SvgText
+                  x={cx}
+                  y={cy - 8}
+                  textAnchor="middle"
+                  fontSize="13"
+                  fontWeight="600"
+                  fill="#94a3b8"
+                >
+                  Tổng
+                </SvgText>
+
+                <SvgText
+                  x={cx}
+                  y={cy + 14}
+                  textAnchor="middle"
+                  fontSize="22"
+                  fontWeight="900"
+                  fill="url(#center-total-gradient)"
+                >
+                  {formatShortMoney(total)}
+                </SvgText>
+              </G>
+            </Svg>
+
+            {selectedSlice && (
+              <SliceTooltip
+                slice={selectedSlice}
+                cx={cx}
+                cy={cy}
+                outerR={outerR}
+              />
+            )}
+          </View>
+        </Pressable>
+      ) : (
+        <View style={styles.chartEmptyWrap}>
+          <Text style={styles.emptyText}>Tháng này chưa có dữ liệu thống kê.</Text>
+          {!isCurrentMonth ? (
+            <Pressable style={styles.currentMonthBtn} onPress={() => setSelectedMonthIndex(monthSeries.length - 1)}>
+              <Text style={styles.currentMonthBtnText}>Về tháng hiện tại</Text>
+            </Pressable>
+          ) : null}
+        </View>
+      )}
+
+      {/* Monthly comparison bar chart */}
+      <MonthlyBarsPlaceholder monthlySeries={monthSeries} />
+    </View>
+  );
+};
+
+// ─── Styles ──────────────────────────────────────────────────────
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: "#fff",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#dbe3f2",
+    padding: 14,
+  },
+  monthSwitcherRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 6,
+  },
+  monthNavBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#dbe3f2",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#f8fafc",
+  },
+  monthNavBtnDisabled: {
+    opacity: 0.4,
+  },
+  monthNavText: {
+    color: "#334155",
+    fontWeight: "800",
+  },
+  monthNavTextDisabled: {
+    color: "#94a3b8",
+  },
+  monthYearText: {
+    color: "#64748b",
+    fontSize: 12,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+  legendContainer: {
+    gap: 6,
+    marginBottom: 4,
+  },
+  legendItem: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  legendDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginRight: 8,
+  },
+  legendLabel: {
+    flex: 1,
+    color: "#334155",
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  legendValue: {
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  legendValueSvg: {
+    marginLeft: 8,
+  },
+  chartWrapper: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginVertical: 4,
+  },
+  chartEmptyWrap: {
+    marginTop: 8,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    borderRadius: 12,
+    backgroundColor: "#f8fafc",
+    paddingVertical: 18,
+    paddingHorizontal: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  currentMonthBtn: {
+    borderWidth: 1,
+    borderColor: "#bbf7d0",
+    backgroundColor: "#f0fdf4",
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  currentMonthBtnText: {
+    color: "#15803d",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+
+  // Tooltip
+  tooltip: {
+    position: "absolute",
+    backgroundColor: "#1e293b",
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  tooltipHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 2,
+  },
+  tooltipDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 6,
+  },
+  tooltipName: {
+    color: "#e2e8f0",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  tooltipAmount: {
+    fontSize: 14,
+    fontWeight: "900",
+    marginBottom: 1,
+  },
+  tooltipPercent: {
+    color: "#94a3b8",
+    fontSize: 11,
+    fontWeight: "600",
+  },
+
+  // Monthly section
+  monthlySection: {
+    marginTop: 10,
+  },
+  monthlyTitle: {
+    color: "#64748b",
+    fontSize: 13,
+    fontWeight: "600",
+    marginBottom: 8,
+  },
+  monthlyBarRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-end",
+  },
+  monthlyBarCol: {
+    alignItems: "center",
+  },
+  monthlyBarPair: {
+    height: 90,
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "center",
+    gap: 4,
+  },
+  monthlyBarLabel: {
+    color: "#94a3b8",
+    fontSize: 11,
+    fontWeight: "600",
+    marginTop: 4,
+  },
+
+  // Empty state
+  emptyContainer: {
+    backgroundColor: "#fff",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#dbe3f2",
+    padding: 24,
+    alignItems: "center",
+  },
+  emptyText: {
+    color: "#64748b",
+    fontSize: 14,
+    textAlign: "center",
+  },
+});
+
+export default FinanceOverviewChart;
+

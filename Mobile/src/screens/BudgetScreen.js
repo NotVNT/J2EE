@@ -1,10 +1,10 @@
-﻿import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import http from "../services/http";
 import { API_ENDPOINTS } from "../constants/api";
 import { SUCCESS_ALERT_MESSAGES, SUCCESS_ALERT_TITLE } from "../constants/alertMessages";
-import { formatMoney, getApiErrorMessage } from "../utils/format";
+import { formatCurrencyInput, formatMoney, getApiErrorMessage, parseCurrencyInput } from "../utils/format";
 
 function getBudgetVisual(progressRatio) {
   if (progressRatio >= 1) {
@@ -169,12 +169,27 @@ export default function BudgetScreen() {
   }, [onRefresh]);
 
   const onSave = async () => {
-    const limit = Number(amountLimit);
+    const limit = parseCurrencyInput(amountLimit);
     const selectedMonth = Number(month);
     const selectedYear = Number(year);
 
     if (!categoryId) {
       Alert.alert("Thiếu danh mục", "Vui lòng chọn danh mục.");
+      return;
+    }
+
+    if (!amountLimit.trim()) {
+      Alert.alert("Thiếu thông tin", "Vui lòng nhập Hạn mức.");
+      return;
+    }
+
+    if (!month.trim()) {
+      Alert.alert("Thiếu thông tin", "Vui lòng nhập Tháng.");
+      return;
+    }
+
+    if (!year.trim()) {
+      Alert.alert("Thiếu thông tin", "Vui lòng nhập Năm.");
       return;
     }
 
@@ -266,8 +281,8 @@ export default function BudgetScreen() {
           style={styles.input}
           keyboardType="numeric"
           value={amountLimit}
-          onChangeText={setAmountLimit}
-          placeholder="Ví dụ: 3000000"
+          onChangeText={(value) => setAmountLimit(formatCurrencyInput(value))}
+          placeholder="Ví dụ: 3.000.000"
           placeholderTextColor="#98a2b3"
         />
 

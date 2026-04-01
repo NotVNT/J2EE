@@ -1,10 +1,10 @@
-﻿import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import http from "../services/http";
 import { API_ENDPOINTS } from "../constants/api";
 import { SUCCESS_ALERT_MESSAGES, SUCCESS_ALERT_TITLE } from "../constants/alertMessages";
-import { getApiErrorMessage, todayIso } from "../utils/format";
+import { formatCurrencyInput, getApiErrorMessage, parseCurrencyInput, todayIso } from "../utils/format";
 import { PickDateField } from "../utils/pickDate";
 
 export default function AddExpenseScreen() {
@@ -36,10 +36,15 @@ export default function AddExpenseScreen() {
 
   const onSave = async () => {
     const normalizedName = name.trim();
-    const numericAmount = Number(amount);
+    const numericAmount = parseCurrencyInput(amount);
 
     if (!normalizedName) {
-      Alert.alert("Thiếu thông tin", "Vui lòng nhập tên khoản chi.");
+      Alert.alert("Thiếu thông tin", "Vui lòng nhập Tên khoản chi.");
+      return;
+    }
+
+    if (!amount.trim()) {
+      Alert.alert("Thiếu thông tin", "Vui lòng nhập Số tiền.");
       return;
     }
 
@@ -85,9 +90,9 @@ export default function AddExpenseScreen() {
       <TextInput
         style={styles.input}
         value={amount}
-        onChangeText={setAmount}
+        onChangeText={(value) => setAmount(formatCurrencyInput(value))}
         keyboardType="numeric"
-        placeholder="Ví dụ: 120000"
+        placeholder="Ví dụ: 120.000"
       />
 
       <PickDateField label="Ngày" value={date} onChange={setDate} />
