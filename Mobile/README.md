@@ -45,3 +45,6 @@
 3. Hoàn thiện luồng OTP giao dịch cho add/delete income/expense.
 4. Tách service + hooks để tối ưu maintainability.
 5. Đóng gói release Android/iOS.
+
+
+npx expo start --dev-client

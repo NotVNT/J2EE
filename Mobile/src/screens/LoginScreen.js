@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { AuthContext } from "../components/AuthContext";
+import DevbotLoader from "../components/DevbotLoader";
 import { getApiErrorMessage } from "../utils/format";
 import { tokenStorage } from "../storage/tokenStorage";
 import devbotLogo from "../assets/devbot.png";
@@ -70,11 +71,20 @@ export default function LoginScreen() {
     } catch (error) {
       const isTimeout = error?.code === "ECONNABORTED";
       const isNetworkError = !error?.response && /network|timeout|socket|failed/i.test(String(error?.message || ""));
+      const statusCode = error?.response?.status;
+      const isServiceUnavailable = [502, 503, 504].includes(statusCode);
 
-      if (isTimeout || isNetworkError) {
+      console.tron?.error?.("[Login] API error", {
+        code: error?.code,
+        statusCode,
+        message: error?.message,
+        responseMessage: error?.response?.data?.message
+      });
+
+      if (isTimeout || isNetworkError || isServiceUnavailable) {
         Alert.alert(
-          "Không kết nối được máy chủ",
-          "Render đang khởi động lại dịch vụ. Vui lòng đợi khoảng 30-90 giây rồi thử đăng nhập lại."
+          "Không kết nối được với máy chủ",
+          "Hệ thống đang gặp sự cố kết nối. Vui lòng kiểm tra kết nối mạng của bạn hoặc thử lại sau ít phút."
         );
       } else {
         const message = getApiErrorMessage(error, "Không thể đăng nhập. Vui lòng kiểm tra lại tài khoản.");
@@ -91,6 +101,8 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.screen}>
+      {loading ? <DevbotLoader text="Devbot đang xác thực" overlay /> : null}
+
       <View style={styles.bgGlowTop} />
       <View style={styles.bgGlowBottom} />
 
