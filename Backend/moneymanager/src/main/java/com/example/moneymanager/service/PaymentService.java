@@ -33,7 +33,7 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final ProfileService profileService;
     private final SubscriptionService subscriptionService;
-    private final PaymentOtpService paymentOtpService;
+
     private final ClientPlatformService clientPlatformService;
 
     @Value("${payos.return-url}")
@@ -54,12 +54,7 @@ public class PaymentService {
     @Transactional
     public CreatePaymentResponseDTO createPaymentLink(CreatePaymentRequestDTO requestDTO) {
         validateRequest(requestDTO);
-        if (!clientPlatformService.isMobileClient()) {
-            paymentOtpService.ensureValidAuthorization(
-                    requestDTO.getPaymentAuthorizationToken(),
-                    requestDTO.getPlanId()
-            );
-        }
+
 
         ProfileEntity currentProfile = profileService.getCurrentProfile();
         SubscriptionService.PlanCatalogItem plan = subscriptionService.getPlanCatalogItem(requestDTO.getPlanId());
@@ -89,9 +84,7 @@ public class PaymentService {
                     .profile(currentProfile)
                     .build();
 
-            if (!clientPlatformService.isMobileClient()) {
-                paymentOtpService.markAuthorizationConsumed(requestDTO.getPaymentAuthorizationToken());
-            }
+
 
             paymentEntity = paymentRepository.save(paymentEntity);
             return toDTO(paymentEntity);
@@ -174,10 +167,7 @@ public class PaymentService {
         if (requestDTO.getPlanId() == null || requestDTO.getPlanId().isBlank()) {
             throw new RuntimeException("Vui long chon goi dich vu.");
         }
-        if (!clientPlatformService.isMobileClient()
-                && (requestDTO.getPaymentAuthorizationToken() == null || requestDTO.getPaymentAuthorizationToken().isBlank())) {
-            throw new RuntimeException("Vui long xac thuc OTP truoc khi thanh toan.");
-        }
+
     }
 
     private long generateOrderCode() {

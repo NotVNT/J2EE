@@ -1,7 +1,7 @@
 package com.example.moneymanager.controller;
 
 import com.example.moneymanager.dto.IncomeDTO;
-import com.example.moneymanager.dto.IncomeDeleteRequestDTO;
+
 import com.example.moneymanager.service.IncomeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -33,8 +33,8 @@ public class IncomeController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteIncome(@PathVariable Long id, @RequestBody(required = false) IncomeDeleteRequestDTO requestDTO) {
-        incomeService.deleteIncome(id, requestDTO);
+    public ResponseEntity<Void> deleteIncome(@PathVariable Long id) {
+        incomeService.deleteIncome(id);
         return ResponseEntity.noContent().build();
     }
 }

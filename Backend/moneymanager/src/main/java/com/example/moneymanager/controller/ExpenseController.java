@@ -1,7 +1,7 @@
 package com.example.moneymanager.controller;
 
 import com.example.moneymanager.dto.ExpenseDTO;
-import com.example.moneymanager.dto.ExpenseDeleteRequestDTO;
+
 import com.example.moneymanager.dto.ExpenseResponseDTO;
 import com.example.moneymanager.dto.ReceiptImportAnalyzeResponseDTO;
 import com.example.moneymanager.dto.ReceiptImportConfirmRequestDTO;
@@ -37,8 +37,8 @@ public class ExpenseController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteExpense(@PathVariable Long id, @RequestBody(required = false) ExpenseDeleteRequestDTO requestDTO) {
-        expenseService.deleteExpense(id, requestDTO);
+    public ResponseEntity<Void> deleteExpense(@PathVariable Long id) {
+        expenseService.deleteExpense(id);
         return ResponseEntity.noContent().build();
     }
 

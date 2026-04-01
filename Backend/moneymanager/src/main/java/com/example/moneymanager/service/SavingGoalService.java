@@ -24,7 +24,7 @@ public class SavingGoalService {
     private final SavingGoalRepository goalRepository;
     private final SavingGoalContributionRepository contributionRepository;
     private final ProfileService profileService;
-    private final TransactionOtpService transactionOtpService;
+
 
     // ─── CREATE ──────────────────────────────────────────────────
     @Transactional
@@ -126,12 +126,7 @@ public class SavingGoalService {
             dto.setContributionDate(LocalDate.now());
         }
 
-        String payloadHash = transactionOtpService.buildSavingGoalContributionPayloadHash(goal, dto);
-        transactionOtpService.ensureValidAuthorization(
-                dto.getTransactionAuthorizationToken(),
-                TransactionOtpService.ACTION_SAVING_GOAL_CONTRIBUTION,
-                payloadHash
-        );
+
 
         SavingGoalContributionEntity contribution = SavingGoalContributionEntity.builder()
                 .amount(dto.getAmount())
@@ -148,7 +143,7 @@ public class SavingGoalService {
             goal.setStatus(GoalStatus.COMPLETED);
         }
         goalRepository.save(goal);
-        transactionOtpService.markAuthorizationConsumed(dto.getTransactionAuthorizationToken());
+
 
         return toContributionDTO(contribution);
     }

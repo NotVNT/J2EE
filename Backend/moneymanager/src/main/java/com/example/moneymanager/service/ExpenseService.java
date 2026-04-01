@@ -1,7 +1,7 @@
 package com.example.moneymanager.service;
 
 import com.example.moneymanager.dto.BudgetStatusDTO;
-import com.example.moneymanager.dto.ExpenseDeleteRequestDTO;
+
 import com.example.moneymanager.dto.ExpenseDTO;
 import com.example.moneymanager.dto.ExpenseResponseDTO;
 import com.example.moneymanager.entity.CategoryEntity;
@@ -27,20 +27,14 @@ public class ExpenseService {
     private final ProfileService profileService;
     private final SubscriptionService subscriptionService;
     private final BudgetService budgetService;
-    private final TransactionOtpService transactionOtpService;
+
     private final ClientPlatformService clientPlatformService;
 
     // Adds a new expense and checks budget status
     public ExpenseResponseDTO addExpense(ExpenseDTO dto) {
         ProfileEntity profile = profileService.getCurrentProfile();
         subscriptionService.ensureCanCreateTransaction(profile, dto.getDate());
-        if (!clientPlatformService.isMobileClient()) {
-            transactionOtpService.ensureValidAuthorization(
-                    dto.getTransactionAuthorizationToken(),
-                    "EXPENSE",
-                    transactionOtpService.buildExpensePayloadHash(dto)
-            );
-        }
+
 
         CategoryEntity category = categoryRepository.findById(dto.getCategoryId())
                 .orElseThrow(() -> new RuntimeException("Category not found"));
@@ -62,9 +56,7 @@ public class ExpenseService {
             budgetService.sendBudgetAlertEmailAsync(profile, budgetStatus);
         }
 
-        if (!clientPlatformService.isMobileClient()) {
-            transactionOtpService.markAuthorizationConsumed(dto.getTransactionAuthorizationToken());
-        }
+
         return toResponseDTO(newExpense, budgetStatus);
     }
 
@@ -86,19 +78,9 @@ public class ExpenseService {
     }
 
     // Delete expense by id for current user
-    public void deleteExpense(Long expenseId, ExpenseDeleteRequestDTO requestDTO) {
+    public void deleteExpense(Long expenseId) {
         ExpenseEntity entity = getOwnedExpense(expenseId);
-        if (!clientPlatformService.isMobileClient()) {
-            transactionOtpService.ensureValidAuthorization(
-                    requestDTO != null ? requestDTO.getTransactionAuthorizationToken() : null,
-                    TransactionOtpService.ACTION_DELETE_EXPENSE,
-                    transactionOtpService.buildDeleteExpensePayloadHash(entity)
-            );
-        }
         expenseRepository.delete(entity);
-        if (!clientPlatformService.isMobileClient()) {
-            transactionOtpService.markAuthorizationConsumed(requestDTO != null ? requestDTO.getTransactionAuthorizationToken() : null);
-        }
     }
 
     // Get latest 5 expenses for current user
