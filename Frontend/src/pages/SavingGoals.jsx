@@ -8,6 +8,8 @@ import Dashboard from "../components/Dashboard.jsx";
 import SavingGoalList from "../components/SavingGoalList.jsx";
 import SavingGoalForm from "../components/SavingGoalForm.jsx";
 import ContributionModal from "../components/ContributionModal.jsx";
+import Modal from "../components/Modal.jsx";
+import DeleteAlert from "../components/DeleteAlert.jsx";
 
 const SavingGoals = () => {
   useUser();
