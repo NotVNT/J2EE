@@ -3,6 +3,8 @@ import TransactionInfoCard from "./TransactionInfoCard.jsx";
 import moment from "moment";
 import {useState} from "react";
 
+const cardBtnBase = "inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/10 transition-colors";
+
 const IncomeList = ({
     transactions,
     onDelete,
@@ -15,10 +17,7 @@ const IncomeList = ({
     const isBusy = loadingAction !== null;
 
     const handleEmail = async () => {
-        if (disableExportActions) {
-            return;
-        }
-
+        if (disableExportActions) return;
         setLoadingAction("email");
         try {
             await onEmail();
@@ -28,10 +27,7 @@ const IncomeList = ({
     };
 
     const handleDownload = async () => {
-        if (disableExportActions) {
-            return;
-        }
-
+        if (disableExportActions) return;
         setLoadingAction("download");
         try {
             await onDownload();
@@ -43,46 +39,38 @@ const IncomeList = ({
     return (
         <div className="card">
             <div className="flex items-center justify-between">
-                <h5 className="text-lg">Nguon thu nhap</h5>
+                <h5 className="text-lg font-semibold text-slate-900 dark:text-white">Nguồn thu nhập</h5>
                 <div className="flex flex-col items-end gap-2">
                     <div className="flex items-center justify-end gap-2">
                         <button
                             disabled={isBusy || disableExportActions}
-                            className={`card-btn ${isBusy || disableExportActions ? "cursor-not-allowed opacity-60" : ""}`}
+                            className={`${cardBtnBase} ${isBusy || disableExportActions ? "cursor-not-allowed opacity-60" : ""}`}
                             onClick={handleEmail}
                             title={disableExportActions ? disabledMessage : ""}
                             type="button"
                         >
                             {loadingAction === "email" ? (
-                                <>
-                                    <LoaderCircle className="w-4 h-4 animate-spin"/>Dang gui Email...
-                                </>
+                                <><LoaderCircle className="w-4 h-4 animate-spin"/>Đang gửi...</>
                             ) : (
-                                <>
-                                    <Mail size={15} className="text-base" />Gui Email
-                                </>
+                                <><Mail size={15} />Gửi Email</>
                             )}
                         </button>
                         <button
                             disabled={isBusy || disableExportActions}
-                            className={`card-btn ${isBusy || disableExportActions ? "cursor-not-allowed opacity-60" : ""}`}
+                            className={`${cardBtnBase} ${isBusy || disableExportActions ? "cursor-not-allowed opacity-60" : ""}`}
                             onClick={handleDownload}
                             title={disableExportActions ? disabledMessage : ""}
                             type="button"
                         >
                             {loadingAction === "download" ? (
-                                <>
-                                    <LoaderCircle className="w-4 h-4 animate-spin"/>Dang tai xuong...
-                                </>
+                                <><LoaderCircle className="w-4 h-4 animate-spin"/>Đang tải...</>
                             ) : (
-                                <>
-                                    <Download size={15} className="text-base" />Tai xuong
-                                </>
+                                <><Download size={15} />Tải xuống</>
                             )}
                         </button>
                     </div>
                     {disableExportActions && disabledMessage ? (
-                        <p className="max-w-xs text-right text-xs text-amber-600">{disabledMessage}</p>
+                        <p className="max-w-xs text-right text-xs text-amber-600 dark:text-amber-400">{disabledMessage}</p>
                     ) : null}
                 </div>
             </div>

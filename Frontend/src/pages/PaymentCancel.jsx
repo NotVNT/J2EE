@@ -14,7 +14,7 @@ const PAYMENT_STATUS_LABELS = {
   FAILED: "Thanh toán thất bại",
   CANCELLED: "Đã hủy",
   EXPIRED: "Đã hết hạn",
-  UNDERPAID: "Thanh toán chưa đủ"
+  UNDERPAID: "Thanh toán chưa đủ",
 };
 
 const PaymentCancel = () => {
@@ -30,19 +30,12 @@ const PaymentCancel = () => {
   }, [searchParams]);
 
   const handleSyncStatus = async () => {
-    if (!orderCode) {
-      toast.error("Không tìm thấy mã đơn hàng.");
-      return;
-    }
-
+    if (!orderCode) { toast.error("Không tìm thấy mã đơn hàng."); return; }
     setIsSyncing(true);
-
     try {
       const response = await axiosConfig.get(API_ENDPOINTS.SYNC_PAYMENT_STATUS(orderCode));
       localStorage.setItem(PAYMENT_STORAGE_KEY, JSON.stringify(response.data));
-      toast.success(
-        `Trạng thái thanh toán mới nhất: ${PAYMENT_STATUS_LABELS[response.data.status] || response.data.status}`
-      );
+      toast.success(`Trạng thái thanh toán mới nhất: ${PAYMENT_STATUS_LABELS[response.data.status] || response.data.status}`);
     } catch (error) {
       toast.error(error.response?.data?.message || "Không thể đồng bộ trạng thái thanh toán.");
     } finally {
@@ -51,39 +44,40 @@ const PaymentCancel = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(248,113,113,0.12),transparent_30%),linear-gradient(180deg,#fff7ed_0%,#fff1f2_100%)] px-6 py-12">
-      <div className="mx-auto max-w-3xl rounded-[32px] border border-rose-200 bg-white p-8 shadow-xl shadow-rose-100/60">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-rose-100 text-rose-700">
-          <CircleAlert size={30} />
+    <div className="min-h-screen bg-slate-50 dark:bg-[#0A0E1A] px-6 py-12">
+      <div className="mx-auto max-w-2xl rounded-2xl border border-red-200 dark:border-red-500/20
+        bg-white dark:bg-[#0F172A] p-8 shadow-2xl shadow-red-100/40 dark:shadow-black/40">
+
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl
+          bg-red-100 dark:bg-red-500/15 border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 mb-6">
+          <CircleAlert size={28} />
         </div>
 
-        <div className="mt-6 text-center">
-          <p className="text-sm uppercase tracking-[0.25em] text-rose-600">Thanh toán đã bị hủy</p>
-          <h1 className="mt-3 text-3xl font-semibold text-slate-900">
+        <div className="text-center mb-8">
+          <p className="text-xs uppercase tracking-widest text-red-600 dark:text-red-400 mb-2">Thanh toán đã bị hủy</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
             Quá trình thanh toán đã bị hủy hoặc chưa được hoàn tất.
           </h1>
-          <p className="mt-3 text-slate-600">
+          <p className="text-sm text-slate-500 dark:text-slate-400">
             Bạn có thể quay lại trang thanh toán để tạo liên kết mới, hoặc làm mới trạng thái đơn hàng hiện tại nếu việc thanh toán đã hoàn tất ở tab khác.
           </p>
         </div>
 
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+        <div className="flex flex-col gap-3 sm:flex-row">
           <button
-            className="flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex items-center justify-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-500 px-5 py-3 text-sm font-semibold text-white transition-all active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
             disabled={!orderCode || isSyncing}
             onClick={handleSyncStatus}
             type="button"
           >
-            <RefreshCcw size={16} className={isSyncing ? "animate-spin" : ""} />
+            <RefreshCcw size={15} className={isSyncing ? "animate-spin" : ""} />
             {isSyncing ? "Đang kiểm tra..." : "Kiểm tra trạng thái thanh toán"}
           </button>
-
           <Link
-            className="flex items-center justify-center gap-2 rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+            className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-5 py-3 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/10 transition-all"
             to="/payment"
           >
-            <ArrowLeft size={16} />
-            Quay lại trang thanh toán
+            <ArrowLeft size={15} />Quay lại trang thanh toán
           </Link>
         </div>
       </div>

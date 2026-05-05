@@ -64,6 +64,14 @@ export const API_ENDPOINTS = {
     // Admin endpoints
     ADMIN_OVERVIEW: "/admin/overview",
     ADMIN_PAYMENTS: "/admin/payments",
+    ADMIN_BROADCAST: "/admin/notifications/broadcast",
+    ADMIN_NOTIFICATIONS: "/admin/notifications",
+
+    // Notification endpoints
+    GET_NOTIFICATIONS: "/notifications",
+    GET_UNREAD_COUNT: "/notifications/unread-count",
+    MARK_NOTIFICATION_READ: (id) => `/notifications/${id}/read`,
+    MARK_ALL_NOTIFICATIONS_READ: "/notifications/read-all",
 
     // Saving Goal endpoints
     GET_SAVING_GOALS: "/saving-goals",

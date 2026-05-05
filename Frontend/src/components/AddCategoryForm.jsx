@@ -25,7 +25,7 @@ const AddCategoryForm = ({onAddCategory, initialCategoryData, isEditing}) => {
     ]
 
     const handleChange = (key, value) => {
-        setCategory({...category, [key]: value})
+        setCategory(prev => ({...prev, [key]: value}))
     }
 
     const handleSubmit = async () => {

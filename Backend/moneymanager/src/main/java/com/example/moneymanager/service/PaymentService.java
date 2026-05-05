@@ -33,6 +33,7 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final ProfileService profileService;
     private final SubscriptionService subscriptionService;
+    private final NotificationService notificationService;
 
     @Value("${payos.return-url}")
     private String returnUrl;
@@ -90,11 +91,12 @@ public class PaymentService {
     @Transactional
     public CreatePaymentResponseDTO syncPaymentStatus(Long orderCode) {
         PaymentEntity paymentEntity = findOwnedPayment(orderCode);
+        boolean wasPaidBefore = STATUS_PAID.equalsIgnoreCase(paymentEntity.getStatus());
 
         try {
             PaymentLink paymentLink = payOS.paymentRequests().get(orderCode);
             paymentEntity.setStatus(normalizeStatus(String.valueOf(paymentLink.getStatus())));
-            activateSubscriptionIfPaid(paymentEntity);
+            activateSubscriptionIfPaid(paymentEntity, wasPaidBefore);
             paymentEntity = paymentRepository.save(paymentEntity);
             return toDTO(paymentEntity);
         } catch (Exception e) {
@@ -115,13 +117,15 @@ public class PaymentService {
                 return;
             }
 
+            boolean wasPaidBefore = STATUS_PAID.equalsIgnoreCase(paymentEntity.getStatus());
+
             paymentEntity.setPaymentLinkId(webhookData.getPaymentLinkId());
             paymentEntity.setAmount(webhookData.getAmount());
             paymentEntity.setDescription(webhookData.getDescription());
 
             if ("00".equals(webhookData.getCode())) {
                 paymentEntity.setStatus(STATUS_PAID);
-                activateSubscriptionIfPaid(paymentEntity);
+                activateSubscriptionIfPaid(paymentEntity, wasPaidBefore);
             } else {
                 paymentEntity.setStatus(STATUS_FAILED);
             }
@@ -189,21 +193,25 @@ public class PaymentService {
 
     private void syncPaymentStatusSilently(PaymentEntity paymentEntity) {
         try {
+            boolean wasPaidBefore = STATUS_PAID.equalsIgnoreCase(paymentEntity.getStatus());
             PaymentLink paymentLink = payOS.paymentRequests().get(paymentEntity.getOrderCode());
             paymentEntity.setStatus(normalizeStatus(String.valueOf(paymentLink.getStatus())));
-            activateSubscriptionIfPaid(paymentEntity);
+            activateSubscriptionIfPaid(paymentEntity, wasPaidBefore);
             paymentRepository.save(paymentEntity);
         } catch (Exception e) {
             System.err.println("Không thể tự động đồng bộ giao dịch " + paymentEntity.getOrderCode() + ": " + e.getMessage());
         }
     }
 
-    private void activateSubscriptionIfPaid(PaymentEntity paymentEntity) {
+    private void activateSubscriptionIfPaid(PaymentEntity paymentEntity, boolean wasPaidBefore) {
         if (STATUS_PAID.equalsIgnoreCase(paymentEntity.getStatus())
                 && paymentEntity.getProfile() != null
                 && paymentEntity.getPlanId() != null
                 && !paymentEntity.getPlanId().isBlank()) {
             subscriptionService.activatePaidSubscription(paymentEntity.getProfile(), paymentEntity.getPlanId());
+            if (!wasPaidBefore) {
+                notificationService.notifyPaymentSuccess(paymentEntity.getProfile(), paymentEntity.getPlanName());
+            }
         }
     }
 

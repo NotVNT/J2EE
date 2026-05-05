@@ -82,41 +82,51 @@ const Budget = () => {
 
     return (
         <Dashboard activeMenu="Budget">
-            <div className="my-5 mx-auto">
-                <div className="grid grid-cols-1 gap-6">
-                    {/* Danh sách hạn mức */}
-                    <BudgetList
-                        budgets={budgets}
-                        loading={loading}
-                        onDelete={(id) => setDeleteAlert({ show: true, id })}
-                        onAddClick={() => setShowAddModal(true)}
-                    />
-
-                    {/* Modal thêm/cập nhật hạn mức */}
-                    <Modal
-                        isOpen={showAddModal}
-                        onClose={() => setShowAddModal(false)}
-                        title="Thiết lập hạn mức ngân sách"
-                    >
-                        <BudgetForm
-                            categories={categories}
-                            onSave={handleSaveBudget}
-                            onCancel={() => setShowAddModal(false)}
-                        />
-                    </Modal>
-
-                    {/* Modal xác nhận xóa */}
-                    <Modal
-                        isOpen={deleteAlert.show}
-                        onClose={() => setDeleteAlert({ show: false, id: null })}
-                        title="Xóa hạn mức"
-                    >
-                        <DeleteAlert
-                            content="Bạn có chắc muốn xóa hạn mức này không?"
-                            onDelete={() => handleDeleteBudget(deleteAlert.id)}
-                        />
-                    </Modal>
+            <div className="my-5 mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                {/* ── Header ── */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h2 className="text-3xl font-bold text-slate-800 dark:text-white tracking-tight">
+                            Hạn mức ngân sách
+                        </h2>
+                        <p className="mt-1 text-slate-500 dark:text-slate-400">
+                            Thiết lập giới hạn chi tiêu và theo dõi cảnh báo vượt mức
+                        </p>
+                    </div>
                 </div>
+
+                {/* ── Budget List ── */}
+                <BudgetList
+                    budgets={budgets}
+                    loading={loading}
+                    onDelete={(id) => setDeleteAlert({ show: true, id })}
+                    onAddClick={() => setShowAddModal(true)}
+                />
+
+                {/* ── Add/Edit Budget Modal ── */}
+                <Modal
+                    isOpen={showAddModal}
+                    onClose={() => setShowAddModal(false)}
+                    title="Thiết lập hạn mức ngân sách"
+                >
+                    <BudgetForm
+                        categories={categories}
+                        onSave={handleSaveBudget}
+                        onCancel={() => setShowAddModal(false)}
+                    />
+                </Modal>
+
+                {/* ── Delete Confirmation Modal ── */}
+                <Modal
+                    isOpen={deleteAlert.show}
+                    onClose={() => setDeleteAlert({ show: false, id: null })}
+                    title="Xóa hạn mức"
+                >
+                    <DeleteAlert
+                        content="Bạn có chắc muốn xóa hạn mức này không?"
+                        onDelete={() => handleDeleteBudget(deleteAlert.id)}
+                    />
+                </Modal>
             </div>
         </Dashboard>
     );

@@ -35,6 +35,7 @@ public class FilterController {
         LocalDate endDate = filter.getEndDate() != null ? filter.getEndDate() : LocalDate.now();
         String keyword = filter.getKeyword() != null ? filter.getKeyword() : "";
         String sortField = filter.getSortField() != null ? filter.getSortField() : "date";
+        if ("category".equals(sortField)) sortField = "category.name";
         Sort.Direction direction = "desc".equalsIgnoreCase(filter.getSortOrder()) ? Sort.Direction.DESC : Sort.Direction.ASC;
         Sort sort = Sort.by(direction, sortField);
         subscriptionService.ensureCanUseFilters(profileService.getCurrentProfile(), startDate);

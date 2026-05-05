@@ -1,17 +1,27 @@
-const InfoCard = ({icon, label, value, color, onClick}) => {
-    return(
-        <div onClick={onClick} className="bg-white p-6 rounded-[1.5rem] shadow-[0_2px_10px_0_rgba(25,28,30,0.02)] border border-[#E5E7EB]/50 flex flex-col gap-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg cursor-pointer">
-            <div className={`w-12 h-12 flex items-center justify-center ${color} rounded-[1rem]`}>
-                {icon}
-            </div>
-            <div>
-                <p className="text-[11px] text-[#191c1e]/50 font-medium uppercase tracking-widest mb-2">{label}</p>
-                <div className="flex items-center justify-between">
-                    <p className="text-[22px] text-[#191c1e] font-semibold tracking-tighter leading-none">{value}</p>
-                </div>
-            </div>
-        </div>
-    )
-}
+const InfoCard = ({ icon, label, value, color, onClick }) => {
+  return (
+    <div
+      onClick={onClick}
+      className="group flex flex-col gap-4 p-5 rounded-2xl cursor-pointer transition-all duration-200
+        bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10
+        hover:border-amber-500/30 dark:hover:border-amber-500/30
+        hover:-translate-y-0.5 hover:shadow-lg dark:hover:shadow-black/20"
+    >
+      <div className={`w-11 h-11 flex items-center justify-center rounded-xl ${color}`}>
+        {icon}
+      </div>
+      <div>
+        <p className="text-[11px] font-semibold uppercase tracking-widest mb-2
+          text-slate-400 dark:text-slate-500">
+          {label}
+        </p>
+        <p className="text-2xl font-bold tracking-tight leading-none
+          text-slate-900 dark:text-white">
+          {value}
+        </p>
+      </div>
+    </div>
+  );
+};
 
 export default InfoCard;

@@ -23,21 +23,21 @@ const SavingGoalList = ({ goals, loading, onAddClick, onEdit, onDelete, onContri
     return (
         <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
             <div className="space-y-5">
-                <div className="rounded-[28px] border border-white/70 bg-white/85 px-5 py-5 shadow-sm backdrop-blur-sm">
+                <div className="rounded-[28px] border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-5 py-5 shadow-sm">
                     <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                         <div className="max-w-2xl">
-                            <span className="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700">
+                            <span className="inline-flex items-center rounded-full bg-violet-50 dark:bg-violet-500/10 px-3 py-1 text-xs font-medium text-violet-700 dark:text-violet-400">
                                 Kế hoạch tích lũy
                             </span>
-                            <h2 className="mt-3 text-2xl font-semibold text-slate-900">Mục tiêu tiết kiệm</h2>
-                            <p className="mt-2 text-sm text-slate-500">
+                            <h2 className="mt-3 text-2xl font-semibold text-slate-900 dark:text-white">Mục tiêu tiết kiệm</h2>
+                            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
                                 Theo dõi từng mục tiêu, biết còn thiếu bao nhiêu và giữ nhịp đóng góp ổn định mỗi tháng.
                             </p>
                         </div>
 
                         <button
                             onClick={onAddClick}
-                            className="inline-flex items-center justify-center gap-1.5 rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-slate-800"
+                            className="inline-flex items-center justify-center gap-1.5 rounded-2xl bg-slate-900 dark:bg-white/10 dark:hover:bg-white/15 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-slate-800"
                         >
                             <Plus size={15} />
                             Thêm mục tiêu
@@ -45,10 +45,12 @@ const SavingGoalList = ({ goals, loading, onAddClick, onEdit, onDelete, onContri
                     </div>
                 </div>
 
-                {loading && <div className="py-10 text-center text-gray-400">Đang tải...</div>}
+                {loading && (
+                    <div className="py-10 text-center text-slate-400">Đang tải...</div>
+                )}
 
                 {!loading && goals.length === 0 && (
-                    <div className="flex flex-col items-center justify-center rounded-[28px] border border-dashed border-slate-200 bg-white/80 py-16 text-gray-400 shadow-sm">
+                    <div className="flex flex-col items-center justify-center rounded-[28px] border border-dashed border-slate-200 dark:border-white/10 bg-white/80 dark:bg-white/3 py-16 text-slate-400">
                         <p className="mb-2 text-lg">Chưa có mục tiêu tiết kiệm nào</p>
                         <p className="text-sm">Bấm "Thêm mục tiêu" để bắt đầu lập kế hoạch!</p>
                     </div>
@@ -67,27 +69,27 @@ const SavingGoalList = ({ goals, loading, onAddClick, onEdit, onDelete, onContri
                 </div>
             </div>
 
-            <aside className="rounded-[28px] border border-indigo-100 bg-gradient-to-br from-white via-indigo-50/80 to-sky-50 p-4 shadow-sm xl:sticky xl:top-5">
-                <div className="flex items-center gap-2 text-indigo-700">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-700">
+            <aside className="rounded-[28px] border border-violet-100 dark:border-violet-500/20 bg-linear-to-br from-white dark:from-[#0F172A] via-violet-50/80 dark:via-violet-500/5 to-sky-50 dark:to-[#0F172A] p-4 shadow-sm xl:sticky xl:top-5">
+                <div className="flex items-center gap-2 text-violet-700 dark:text-violet-400">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-violet-100 dark:bg-violet-500/15 text-violet-700 dark:text-violet-400">
                         <CircleHelp size={18} />
                     </div>
                     <div>
-                        <p className="text-sm font-semibold text-slate-900">Hướng dẫn nhanh</p>
-                        <p className="text-xs text-slate-500">Hiển thị ngay bên góc phải để bạn thao tác thuận mắt hơn.</p>
+                        <p className="text-sm font-semibold text-slate-900 dark:text-white">Hướng dẫn nhanh</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">Hiển thị ngay bên góc phải để bạn thao tác thuận mắt hơn.</p>
                     </div>
                 </div>
 
                 <div className="mt-4 space-y-3">
                     {quickTips.map(({ icon: Icon, title, description }) => (
-                        <div key={title} className="rounded-2xl border border-white/70 bg-white/80 p-3">
+                        <div key={title} className="rounded-2xl border border-white/70 dark:border-white/10 bg-white/80 dark:bg-white/5 p-3">
                             <div className="flex items-start gap-3">
-                                <div className="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white">
+                                <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-900 dark:bg-white/10 text-white">
                                     <Icon size={16} />
                                 </div>
                                 <div>
-                                    <p className="text-sm font-semibold text-slate-900">{title}</p>
-                                    <p className="mt-1 text-xs leading-5 text-slate-500">{description}</p>
+                                    <p className="text-sm font-semibold text-slate-900 dark:text-white">{title}</p>
+                                    <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">{description}</p>
                                 </div>
                             </div>
                         </div>

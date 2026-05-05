@@ -24,26 +24,11 @@ const SavingGoalForm = ({ initialData, isEditing, onSave, onCancel }) => {
     const handleChange = (key, value) => setForm({ ...form, [key]: value });
 
     const handleSubmit = () => {
-        if (!form.name.trim()) {
-            alert("Tên mục tiêu không được để trống");
-            return;
-        }
-        if (!form.targetAmount || Number(form.targetAmount) <= 0) {
-            alert("Số tiền mục tiêu phải lớn hơn 0");
-            return;
-        }
-        if (!isEditing && Number(form.currentAmount) > Number(form.targetAmount)) {
-            alert("Số tiền hiện có không được lớn hơn số tiền mục tiêu");
-            return;
-        }
-        if (!form.targetDate) {
-            alert("Hãy chọn hạn chót");
-            return;
-        }
-        if (form.targetDate < form.startDate) {
-            alert("Hạn chót phải lớn hơn hoặc bằng ngày bắt đầu");
-            return;
-        }
+        if (!form.name.trim()) { alert("Tên mục tiêu không được để trống"); return; }
+        if (!form.targetAmount || Number(form.targetAmount) <= 0) { alert("Số tiền mục tiêu phải lớn hơn 0"); return; }
+        if (!isEditing && Number(form.currentAmount) > Number(form.targetAmount)) { alert("Số tiền hiện có không được lớn hơn số tiền mục tiêu"); return; }
+        if (!form.targetDate) { alert("Hãy chọn hạn chót"); return; }
+        if (form.targetDate < form.startDate) { alert("Hạn chót phải lớn hơn hoặc bằng ngày bắt đầu"); return; }
 
         const dto = {
             name: form.name.trim(),
@@ -51,9 +36,7 @@ const SavingGoalForm = ({ initialData, isEditing, onSave, onCancel }) => {
             startDate: form.startDate,
             targetDate: form.targetDate,
         };
-        if (!isEditing) {
-            dto.currentAmount = Number(form.currentAmount) || 0;
-        }
+        if (!isEditing) dto.currentAmount = Number(form.currentAmount) || 0;
         onSave(dto);
     };
 
@@ -62,11 +45,12 @@ const SavingGoalForm = ({ initialData, isEditing, onSave, onCancel }) => {
         return Number(v).toLocaleString("vi-VN");
     };
 
+    const labelClass = "text-xs font-medium text-slate-700 dark:text-slate-300";
+
     return (
         <div className="flex flex-col gap-4">
-            {/* Tên mục tiêu */}
             <div>
-                <label className="text-xs text-slate-800 font-medium">Tên mục tiêu</label>
+                <label className={labelClass}>Tên mục tiêu</label>
                 <input
                     type="text"
                     value={form.name}
@@ -76,9 +60,8 @@ const SavingGoalForm = ({ initialData, isEditing, onSave, onCancel }) => {
                 />
             </div>
 
-            {/* Số tiền mục tiêu */}
             <div>
-                <label className="text-xs text-slate-800 font-medium">Số tiền mục tiêu (VND)</label>
+                <label className={labelClass}>Số tiền mục tiêu (VND)</label>
                 <input
                     type="text"
                     value={fmt(form.targetAmount)}
@@ -88,10 +71,9 @@ const SavingGoalForm = ({ initialData, isEditing, onSave, onCancel }) => {
                 />
             </div>
 
-            {/* Số tiền ban đầu */}
             {!isEditing && (
                 <div>
-                    <label className="text-xs text-slate-800 font-medium">Số tiền hiện có ban đầu (VND)</label>
+                    <label className={labelClass}>Số tiền hiện có ban đầu (VND)</label>
                     <input
                         type="text"
                         value={fmt(form.currentAmount)}
@@ -102,10 +84,9 @@ const SavingGoalForm = ({ initialData, isEditing, onSave, onCancel }) => {
                 </div>
             )}
 
-            {/* Ngày bắt đầu */}
             {!isEditing && (
                 <div>
-                    <label className="text-xs text-slate-800 font-medium">Ngày bắt đầu</label>
+                    <label className={labelClass}>Ngày bắt đầu</label>
                     <input
                         type="date"
                         value={form.startDate}
@@ -115,9 +96,8 @@ const SavingGoalForm = ({ initialData, isEditing, onSave, onCancel }) => {
                 </div>
             )}
 
-            {/* Hạn chót */}
             <div>
-                <label className="text-xs text-slate-800 font-medium">Hạn chót</label>
+                <label className={labelClass}>Hạn chót</label>
                 <input
                     type="date"
                     value={form.targetDate}
@@ -126,17 +106,16 @@ const SavingGoalForm = ({ initialData, isEditing, onSave, onCancel }) => {
                 />
             </div>
 
-            {/* Buttons */}
             <div className="flex gap-3 mt-2">
                 <button
                     onClick={handleSubmit}
-                    className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-xl text-sm font-medium transition-colors"
+                    className="flex-1 bg-violet-600 hover:bg-violet-700 text-white py-2.5 rounded-xl text-sm font-medium transition-colors"
                 >
                     {isEditing ? "Cập nhật" : "Tạo mục tiêu"}
                 </button>
                 <button
                     onClick={onCancel}
-                    className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2.5 rounded-xl text-sm font-medium transition-colors"
+                    className="flex-1 bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/15 text-slate-700 dark:text-slate-300 py-2.5 rounded-xl text-sm font-medium transition-colors"
                 >
                     Huỷ
                 </button>

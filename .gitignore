@@ -1,0 +1,453 @@
+# ============================================================
+# MONEYMANAGER - COMPREHENSIVE .gitignore
+# Purpose: Exclude secrets & private data while keeping all source code
+# Last Updated: May 5, 2026
+# ============================================================
+
+# ============================================================
+# 🔐 CRITICAL: Secrets & Environment (NEVER COMMIT)
+# ============================================================
+
+# Environment Variable Files
+.env
+.env.local
+.env.*.local
+.env.development.local
+.env.production.local
+.env.test.local
+.env.backup
+.env.*.backup
+
+# Configuration files with actual credentials (not templates!)
+# NOTE: .env.example SHOULD BE COMMITTED as a template
+Backend/moneymanager/.env
+Backend/moneymanager/application*.properties
+Backend/moneymanager/application-*.properties
+!Backend/moneymanager/application.properties.example
+
+Frontend/.env
+Frontend/.env.local
+
+Mobile/.env
+Mobile/.env.local
+
+# 🤖 AI Service Credentials (SENSITIVE)
+gemini.config
+gemini*.properties
+**/gemini/**/*.key
+**/gemini/**/*.secret
+**/config/gemini/
+
+# 💳 Payment Gateway (PayOS) Credentials
+payos.config
+payos*.properties
+**/payos/**/*.key
+**/payos/**/*.secret
+**/config/payos/
+
+# 📧 Email Service (Brevo) Credentials
+brevo.config
+brevo*.properties
+brevo.env
+**/brevo/**/*.password
+**/brevo/**/*.key
+**/config/brevo/
+
+# 🗄️ Database Credentials
+db.config
+database*.properties
+**/db/**/*.password
+**/jdbc.properties
+
+# Other API Keys & Credentials
+*.secret
+*.apikey
+*.key
+*.pem
+*.pfx
+*.p12
+*.jks
+secrets.json
+**/secrets/
+credential*.json
+**/credentials.json
+
+
+# ============================================================
+# 📦 Build Outputs (Rebuild Locally - EXCLUDE)
+# ============================================================
+
+# Node.js Dependencies & Build
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+yarn-error.log
+.npm
+.eslintcache
+.node_repl_history
+dist/
+build/
+.parcel-cache
+.cache
+.next
+out/
+
+# Node.js pnpm lockfile
+pnpm-lock.yaml
+
+# Node version manager
+.nvmrc
+
+# Java / Maven Build
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# Gradle Build
+.gradle/
+**/build/
+gradle-app.setting
+!gradle/wrapper/gradle-wrapper.jar
+!gradle-wrapper.jar
+
+# Maven Wrapper (local wrapper files)
+.mvn/wrapper/maven-wrapper.jar
+.mvn/wrapper/maven-wrapper.properties
+
+# Compiled Java Classes
+*.class
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Log Files
+*.log
+*.log.*
+logs/
+
+# Lock files (optional - can commit if using strict versions)
+# Uncomment if your team prefers to exclude lock files
+# package-lock.json
+# yarn.lock
+
+
+# ============================================================
+# 🛠️ IDE & Editor Cache (EXCLUDE)
+# ============================================================
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+.idea_modules/
+*.jks
+
+# JetBrains IDEs (PyCharm, WebStorm, etc.)
+*.iml
+.gradle/
+.idea/
+
+# VS Code
+.vscode/
+*.code-workspace
+.history/
+.vscode-test
+.vscode/launch.json
+.vscode/tasks.json
+.vscode/extensions.json
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim & Neovim
+*~
+*.swp
+*.swo
+.vim/
+.nvim/
+
+# Emacs
+*~
+.#*
+
+# Eclipse
+.classpath
+.factorypath
+.c9/
+*.launch
+.project
+.pydevproject
+.settings/
+*.jvmopts
+
+
+# ============================================================
+# 🖥️ Operating System Files (EXCLUDE)
+# ============================================================
+
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+
+
+# ============================================================
+# 🧪 Testing & Coverage (EXCLUDE - Rebuild Locally)
+# ============================================================
+
+coverage/
+.nyc_output/
+lcov.info
+*.lcov
+.coverage
+.coverage.*
+htmlcov/
+pytest.cov
+.pytest_cache/
+.hypothesis/
+junit.xml
+test-results/
+coverage-results/
+.test-tmp/
+
+
+# ============================================================
+# 🗄️ Database (EXCLUDE - Data Files, Keep Schema)
+# ============================================================
+
+# Database files & dumps
+*.db
+*.sqlite
+*.sqlite3
+*.sql~
+*.sql.bak
+database_backups/
+db_dumps/
+*.sql.backup
+
+# KEEP: Migration scripts & schema (usually in Backend/db/migrations/)
+
+# Database temp files
+*.ibd
+*.myd
+*.myi
+
+
+# ============================================================
+# 🐳 Docker & Containerization (Partial)
+# ============================================================
+
+# Docker composition overrides (local only)
+docker-compose.override.yml
+docker-compose.local.yml
+
+# Docker build cache
+.docker/
+.dockerignore
+
+# Note: Dockerfile, docker-compose.yml SHOULD be committed
+
+
+# ============================================================
+# 📚 Documentation Build Output (EXCLUDE)
+# ============================================================
+
+docs/_build/
+docs/.build/
+docs/.doctrees/
+site/
+_site/
+.jekyll-cache/
+.bundle/
+
+
+# ============================================================
+# 🔄 CI/CD & Deployment (Local Overrides Only)
+# ============================================================
+
+# GitHub Actions
+.github/workflows/**/*.log
+.github/workflows/**/*.backup
+.github/workflows/**/*.local
+
+# Local CI configs
+.gitlab-ci.local.yml
+.travis.yml.local
+.circleci.local.yml
+
+# Deployment scripts (only if they contain credentials)
+deploy.local.sh
+deploy.backup.sh
+release.local.sh
+.deploy.config
+
+
+# ============================================================
+# 🎨 OS Specific & Misc (EXCLUDE)
+# ============================================================
+
+# Misc temp files
+*.tmp
+*.temp
+*.bak
+*.backup
+*~
+.DS_Store
+
+# PID files
+*.pid
+*.pid.lock
+*.seed
+
+# Generated types
+*.tsbuildinfo
+
+# Compiled documentation
+_docs/
+apidocs/
+
+
+# ============================================================
+# 🐍 Python (if used for scripts/automation)
+# ============================================================
+
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+
+# ============================================================
+# ⚠️ IMPORTANT: Project-Specific Exclusions
+# ============================================================
+
+# Backend - Local configurations (not .env)
+Backend/moneymanager/logs/
+Backend/moneymanager/*.log
+
+# Frontend - Local build artifacts only (code IS included)
+Frontend/.next/
+Frontend/out/
+Frontend/.vercel
+
+# Mobile - Expo local cache
+Mobile/.expo/
+Mobile/.expo-shared/
+Mobile/dist/
+Mobile/ios/Pods/
+Mobile/android/.gradle/
+Mobile/android/local.properties
+Mobile/android/build/
+
+# React Native / Expo specific
+Mobile/android/app/debug.keystore
+Mobile/android/gradle/wrapper/gradle-wrapper.jar
+Mobile/.expo/
+
+# Database - Only exclude dumps and backups, not migrations
+database_exports/
+backup_databases/
+
+# IDE - Only config, not project files
+.editorconfig.local
+
+
+# ============================================================
+# 📝 IMPORTANT: What NOT to Ignore (INCLUDE in Repo)
+# ============================================================
+
+# ✅ DO COMMIT THESE:
+# - All .java source files (Backend/)
+# - All .jsx/.js React components (Frontend/)
+# - All .js React Native components (Mobile/)
+# - All configuration templates (.env.example)
+# - Build configuration (pom.xml, package.json, Dockerfile)
+# - ESLint config, Tailwind config, Babel config
+# - Database migration scripts (Backend/db/migrations/)
+# - README.md and documentation
+# - GitHub Actions workflows (.github/workflows/)
+# - .editorconfig for consistency
+# - Project-wide .gitignore (this file)
+# - mvnw, mvnw.cmd (Maven wrapper)
+# - gradle wrapper files
+
+# ❌ DO NOT COMMIT:
+# - .env with actual values (only .env.example)
+# - API keys, credentials, passwords
+# - node_modules/, target/, .gradle/
+# - IDE cache (.idea/, .vscode/ except extensions.json)
+# - OS files (.DS_Store, Thumbs.db)
+# - Build artifacts (*.class, *.jar from target/)
+# - Database backup files
+# - Local configuration files
+
+
+# ============================================================
+# ⚠️ RULE: When in Doubt, Exclude It
+# Better to protect a credential than expose it
+# ============================================================
+
+# CI/CD & Deployment temporary files
+*.tmp.json
+*.backup.yml
+deployment.log
+
+# System generated files
+.~*
+*.tmp~
+*._*
+

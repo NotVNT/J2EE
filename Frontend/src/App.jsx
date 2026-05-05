@@ -9,7 +9,9 @@ const AdminDashboard = lazy(() => import("./pages/Admin/AdminDashboard.jsx"));
 const AdminPayments = lazy(() => import("./pages/Admin/AdminPayments.jsx"));
 const AdminSettings = lazy(() => import("./pages/Admin/AdminSettings.jsx"));
 const AdminSubscription = lazy(() => import("./pages/Admin/AdminSubscription.jsx"));
+const AdminNotifications = lazy(() => import("./pages/Admin/AdminNotifications.jsx"));
 const Home = lazy(() => import("./pages/Home.jsx"));
+const Notifications = lazy(() => import("./pages/Notifications.jsx"));
 const Income = lazy(() => import("./pages/Income.jsx"));
 const Expense = lazy(() => import("./pages/Expense.jsx"));
 const Budget = lazy(() => import("./pages/Budget.jsx"));
@@ -51,6 +53,7 @@ const App = () => {
                     <Route path="/payment/success" element={<PaymentSuccess />} />
                     <Route path="/payment/cancel" element={<PaymentCancel />} />
                     <Route path="/profile" element={<Profile />} />
+                    <Route path="/notifications" element={<Notifications />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/signup" element={<Signup />} />
                     <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -61,6 +64,7 @@ const App = () => {
                             <Route index element={<AdminDashboard />} />
                             <Route path="payments" element={<AdminPayments />} />
                             <Route path="subscriptions" element={<AdminSubscription />} />
+                            <Route path="notifications" element={<AdminNotifications />} />
                             <Route path="settings" element={<AdminSettings />} />
                         </Route>
                     </Route>

@@ -22,10 +22,7 @@ const PUBLIC_PATHS = new Set([
 ]);
 
 const formatAssistantMessage = (content) => {
-  if (!content) {
-    return [];
-  }
-
+  if (!content) return [];
   const normalizedContent = content
     .replace(/\*\*(.*?)\*\*/g, "$1")
     .replace(/`([^`]+)`/g, "$1")
@@ -36,11 +33,7 @@ const formatAssistantMessage = (content) => {
     .replace(/([^\n])(•\s)/g, "$1\n$2")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
-
-  return normalizedContent
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean);
+  return normalizedContent.split("\n").map((line) => line.trim()).filter(Boolean);
 };
 
 const ChatWidget = () => {
@@ -54,8 +47,7 @@ const ChatWidget = () => {
     {
       id: "assistant-welcome",
       role: "assistant",
-      content:
-        "Xin chào. Tôi là trợ lý AI của Money Manager, có thể trò chuyện và hỗ trợ bạn về quản lý chi tiêu."
+      content: "Xin chào. Tôi là trợ lý AI của Money Manager, có thể trò chuyện và hỗ trợ bạn về quản lý chi tiêu."
     }
   ]);
 
@@ -63,60 +55,38 @@ const ChatWidget = () => {
   const shouldHideWidget = !token || PUBLIC_PATHS.has(location.pathname);
 
   useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
+    if (!isOpen) return;
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isOpen]);
 
-  if (shouldHideWidget) {
-    return null;
-  }
+  if (shouldHideWidget) return null;
 
   const sendMessage = async (promptText) => {
     const trimmedMessage = promptText.trim();
+    if (!trimmedMessage || isSending) return;
 
-    if (!trimmedMessage || isSending) {
-      return;
-    }
-
-    const userMessage = {
-      id: `user-${Date.now()}`,
-      role: "user",
-      content: trimmedMessage
-    };
-
-    setMessages((currentMessages) => [...currentMessages, userMessage]);
+    const userMessage = { id: `user-${Date.now()}`, role: "user", content: trimmedMessage };
+    setMessages((prev) => [...prev, userMessage]);
     setMessage("");
     setIsSending(true);
 
     try {
-      const response = await axiosConfig.post(API_ENDPOINTS.GEMINI_CHAT, {
-        message: trimmedMessage
-      });
-
-      setMessages((currentMessages) => [
-        ...currentMessages,
+      const response = await axiosConfig.post(API_ENDPOINTS.GEMINI_CHAT, { message: trimmedMessage });
+      setMessages((prev) => [
+        ...prev,
         {
           id: `assistant-${Date.now()}`,
           role: "assistant",
-          content:
-            response.data?.reply ||
-            "Tôi đã nhận câu hỏi nhưng hiện chưa tạo được câu trả lời phù hợp."
+          content: response.data?.reply || "Tôi đã nhận câu hỏi nhưng hiện chưa tạo được câu trả lời phù hợp."
         }
       ]);
     } catch (error) {
-      const fallbackMessage =
-        error.response?.data?.message ||
-        "Hiện tại tôi chưa phản hồi được. Bạn thử lại sau giúp mình nhé.";
-
-      setMessages((currentMessages) => [
-        ...currentMessages,
+      setMessages((prev) => [
+        ...prev,
         {
           id: `assistant-error-${Date.now()}`,
           role: "assistant",
-          content: fallbackMessage,
+          content: error.response?.data?.message || "Hiện tại tôi chưa phản hồi được. Bạn thử lại sau giúp mình nhé.",
           isError: true
         }
       ]);
@@ -133,8 +103,9 @@ const ChatWidget = () => {
   return (
     <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-3">
       {isOpen && (
-        <div className="flex h-[32rem] w-[22rem] max-w-[calc(100vw-1.5rem)] flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/15">
-          <div className="flex items-start justify-between gap-3 bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 px-5 py-4 text-white">
+        <div className="flex h-128 w-88 max-w-[calc(100vw-1.5rem)] flex-col overflow-hidden rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0F172A] shadow-2xl shadow-slate-900/20">
+          {/* Header */}
+          <div className="flex items-start justify-between gap-3 bg-linear-to-br from-amber-500 via-amber-400 to-yellow-500 px-5 py-4 text-white">
             <div>
               <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.24em] text-white/80">
                 <Sparkles size={16} />
@@ -147,7 +118,6 @@ const ChatWidget = () => {
                 Hỏi về quản lý chi tiêu, tiết kiệm và cách sử dụng Money Manager.
               </p>
             </div>
-
             <button
               type="button"
               onClick={() => setIsOpen(false)}
@@ -158,8 +128,9 @@ const ChatWidget = () => {
             </button>
           </div>
 
-          <div className="flex-1 space-y-4 overflow-y-auto bg-slate-50 px-4 py-4">
-            <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+          {/* Messages area */}
+          <div className="flex-1 space-y-4 overflow-y-auto bg-slate-50 dark:bg-[#0A0E1A] px-4 py-4">
+            <div className="rounded-2xl border border-amber-100 dark:border-amber-500/20 bg-amber-50 dark:bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-300">
               Bạn có thể bắt đầu bằng một trong các gợi ý bên dưới hoặc nhập câu hỏi của riêng mình.
             </div>
 
@@ -170,7 +141,7 @@ const ChatWidget = () => {
                   type="button"
                   onClick={() => sendMessage(prompt)}
                   disabled={isSending}
-                  className="rounded-full border border-slate-200 bg-white px-3 py-2 text-left text-xs font-medium text-slate-700 transition hover:border-emerald-300 hover:text-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-3 py-2 text-left text-xs font-medium text-slate-700 dark:text-slate-300 transition hover:border-amber-300 dark:hover:border-amber-500/50 hover:text-amber-700 dark:hover:text-amber-400 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {prompt}
                 </button>
@@ -180,21 +151,19 @@ const ChatWidget = () => {
             {messages.map((chatMessage) => (
               <div
                 key={chatMessage.id}
-                className={`flex ${
-                  chatMessage.role === "user" ? "justify-end" : "justify-start"
-                }`}
+                className={`flex ${chatMessage.role === "user" ? "justify-end" : "justify-start"}`}
               >
                 <div
                   className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-6 shadow-sm ${
                     chatMessage.role === "user"
-                      ? "bg-slate-900 text-white"
+                      ? "bg-slate-900 dark:bg-amber-500 text-white"
                       : chatMessage.isError
-                        ? "border border-rose-200 bg-rose-50 text-rose-900"
-                        : "border border-slate-200 bg-white text-slate-800"
+                        ? "border border-rose-200 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 text-rose-900 dark:text-rose-300"
+                        : "border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-800 dark:text-slate-200"
                   }`}
                 >
                   {chatMessage.role === "assistant" ? (
-                    <div className="space-y-2 break-words">
+                    <div className="space-y-2 wrap-break-word">
                       {formatAssistantMessage(chatMessage.content).map((line, index) => (
                         <p key={`${chatMessage.id}-${index}`}>{line}</p>
                       ))}
@@ -208,7 +177,7 @@ const ChatWidget = () => {
 
             {isSending && (
               <div className="flex justify-start">
-                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-500 shadow-sm">
+                <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-4 py-3 text-sm text-slate-500 dark:text-slate-400 shadow-sm">
                   Trợ lý đang trả lời...
                 </div>
               </div>
@@ -217,10 +186,9 @@ const ChatWidget = () => {
             <div ref={messagesEndRef} />
           </div>
 
-          <form onSubmit={handleSubmit} className="border-t border-slate-200 bg-white p-3">
-            <label htmlFor="chat-message" className="sr-only">
-              Nhập tin nhắn
-            </label>
+          {/* Input */}
+          <form onSubmit={handleSubmit} className="border-t border-slate-200 dark:border-white/10 bg-white dark:bg-[#0F172A] p-3">
+            <label htmlFor="chat-message" className="sr-only">Nhập tin nhắn</label>
             <div className="flex items-end gap-2">
               <textarea
                 id="chat-message"
@@ -228,7 +196,7 @@ const ChatWidget = () => {
                 onChange={(event) => setMessage(event.target.value)}
                 placeholder="Nhập câu hỏi của bạn..."
                 rows={2}
-                className="min-h-[52px] flex-1 resize-none rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-emerald-400"
+                className="min-h-13 flex-1 resize-none rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-4 py-3 text-sm text-slate-800 dark:text-slate-200 outline-none transition focus:border-amber-400 dark:focus:border-amber-500 placeholder:text-slate-400 dark:placeholder:text-slate-500"
                 onKeyDown={(event) => {
                   if (event.key === "Enter" && !event.shiftKey) {
                     event.preventDefault();
@@ -239,7 +207,7 @@ const ChatWidget = () => {
               <button
                 type="submit"
                 disabled={isSending || !message.trim()}
-                className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500 text-white transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:bg-slate-300"
+                className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-500 text-white transition hover:bg-amber-600 disabled:cursor-not-allowed disabled:bg-slate-300 dark:disabled:bg-white/10"
                 aria-label="Gửi tin nhắn"
               >
                 <SendHorizontal size={18} />
@@ -251,11 +219,11 @@ const ChatWidget = () => {
 
       <button
         type="button"
-        onClick={() => setIsOpen((currentValue) => !currentValue)}
-        className="group relative inline-flex h-16 w-16 items-center justify-center rounded-full bg-slate-950 text-white shadow-xl shadow-slate-900/20 transition hover:bg-emerald-600"
+        onClick={() => setIsOpen((v) => !v)}
+        className="group relative inline-flex h-16 w-16 items-center justify-center rounded-full bg-amber-500 hover:bg-amber-600 text-white shadow-xl shadow-amber-500/30 transition"
         aria-label={isOpen ? "Đóng trợ lý" : "Mở trợ lý"}
       >
-        <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/12">
+        <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/15">
           {isOpen ? <X size={20} /> : <MessageCircle size={22} />}
         </span>
       </button>

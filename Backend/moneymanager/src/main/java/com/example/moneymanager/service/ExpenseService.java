@@ -26,6 +26,7 @@ public class ExpenseService {
     private final ProfileService profileService;
     private final SubscriptionService subscriptionService;
     private final BudgetService budgetService;
+    private final NotificationService notificationService;
 
     // Adds a new expense and checks budget status
     public ExpenseResponseDTO addExpense(ExpenseDTO dto) {
@@ -46,6 +47,12 @@ public class ExpenseService {
         // Kiểm tra trạng thái ngân sách
         BudgetStatusDTO budgetStatus = budgetService.checkBudgetStatus(
                 profile.getId(), category.getId(), month, year);
+
+        // Notify expense added
+        notificationService.notifyExpenseAdded(profile, newExpense.getName(), newExpense.getAmount());
+
+        // Notify budget warning
+        notificationService.notifyBudgetWarning(profile, budgetStatus);
 
         // Gửi email cảnh báo bất đồng bộ nếu có cảnh báo
         if (budgetStatus.isHasBudget() && (budgetStatus.isExceeded() || budgetStatus.isWarning())) {

@@ -7,6 +7,10 @@ import com.example.moneymanager.entity.ProfileEntity;
 import com.example.moneymanager.entity.SubscriptionStatus;
 import com.example.moneymanager.repository.PaymentRepository;
 import com.example.moneymanager.repository.ProfileRepository;
+import com.example.moneymanager.dto.AdminBroadcastDTO;
+import com.example.moneymanager.dto.NotificationDTO;
+import com.example.moneymanager.entity.NotificationEntity;
+import com.example.moneymanager.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +26,8 @@ public class AdminService {
     private final ProfileService profileService;
     private final ProfileRepository profileRepository;
     private final PaymentRepository paymentRepository;
+    private final NotificationService notificationService;
+    private final NotificationRepository notificationRepository;
 
     @Transactional(readOnly = true)
     public AdminOverviewDTO getOverview() {
@@ -90,6 +96,25 @@ public class AdminService {
                 .createdAt(paymentEntity.getCreatedAt())
                 .updatedAt(paymentEntity.getUpdatedAt())
                 .build();
+    }
+
+    public void sendBroadcast(AdminBroadcastDTO dto) {
+        ensureAdmin();
+        notificationService.createBroadcast(dto.getTitle(), dto.getMessage());
+    }
+
+    @Transactional(readOnly = true)
+    public List<NotificationDTO> getBroadcasts() {
+        ensureAdmin();
+        List<NotificationEntity> broadcasts = notificationRepository.findByProfileIsNullOrderByCreatedAtDesc();
+        return broadcasts.stream().map(n -> NotificationDTO.builder()
+                .id(n.getId())
+                .title(n.getTitle())
+                .message(n.getMessage())
+                .type(n.getType().name())
+                .isRead(true) // Not applicable for admin view really
+                .createdAt(n.getCreatedAt())
+                .build()).toList();
     }
 
     private void ensureAdmin() {

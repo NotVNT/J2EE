@@ -6,7 +6,11 @@ import com.example.moneymanager.service.AdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import com.example.moneymanager.dto.AdminBroadcastDTO;
+import com.example.moneymanager.dto.NotificationDTO;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -42,6 +46,32 @@ public class AdminController {
     ) {
         try {
             List<AdminPaymentDTO> response = adminService.getPayments(status, search, limit);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            HttpStatus statusCode = e.getMessage() != null && e.getMessage().contains("Forbidden")
+                    ? HttpStatus.FORBIDDEN
+                    : HttpStatus.BAD_REQUEST;
+            return ResponseEntity.status(statusCode).body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/notifications/broadcast")
+    public ResponseEntity<?> sendBroadcast(@RequestBody AdminBroadcastDTO dto) {
+        try {
+            adminService.sendBroadcast(dto);
+            return ResponseEntity.ok(Map.of("message", "Đã gửi thông báo thành công"));
+        } catch (Exception e) {
+            HttpStatus statusCode = e.getMessage() != null && e.getMessage().contains("Forbidden")
+                    ? HttpStatus.FORBIDDEN
+                    : HttpStatus.BAD_REQUEST;
+            return ResponseEntity.status(statusCode).body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/notifications")
+    public ResponseEntity<?> getBroadcasts() {
+        try {
+            List<NotificationDTO> response = adminService.getBroadcasts();
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             HttpStatus statusCode = e.getMessage() != null && e.getMessage().contains("Forbidden")

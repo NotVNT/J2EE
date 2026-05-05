@@ -1,58 +1,98 @@
-import {useContext} from "react";
-import {AppContext} from "../context/AppContext.jsx";
-import {User} from "lucide-react";
-import {SIDE_BAR_DATA} from "../assets/assets.js";
-import {useNavigate} from "react-router-dom";
+import { useContext } from "react";
+import { AppContext } from "../context/AppContext.jsx";
+import { User, Zap } from "lucide-react";
+import { SIDE_BAR_DATA } from "../assets/assets.js";
+import { useNavigate } from "react-router-dom";
 
-const Sidebar = ({activeMenu}) => {
-    const {user} = useContext(AppContext);
-    const navigate = useNavigate();
-    return (
-        <aside className="h-screen w-64 fixed left-0 top-0 bg-[#F4F6F8] flex lg:flex flex-col p-6 gap-2 font-['Inter'] text-sm tracking-tight border-r border-[#E5E7EB] z-50">
-            <div className="text-2xl font-black text-[#1a237e] tracking-tighter mb-8 cursor-pointer flex items-center gap-2" onClick={() => navigate("/dashboard")}>
-                Money Manager
-            </div>
-            
-            <div className="flex items-center gap-3 mb-8 p-1">
-                <div className="relative">
-                    {user?.profileImageUrl ? (
-                        <img src={user.profileImageUrl} alt="profile" className="w-10 h-10 rounded-full object-cover shadow-sm bg-white" />
-                    ) : (
-                        <div className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant">
-                            <User className="w-5 h-5" />
-                        </div>
-                    )}
-                    {user?.subscriptionPlan === "PREMIUM" && (
-                        <span className="absolute -bottom-1 -right-1 bg-secondary text-[9px] text-white px-1.5 py-0.5 rounded-full font-bold shadow-sm uppercase">PRO</span>
-                    )}
-                </div>
-                <div className="flex-1 overflow-hidden">
-                    <p className="font-bold text-on-surface truncate">{user?.fullName || "Người dùng"}</p>
-                    <p className="text-xs text-on-surface-variant/70 truncate">{user?.subscriptionPlan === "PREMIUM" ? "Tài khoản Premium" : "Tài khoản Basic"}</p>
-                </div>
-            </div>
+const Sidebar = ({ activeMenu }) => {
+  const { user } = useContext(AppContext);
+  const navigate = useNavigate();
 
-            <nav className="flex-1 space-y-1 overflow-y-auto pr-2">
-                {SIDE_BAR_DATA.map((item, index) => {
-                    const isActive = activeMenu === item.label;
-                    return (
-                        <button
-                            onClick={() => navigate(item.path)}
-                            key={`menu_${index}`}
-                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
-                                isActive 
-                                ? "bg-white text-[#2563eb] font-bold shadow-sm"
-                                : "text-slate-500 font-medium hover:text-[#1a237e] hover:bg-white/50"
-                            }`}
-                        >
-                            <item.icon className={`w-5 h-5 ${isActive ? "text-[#2563eb]" : "text-slate-400"}`} />
-                            {item.label}
-                        </button>
-                    );
-                })}
-            </nav>
-        </aside>
-    )
-}
+  return (
+    <aside className="h-screen w-64 fixed left-0 top-0 flex flex-col p-5 gap-2 z-50
+      bg-white dark:bg-[#0F172A] border-r border-slate-200 dark:border-white/10">
+
+      {/* Logo */}
+      <div
+        onClick={() => navigate("/dashboard")}
+        className="flex items-center gap-2.5 mb-7 px-1 cursor-pointer"
+      >
+        <div className="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center">
+          <Zap size={16} className="text-white" fill="white" />
+        </div>
+        <span className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">
+          Money<span className="text-amber-500">Manager</span>
+        </span>
+      </div>
+
+      {/* User info */}
+      <div className="flex items-center gap-3 mb-6 p-3 rounded-xl
+        bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+        <div className="relative shrink-0">
+          {user?.profileImageUrl ? (
+            <img
+              src={user.profileImageUrl}
+              alt="profile"
+              className="w-9 h-9 rounded-full object-cover"
+            />
+          ) : (
+            <div className="w-9 h-9 rounded-full bg-slate-200 dark:bg-white/10 flex items-center justify-center">
+              <User size={17} className="text-slate-500 dark:text-slate-400" />
+            </div>
+          )}
+          {user?.subscriptionPlan === "PREMIUM" && (
+            <span className="absolute -bottom-1 -right-1 bg-amber-500 text-[8px] text-white px-1 py-0.5 rounded-full font-bold uppercase">
+              PRO
+            </span>
+          )}
+        </div>
+        <div className="flex-1 overflow-hidden">
+          <p className="font-semibold text-slate-900 dark:text-white text-sm truncate">
+            {user?.fullName || "Người dùng"}
+          </p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+            {user?.subscriptionPlan === "PREMIUM" ? "Premium" : user?.subscriptionPlan === "BASIC" ? "Basic" : "Free"}
+          </p>
+        </div>
+      </div>
+
+      {/* Nav */}
+      <nav className="flex-1 space-y-0.5 overflow-y-auto">
+        {SIDE_BAR_DATA.map((item, index) => {
+          const isActive = activeMenu === item.label;
+          return (
+            <button
+              onClick={() => navigate(item.path)}
+              key={`menu_${index}`}
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
+                isActive
+                  ? "bg-amber-500/15 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                  : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-slate-200"
+              }`}
+            >
+              <item.icon
+                size={18}
+                className={isActive ? "text-amber-500" : "text-slate-400 dark:text-slate-500"}
+              />
+              {item.label}
+            </button>
+          );
+        })}
+      </nav>
+
+      {/* Upgrade hint for free users */}
+      {user?.subscriptionPlan === "FREE" && (
+        <div
+          onClick={() => navigate("/payment")}
+          className="mt-4 p-3 rounded-xl bg-linear-to-br from-violet-600/20 to-amber-500/10
+            border border-violet-500/20 cursor-pointer hover:border-violet-500/40 transition-all"
+        >
+          <p className="text-xs font-semibold text-violet-400 mb-0.5">Nâng cấp lên Premium</p>
+          <p className="text-[11px] text-slate-500 dark:text-slate-400">Mở khoá tất cả tính năng AI</p>
+        </div>
+      )}
+    </aside>
+  );
+};
 
 export default Sidebar;

@@ -1,146 +1,105 @@
 import Dashboard from "../components/Dashboard.jsx";
-import {useUser} from "../hooks/useUser.jsx";
-import {Plus} from "lucide-react";
+import { useUser } from "../hooks/useUser.jsx";
+import { Plus } from "lucide-react";
 import CategoryList from "../components/CategoryList.jsx";
-import {useEffect, useState} from "react";
+import { useEffect, useState } from "react";
 import axiosConfig from "../util/axiosConfig.jsx";
-import {API_ENDPOINTS} from "../util/apiEndpoints.js";
+import { API_ENDPOINTS } from "../util/apiEndpoints.js";
 import toast from "react-hot-toast";
 import Modal from "../components/Modal.jsx";
 import AddCategoryForm from "../components/AddCategoryForm.jsx";
 
 const Category = () => {
-    useUser();
-    const [loading, setLoading] = useState(false);
-    const [categoryData, setCategoryData] = useState([]);
-    const [openAddCategoryModal, setOpenAddCategoryModal] = useState(false);
-    const [openEditCategoryModal, setOpenEditCategoryModal] = useState(false);
-    const [selectedCategory, setSelectedCategory] = useState(null);
+  useUser();
+  const [loading, setLoading] = useState(false);
+  const [categoryData, setCategoryData] = useState([]);
+  const [openAddCategoryModal, setOpenAddCategoryModal] = useState(false);
+  const [openEditCategoryModal, setOpenEditCategoryModal] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState(null);
 
-    const fetchCategoryDetails = async () => {
-        if (loading) return;
-
-        setLoading(true);
-
-        try {
-            const response = await axiosConfig.get(API_ENDPOINTS.GET_ALL_CATEGORIES);
-            if (response.status === 200) {
-                console.log('categories',response.data);
-                setCategoryData(response.data);
-            }
-        }catch(error) {
-            console.error('Something went wrong. Please try again.', error);
-            toast.error(error.message);
-        } finally {
-            setLoading(false);
-        }
+  const fetchCategoryDetails = async () => {
+    if (loading) return;
+    setLoading(true);
+    try {
+      const response = await axiosConfig.get(API_ENDPOINTS.GET_ALL_CATEGORIES);
+      if (response.status === 200) setCategoryData(response.data);
+    } catch (error) {
+      console.error("Something went wrong. Please try again.", error);
+      toast.error(error.message);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    useEffect(() => {
+  useEffect(() => { fetchCategoryDetails(); }, []);
+
+  const handleAddCategory = async (category) => {
+    const { name, type, icon } = category;
+    if (!name.trim()) { toast.error("Category Name is required"); return; }
+    const isDuplicate = categoryData.some((c) => c.name.toLowerCase() === name.trim().toLowerCase());
+    if (isDuplicate) { toast.error("Category Name already exists"); return; }
+    try {
+      const response = await axiosConfig.post(API_ENDPOINTS.ADD_CATEGORY, { name, type, icon });
+      if (response.status === 201) {
+        toast.success("Thêm danh mục thành công");
+        setOpenAddCategoryModal(false);
         fetchCategoryDetails();
-    }, []);
-
-    const handleAddCategory = async (category) => {
-        const {name, type, icon} = category;
-
-        if (!name.trim()) {
-            toast.error("Category Name is required");
-            return;
-        }
-
-        //check if the category already exists
-        const isDuplicate = categoryData.some((category) => {
-            return category.name.toLowerCase() === name.trim().toLowerCase();
-        })
-
-        if (isDuplicate) {
-            toast.error("Category Name already exists");
-            return;
-        }
-
-        try {
-            const response = await axiosConfig.post(API_ENDPOINTS.ADD_CATEGORY, {name, type, icon});
-            if (response.status === 201) {
-                toast.success("Thêm danh mục thành công");
-                setOpenAddCategoryModal(false);
-                fetchCategoryDetails();
-            }
-        }catch (error) {
-            console.error('Error adding category:', error);
-            toast.error(error.response?.data?.message || "Failed to add category.");
-        }
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to add category.");
     }
+  };
 
-    const handleEditCategory = (categoryToEdit) => {
-        setSelectedCategory(categoryToEdit);
-        setOpenEditCategoryModal(true);
+  const handleEditCategory = (categoryToEdit) => {
+    setSelectedCategory(categoryToEdit);
+    setOpenEditCategoryModal(true);
+  };
+
+  const handleUpdateCategory = async (updatedCategory) => {
+    const { id, name, type, icon } = updatedCategory;
+    if (!name.trim()) { toast.error("Category Name is required"); return; }
+    if (!id) { toast.error("Category ID is missing for update"); return; }
+    try {
+      await axiosConfig.put(API_ENDPOINTS.UPDATE_CATEGORY(id), { name, type, icon });
+      setOpenEditCategoryModal(false);
+      setSelectedCategory(null);
+      toast.success("Cập nhật danh mục thành công");
+      fetchCategoryDetails();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to update category.");
     }
+  };
 
-    const handleUpdateCategory = async (updatedCategory) => {
-        const {id, name, type, icon} = updatedCategory;
-        if (!name.trim()) {
-            toast.error("Category Name is required");
-            return;
-        }
+  return (
+    <Dashboard activeMenu="Category">
+      <div className="space-y-5">
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white">Tất cả danh mục</h2>
+          <button
+            onClick={() => setOpenAddCategoryModal(true)}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold
+              bg-violet-600 hover:bg-violet-500 text-white transition-all duration-150 active:scale-95"
+          >
+            <Plus size={15} />Thêm danh mục
+          </button>
+        </div>
 
-        if (!id) {
-            toast.error("Category ID is missing for update");
-            return;
-        }
+        <CategoryList categories={categoryData} onEditCategory={handleEditCategory} />
 
-        try {
-            await axiosConfig.put(API_ENDPOINTS.UPDATE_CATEGORY(id), {name, type, icon});
-            setOpenEditCategoryModal(false);
-            setSelectedCategory(null);
-            toast.success("Cập nhật danh mục thành công");
-            fetchCategoryDetails();
-        }catch(error) {
-            console.error('Error updating category:', error.response?.data?.message || error.message);
-            toast.error(error.response?.data?.message || "Failed to update category.");
-        }
-    }
+        <Modal isOpen={openAddCategoryModal} onClose={() => setOpenAddCategoryModal(false)} title="Thêm danh mục">
+          <AddCategoryForm onAddCategory={handleAddCategory} />
+        </Modal>
 
-    return (
-        <Dashboard activeMenu="Category">
-            <div className="my-5 mx-auto">
-                {/* Add button to add category*/}
-                <div className="flex justify-between items-center mb-5">
-                    <h2 className="text-2xl font-semibold">Tất cả danh mục</h2>
-                    <button
-                        onClick={() => setOpenAddCategoryModal(true)}
-                        className="add-btn flex items-center gap-1">
-                        <Plus size={15} />Thêm danh mục</button>
-                </div>
-
-                {/* Category list */}
-                <CategoryList categories={categoryData} onEditCategory={handleEditCategory} />
-
-                {/* Adding category modal*/}
-                <Modal
-                    isOpen={openAddCategoryModal}
-                    onClose={() => setOpenAddCategoryModal(false)}
-                    title="Thêm danh mục"
-                >
-                    <AddCategoryForm onAddCategory={handleAddCategory}/>
-                </Modal>
-                {/* Updating category modal*/}
-                <Modal
-                    onClose={() =>{
-                        setOpenEditCategoryModal(false);
-                        setSelectedCategory(null);
-                    }}
-                    isOpen={openEditCategoryModal}
-                    title="Cập nhật danh mục"
-                >
-                    <AddCategoryForm
-                        initialCategoryData={selectedCategory}
-                        onAddCategory={handleUpdateCategory}
-                        isEditing={true}
-                    />
-                </Modal>
-            </div>
-        </Dashboard>
-    )
-}
+        <Modal
+          onClose={() => { setOpenEditCategoryModal(false); setSelectedCategory(null); }}
+          isOpen={openEditCategoryModal}
+          title="Cập nhật danh mục"
+        >
+          <AddCategoryForm initialCategoryData={selectedCategory} onAddCategory={handleUpdateCategory} isEditing={true} />
+        </Modal>
+      </div>
+    </Dashboard>
+  );
+};
 
 export default Category;

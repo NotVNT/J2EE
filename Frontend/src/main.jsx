@@ -3,6 +3,7 @@ import { BrowserRouter } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import App from "./App.jsx";
 import { AppContextProvider } from "./context/AppContext.jsx";
+import { ThemeProvider } from "./context/ThemeContext.jsx";
 import "./index.css";
 
 // Polyfill for mgt.clearMarks is not a function
@@ -32,9 +33,20 @@ window.addEventListener("error", (e) => {
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <BrowserRouter>
-    <AppContextProvider>
-      <Toaster />
-      <App />
-    </AppContextProvider>
+    <ThemeProvider>
+      <AppContextProvider>
+        <Toaster
+          toastOptions={{
+            style: {
+              background: "#1E293B",
+              color: "#F8FAFC",
+              border: "1px solid rgba(255,255,255,0.1)",
+              borderRadius: "12px",
+            },
+          }}
+        />
+        <App />
+      </AppContextProvider>
+    </ThemeProvider>
   </BrowserRouter>
 );
