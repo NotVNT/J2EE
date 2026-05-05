@@ -28,8 +28,10 @@ public class ProfileController {
             ProfileDTO registeredProfile = profileService.registerProfile(profileDTO);
             return ResponseEntity.status(HttpStatus.CREATED).body(registeredProfile);
         } catch (Exception e) {
+            e.printStackTrace();
+            String errorMsg = e.getMessage() != null ? e.getMessage() : "Lỗi hệ thống không xác định: " + e.getClass().getSimpleName();
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
-                    "message", e.getMessage()
+                    "message", errorMsg
             ));
         }
     }
