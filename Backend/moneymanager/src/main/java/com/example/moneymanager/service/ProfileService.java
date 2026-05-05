@@ -46,6 +46,8 @@ public class ProfileService {
         });
 
         ProfileEntity newProfile = toEntity(profileDTO);
+        newProfile.setIsActive(false);
+        newProfile.setSubscriptionPlan(com.example.moneymanager.entity.SubscriptionPlan.FREE);
         newProfile.setActivationToken(UUID.randomUUID().toString());
         newProfile = profileRepository.save(newProfile);
         // Gửi email kích hoạt tài khoản

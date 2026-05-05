@@ -1,14 +1,13 @@
 package com.example.moneymanager.service;
 
-import com.example.moneymanager.dto.AssistantChatResponseDTO;
-import com.example.moneymanager.dto.ExpenseDTO;
-import com.example.moneymanager.dto.IncomeDTO;
-import com.example.moneymanager.dto.RecentTransactionDTO;
+import com.example.moneymanager.dto.*;
 import com.example.moneymanager.entity.ProfileEntity;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -26,6 +25,7 @@ public class DashboardService {
     private final ExpenseService expenseService;
     private final ProfileService profileService;
     private final SavingGoalService savingGoalService;
+    private final BudgetService budgetService;
     private final GeminiService geminiService;
 
     public Map<String, Object> getDashboardData() {
@@ -89,6 +89,37 @@ public class DashboardService {
             returnValue.put("savingGoalActiveCount", savingGoalSummary.getOrDefault("activeCount", 0));
             returnValue.put("savingGoalCompletedCount", savingGoalSummary.getOrDefault("completedCount", 0));
             returnValue.put("savingGoalTotalSaved", savingGoalSummary.getOrDefault("totalSaved", 0));
+
+            // Budgets for current month
+            returnValue.put("budgets", budgetService.getBudgetsForCurrentMonth());
+
+            // Priority Saving Goal
+            List<SavingGoalDTO> allGoals = savingGoalService.getAllGoals();
+            returnValue.put("priorityGoal", allGoals.isEmpty() ? null : allGoals.get(0));
+
+            // Monthly History (Last 6 Months)
+            List<Map<String, Object>> monthlyHistory = new java.util.ArrayList<>();
+            LocalDate now = LocalDate.now();
+            for (int i = 5; i >= 0; i--) {
+                LocalDate date = now.minusMonths(i);
+                int year = date.getYear();
+                int month = date.getMonthValue();
+                
+                java.math.BigDecimal monthIncome = incomeService.getIncomesByMonthForCurrentUser(year, month)
+                        .stream().map(com.example.moneymanager.dto.IncomeDTO::getAmount)
+                        .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+                
+                java.math.BigDecimal monthExpense = expenseService.getExpensesByMonthForCurrentUser(year, month)
+                        .stream().map(com.example.moneymanager.dto.ExpenseDTO::getAmount)
+                        .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+
+                Map<String, Object> history = new HashMap<>();
+                history.put("month", "T" + month);
+                history.put("income", monthIncome);
+                history.put("expense", monthExpense);
+                monthlyHistory.add(history);
+            }
+            returnValue.put("monthlyHistory", monthlyHistory);
 
             return returnValue;
 
