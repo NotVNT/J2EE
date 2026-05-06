@@ -12,6 +12,7 @@ export const API_ENDPOINTS = {
     ACTIVATE: "/activate",
     FORGOT_PASSWORD: "/forgot-password",
     RESET_PASSWORD: "/reset-password",
+    GOOGLE_AUTH: "/auth/google",
 
     // User profile endpoints
     ACTIVATE_ACCOUNT: (token) => `/activate?token=${token}`,

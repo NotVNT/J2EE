@@ -22,7 +22,7 @@ public class AppUserDetailsService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("Profile not found with email: " + email));
         return User.builder()
                 .username(existingProfile.getEmail())
-                .password(existingProfile.getPassword())
+                .password(existingProfile.getPassword() != null ? existingProfile.getPassword() : "")
                 .authorities(Collections.emptyList())
                 .build();
     }

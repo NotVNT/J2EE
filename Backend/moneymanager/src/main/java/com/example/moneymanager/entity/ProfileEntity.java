@@ -43,6 +43,7 @@ public class ProfileEntity {
     private LocalDate subscriptionActivatedAt;
     private LocalDate subscriptionExpiresAt;
     private Boolean autoRenew;
+    private String googleId;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id")

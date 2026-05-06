@@ -42,7 +42,8 @@ public class SecurityConfig {
                                 "/forgot-password",   // ✅ thêm
                                 "/reset-password",    // ✅ thêm
                                 "/gemini/test",
-                                "/payments/payos/webhook"
+                                "/payments/payos/webhook",
+                                "/auth/google"        // ✅ Google OAuth2
                         ).permitAll()
                         .anyRequest().authenticated())
                         .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
