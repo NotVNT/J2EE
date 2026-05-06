@@ -1,0 +1,43 @@
+# === Personal configuration files ===
+CLAUDE.md
+COPILOT.md
+
+# === Environment files ===
+.env
+
+# === Java / Maven ===
+Backend/moneymanager/target/
+*.class
+*.jar
+*.war
+*.ear
+*.log
+
+# === Node.js / Frontend ===
+node_modules/
+Frontend/dist/
+Frontend/build/
+Frontend/.env
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# === Mobile / React Native ===
+Mobile/node_modules/
+Mobile/.expo/
+Mobile/dist/
+Mobile/web-build/
+*.jks
+*.keystore
+
+# === VS Code / IDE ===
+.vscode/
+.idea/
+*.iml
+
+# === OS files ===
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
