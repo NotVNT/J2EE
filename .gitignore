@@ -1,6 +1,16 @@
-# === Personal configuration files ===
+# === Personal configuration files (top-level guidance docs) ===
 CLAUDE.md
 COPILOT.md
+
+# === AI Assistant Rules & Guidelines (LOCAL ONLY) ===
+.claude/
+.copilot/
+.claude/.instructions.md
+.copilot/.instructions.md
+.instructions.md
+.prompt.md
+.agent.md
+
 
 # === Environment files ===
 .env
