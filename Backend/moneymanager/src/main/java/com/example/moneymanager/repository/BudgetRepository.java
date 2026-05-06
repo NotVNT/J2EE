@@ -37,4 +37,7 @@ public interface BudgetRepository extends JpaRepository<BudgetEntity, Long> {
             @Param("month") Integer month,
             @Param("year") Integer year
     );
+
+    // Xoá toàn bộ budget thuộc một danh mục (dùng khi xoá danh mục)
+    void deleteByCategoryId(Long categoryId);
 }

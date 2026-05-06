@@ -11,6 +11,7 @@ import ExpenseList from "../components/ExpenseList.jsx";
 import Modal from "../components/Modal.jsx";
 import AddExpenseForm from "../components/AddExpenseForm.jsx";
 import DeleteAlert from "../components/DeleteAlert.jsx";
+import QuickExpenseTemplates from "../components/QuickExpenseTemplates.jsx";
 
 const Expense = () => {
   useUser();
@@ -212,6 +213,12 @@ const Expense = () => {
           isImportingReceipt={isImportingReceipt}
         />
         <input ref={receiptFileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImportReceipt} disabled={isImportingReceipt} />
+
+        {/* Quick Expense Templates */}
+        <QuickExpenseTemplates
+          categories={categories}
+          onAddExpense={handleAddExpense}
+        />
 
         <ExpenseList
           transactions={expenseData}
