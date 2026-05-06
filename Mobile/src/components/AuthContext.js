@@ -21,7 +21,7 @@ export function AuthProvider({ children }) {
     return response.data;
   }, []);
 
-  const signIn = useCallback(async ({ email, password }) => {
+  const signIn = useCallback(async ({ email, password, rememberMe = false }) => {
     const response = await http.post(API_ENDPOINTS.LOGIN, { email, password });
     const { token, user: profile } = response.data || {};
 
@@ -29,7 +29,7 @@ export function AuthProvider({ children }) {
       throw new Error("Không nhận được token từ máy chủ");
     }
 
-    await tokenStorage.setToken(token);
+    await tokenStorage.setToken(token, { remember: rememberMe });
 
     if (profile) {
       setUser(profile);

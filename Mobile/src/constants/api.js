@@ -1,14 +1,68 @@
-const fallbackBaseUrl = "http://10.0.2.2:8080/api/v1.0";
+const FALLBACK_PROD_API_URL = "https://money-manager-ln9d.onrender.com/api/v1.0";
 
-export const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || fallbackBaseUrl;
+export const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || FALLBACK_PROD_API_URL;
+export const CLOUDINARY_CLOUD_NAME = process.env.EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME || "dcr9ovybu";
+export const CLOUDINARY_UPLOAD_PRESET = process.env.EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "moneymanager";
 
 export const API_ENDPOINTS = {
+  // Health
   HEALTH: "/health",
+
+  // Auth
   LOGIN: "/login",
+  REGISTER: "/register",
+  ACTIVATE: "/activate",
+  FORGOT_PASSWORD: "/forgot-password",
+  RESET_PASSWORD: "/reset-password",
+
+  // Profile
   GET_USER_INFO: "/profile",
+  UPDATE_PROFILE: "/profile",
+  UPDATE_AUTO_RENEW: "/profile/subscription/auto-renew",
+
+  // Dashboard
   DASHBOARD_DATA: "/dashboard",
+
+  // Categories
+  GET_ALL_CATEGORIES: "/categories",
+  ADD_CATEGORY: "/categories",
+  UPDATE_CATEGORY: (categoryId) => `/categories/${categoryId}`,
+  DELETE_CATEGORY: (categoryId) => `/categories/${categoryId}`,
+  CATEGORY_BY_TYPE: (type) => `/categories/type/${type}`,
+
+  // Expenses
   GET_ALL_EXPENSE: "/expenses",
   ADD_EXPENSE: "/expenses",
   DELETE_EXPENSE: (expenseId) => `/expenses/${expenseId}`,
-  CATEGORY_BY_TYPE: (type) => `/categories/type/${type}`
+
+  // Incomes
+  GET_ALL_INCOMES: "/incomes",
+  ADD_INCOME: "/incomes",
+  DELETE_INCOME: (incomeId) => `/incomes/${incomeId}`,
+
+  // Budgets
+  GET_BUDGETS: "/budgets",
+  SET_BUDGET: "/budgets",
+  DELETE_BUDGET: (id) => `/budgets/${id}`,
+
+  // Saving goals
+  GET_SAVING_GOALS: "/saving-goals",
+  ADD_SAVING_GOAL: "/saving-goals",
+  UPDATE_SAVING_GOAL: (id) => `/saving-goals/${id}`,
+  DELETE_SAVING_GOAL: (id) => `/saving-goals/${id}`,
+  SAVING_GOAL_CONTRIBUTIONS: (id) => `/saving-goals/${id}/contributions`,
+  ADD_SAVING_GOAL_CONTRIBUTION: (id) => `/saving-goals/${id}/contributions`,
+
+  // Filters
+  APPLY_FILTERS: "/filter",
+
+  // Payment & OTP
+  REQUEST_PAYMENT_OTP: "/payments/otp/request",
+  VERIFY_PAYMENT_OTP: "/payments/otp/verify",
+  CREATE_PAYMENT: "/payments/payos/create",
+  GET_PAYMENT_BY_ORDER_CODE: (orderCode) => `/payments/${orderCode}`,
+  SYNC_PAYMENT_STATUS: (orderCode) => `/payments/${orderCode}/status`,
+
+  // Image upload
+  UPLOAD_IMAGE: `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`
 };

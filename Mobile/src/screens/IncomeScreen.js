@@ -1,0 +1,412 @@
+import React, { useCallback, useMemo, useState } from "react";
+import { Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from "react-native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import http from "../services/http";
+import { API_ENDPOINTS } from "../constants/api";
+import { SUCCESS_ALERT_MESSAGES, SUCCESS_ALERT_TITLE } from "../constants/alertMessages";
+import { formatDate, formatMoney, getApiErrorMessage } from "../utils/format";
+import IncomeExpenseChart from "../components/IncomeExpenseChart";
+
+const FILTER_TYPES = {
+  current: "current",
+  all: "all",
+  specific: "specific"
+};
+
+function IncomeItem({ item, onDelete }) {
+  return (
+    <View style={styles.itemCard}>
+      <View style={styles.itemMain}>
+        <View style={styles.iconBubble}>
+          <Text style={styles.iconText}>{item?.icon || "💰"}</Text>
+        </View>
+
+        <View style={styles.itemContent}>
+          <Text style={styles.itemName}>{item?.name || "Thu nhập"}</Text>
+          <Text style={styles.itemMeta}>{formatDate(item?.date)} • {item?.categoryName || "Khác"}</Text>
+        </View>
+      </View>
+
+      <View style={styles.itemRight}>
+        <Text style={styles.itemAmount}>+ {formatMoney(item?.amount)}</Text>
+        <Pressable onPress={() => onDelete(item?.id)} style={styles.deleteButton}>
+          <Text style={styles.deleteText}>Xóa</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
+export default function IncomeScreen() {
+  const navigation = useNavigation();
+  const [incomes, setIncomes] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
+  const [filterType, setFilterType] = useState(FILTER_TYPES.current);
+  const [selectedMonth, setSelectedMonth] = useState("");
+
+  const totalIncome = useMemo(() => {
+    return incomes.reduce((sum, item) => sum + Number(item?.amount || 0), 0);
+  }, [incomes]);
+
+  const fetchIncomes = useCallback(async () => {
+    if (filterType === FILTER_TYPES.specific && !selectedMonth.trim()) {
+      setIncomes([]);
+      return;
+    }
+
+    const params = {};
+    if (filterType === FILTER_TYPES.all) {
+      params.all = true;
+    }
+
+    if (filterType === FILTER_TYPES.specific) {
+      const [year, month] = selectedMonth.split("-");
+      if (!year || !month) {
+        setIncomes([]);
+        return;
+      }
+
+      params.year = Number(year);
+      params.month = Number(month);
+    }
+
+    const response = await http.get(API_ENDPOINTS.GET_ALL_INCOMES, { params });
+    setIncomes(Array.isArray(response.data) ? response.data : []);
+  }, [filterType, selectedMonth]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await fetchIncomes();
+    } catch (error) {
+      Alert.alert("Lỗi", getApiErrorMessage(error, "Không tải được danh sách thu nhập"));
+    } finally {
+      setRefreshing(false);
+    }
+  }, [fetchIncomes]);
+
+  const onDelete = async (id) => {
+    if (!id) return;
+
+    Alert.alert("Xác nhận", "Bạn có chắc muốn xóa khoản thu này?", [
+      { text: "Hủy", style: "cancel" },
+      {
+        text: "Xóa",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await http.delete(API_ENDPOINTS.DELETE_INCOME(id));
+            await fetchIncomes();
+            Alert.alert(SUCCESS_ALERT_TITLE, SUCCESS_ALERT_MESSAGES.delete.income);
+          } catch (error) {
+            Alert.alert("Xóa thất bại", getApiErrorMessage(error, "Không thể xóa khoản thu này"));
+          }
+        }
+      }
+    ]);
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      onRefresh();
+    }, [onRefresh])
+  );
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.filterCard}>
+        <Text style={styles.filterTitle}>Khung thời gian</Text>
+        <View style={styles.filterRow}>
+          <Pressable
+            style={[styles.filterChip, filterType === FILTER_TYPES.current && styles.filterChipActive]}
+            onPress={() => {
+              setFilterType(FILTER_TYPES.current);
+              setSelectedMonth("");
+            }}
+          >
+            <Text style={[styles.filterChipText, filterType === FILTER_TYPES.current && styles.filterChipTextActive]}>Tháng này</Text>
+          </Pressable>
+
+          <Pressable
+            style={[styles.filterChip, filterType === FILTER_TYPES.all && styles.filterChipActive]}
+            onPress={() => {
+              setFilterType(FILTER_TYPES.all);
+              setSelectedMonth("");
+            }}
+          >
+            <Text style={[styles.filterChipText, filterType === FILTER_TYPES.all && styles.filterChipTextActive]}>Tất cả</Text>
+          </Pressable>
+
+          <Pressable
+            style={[styles.filterChip, styles.filterChipLast, filterType === FILTER_TYPES.specific && styles.filterChipActive]}
+            onPress={() => setFilterType(FILTER_TYPES.specific)}
+          >
+            <Text style={[styles.filterChipText, filterType === FILTER_TYPES.specific && styles.filterChipTextActive]}>Chọn tháng</Text>
+          </Pressable>
+        </View>
+
+        {filterType === FILTER_TYPES.specific ? (
+          <TextInput
+            style={styles.monthInput}
+            value={selectedMonth}
+            onChangeText={setSelectedMonth}
+            placeholder="YYYY-MM (ví dụ: 2026-03)"
+            placeholderTextColor="#98a2b3"
+          />
+        ) : null}
+      </View>
+
+      <View style={styles.summaryCard}>
+        <Text style={styles.summaryLabel}>Tổng thu nhập</Text>
+        <Text style={styles.summaryAmount}>{formatMoney(totalIncome)}</Text>
+        <Text style={styles.summaryHint}>{incomes.length} giao dịch</Text>
+
+        <Pressable style={styles.addButton} onPress={() => navigation.navigate("AddIncome")}>
+          <Text style={styles.addButtonText}>+ Thêm thu nhập</Text>
+        </Pressable>
+      </View>
+
+      <FlatList
+        data={incomes}
+        keyExtractor={(item) => String(item?.id)}
+        renderItem={({ item }) => <IncomeItem item={item} onDelete={onDelete} />}
+        contentContainerStyle={[styles.listContent, !incomes.length && styles.listContentEmpty]}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        ListHeaderComponent={
+          incomes.length ? (
+            <View>
+              <IncomeExpenseChart data={incomes} title="Tổng quan thu nhập" colorPrimary="#15803d" />
+              <View style={styles.listHeader}>
+                <Text style={styles.listTitle}>Danh sách thu nhập</Text>
+              </View>
+            </View>
+          ) : null
+        }
+        ListEmptyComponent={
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyIcon}>💹</Text>
+            <Text style={styles.emptyTitle}>Chưa có dữ liệu thu nhập</Text>
+            <Text style={styles.emptyText}>
+              {filterType === FILTER_TYPES.specific && !selectedMonth.trim()
+                ? "Nhập tháng theo định dạng YYYY-MM để xem dữ liệu."
+                : "Hãy thêm khoản thu đầu tiên để theo dõi tài chính rõ ràng hơn."}
+            </Text>
+            <Pressable style={styles.emptyAction} onPress={() => navigation.navigate("AddIncome")}>
+              <Text style={styles.emptyActionText}>+ Thêm thu nhập</Text>
+            </Pressable>
+          </View>
+        }
+      />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#f2f4f7",
+    padding: 16,
+    paddingTop: 24
+  },
+  filterCard: {
+    backgroundColor: "#ffffff",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#e4e7ec",
+    padding: 12,
+    marginBottom: 12
+  },
+  filterTitle: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#101828",
+    marginBottom: 10
+  },
+  filterRow: {
+    flexDirection: "row"
+  },
+  filterChip: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: "#d0d5dd",
+    backgroundColor: "#ffffff",
+    borderRadius: 10,
+    paddingVertical: 10,
+    alignItems: "center",
+    marginRight: 8
+  },
+  filterChipLast: {
+    marginRight: 0
+  },
+  filterChipActive: {
+    borderColor: "#22c55e",
+    backgroundColor: "#ecfdf3"
+  },
+  filterChipText: {
+    color: "#344054",
+    fontWeight: "700",
+    fontSize: 12
+  },
+  filterChipTextActive: {
+    color: "#067647"
+  },
+  monthInput: {
+    marginTop: 10,
+    backgroundColor: "#f9fafb",
+    borderWidth: 1,
+    borderColor: "#d0d5dd",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 11,
+    color: "#101828"
+  },
+  summaryCard: {
+    backgroundColor: "#ffffff",
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#e4e7ec",
+    padding: 14,
+    marginBottom: 14,
+    shadowColor: "#101828",
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2
+  },
+  summaryLabel: {
+    fontSize: 13,
+    color: "#667085",
+    fontWeight: "700"
+  },
+  summaryAmount: {
+    marginTop: 4,
+    fontSize: 26,
+    color: "#067647",
+    fontWeight: "800"
+  },
+  summaryHint: {
+    marginTop: 4,
+    fontSize: 12,
+    color: "#667085"
+  },
+  addButton: {
+    marginTop: 12,
+    backgroundColor: "#15803d",
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: "center"
+  },
+  addButtonText: {
+    color: "#fff",
+    fontWeight: "800",
+    fontSize: 15
+  },
+  listContent: {
+    paddingBottom: 24
+  },
+  listContentEmpty: {
+    flexGrow: 1,
+    justifyContent: "center"
+  },
+  listHeader: {
+    marginBottom: 8
+  },
+  listTitle: {
+    color: "#101828",
+    fontWeight: "800",
+    fontSize: 16
+  },
+  itemCard: {
+    backgroundColor: "#fff",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#e4e7ec",
+    padding: 12,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10
+  },
+  itemMain: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+    paddingRight: 10
+  },
+  iconBubble: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: "#f2f4f7",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 10
+  },
+  iconText: {
+    fontSize: 18
+  },
+  itemContent: {
+    flex: 1
+  },
+  itemName: {
+    fontWeight: "700",
+    color: "#0f172a",
+    fontSize: 15
+  },
+  itemMeta: {
+    marginTop: 4,
+    color: "#667085",
+    fontSize: 12
+  },
+  itemRight: {
+    alignItems: "flex-end"
+  },
+  itemAmount: {
+    color: "#067647",
+    fontWeight: "800"
+  },
+  deleteButton: {
+    marginTop: 8,
+    backgroundColor: "#fef3f2",
+    borderColor: "#fecdca",
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 4
+  },
+  deleteText: {
+    color: "#b42318",
+    fontWeight: "700",
+    fontSize: 12
+  },
+  emptyState: {
+    alignItems: "center",
+    paddingHorizontal: 24
+  },
+  emptyIcon: {
+    fontSize: 34,
+    marginBottom: 8
+  },
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: "#101828",
+    marginBottom: 6
+  },
+  emptyText: {
+    textAlign: "center",
+    color: "#667085",
+    lineHeight: 19,
+    marginBottom: 14
+  },
+  emptyAction: {
+    backgroundColor: "#15803d",
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 10
+  },
+  emptyActionText: {
+    color: "#ffffff",
+    fontWeight: "800"
+  }
+});

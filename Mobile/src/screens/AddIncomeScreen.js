@@ -7,7 +7,7 @@ import { SUCCESS_ALERT_MESSAGES, SUCCESS_ALERT_TITLE } from "../constants/alertM
 import { formatCurrencyInput, getApiErrorMessage, parseCurrencyInput, todayIso } from "../utils/format";
 import { PickDateField } from "../utils/pickDate";
 
-export default function AddExpenseScreen() {
+export default function AddIncomeScreen() {
   const navigation = useNavigation();
 
   const [categories, setCategories] = useState([]);
@@ -20,7 +20,7 @@ export default function AddExpenseScreen() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await http.get(API_ENDPOINTS.CATEGORY_BY_TYPE("expense"));
+        const response = await http.get(API_ENDPOINTS.CATEGORY_BY_TYPE("income"));
         const data = Array.isArray(response.data) ? response.data : [];
         setCategories(data);
         if (data.length > 0) {
@@ -39,7 +39,7 @@ export default function AddExpenseScreen() {
     const numericAmount = parseCurrencyInput(amount);
 
     if (!normalizedName) {
-      Alert.alert("Thiếu thông tin", "Vui lòng nhập Tên khoản chi.");
+      Alert.alert("Thiếu thông tin", "Vui lòng nhập Tên khoản thu.");
       return;
     }
 
@@ -60,22 +60,22 @@ export default function AddExpenseScreen() {
 
     setSubmitting(true);
     try {
-      await http.post(API_ENDPOINTS.ADD_EXPENSE, {
+      await http.post(API_ENDPOINTS.ADD_INCOME, {
         name: normalizedName,
         amount: numericAmount,
         categoryId: Number(categoryId),
         date,
-        icon: "💸"
+        icon: "💰"
       });
 
-      Alert.alert(SUCCESS_ALERT_TITLE, SUCCESS_ALERT_MESSAGES.create.expense, [
+      Alert.alert(SUCCESS_ALERT_TITLE, SUCCESS_ALERT_MESSAGES.create.income, [
         {
           text: "OK",
           onPress: () => navigation.goBack()
         }
       ]);
     } catch (error) {
-      Alert.alert("Lưu thất bại", getApiErrorMessage(error, "Không thể tạo khoản chi"));
+      Alert.alert("Lưu thất bại", getApiErrorMessage(error, "Không thể tạo khoản thu"));
     } finally {
       setSubmitting(false);
     }
@@ -83,8 +83,8 @@ export default function AddExpenseScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.label}>Tên khoản chi</Text>
-      <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Ví dụ: Mua đồ ăn" />
+      <Text style={styles.label}>Tên khoản thu</Text>
+      <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Ví dụ: Lương tháng" />
 
       <Text style={styles.label}>Số tiền</Text>
       <TextInput
@@ -92,7 +92,7 @@ export default function AddExpenseScreen() {
         value={amount}
         onChangeText={(value) => setAmount(formatCurrencyInput(value))}
         keyboardType="numeric"
-        placeholder="Ví dụ: 120.000"
+        placeholder="Ví dụ: 15.000.000"
       />
 
       <PickDateField label="Ngày" value={date} onChange={setDate} />
@@ -114,7 +114,7 @@ export default function AddExpenseScreen() {
       </View>
 
       <Pressable style={[styles.saveButton, submitting && styles.saveButtonDisabled]} onPress={onSave} disabled={submitting}>
-        <Text style={styles.saveButtonText}>{submitting ? "Đang lưu..." : "Lưu chi tiêu"}</Text>
+        <Text style={styles.saveButtonText}>{submitting ? "Đang lưu..." : "Lưu thu nhập"}</Text>
       </Pressable>
     </ScrollView>
   );
@@ -145,34 +145,30 @@ const styles = StyleSheet.create({
   categoryContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: "space-between",
+    gap: 8,
     marginBottom: 16
   },
   categoryChip: {
-    width: "48%",
     borderWidth: 1,
     borderColor: "#cbd5e1",
-    borderRadius: 12,
-    paddingHorizontal: 10,
+    borderRadius: 999,
+    paddingHorizontal: 12,
     paddingVertical: 8,
-    backgroundColor: "#fff",
-    marginBottom: 8,
-    alignItems: "center"
+    backgroundColor: "#fff"
   },
   categoryChipActive: {
-    borderColor: "#0f766e",
-    backgroundColor: "#ccfbf1"
+    borderColor: "#15803d",
+    backgroundColor: "#dcfce7"
   },
   categoryText: {
-    color: "#334155",
-    textAlign: "center"
+    color: "#334155"
   },
   categoryTextActive: {
-    color: "#115e59",
+    color: "#166534",
     fontWeight: "700"
   },
   saveButton: {
-    backgroundColor: "#0f766e",
+    backgroundColor: "#15803d",
     borderRadius: 12,
     paddingVertical: 13,
     alignItems: "center"
