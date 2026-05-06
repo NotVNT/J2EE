@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import axiosConfig from "../util/axiosConfig.jsx";
 import { API_ENDPOINTS } from "../util/apiEndpoints.js";
+import { usePageTitle } from "../hooks/usePageTitle.js";
+import Footer from "../components/Footer.jsx";
 
 const PAYMENT_STORAGE_KEY = "latestPayment";
 
@@ -19,6 +21,7 @@ const PAYMENT_STATUS_LABELS = {
 
 const PaymentCancel = () => {
   const [searchParams] = useSearchParams();
+  usePageTitle("Thanh toán bị hủy");
   const [isSyncing, setIsSyncing] = useState(false);
 
   const orderCode = useMemo(() => {
@@ -44,9 +47,9 @@ const PaymentCancel = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#0A0E1A] px-6 py-12">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#0A0E1A] px-6 py-12 flex flex-col">
       <div className="mx-auto max-w-2xl rounded-2xl border border-red-200 dark:border-red-500/20
-        bg-white dark:bg-[#0F172A] p-8 shadow-2xl shadow-red-100/40 dark:shadow-black/40">
+        bg-white dark:bg-[#0F172A] p-8 shadow-2xl shadow-red-100/40 dark:shadow-black/40 flex-1">
 
         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl
           bg-red-100 dark:bg-red-500/15 border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 mb-6">
@@ -81,6 +84,7 @@ const PaymentCancel = () => {
           </Link>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };

@@ -3,6 +3,7 @@ import { LayoutDashboard, Wallet, Settings, LogOut, Package, Menu, X, ArrowLeft,
 import { useContext, useState } from "react";
 import { AppContext } from "../../context/AppContext";
 import { useTheme } from "../../context/ThemeContext";
+import Footer from "../../components/Footer.jsx";
 
 const AdminLayout = () => {
   const { clearUser } = useContext(AppContext);
@@ -138,10 +139,11 @@ const AdminLayout = () => {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto">
-          <div className="p-4 lg:p-8 max-w-7xl mx-auto">
+        <main className="flex-1 overflow-y-auto flex flex-col">
+          <div className="p-4 lg:p-8 max-w-7xl mx-auto flex-1">
             <Outlet />
           </div>
+          <Footer />
         </main>
       </div>
     </div>

@@ -143,17 +143,30 @@ const Menubar = ({ activeMenu }) => {
       </div>
 
       {/* Mobile sidebar overlay */}
-      {openSideMenu && (
-        <div className="fixed inset-0 top-16 z-30 lg:hidden">
-          <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-            onClick={() => setOpenSideMenu(false)}
-          />
-          <div className="relative w-64 h-full">
-            <Sidebar activeMenu={activeMenu} />
+      <div
+        className={`fixed inset-0 top-16 z-30 lg:hidden transition-all duration-300 ease-in-out ${
+          openSideMenu ? 'visible' : 'invisible'
+        }`}
+      >
+        {/* Backdrop — click outside to close */}
+        <div
+          className={`absolute inset-0 transition-opacity duration-300 ease-in-out ${
+            openSideMenu ? 'opacity-100' : 'opacity-0'
+          } bg-black/40 backdrop-blur-sm`}
+          onClick={() => setOpenSideMenu(false)}
+        />
+
+        {/* Sidebar panel */}
+        <div
+          className={`relative transition-transform duration-300 ease-in-out ${
+            openSideMenu ? 'translate-x-0' : '-translate-x-full'
+          }`}
+        >
+          <div className="w-64 h-full">
+            <Sidebar activeMenu={activeMenu} mobileOverlay={true} />
           </div>
         </div>
-      )}
+      </div>
     </header>
   );
 };

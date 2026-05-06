@@ -17,37 +17,80 @@ COPILOT.md
 
 # === Java / Maven ===
 Backend/moneymanager/target/
+Backend/moneymanager/build/
+Backend/moneymanager/dist/
+Backend/moneymanager/.classpath
+Backend/moneymanager/.project
+Backend/moneymanager/.settings/
 *.class
 *.jar
 *.war
 *.ear
 *.log
+logs/
+out/
 
 # === Node.js / Frontend ===
 node_modules/
 Frontend/dist/
 Frontend/build/
 Frontend/.env
+Frontend/.env.local
+Frontend/.env.*.local
+Frontend/npm-debug.log*
+Frontend/yarn-debug.log*
+Frontend/yarn-error.log*
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+.pnpm-debug.log*
 
 # === Mobile / React Native ===
 Mobile/node_modules/
 Mobile/.expo/
 Mobile/dist/
 Mobile/web-build/
+Mobile/.env
+Mobile/.env.local
+Mobile/.env.*.local
+Mobile/ios/Pods/
+Mobile/android/.gradle/
+Mobile/android/build/
+Mobile/android/app/build/
 *.jks
 *.keystore
+*.p8
+*.mobileprovision
 
 # === VS Code / IDE ===
 .vscode/
+.vscode/settings.json
+.vscode/launch.json
 .idea/
 *.iml
+*.sublime-workspace
+*.sublime-project
+*.swp
+*.swo
+*~
+.DS_Store
+.AppleDouble
+.LSOverride
 
 # === OS files ===
 .DS_Store
 Thumbs.db
-*.swp
-*.swo
-*~
+.windows
+*.pem
+*.key
+*.crt
+
+# === Misc / Temp files ===
+*.tmp
+*.bak
+*.backup
+.cache/
+.temp/
+dist-ssr/
+*.local
+.env.production.local

@@ -3,8 +3,10 @@ import { Send, Bell, Clock, Search, RefreshCw } from "lucide-react";
 import axiosConfig from "../../util/axiosConfig";
 import { API_ENDPOINTS } from "../../util/apiEndpoints";
 import toast from "react-hot-toast";
+import { usePageTitle } from "../../hooks/usePageTitle.js";
 
 const AdminNotifications = () => {
+  usePageTitle("Quản lý thông báo");
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);

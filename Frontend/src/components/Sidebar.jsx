@@ -4,13 +4,13 @@ import { User, Zap } from "lucide-react";
 import { SIDE_BAR_DATA } from "../assets/assets.js";
 import { useNavigate } from "react-router-dom";
 
-const Sidebar = ({ activeMenu }) => {
+const Sidebar = ({ activeMenu, mobileOverlay = false }) => {
   const { user } = useContext(AppContext);
   const navigate = useNavigate();
 
   return (
-    <aside className="h-screen w-64 fixed left-0 top-0 flex flex-col p-5 gap-2 z-50
-      bg-white dark:bg-[#0F172A] border-r border-slate-200 dark:border-white/10">
+    <aside className={`h-screen w-64 fixed left-0 top-0 flex-col p-5 gap-2 z-50
+      bg-white dark:bg-[#0F172A] border-r border-slate-200 dark:border-white/10 ${mobileOverlay ? "flex" : "hidden lg:flex"}`}>
 
       {/* Logo */}
       <div

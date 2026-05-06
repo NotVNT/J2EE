@@ -36,6 +36,8 @@ public interface IncomeRepository extends JpaRepository<IncomeEntity, Long> {
 
     long countByProfileIdAndDateBetween(Long profileId, LocalDate startDate, LocalDate endDate);
 
+    List<IncomeEntity> findByProfileIdAndDate(Long profileId, LocalDate date);
+
     // Xoá toàn bộ income thuộc một danh mục (dùng khi xoá danh mục)
     void deleteByCategoryId(Long categoryId);
 }

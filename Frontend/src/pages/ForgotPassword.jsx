@@ -6,9 +6,12 @@ import Input from "../components/Input.jsx";
 import axiosConfig from "../util/axiosConfig.jsx";
 import { API_ENDPOINTS } from "../util/apiEndpoints.js";
 import { validateEmail } from "../util/validation.js";
+import { usePageTitle } from "../hooks/usePageTitle.js";
+import Footer from "../components/Footer.jsx";
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
+  usePageTitle("Quên mật khẩu");
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -37,9 +40,9 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#0A0E1A]">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#0A0E1A] flex flex-col">
       <Header />
-      <main className="mx-auto flex max-w-md items-center justify-center px-6 py-16">
+      <main className="mx-auto flex max-w-md items-center justify-center px-6 py-16 flex-1">
         <div className="w-full rounded-2xl border border-slate-200 dark:border-white/10 shadow-2xl bg-white dark:bg-[#0F172A]">
           <div className="p-8">
             <button
@@ -122,6 +125,7 @@ const ForgotPassword = () => {
           </div>
         </div>
       </main>
+      <Footer />
     </div>
   );
 };

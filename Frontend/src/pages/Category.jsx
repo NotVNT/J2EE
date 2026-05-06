@@ -9,9 +9,11 @@ import toast from "react-hot-toast";
 import Modal from "../components/Modal.jsx";
 import AddCategoryForm from "../components/AddCategoryForm.jsx";
 import DeleteAlert from "../components/DeleteAlert.jsx";
+import { usePageTitle } from "../hooks/usePageTitle.js";
 
 const Category = () => {
   useUser();
+  usePageTitle("Danh mục");
   const [loading, setLoading] = useState(false);
   const [categoryData, setCategoryData] = useState([]);
   const [openAddCategoryModal, setOpenAddCategoryModal] = useState(false);

@@ -10,9 +10,11 @@ import axiosConfig from "../util/axiosConfig.jsx";
 import {API_ENDPOINTS} from "../util/apiEndpoints.js";
 import {validateEmail} from "../util/validation.js";
 import uploadProfileImage from "../util/uploadProfileImage.js";
+import { usePageTitle } from "../hooks/usePageTitle.js";
 
 const Profile = () => {
     useUser();
+    usePageTitle("Hồ sơ người dùng");
 
     const {user, setUser} = useContext(AppContext);
     const [fullName, setFullName] = useState("");

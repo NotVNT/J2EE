@@ -8,11 +8,14 @@ import Input from "../components/Input.jsx";
 import axiosConfig from "../util/axiosConfig.jsx";
 import { API_ENDPOINTS } from "../util/apiEndpoints.js";
 import { validateEmail } from "../util/validation.js";
+import { usePageTitle } from "../hooks/usePageTitle.js";
+import Footer from "../components/Footer.jsx";
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 const Login = () => {
   const navigate = useNavigate();
+  usePageTitle("Đăng nhập");
   const { setUser } = useContext(AppContext);
   const { theme } = useTheme();
   const [email, setEmail] = useState("");
@@ -179,9 +182,9 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#0A0E1A]">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#0A0E1A] flex flex-col">
       <Header />
-      <main className="mx-auto flex max-w-5xl items-center justify-center px-6 py-12">
+      <main className="mx-auto flex max-w-5xl items-center justify-center px-6 py-12 flex-1">
         <div className="grid w-full overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10 md:grid-cols-[0.95fr_1.05fr] shadow-2xl">
 
           {/* Left visual panel */}
@@ -299,6 +302,7 @@ const Login = () => {
           </section>
         </div>
       </main>
+      <Footer />
     </div>
   );
 };

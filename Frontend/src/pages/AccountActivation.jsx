@@ -4,9 +4,12 @@ import { CheckCircle2, LoaderCircle, MailWarning, TriangleAlert, Zap } from "luc
 import Header from "../components/Header.jsx";
 import axiosConfig from "../util/axiosConfig.jsx";
 import { API_ENDPOINTS } from "../util/apiEndpoints.js";
+import { usePageTitle } from "../hooks/usePageTitle.js";
+import Footer from "../components/Footer.jsx";
 
 const AccountActivation = () => {
   const [searchParams] = useSearchParams();
+  usePageTitle("Xác nhận tài khoản");
   const [status, setStatus] = useState("loading");
   const [message, setMessage] = useState("Chúng tôi đang xác nhận tài khoản của bạn.");
 
@@ -133,6 +136,7 @@ const AccountActivation = () => {
           </section>
         </div>
       </main>
+      <Footer />
     </div>
   );
 };

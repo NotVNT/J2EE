@@ -123,7 +123,7 @@ body {
 }
 .budget-card__delete {
   @apply text-slate-300 dark:text-slate-600 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10
-         w-7 h-7 flex justify-center items-center rounded-lg transition-colors;
+         sm:w-7 sm:h-7 w-11 h-11 flex justify-center items-center rounded-lg transition-colors;
 }
 
 .budget-card__bar-wrap {
@@ -156,7 +156,7 @@ body {
   @apply space-y-4;
 }
 .budget-form__row {
-  @apply flex gap-4;
+  @apply flex flex-col sm:flex-row gap-4;
 }
 .budget-form__half {
   @apply flex-1;

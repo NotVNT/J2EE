@@ -12,9 +12,11 @@ import Modal from "../components/Modal.jsx";
 import AddExpenseForm from "../components/AddExpenseForm.jsx";
 import DeleteAlert from "../components/DeleteAlert.jsx";
 import QuickExpenseTemplates from "../components/QuickExpenseTemplates.jsx";
+import { usePageTitle } from "../hooks/usePageTitle.js";
 
 const Expense = () => {
   useUser();
+  usePageTitle("Chi tiêu");
   const { user } = useContext(AppContext);
   const [expenseData, setExpenseData] = useState([]);
   const [categories, setCategories] = useState([]);

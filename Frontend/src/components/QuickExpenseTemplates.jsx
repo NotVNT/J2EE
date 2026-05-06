@@ -62,8 +62,8 @@ function TemplateCard({ template, onUse, onEdit, onDelete, isLoading }) {
       transition-all duration-200 cursor-pointer select-none"
       onClick={() => !isLoading && onUse(template)}
     >
-      {/* Action buttons – hiện khi hover */}
-      <div className="absolute top-1.5 right-1.5 hidden group-hover:flex gap-1 z-10">
+      {/* Action buttons – luôn hiện trên mobile, hover trên desktop */}
+      <div className="absolute top-1.5 right-1.5 flex sm:hidden sm:group-hover:flex gap-1 z-10">
         <button
           type="button"
           onClick={(e) => { e.stopPropagation(); onEdit(template); }}

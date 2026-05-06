@@ -28,6 +28,7 @@ const ResetPassword = lazy(() => import("./pages/ResetPassword.jsx"));
 const AccountActivation = lazy(() => import("./pages/AccountActivation.jsx"));
 const Profile = lazy(() => import("./pages/Profile.jsx"));
 const SavingGoals = lazy(() => import("./pages/SavingGoals.jsx"));
+const Reports = lazy(() => import("./pages/Reports.jsx"));
 
 const LoadingFallback = () => (
     <div className="flex justify-center items-center h-screen w-full">
@@ -47,6 +48,7 @@ const App = () => {
                     <Route path="/expense" element={<Expense />} />
                     <Route path="/budget" element={<Budget />} />
                     <Route path="/saving-goals" element={<SavingGoals />} />
+                    <Route path="/reports" element={<Reports />} />
                     <Route path="/category" element={<Category />} />
                     <Route path="/filter" element={<Filter />} />
                     <Route path="/payment" element={<Payment />} />

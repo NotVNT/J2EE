@@ -4,6 +4,8 @@ import { Link, useSearchParams } from "react-router-dom";
 import axiosConfig from "../util/axiosConfig.jsx";
 import { API_ENDPOINTS } from "../util/apiEndpoints.js";
 import { AppContext } from "../context/AppContext.jsx";
+import { usePageTitle } from "../hooks/usePageTitle.js";
+import Footer from "../components/Footer.jsx";
 
 const PAYMENT_STORAGE_KEY = "latestPayment";
 
@@ -19,6 +21,7 @@ const PAYMENT_STATUS_LABELS = {
 
 const PaymentSuccess = () => {
   const [searchParams] = useSearchParams();
+  usePageTitle("Thanh toán thành công");
   const { setUser } = useContext(AppContext);
   const [payment, setPayment] = useState(null);
   const [arrivedAt] = useState(() => new Date().toISOString());
@@ -66,9 +69,9 @@ const PaymentSuccess = () => {
   const displayedTime = payment?.updatedAt || payment?.createdAt || arrivedAt;
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#0A0E1A] px-6 py-12">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#0A0E1A] px-6 py-12 flex flex-col">
       <div className="mx-auto max-w-2xl rounded-2xl border border-emerald-200 dark:border-emerald-500/20
-        bg-white dark:bg-[#0F172A] p-8 shadow-2xl shadow-emerald-100/40 dark:shadow-black/40">
+        bg-white dark:bg-[#0F172A] p-8 shadow-2xl shadow-emerald-100/40 dark:shadow-black/40 flex-1">
 
         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl
           bg-emerald-100 dark:bg-emerald-500/15 border border-emerald-200 dark:border-emerald-500/30 text-emerald-600 dark:text-emerald-400 mb-6">
@@ -126,6 +129,7 @@ const PaymentSuccess = () => {
           </Link>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };
