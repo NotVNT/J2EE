@@ -1,8 +1,7 @@
-import { useCallback, useContext, useEffect, useState, useRef } from "react";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { LoaderCircle, Zap } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { AppContext } from "../context/AppContext.jsx";
-import { useTheme } from "../context/ThemeContext.jsx";
 import Header from "../components/Header.jsx";
 import Input from "../components/Input.jsx";
 import axiosConfig from "../util/axiosConfig.jsx";
@@ -14,13 +13,14 @@ const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 const Login = () => {
   const navigate = useNavigate();
   const { setUser } = useContext(AppContext);
-  const { theme } = useTheme();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+
+  // Ref cho container chứa Google rendered button
   const googleButtonRef = useRef(null);
 
   useEffect(() => {
@@ -31,6 +31,7 @@ const Login = () => {
     }
   }, []);
 
+  // Callback nhận credential từ Google (id_token)
   const handleGoogleCredential = useCallback(async (response) => {
     setIsGoogleLoading(true);
     setError("");
@@ -40,8 +41,6 @@ const Login = () => {
       });
       const { token, user } = data;
       if (token) {
-        // Google login không có "remember me" → dùng sessionStorage mặc định
-        // Nếu rememberMe đang bật → lưu localStorage
         if (rememberMe) {
           localStorage.setItem("token", token);
           sessionStorage.removeItem("token");
@@ -50,11 +49,7 @@ const Login = () => {
           localStorage.removeItem("token");
         }
         setUser(user);
-        if (user.role === "admin") {
-          navigate("/admin");
-        } else {
-          navigate("/dashboard");
-        }
+        navigate(user.role === "admin" ? "/admin" : "/dashboard");
       }
     } catch (err) {
       setError(err.response?.data?.message || "Đăng nhập bằng Google thất bại. Vui lòng thử lại.");
@@ -63,68 +58,65 @@ const Login = () => {
     }
   }, [navigate, setUser, rememberMe]);
 
-  // Load Google Identity Services script và khởi tạo
+  // Load GSI script → initialize → renderButton vào ref div
+  // Dùng renderButton thay vì prompt() → không bị trình duyệt chặn popup
   useEffect(() => {
     if (!GOOGLE_CLIENT_ID) return;
 
-    const initializeGoogle = () => {
-      if (window.google?.accounts?.id && googleButtonRef.current) {
-        window.google.accounts.id.initialize({
-          client_id: GOOGLE_CLIENT_ID,
-          callback: handleGoogleCredential,
-          ux_mode: "popup",
-          use_fedcm_for_prompt: true,
-        });
+    const renderGoogleButton = () => {
+      if (!window.google?.accounts?.id || !googleButtonRef.current) return;
 
-        // Tự động render nút Google Sign-In chính chủ của Google để vượt tường lửa / adblock
-        window.google.accounts.id.renderButton(googleButtonRef.current, {
-          theme: theme === "dark" ? "filled_black" : "outline",
-          size: "large",
-          width: googleButtonRef.current.parentElement.offsetWidth, // Lấy độ rộng của khối bao ngoài
-          shape: "rectangular",
-          logo_alignment: "center",
-        });
-      }
+      window.google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handleGoogleCredential,
+        ux_mode: "popup",
+      });
+
+      // Xóa nút cũ nếu đã render trước đó (tránh duplicate)
+      googleButtonRef.current.innerHTML = "";
+
+      // Render nút chính thức của Google vào container
+      window.google.accounts.id.renderButton(googleButtonRef.current, {
+        type: "standard",
+        theme: "outline",
+        size: "large",
+        text: "signin_with",
+        shape: "rectangular",
+        logo_alignment: "left",
+        width: googleButtonRef.current.offsetWidth || 400,
+        locale: "vi",
+      });
     };
 
-    // Theo dõi load API
+    // Script đã được load trước đó
     if (window.google?.accounts?.id) {
-      // Đợi 1 chút để DOM form kịp render Width 100%
-      setTimeout(initializeGoogle, 100);
+      renderGoogleButton();
       return;
     }
 
+    // Kiểm tra script đã có trong DOM chưa
+    const existingScript = document.querySelector(
+      'script[src="https://accounts.google.com/gsi/client"]'
+    );
+    if (existingScript) {
+      existingScript.addEventListener("load", renderGoogleButton);
+      return () => existingScript.removeEventListener("load", renderGoogleButton);
+    }
+
+    // Load script mới
     const script = document.createElement("script");
     script.src = "https://accounts.google.com/gsi/client";
     script.async = true;
     script.defer = true;
-    script.onload = initializeGoogle;
+    script.onload = renderGoogleButton;
     document.head.appendChild(script);
 
     return () => {
-      // Cleanup: cancel one-tap nếu có
       if (window.google?.accounts?.id) {
         window.google.accounts.id.cancel();
       }
     };
-  }, [handleGoogleCredential, theme]);
-
-  const handleGoogleLogin = () => {
-    if (!GOOGLE_CLIENT_ID) {
-      setError("Google Client ID chưa được cấu hình.");
-      return;
-    }
-    if (!window.google?.accounts?.id) {
-      setError("Đang tải Google Sign-In, vui lòng thử lại sau giây lát.");
-      return;
-    }
-    window.google.accounts.id.prompt((notification) => {
-      if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-        // Fallback: dùng renderButton nếu popup bị chặn
-        setError("Google popup bị chặn bởi trình duyệt. Vui lòng cho phép popup và thử lại.");
-      }
-    });
-  };
+  }, [handleGoogleCredential]);
 
   const handleForgotPassword = () => navigate("/forgot-password");
 
@@ -158,11 +150,7 @@ const Login = () => {
           localStorage.removeItem("rememberedEmail");
         }
         setUser(user);
-        if (user.role === "admin") {
-          navigate("/admin");
-        } else {
-          navigate("/dashboard");
-        }
+        navigate(user.role === "admin" ? "/admin" : "/dashboard");
       }
     } catch (err) {
       setError(err.response?.data?.message || err.message);
@@ -260,7 +248,7 @@ const Login = () => {
                 </p>
               )}
 
-              <button className="btn-primary flex items-center justify-center gap-2" disabled={isLoading} type="submit">
+              <button className="btn-primary flex items-center justify-center gap-2" disabled={isLoading || isGoogleLoading} type="submit">
                 {isLoading ? (
                   <>
                     <LoaderCircle className="animate-spin" size={18} />
@@ -275,13 +263,25 @@ const Login = () => {
                 <span className="h-px flex-1 bg-slate-200 dark:bg-white/10" />
               </div>
 
-              {/* Nút chuẩn của Google sẽ được render tự động vào DOM này thay cho nút tự thiết kế */}
-              <div 
-                className="w-full flex justify-center rounded-lg overflow-hidden border border-slate-200 dark:border-white/10 hover:opacity-90 transition-opacity" 
-                style={{ height: '40px' }}
-                ref={googleButtonRef}
-              >
-              </div>
+              {/* Khu vực Google renders nút chính thức — không bị popup blocker chặn */}
+              {isGoogleLoading ? (
+                <div className="flex w-full items-center justify-center gap-3 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-4 py-3 text-slate-700 dark:text-slate-300">
+                  <LoaderCircle className="animate-spin" size={18} />
+                  <span className="font-medium">Đang xác thực Google...</span>
+                </div>
+              ) : (
+                <div
+                  ref={googleButtonRef}
+                  className="w-full flex justify-center [&>div]:w-full [&>div>div]:w-full"
+                  style={{ minHeight: "44px" }}
+                />
+              )}
+
+              {!GOOGLE_CLIENT_ID && (
+                <p className="text-center text-xs text-slate-400">
+                  (Google Sign-In chưa được cấu hình)
+                </p>
+              )}
 
               <p className="text-center text-sm text-slate-600 dark:text-slate-400">
                 Chưa có tài khoản?{" "}
