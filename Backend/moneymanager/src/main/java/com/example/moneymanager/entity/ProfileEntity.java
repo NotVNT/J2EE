@@ -25,6 +25,7 @@ public class ProfileEntity {
     private String fullName;
     @Column(unique = true)
     private String email;
+    @Column(nullable = true)
     private String password;
     private String profileImageUrl;
     @Column(updatable = false)

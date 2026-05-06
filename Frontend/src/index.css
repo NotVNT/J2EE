@@ -48,6 +48,15 @@ body {
   @apply w-full rounded-xl bg-violet-600 hover:bg-violet-500 px-4 py-3 text-sm font-semibold text-white transition-all duration-150 active:scale-95 cursor-pointer;
 }
 
+/* ───────────────────────────────────────────────────────────── */
+/* GOOGLE SIGN-IN BUTTON FIX                                     */
+/* ───────────────────────────────────────────────────────────── */
+
+.google-btn-wrapper > div[class*="haAclf"],
+.google-btn-wrapper .haAclf {
+  padding: 0 !important;
+}
+
 .form-input {
   @apply w-full mt-1 px-4 py-2.5 rounded-xl text-sm outline-none transition-colors
          bg-slate-100 border border-slate-200 text-slate-900 placeholder-slate-400

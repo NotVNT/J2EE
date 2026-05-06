@@ -76,15 +76,22 @@ const Login = () => {
           use_fedcm_for_prompt: true,
         });
 
-        // Tự động render nút Google Sign-In chính chủ của Google để vượt tường lửa / adblock
-        window.google.accounts.id.renderButton(googleButtonRef.current, {
-          theme: theme === "dark" ? "filled_black" : "outline",
-          size: "large",
-          width: googleButtonRef.current.parentElement.offsetWidth, // Lấy độ rộng của khối bao ngoài
-          shape: "rectangular",
-          logo_alignment: "center",
-        });
+        renderGoogleButton();
       }
+    };
+
+    const renderGoogleButton = () => {
+      if (!googleButtonRef.current) return;
+      // Xoá nội dung cũ để render lại theme mới cho khớp
+      googleButtonRef.current.innerHTML = "";
+      const containerWidth = googleButtonRef.current.offsetWidth;
+      window.google.accounts.id.renderButton(googleButtonRef.current, {
+        theme: theme === "dark" ? "filled_black" : "outline",
+        size: "large",
+        width: containerWidth,
+        shape: "rectangular",
+        logo_alignment: "center",
+      });
     };
 
     // Theo dõi load API
@@ -277,8 +284,7 @@ const Login = () => {
 
               {/* Nút chuẩn của Google sẽ được render tự động vào DOM này thay cho nút tự thiết kế */}
               <div 
-                className="w-full flex justify-center rounded-lg overflow-hidden border border-slate-200 dark:border-white/10 hover:opacity-90 transition-opacity" 
-                style={{ height: '40px' }}
+                className="google-btn-wrapper w-full flex justify-center" 
                 ref={googleButtonRef}
               >
               </div>
