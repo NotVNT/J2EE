@@ -71,6 +71,8 @@ export const API_ENDPOINTS = {
     ADMIN_PAYMENTS: "/admin/payments",
     ADMIN_BROADCAST: "/admin/notifications/broadcast",
     ADMIN_NOTIFICATIONS: "/admin/notifications",
+    ADMIN_NOTIFICATION_UPDATE: (id) => `/admin/notifications/${id}`,
+    ADMIN_NOTIFICATION_DELETE: (id) => `/admin/notifications/${id}`,
 
     // Notification endpoints
     GET_NOTIFICATIONS: "/notifications",

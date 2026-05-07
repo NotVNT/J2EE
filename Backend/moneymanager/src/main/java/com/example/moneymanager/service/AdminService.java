@@ -10,6 +10,7 @@ import com.example.moneymanager.repository.ProfileRepository;
 import com.example.moneymanager.dto.AdminBroadcastDTO;
 import com.example.moneymanager.dto.NotificationDTO;
 import com.example.moneymanager.entity.NotificationEntity;
+import com.example.moneymanager.repository.NotificationReadRepository;
 import com.example.moneymanager.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -28,6 +29,7 @@ public class AdminService {
     private final PaymentRepository paymentRepository;
     private final NotificationService notificationService;
     private final NotificationRepository notificationRepository;
+    private final NotificationReadRepository notificationReadRepository;
 
     @Transactional(readOnly = true)
     public AdminOverviewDTO getOverview() {
@@ -115,6 +117,32 @@ public class AdminService {
                 .isRead(true) // Not applicable for admin view really
                 .createdAt(n.getCreatedAt())
                 .build()).toList();
+    }
+
+    @Transactional
+    public void updateBroadcast(Long id, AdminBroadcastDTO dto) {
+        ensureAdmin();
+        NotificationEntity notification = notificationRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy thông báo"));
+        if (notification.getProfile() != null) {
+            throw new RuntimeException("Chỉ có thể chỉnh sửa thông báo broadcast");
+        }
+        notification.setTitle(dto.getTitle());
+        notification.setMessage(dto.getMessage());
+        notificationRepository.save(notification);
+    }
+
+    @Transactional
+    public void deleteBroadcast(Long id) {
+        ensureAdmin();
+        NotificationEntity notification = notificationRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy thông báo"));
+        if (notification.getProfile() != null) {
+            throw new RuntimeException("Chỉ có thể xoá thông báo broadcast");
+        }
+        // Delete all read records first
+        notificationReadRepository.deleteByNotificationId(id);
+        notificationRepository.delete(notification);
     }
 
     private void ensureAdmin() {
