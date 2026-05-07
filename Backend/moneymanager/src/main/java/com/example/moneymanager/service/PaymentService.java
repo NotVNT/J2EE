@@ -34,6 +34,7 @@ public class PaymentService {
     private final ProfileService profileService;
     private final SubscriptionService subscriptionService;
     private final NotificationService notificationService;
+    private final DocumentService documentService;
 
     @Value("${payos.return-url}")
     private String returnUrl;
@@ -211,6 +212,18 @@ public class PaymentService {
             subscriptionService.activatePaidSubscription(paymentEntity.getProfile(), paymentEntity.getPlanId());
             if (!wasPaidBefore) {
                 notificationService.notifyPaymentSuccess(paymentEntity.getProfile(), paymentEntity.getPlanName());
+                // Sinh hóa đơn PDF qua AWS Lambda (không block flow chính)
+                try {
+                    documentService.generateInvoice(
+                            paymentEntity.getOrderCode(),
+                            paymentEntity.getAmount(),
+                            paymentEntity.getPlanName(),
+                            paymentEntity.getProfile().getEmail(),
+                            java.time.LocalDate.now()
+                    );
+                } catch (Exception e) {
+                    System.err.println("Không thể sinh hóa đơn cho order " + paymentEntity.getOrderCode() + ": " + e.getMessage());
+                }
             }
         }
     }

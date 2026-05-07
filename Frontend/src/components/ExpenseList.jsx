@@ -46,16 +46,16 @@ const ExpenseList = ({
                             )}
                         </button>
                         <button
-                            className={`${cardBtnBase} ${isBusy || disableExportActions ? "cursor-not-allowed opacity-60" : ""}`}
+                            className={`inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border border-transparent bg-violet-600 hover:bg-violet-500 text-white transition-colors ${isBusy || disableExportActions ? "cursor-not-allowed opacity-60" : ""}`}
                             disabled={isBusy || disableExportActions}
                             onClick={() => handleAction("download", onDownload)}
                             title={disableExportActions ? disabledMessage : ""}
                             type="button"
                         >
                             {loadingAction === "download" ? (
-                                <><LoaderCircle className="w-4 h-4 animate-spin"/>Đang tải...</>
+                                <><LoaderCircle className="w-4 h-4 animate-spin"/>Đang tạo AWS...</>
                             ) : (
-                                <><Download size={15} />Tải xuống</>
+                                <><Download size={15} />Tải File Excel </>
                             )}
                         </button>
                     </div>

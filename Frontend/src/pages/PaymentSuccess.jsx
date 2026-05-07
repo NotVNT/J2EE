@@ -1,6 +1,7 @@
 import { useContext, useEffect, useMemo, useState } from "react";
-import { ArrowRight, BadgeCheck, CalendarClock, CreditCard, Hash, House } from "lucide-react";
+import { ArrowRight, BadgeCheck, CalendarClock, CreditCard, Hash, House, FileText, LoaderCircle } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
+import toast from "react-hot-toast";
 import axiosConfig from "../util/axiosConfig.jsx";
 import { API_ENDPOINTS } from "../util/apiEndpoints.js";
 import { AppContext } from "../context/AppContext.jsx";
@@ -25,6 +26,30 @@ const PaymentSuccess = () => {
   const { setUser } = useContext(AppContext);
   const [payment, setPayment] = useState(null);
   const [arrivedAt] = useState(() => new Date().toISOString());
+  const [isGeneratingInvoice, setIsGeneratingInvoice] = useState(false);
+
+  const handleDownloadInvoice = async () => {
+    if (!payment?.orderCode) return;
+    setIsGeneratingInvoice(true);
+    try {
+      const response = await axiosConfig.post(API_ENDPOINTS.GENERATE_INVOICE, {
+        orderCode: payment.orderCode,
+        amount: payment.amount,
+        planName: payment.planName || payment.description,
+        paidDate: payment.updatedAt || payment.createdAt || arrivedAt
+      });
+      if (response.data?.presignedUrl) {
+        window.open(response.data.presignedUrl, "_blank");
+        toast.success("Đã mở hóa đơn PDF");
+      } else {
+        toast.error("Không tìm thấy link tải hóa đơn");
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Lỗi khi sinh hóa đơn. Vui lòng kiểm tra lại cấu hình AWS Lambda.");
+    } finally {
+      setIsGeneratingInvoice(false);
+    }
+  };
 
   const orderCode = useMemo(() => {
     const savedPayment = JSON.parse(localStorage.getItem(PAYMENT_STORAGE_KEY) || "null");
@@ -121,6 +146,21 @@ const PaymentSuccess = () => {
           >
             <House size={15} />Về trang chủ
           </Link>
+          
+          {isPaid && (
+            <button
+              onClick={handleDownloadInvoice}
+              disabled={isGeneratingInvoice}
+              className="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 px-5 py-3 text-sm font-semibold text-white transition-all active:scale-95 disabled:opacity-60"
+            >
+              {isGeneratingInvoice ? (
+                <><LoaderCircle size={15} className="animate-spin" /> Đang tạo...</>
+              ) : (
+                <><FileText size={15} /> Tải hóa đơn PDF</>
+              )}
+            </button>
+          )}
+
           <Link
             className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-5 py-3 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/10 transition-all"
             to="/payment"

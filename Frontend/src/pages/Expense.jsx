@@ -105,19 +105,23 @@ const Expense = () => {
 
   const handleDownloadExpenseDetails = async () => {
     if (exportLocked) { toast.error(exportUpgradeMessage); return; }
+    const loadingToast = toast.loading("Đang tạo báo cáo Excel qua AWS Lambda...");
     try {
-      const response = await axiosConfig.get(API_ENDPOINTS.EXPENSE_EXCEL_DOWNLOAD, { responseType: "blob" });
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", "expense_details.xlsx");
-      document.body.appendChild(link);
-      link.click();
-      link.parentNode.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      toast.success("Expense details downloaded successfully!");
+      const today = new Date();
+      const response = await axiosConfig.post(API_ENDPOINTS.GENERATE_EXPENSE_REPORT, {
+        month: today.getMonth() + 1,
+        year: today.getFullYear()
+      });
+      toast.dismiss(loadingToast);
+      if (response.data?.presignedUrl) {
+        window.open(response.data.presignedUrl, "_blank");
+        toast.success("Báo cáo Excel đã được tạo thành công!");
+      } else {
+        toast.error("Không tìm thấy link báo cáo");
+      }
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to download expense details.");
+      toast.dismiss(loadingToast);
+      toast.error(error.response?.data?.message || "Lỗi khi tạo báo cáo. Vui lòng kiểm tra AWS Lambda.");
     }
   };
 

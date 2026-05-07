@@ -89,6 +89,10 @@ export const API_ENDPOINTS = {
     SAVING_GOAL_CONTRIBUTIONS: (id) => `/saving-goals/${id}/contributions`,
     ADD_SAVING_GOAL_CONTRIBUTION: (id) => `/saving-goals/${id}/contributions`,
 
+    // Document generation (Lambda)
+    GENERATE_INVOICE: "/documents/invoice",
+    GENERATE_EXPENSE_REPORT: "/documents/report/expense",
+
     // Image upload
     UPLOAD_IMAGE: "/files/upload"
 }
