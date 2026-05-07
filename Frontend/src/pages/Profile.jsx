@@ -1,5 +1,5 @@
 import {useContext, useEffect, useState} from "react";
-import {BadgeCheck, LoaderCircle, Mail, Sparkles, User} from "lucide-react";
+import {BadgeCheck, LoaderCircle, Mail, ShieldCheck, Sparkles, User} from "lucide-react";
 import toast from "react-hot-toast";
 import Dashboard from "../components/Dashboard.jsx";
 import Input from "../components/Input.jsx";
@@ -123,7 +123,15 @@ const Profile = () => {
                                 )}
                                 <div className="min-w-0">
                                     <p className="text-xs uppercase tracking-[0.24em] text-white/50">Tài khoản</p>
-                                    <h1 className="truncate text-2xl font-semibold">{fullName || "Người dùng"}</h1>
+                                    <div className="flex items-center gap-2">
+                                        <h1 className="truncate text-2xl font-semibold">{fullName || "Người dùng"}</h1>
+                                        {user?.role === "admin" && (
+                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-bold uppercase tracking-wide border border-amber-500/30 shrink-0">
+                                                <ShieldCheck size={11} />
+                                                Admin
+                                            </span>
+                                        )}
+                                    </div>
                                     <p className="truncate text-sm text-white/70">{email || "Chưa có email"}</p>
                                 </div>
                             </div>
