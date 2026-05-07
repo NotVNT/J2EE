@@ -90,5 +90,5 @@ export const API_ENDPOINTS = {
     ADD_SAVING_GOAL_CONTRIBUTION: (id) => `/saving-goals/${id}/contributions`,
 
     // Image upload
-    UPLOAD_IMAGE: `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`
+    UPLOAD_IMAGE: "/files/upload"
 }
