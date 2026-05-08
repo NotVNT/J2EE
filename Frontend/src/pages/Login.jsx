@@ -24,7 +24,9 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const googleButtonRef = useRef(null);
+  const googleBtnContainerRef = useRef(null);
+  const googleBtnLightRef = useRef(null);
+  const googleBtnDarkRef = useRef(null);
 
   useEffect(() => {
     const rememberedEmail = localStorage.getItem("rememberedEmail");
@@ -71,7 +73,7 @@ const Login = () => {
     if (!GOOGLE_CLIENT_ID) return;
 
     const initializeGoogle = () => {
-      if (window.google?.accounts?.id && googleButtonRef.current) {
+      if (window.google?.accounts?.id && googleBtnLightRef.current && googleBtnDarkRef.current) {
         window.google.accounts.id.initialize({
           client_id: GOOGLE_CLIENT_ID,
           callback: handleGoogleCredential,
@@ -79,17 +81,25 @@ const Login = () => {
           use_fedcm_for_prompt: true,
         });
 
-        renderGoogleButton();
+        renderGoogleButtons();
       }
     };
 
-    const renderGoogleButton = () => {
-      if (!googleButtonRef.current) return;
-      // Xoá nội dung cũ để render lại theme mới cho khớp
-      googleButtonRef.current.innerHTML = "";
-      const containerWidth = googleButtonRef.current.offsetWidth;
-      window.google.accounts.id.renderButton(googleButtonRef.current, {
-        theme: theme === "dark" ? "filled_black" : "outline",
+    const renderGoogleButtons = () => {
+      if (!googleBtnLightRef.current || !googleBtnDarkRef.current || !googleBtnContainerRef.current) return;
+      
+      const containerWidth = googleBtnContainerRef.current.offsetWidth || 400;
+
+      window.google.accounts.id.renderButton(googleBtnLightRef.current, {
+        theme: "outline",
+        size: "large",
+        width: containerWidth,
+        shape: "rectangular",
+        logo_alignment: "center",
+      });
+
+      window.google.accounts.id.renderButton(googleBtnDarkRef.current, {
+        theme: "filled_black",
         size: "large",
         width: containerWidth,
         shape: "rectangular",
@@ -117,7 +127,7 @@ const Login = () => {
         window.google.accounts.id.cancel();
       }
     };
-  }, [handleGoogleCredential, theme]);
+  }, [handleGoogleCredential]);
 
   const handleGoogleLogin = () => {
     if (!GOOGLE_CLIENT_ID) {
@@ -285,11 +295,16 @@ const Login = () => {
                 <span className="h-px flex-1 bg-slate-200 dark:bg-white/10" />
               </div>
 
-              {/* Nút chuẩn của Google sẽ được render tự động vào DOM này thay cho nút tự thiết kế */}
-              <div 
-                className="google-btn-wrapper w-full flex justify-center" 
-                ref={googleButtonRef}
-              >
+              {/* Render sẵn 2 nút Google nhưng dùng CSS để ẩn/hiện mượt mà khi đổi theme */}
+              <div className="w-full" ref={googleBtnContainerRef}>
+                <div 
+                  className="google-btn-wrapper flex justify-center dark:hidden" 
+                  ref={googleBtnLightRef}
+                ></div>
+                <div 
+                  className="google-btn-wrapper hidden dark:flex justify-center" 
+                  ref={googleBtnDarkRef}
+                ></div>
               </div>
 
               <p className="text-center text-sm text-slate-600 dark:text-slate-400">

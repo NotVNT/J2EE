@@ -52,9 +52,14 @@ body {
 /* GOOGLE SIGN-IN BUTTON FIX                                     */
 /* ───────────────────────────────────────────────────────────── */
 
+.google-btn-wrapper {
+  color-scheme: light;
+}
+
 .google-btn-wrapper > div[class*="haAclf"],
 .google-btn-wrapper .haAclf {
   padding: 0 !important;
+  background-color: transparent !important;
 }
 
 .form-input {
