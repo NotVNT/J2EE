@@ -2,6 +2,7 @@ import React, { useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Alert, Linking, Pressable, StyleSheet, Text, View } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { WebView } from "react-native-webview";
+import { COLORS } from "../constants/colors";
 
 const APP_RESULT_PREFIX = "moneymanager://payment/";
 const WEB_SUCCESS_PATH = "/payment/success";
@@ -151,7 +152,7 @@ export default function PaymentCheckoutScreen() {
 
       {isPageLoading ? (
         <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color="#2563eb" />
+          <ActivityIndicator size="large" color={COLORS.PRIMARY} />
           <Text style={styles.loadingText}>Đang tải cổng thanh toán...</Text>
         </View>
       ) : null}
@@ -183,14 +184,14 @@ export default function PaymentCheckoutScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8fafc"
+    backgroundColor: COLORS.BG
   },
   header: {
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: "#ffffff",
+    backgroundColor: COLORS.CARD,
     borderBottomWidth: 1,
-    borderBottomColor: "#e2e8f0",
+    borderBottomColor: COLORS.CARD_BORDER,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -200,25 +201,25 @@ const styles = StyleSheet.create({
     flex: 1
   },
   headerTitle: {
-    color: "#0f172a",
+    color: COLORS.TEXT,
     fontSize: 18,
     fontWeight: "700"
   },
   headerSubtitle: {
-    color: "#475569",
+    color: COLORS.TEXT_SECONDARY,
     marginTop: 4,
     lineHeight: 20
   },
   secondaryButton: {
     borderWidth: 1,
-    borderColor: "#cbd5e1",
+    borderColor: COLORS.CARD_BORDER,
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    backgroundColor: "#ffffff"
+    backgroundColor: COLORS.CARD
   },
   secondaryButtonText: {
-    color: "#0f172a",
+    color: COLORS.TEXT,
     fontWeight: "700"
   },
   loadingOverlay: {
@@ -234,7 +235,7 @@ const styles = StyleSheet.create({
     gap: 10
   },
   loadingText: {
-    color: "#334155",
+    color: COLORS.TEXT,
     fontWeight: "600"
   },
   fallbackContainer: {
@@ -242,28 +243,28 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     padding: 24,
-    backgroundColor: "#f8fafc"
+    backgroundColor: COLORS.BG
   },
   fallbackTitle: {
-    color: "#0f172a",
+    color: COLORS.TEXT,
     fontSize: 22,
     fontWeight: "700",
     textAlign: "center"
   },
   fallbackText: {
-    color: "#475569",
+    color: COLORS.TEXT_SECONDARY,
     textAlign: "center",
     marginTop: 8,
     marginBottom: 18
   },
   primaryButton: {
-    backgroundColor: "#2563eb",
+    backgroundColor: COLORS.PRIMARY,
     borderRadius: 12,
     paddingHorizontal: 18,
     paddingVertical: 12
   },
   primaryButtonText: {
-    color: "#ffffff",
+    color: COLORS.WHITE,
     fontWeight: "700"
   }
 });

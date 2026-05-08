@@ -8,6 +8,7 @@ import { SUCCESS_ALERT_MESSAGES, SUCCESS_ALERT_TITLE } from "../constants/alertM
 import { tokenStorage } from "../storage/tokenStorage";
 import { getApiErrorMessage } from "../utils/format";
 import uploadProfileImage from "../utils/uploadProfileImage";
+import { COLORS } from "../constants/colors";
 
 function validateEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || "").trim());
@@ -220,13 +221,13 @@ export default function EditProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f8fafc" },
+  container: { flex: 1, backgroundColor: COLORS.BG },
   content: { padding: 16 },
   card: {
-    backgroundColor: "#fff",
+    backgroundColor: COLORS.CARD,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
+    borderColor: COLORS.CARD_BORDER,
     padding: 14
   },
   avatarSection: {
@@ -241,17 +242,17 @@ const styles = StyleSheet.create({
     height: 108,
     borderRadius: 999,
     padding: 6,
-    backgroundColor: "#eff6ff",
+    backgroundColor: COLORS.ROSE_MIST,
     borderWidth: 1,
-    borderColor: "#bfdbfe"
+    borderColor: COLORS.CARD_BORDER
   },
   avatarImage: {
     width: "100%",
     height: "100%",
     borderRadius: 999,
     borderWidth: 2,
-    borderColor: "#dbeafe",
-    backgroundColor: "#e2e8f0",
+    borderColor: COLORS.CARD_BORDER,
+    backgroundColor: COLORS.BG,
     overflow: "hidden"
   },
   avatarPlaceholder: {
@@ -259,14 +260,14 @@ const styles = StyleSheet.create({
     height: "100%",
     borderRadius: 999,
     borderWidth: 2,
-    borderColor: "#dbeafe",
-    backgroundColor: "#e2e8f0",
+    borderColor: COLORS.CARD_BORDER,
+    backgroundColor: COLORS.BG,
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden"
   },
   avatarPlaceholderText: {
-    color: "#334155",
+    color: COLORS.TEXT,
     fontWeight: "800",
     fontSize: 28
   },
@@ -277,15 +278,15 @@ const styles = StyleSheet.create({
     minWidth: 34,
     height: 30,
     borderRadius: 999,
-    backgroundColor: "#ffffff",
+    backgroundColor: COLORS.CARD,
     borderWidth: 1,
-    borderColor: "#93c5fd",
+    borderColor: COLORS.CARD_BORDER,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 8
   },
   avatarEditButtonText: {
-    color: "#1d4ed8",
+    color: COLORS.PRIMARY,
     fontWeight: "700",
     fontSize: 12
   },
@@ -293,28 +294,28 @@ const styles = StyleSheet.create({
     marginTop: 8
   },
   removeAvatarButtonText: {
-    color: "#b91c1c",
+    color: COLORS.EXPENSE,
     fontWeight: "600"
   },
   title: {
-    color: "#0f172a",
+    color: COLORS.TEXT,
     fontWeight: "800",
     fontSize: 20,
     marginBottom: 4
   },
   subtitle: {
-    color: "#64748b",
+    color: COLORS.TEXT_SECONDARY,
     marginBottom: 14
   },
   label: {
-    color: "#334155",
+    color: COLORS.TEXT,
     marginBottom: 6,
     fontWeight: "600"
   },
   input: {
-    backgroundColor: "#fff",
+    backgroundColor: COLORS.CARD,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
+    borderColor: COLORS.CARD_BORDER,
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 10,
@@ -323,17 +324,17 @@ const styles = StyleSheet.create({
   secondaryButton: {
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#cbd5e1",
+    borderColor: COLORS.CARD_BORDER,
     alignItems: "center",
     paddingVertical: 11,
     marginBottom: 12
   },
   secondaryButtonText: {
-    color: "#334155",
+    color: COLORS.TEXT,
     fontWeight: "700"
   },
   saveButton: {
-    backgroundColor: "#0f172a",
+    backgroundColor: COLORS.PRIMARY,
     borderRadius: 10,
     alignItems: "center",
     paddingVertical: 12
@@ -342,7 +343,7 @@ const styles = StyleSheet.create({
     opacity: 0.6
   },
   saveButtonText: {
-    color: "#fff",
+    color: COLORS.WHITE,
     fontWeight: "700"
   }
 });

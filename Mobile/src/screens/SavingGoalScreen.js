@@ -6,6 +6,7 @@ import { API_ENDPOINTS } from "../constants/api";
 import { SUCCESS_ALERT_MESSAGES, SUCCESS_ALERT_TITLE } from "../constants/alertMessages";
 import { formatCurrencyInput, formatDate, formatMoney, getApiErrorMessage, parseCurrencyInput, todayIso } from "../utils/format";
 import { PickDateField } from "../utils/pickDate";
+import { COLORS } from "../constants/colors";
 
 function getGoalVisual(goal) {
   const progressPercent = Number(goal?.progressPercent || 0);
@@ -13,26 +14,26 @@ function getGoalVisual(goal) {
   const isBehindSchedule = Boolean(goal?.isBehindSchedule);
 
   if (status === "COMPLETED") {
-    return { color: "#067647", bg: "#ecfdf3", border: "#abefc6", label: "Hoàn thành" };
+    return { color: COLORS.INCOME, bg: COLORS.INCOME_LIGHT, border: "#abefc6", label: "Hoàn thành" };
   }
 
   if (status === "CANCELLED") {
-    return { color: "#475467", bg: "#f2f4f7", border: "#d0d5dd", label: "Đã hủy" };
+    return { color: COLORS.TEXT_SECONDARY, bg: COLORS.BG, border: COLORS.CARD_BORDER, label: "Đã hủy" };
   }
 
   if (isBehindSchedule) {
-    return { color: "#b42318", bg: "#fef3f2", border: "#fecdca", label: "Chậm tiến độ" };
+    return { color: COLORS.EXPENSE, bg: COLORS.EXPENSE_LIGHT, border: "#fecdca", label: "Chậm tiến độ" };
   }
 
   if (progressPercent >= 75) {
-    return { color: "#067647", bg: "#ecfdf3", border: "#abefc6", label: "Đang thực hiện" };
+    return { color: COLORS.INCOME, bg: COLORS.INCOME_LIGHT, border: "#abefc6", label: "Đang thực hiện" };
   }
 
   if (progressPercent >= 40) {
-    return { color: "#b54708", bg: "#fffaeb", border: "#fedf89", label: "Đang thực hiện" };
+    return { color: COLORS.WARNING, bg: COLORS.WARNING_LIGHT, border: "#fedf89", label: "Đang thực hiện" };
   }
 
-  return { color: "#175cd3", bg: "#eff8ff", border: "#b2ddff", label: "Đang thực hiện" };
+  return { color: COLORS.INFO, bg: COLORS.INFO_LIGHT, border: "#b2ddff", label: "Đang thực hiện" };
 }
 
 function GoalCard({ item, onContribute, onDelete }) {
@@ -391,9 +392,9 @@ export default function SavingGoalScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f2f4f7", padding: 16, paddingTop: 24 },
+  container: { flex: 1, backgroundColor: COLORS.BG, padding: 16, paddingTop: 24 },
   overviewCard: {
-    backgroundColor: "#111827",
+    backgroundColor: COLORS.PRIMARY,
     borderRadius: 18,
     padding: 14,
     marginBottom: 12
@@ -403,73 +404,73 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 4,
-    backgroundColor: "#312e81",
-    color: "#e0e7ff",
+    backgroundColor: COLORS.PRIMARY_DARK,
+    color: COLORS.PEACH,
     fontWeight: "700",
     fontSize: 11
   },
-  overviewTitle: { color: "#ffffff", fontSize: 20, fontWeight: "800", marginTop: 8 },
-  overviewText: { color: "#cbd5e1", marginTop: 2, fontSize: 12 },
-  overviewMoney: { color: "#d1fae5", marginTop: 8, fontWeight: "800", fontSize: 16 },
-  overviewSubMoney: { color: "#93c5fd", marginTop: 2, fontWeight: "700", fontSize: 13 },
+  overviewTitle: { color: COLORS.WHITE, fontSize: 20, fontWeight: "800", marginTop: 8 },
+  overviewText: { color: COLORS.PEACH, marginTop: 2, fontSize: 12 },
+  overviewMoney: { color: COLORS.WHITE, marginTop: 8, fontWeight: "800", fontSize: 16 },
+  overviewSubMoney: { color: COLORS.PEACH, marginTop: 2, fontWeight: "700", fontSize: 13 },
   overviewTrack: {
     marginTop: 10,
     height: 8,
     borderRadius: 8,
-    backgroundColor: "#374151",
+    backgroundColor: COLORS.PRIMARY_DARK,
     overflow: "hidden"
   },
   overviewFill: {
     height: "100%",
-    backgroundColor: "#22c55e"
+    backgroundColor: COLORS.PEACH
   },
   overviewProgress: {
     marginTop: 6,
-    color: "#d1fae5",
+    color: COLORS.WHITE,
     fontWeight: "700",
     fontSize: 12
   },
   formCard: {
-    backgroundColor: "#fff",
+    backgroundColor: COLORS.CARD,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
+    borderColor: COLORS.CARD_BORDER,
     padding: 12,
     marginBottom: 12
   },
-  formTitle: { fontWeight: "800", color: "#0f172a", marginBottom: 4, fontSize: 18 },
-  formSubtitle: { color: "#667085", marginBottom: 10, fontSize: 12 },
-  label: { color: "#344054", marginBottom: 6, fontWeight: "700" },
+  formTitle: { fontWeight: "800", color: COLORS.TEXT, marginBottom: 4, fontSize: 18 },
+  formSubtitle: { color: COLORS.TEXT_SECONDARY, marginBottom: 10, fontSize: 12 },
+  label: { color: COLORS.TEXT, marginBottom: 6, fontWeight: "700" },
   input: {
-    backgroundColor: "#f9fafb",
+    backgroundColor: COLORS.BG,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#d0d5dd",
+    borderColor: COLORS.CARD_BORDER,
     paddingHorizontal: 14,
     paddingVertical: 11,
     marginBottom: 10,
-    color: "#101828"
+    color: COLORS.TEXT
   },
   dateRow: { flexDirection: "row" },
   dateCol: { flex: 1 },
   dateColLeft: { marginRight: 8 },
   saveButton: {
-    backgroundColor: "#4f46e5",
+    backgroundColor: COLORS.PRIMARY,
     borderRadius: 12,
     paddingVertical: 12,
     alignItems: "center"
   },
   saveButtonDisabled: { opacity: 0.6 },
-  saveButtonText: { color: "#fff", fontWeight: "800" },
+  saveButtonText: { color: COLORS.WHITE, fontWeight: "800" },
   listContent: { paddingBottom: 30 },
   listContentEmpty: { flexGrow: 1, justifyContent: "center" },
   listHeader: { marginBottom: 8 },
-  listTitle: { color: "#101828", fontWeight: "800", fontSize: 16 },
+  listTitle: { color: COLORS.TEXT, fontWeight: "800", fontSize: 16 },
   goalCard: {
-    backgroundColor: "#fff",
+    backgroundColor: COLORS.CARD,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
+    borderColor: COLORS.CARD_BORDER,
     padding: 12,
     marginBottom: 10
   },
@@ -479,8 +480,8 @@ const styles = StyleSheet.create({
     alignItems: "flex-start"
   },
   goalHeaderLeft: { flex: 1, paddingRight: 10 },
-  goalName: { color: "#0f172a", fontWeight: "800", fontSize: 16, marginBottom: 2 },
-  goalPeriod: { color: "#667085", fontSize: 12 },
+  goalName: { color: COLORS.TEXT, fontWeight: "800", fontSize: 16, marginBottom: 2 },
+  goalPeriod: { color: COLORS.TEXT_SECONDARY, fontSize: 12 },
   statusBadge: {
     borderRadius: 999,
     borderWidth: 1,
@@ -494,13 +495,13 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center"
   },
-  progressLabel: { color: "#667085", fontSize: 12 },
+  progressLabel: { color: COLORS.TEXT_SECONDARY, fontSize: 12 },
   progressValue: { fontWeight: "800" },
   progressTrack: {
     marginTop: 6,
     height: 8,
     borderRadius: 8,
-    backgroundColor: "#e4e7ec",
+    backgroundColor: COLORS.CARD_BORDER,
     overflow: "hidden"
   },
   progressFill: { height: "100%" },
@@ -512,33 +513,33 @@ const styles = StyleSheet.create({
   },
   statBox: {
     width: "48%",
-    backgroundColor: "#f8fafc",
+    backgroundColor: COLORS.BG,
     borderRadius: 10,
     paddingHorizontal: 10,
     paddingVertical: 8,
     marginBottom: 8
   },
-  statLabel: { color: "#667085", fontSize: 11, marginBottom: 2 },
-  statValue: { color: "#0f172a", fontWeight: "700", fontSize: 12 },
-  statValueGood: { color: "#067647" },
-  statValueWarn: { color: "#b42318" },
-  statValueInfo: { color: "#175cd3" },
+  statLabel: { color: COLORS.TEXT_SECONDARY, fontSize: 11, marginBottom: 2 },
+  statValue: { color: COLORS.TEXT, fontWeight: "700", fontSize: 12 },
+  statValueGood: { color: COLORS.INCOME },
+  statValueWarn: { color: COLORS.EXPENSE },
+  statValueInfo: { color: COLORS.INFO },
   monthlyCard: {
-    backgroundColor: "#f8fafc",
+    backgroundColor: COLORS.BG,
     borderRadius: 10,
     padding: 10,
     marginTop: 2
   },
-  monthlyLabel: { color: "#667085", fontSize: 12 },
-  monthlyValue: { color: "#0f172a", fontSize: 11, fontWeight: "700" },
+  monthlyLabel: { color: COLORS.TEXT_SECONDARY, fontSize: 12 },
+  monthlyValue: { color: COLORS.TEXT, fontSize: 11, fontWeight: "700" },
   monthlyTrack: {
     marginTop: 6,
     height: 6,
     borderRadius: 6,
-    backgroundColor: "#d0d5dd",
+    backgroundColor: COLORS.CARD_BORDER,
     overflow: "hidden"
   },
-  monthlyFill: { height: "100%", backgroundColor: "#4f46e5" },
+  monthlyFill: { height: "100%", backgroundColor: COLORS.PRIMARY },
   goalActions: {
     marginTop: 10,
     flexDirection: "row",
@@ -546,27 +547,27 @@ const styles = StyleSheet.create({
     alignItems: "center"
   },
   contributeButton: {
-    backgroundColor: "#eef2ff",
+    backgroundColor: COLORS.ROSE_MIST,
     borderWidth: 1,
-    borderColor: "#c7d2fe",
+    borderColor: COLORS.CARD_BORDER,
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: 999
   },
-  contributeText: { color: "#4338ca", fontWeight: "800" },
+  contributeText: { color: COLORS.PRIMARY, fontWeight: "800" },
   deleteButton: {
-    backgroundColor: "#fef3f2",
+    backgroundColor: COLORS.EXPENSE_LIGHT,
     borderWidth: 1,
     borderColor: "#fecdca",
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 6
   },
-  deleteText: { color: "#b42318", fontWeight: "700" },
+  deleteText: { color: COLORS.EXPENSE, fontWeight: "700" },
   emptyState: { alignItems: "center", paddingHorizontal: 24 },
   emptyIcon: { fontSize: 34, marginBottom: 8 },
-  emptyTitle: { fontSize: 16, fontWeight: "800", color: "#101828", marginBottom: 6 },
-  emptyText: { textAlign: "center", color: "#667085", lineHeight: 19 },
+  emptyTitle: { fontSize: 16, fontWeight: "800", color: COLORS.TEXT, marginBottom: 6 },
+  emptyText: { textAlign: "center", color: COLORS.TEXT_SECONDARY, lineHeight: 19 },
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(15,23,42,0.35)",
@@ -574,17 +575,17 @@ const styles = StyleSheet.create({
     padding: 16
   },
   modalCard: {
-    backgroundColor: "#fff",
+    backgroundColor: COLORS.CARD,
     borderRadius: 14,
     padding: 16
   },
   modalTitle: {
-    color: "#0f172a",
+    color: COLORS.TEXT,
     fontWeight: "800",
     fontSize: 18
   },
   modalSubtitle: {
-    color: "#64748b",
+    color: COLORS.TEXT_SECONDARY,
     marginBottom: 10,
     marginTop: 2
   },
@@ -595,7 +596,7 @@ const styles = StyleSheet.create({
   },
   secondaryButton: {
     borderWidth: 1,
-    borderColor: "#cbd5e1",
+    borderColor: COLORS.CARD_BORDER,
     borderRadius: 10,
     paddingVertical: 10,
     paddingHorizontal: 14,

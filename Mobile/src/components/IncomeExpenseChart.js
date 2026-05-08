@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import { View, Text, StyleSheet, Dimensions } from "react-native";
 import { LineChart } from "react-native-chart-kit";
+import { COLORS } from "../constants/colors";
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -83,10 +84,10 @@ const IncomeExpenseChart = ({ data, title, colorPrimary }) => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "#ffffff",
+    backgroundColor: COLORS.CARD,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: "#e4e7ec",
+    borderColor: COLORS.CARD_BORDER,
     padding: 14,
     marginBottom: 12,
     alignItems: "center"
@@ -98,10 +99,10 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
   emptyContainer: {
-    backgroundColor: "#ffffff",
+    backgroundColor: COLORS.CARD,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: "#e4e7ec",
+    borderColor: COLORS.CARD_BORDER,
     padding: 24,
     marginBottom: 12,
     alignItems: "center"

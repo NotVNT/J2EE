@@ -8,6 +8,7 @@ import http from "../services/http";
 import { API_ENDPOINTS } from "../constants/api";
 import { buildMonthlyFinanceSeries } from "../utils/financeStats";
 import { formatDate, formatMoney, getApiErrorMessage } from "../utils/format";
+import { COLORS } from "../constants/colors";
 
 function SectionHeader({ title, onMore }) {
   return (
@@ -24,7 +25,7 @@ function SectionHeader({ title, onMore }) {
 
 function TransactionRow({ item }) {
   const isIncome = String(item?.type || "").toUpperCase().includes("INCOME");
-  const amountColor = isIncome ? "#15803d" : "#b91c1c";
+  const amountColor = isIncome ? COLORS.INCOME : COLORS.EXPENSE;
   const sign = isIncome ? "+" : "-";
 
   return (
@@ -50,7 +51,7 @@ function SavingGoalCard({ goal, onPress }) {
   const status = String(goal?.status || "ACTIVE").toUpperCase();
 
   const isCompleted = status === "COMPLETED";
-  const progressColor = isCompleted ? "#22c55e" : progress >= 50 ? "#22c55e" : progress >= 25 ? "#f59e0b" : "#3b82f6";
+  const progressColor = isCompleted ? COLORS.PRIMARY : progress >= 50 ? COLORS.PRIMARY : progress >= 25 ? COLORS.GOLD : COLORS.INFO;
 
   return (
     <Pressable style={styles.savingGoalCard} onPress={onPress}>
@@ -192,7 +193,7 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f1f5f9"
+    backgroundColor: COLORS.BG
   },
   content: {
     padding: 14,
@@ -206,20 +207,20 @@ const styles = StyleSheet.create({
     marginTop: 6
   },
   sectionTitle: {
-    color: "#0f172a",
+    color: COLORS.TEXT,
     fontSize: 17,
     fontWeight: "800"
   },
   sectionMore: {
-    color: "#22c55e",
+    color: COLORS.PRIMARY,
     fontSize: 13,
     fontWeight: "700"
   },
   sectionCard: {
-    backgroundColor: "#fff",
+    backgroundColor: COLORS.CARD,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
+    borderColor: COLORS.CARD_BORDER,
     padding: 12
   },
 
@@ -230,7 +231,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: "#f1f5f9"
+    borderBottomColor: COLORS.BG
   },
   transactionLeft: {
     flexDirection: "row",
@@ -242,23 +243,23 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: "#f8fafc",
+    backgroundColor: COLORS.ROSE_MIST,
     alignItems: "center",
     justifyContent: "center",
     marginRight: 10,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
+    borderColor: COLORS.CARD_BORDER,
   },
   transactionIcon: {
     fontSize: 16,
   },
   transactionName: {
-    color: "#0f172a",
+    color: COLORS.TEXT,
     fontWeight: "700",
     fontSize: 14
   },
   transactionDate: {
-    color: "#94a3b8",
+    color: COLORS.TEXT_MUTED,
     marginTop: 2,
     fontSize: 12
   },
@@ -267,7 +268,7 @@ const styles = StyleSheet.create({
     fontSize: 13
   },
   emptyText: {
-    color: "#94a3b8",
+    color: COLORS.TEXT_SECONDARY,
     textAlign: "center",
     paddingVertical: 16,
   },
@@ -276,7 +277,7 @@ const styles = StyleSheet.create({
   savingGoalCard: {
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: "#f1f5f9",
+    borderBottomColor: COLORS.BG,
   },
   savingGoalHeader: {
     flexDirection: "row",
@@ -289,12 +290,12 @@ const styles = StyleSheet.create({
     paddingRight: 10,
   },
   savingGoalName: {
-    color: "#0f172a",
+    color: COLORS.TEXT,
     fontWeight: "700",
     fontSize: 14,
   },
   savingGoalStatus: {
-    color: "#94a3b8",
+    color: COLORS.TEXT_MUTED,
     fontSize: 12,
     marginTop: 2,
   },
@@ -305,7 +306,7 @@ const styles = StyleSheet.create({
   savingGoalTrack: {
     height: 6,
     borderRadius: 6,
-    backgroundColor: "#e2e8f0",
+    backgroundColor: COLORS.CARD_BORDER,
     overflow: "hidden",
   },
   savingGoalFill: {
@@ -323,20 +324,20 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   emptyGoalText: {
-    color: "#94a3b8",
+    color: COLORS.TEXT_SECONDARY,
     fontSize: 13,
     marginBottom: 10,
   },
   createGoalButton: {
-    backgroundColor: "#f0fdf4",
+    backgroundColor: COLORS.ROSE_MIST,
     borderWidth: 1,
-    borderColor: "#bbf7d0",
+    borderColor: COLORS.CARD_BORDER,
     borderRadius: 10,
     paddingHorizontal: 16,
     paddingVertical: 8,
   },
   createGoalButtonText: {
-    color: "#15803d",
+    color: COLORS.PRIMARY,
     fontWeight: "700",
     fontSize: 13,
   },

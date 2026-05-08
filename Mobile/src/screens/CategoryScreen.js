@@ -5,18 +5,19 @@ import http from "../services/http";
 import { API_ENDPOINTS } from "../constants/api";
 import { SUCCESS_ALERT_MESSAGES, SUCCESS_ALERT_TITLE } from "../constants/alertMessages";
 import { getApiErrorMessage } from "../utils/format";
+import { COLORS } from "../constants/colors";
 import { CategoryVectorIcon, getCategoryIconPresets, getFirstCategoryIcon, getIconLabel } from "../utils/VectorIcons";
 
 const TYPE_META = {
   expense: {
     label: "Chi tiêu",
-    chipBg: "#fef2f2",
-    chipText: "#b42318"
+    chipBg: COLORS.EXPENSE_LIGHT,
+    chipText: COLORS.EXPENSE
   },
   income: {
     label: "Thu nhập",
-    chipBg: "#ecfdf3",
-    chipText: "#067647"
+    chipBg: COLORS.INCOME_LIGHT,
+    chipText: COLORS.INCOME
   }
 };
 
@@ -24,8 +25,8 @@ function CategoryItem({ item, onEditCategory }) {
   const normalizedType = String(item?.type || "").toLowerCase();
   const meta = TYPE_META[normalizedType] || {
     label: (item?.type || "-").toString().toUpperCase(),
-    chipBg: "#f1f5f9",
-    chipText: "#475467"
+    chipBg: COLORS.BG,
+    chipText: COLORS.TEXT_SECONDARY
   };
 
   return (
@@ -392,35 +393,35 @@ export default function CategoryScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f2f4f7",
+    backgroundColor: COLORS.BG,
     padding: 16,
     paddingTop: 50
   },
   formCard: {
-    backgroundColor: "#fff",
+    backgroundColor: COLORS.CARD,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: "#e4e7ec",
+    borderColor: COLORS.CARD_BORDER,
     padding: 14,
     marginBottom: 14,
-    shadowColor: "#101828",
+    shadowColor: COLORS.TEXT,
     shadowOpacity: 0.06,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
     elevation: 2
   },
-  formTitle: { color: "#0f172a", fontWeight: "800", fontSize: 22, marginBottom: 4 },
-  formSubtitle: { color: "#475467", fontSize: 13, lineHeight: 18, marginBottom: 12 },
-  inputLabel: { color: "#344054", fontWeight: "700", marginBottom: 6 },
+  formTitle: { color: COLORS.TEXT, fontWeight: "800", fontSize: 22, marginBottom: 4 },
+  formSubtitle: { color: COLORS.TEXT_SECONDARY, fontSize: 13, lineHeight: 18, marginBottom: 12 },
+  inputLabel: { color: COLORS.TEXT, fontWeight: "700", marginBottom: 6 },
   input: {
-    backgroundColor: "#f9fafb",
+    backgroundColor: COLORS.BG,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#d0d5dd",
+    borderColor: COLORS.CARD_BORDER,
     paddingHorizontal: 14,
     paddingVertical: 12,
     marginBottom: 10,
-    color: "#101828"
+    color: COLORS.TEXT
   },
   typeRow: {
     flexDirection: "row",
@@ -431,29 +432,29 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#d0d5dd",
+    borderColor: COLORS.CARD_BORDER,
     alignItems: "center"
   },
   typeButtonLeft: {
     marginRight: 10
   },
   typeButtonActiveExpense: {
-    borderColor: "#f97066",
-    backgroundColor: "#fef3f2"
+    borderColor: COLORS.EXPENSE,
+    backgroundColor: COLORS.EXPENSE_LIGHT
   },
   typeButtonActiveIncome: {
-    borderColor: "#32d583",
-    backgroundColor: "#ecfdf3"
+    borderColor: COLORS.INCOME,
+    backgroundColor: COLORS.INCOME_LIGHT
   },
-  typeText: { color: "#344054", fontWeight: "700" },
-  typeTextActive: { color: "#101828" },
-  hintText: { color: "#667085", marginBottom: 12, fontSize: 12 },
+  typeText: { color: COLORS.TEXT, fontWeight: "700" },
+  typeTextActive: { color: COLORS.TEXT },
+  hintText: { color: COLORS.TEXT_SECONDARY, marginBottom: 12, fontSize: 12 },
   iconSelectorWrapper: { marginBottom: 12 },
   iconDropdownTrigger: {
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#d0d5dd",
-    backgroundColor: "#f9fafb",
+    borderColor: COLORS.CARD_BORDER,
+    backgroundColor: COLORS.BG,
     paddingHorizontal: 12,
     paddingVertical: 10,
     flexDirection: "row",
@@ -468,24 +469,24 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 8,
-    backgroundColor: "#fff",
+    backgroundColor: COLORS.CARD,
     borderWidth: 1,
-    borderColor: "#e4e7ec",
+    borderColor: COLORS.CARD_BORDER,
     justifyContent: "center",
     alignItems: "center",
     marginRight: 10
   },
   iconTriggerText: {
-    color: "#344054",
+    color: COLORS.TEXT,
     fontWeight: "600"
   },
-  iconTriggerChevron: { color: "#667085", fontSize: 12, fontWeight: "800" },
+  iconTriggerChevron: { color: COLORS.TEXT_SECONDARY, fontSize: 12, fontWeight: "800" },
   iconDropdownList: {
     marginTop: 8,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#d0d5dd",
-    backgroundColor: "#fff",
+    borderColor: COLORS.CARD_BORDER,
+    backgroundColor: COLORS.CARD,
     maxHeight: 220
   },
   iconDropdownScroll: { maxHeight: 220 },
@@ -499,7 +500,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 6,
     borderRadius: 10
   },
-  iconOptionActive: { backgroundColor: "#ecfdf3" },
+  iconOptionActive: { backgroundColor: COLORS.ROSE_MIST },
   iconOptionLeft: {
     flexDirection: "row",
     alignItems: "center"
@@ -508,48 +509,48 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 8,
-    backgroundColor: "#f2f4f7",
+    backgroundColor: COLORS.BG,
     justifyContent: "center",
     alignItems: "center",
     marginRight: 10
   },
-  iconOptionLabel: { color: "#101828", fontWeight: "600" },
-  iconOptionCheck: { color: "#067647", fontWeight: "800" },
+  iconOptionLabel: { color: COLORS.TEXT, fontWeight: "600" },
+  iconOptionCheck: { color: COLORS.PRIMARY, fontWeight: "800" },
   saveButton: {
-    backgroundColor: "#0f766e",
+    backgroundColor: COLORS.PRIMARY,
     borderRadius: 12,
     paddingVertical: 13,
     alignItems: "center",
-    shadowColor: "#0f766e",
+    shadowColor: COLORS.PRIMARY,
     shadowOpacity: 0.25,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },
     elevation: 3
   },
   saveButtonDisabled: { opacity: 0.6 },
-  saveButtonText: { color: "#fff", fontWeight: "800", fontSize: 16 },
+  saveButtonText: { color: COLORS.WHITE, fontWeight: "800", fontSize: 16 },
   listHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 8
   },
-  listTitle: { color: "#101828", fontWeight: "800", fontSize: 16 },
+  listTitle: { color: COLORS.TEXT, fontWeight: "800", fontSize: 16 },
   listCount: {
     minWidth: 24,
     textAlign: "center",
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 999,
-    backgroundColor: "#ecfdf3",
-    color: "#067647",
+    backgroundColor: COLORS.ROSE_MIST,
+    color: COLORS.PRIMARY,
     fontWeight: "800"
   },
   listContent: { paddingBottom: 24 },
   itemCard: {
-    backgroundColor: "#fff",
+    backgroundColor: COLORS.CARD,
     borderWidth: 1,
-    borderColor: "#e4e7ec",
+    borderColor: COLORS.CARD_BORDER,
     borderRadius: 14,
     padding: 12,
     flexDirection: "row",
@@ -567,30 +568,30 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 10,
-    backgroundColor: "#f2f4f7",
+    backgroundColor: COLORS.ROSE_MIST,
     justifyContent: "center",
     alignItems: "center",
     marginRight: 10
   },
   itemIconText: { fontSize: 18 },
-  itemName: { color: "#0f172a", fontWeight: "700", fontSize: 15, flexShrink: 1 },
+  itemName: { color: COLORS.TEXT, fontWeight: "700", fontSize: 15, flexShrink: 1 },
   itemRight: { alignItems: "flex-end" },
   typeChip: { borderRadius: 999, paddingVertical: 5, paddingHorizontal: 10 },
   typeChipText: { fontWeight: "800", fontSize: 12 },
   itemActionRow: { flexDirection: "row", marginTop: 8 },
   itemEditBtn: {
-    backgroundColor: "#eef4ff",
+    backgroundColor: COLORS.ROSE_MIST,
     borderWidth: 1,
-    borderColor: "#dbe8ff",
+    borderColor: COLORS.CARD_BORDER,
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 4
   },
-  itemEditText: { color: "#175cd3", fontSize: 12, fontWeight: "700" },
+  itemEditText: { color: COLORS.PRIMARY, fontSize: 12, fontWeight: "700" },
   emptyState: { alignItems: "center", marginTop: 44, paddingHorizontal: 24 },
   emptyIcon: { fontSize: 36, marginBottom: 8 },
-  emptyTitle: { fontSize: 16, fontWeight: "800", color: "#101828", marginBottom: 6 },
-  emptyText: { textAlign: "center", color: "#667085", lineHeight: 19 },
+  emptyTitle: { fontSize: 16, fontWeight: "800", color: COLORS.TEXT, marginBottom: 6 },
+  emptyText: { textAlign: "center", color: COLORS.TEXT_SECONDARY, lineHeight: 19 },
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(15, 23, 42, 0.35)",
@@ -598,54 +599,54 @@ const styles = StyleSheet.create({
     padding: 16
   },
   modalCard: {
-    backgroundColor: "#fff",
+    backgroundColor: COLORS.CARD,
     borderRadius: 14,
     padding: 14,
     maxHeight: "80%"
   },
-  modalTitle: { color: "#0f172a", fontWeight: "800", fontSize: 18 },
-  modalSubTitle: { color: "#667085", marginTop: 2, marginBottom: 10 },
+  modalTitle: { color: COLORS.TEXT, fontWeight: "800", fontSize: 18 },
+  modalSubTitle: { color: COLORS.TEXT_SECONDARY, marginTop: 2, marginBottom: 10 },
   modalIconPreview: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 10
   },
-  modalIconLabel: { marginLeft: 8, color: "#344054", fontWeight: "600" },
+  modalIconLabel: { marginLeft: 8, color: COLORS.TEXT, fontWeight: "600" },
   modalIconList: { maxHeight: 300 },
   modalIconRow: { justifyContent: "space-between" },
   modalIconItem: {
     width: "32%",
     borderWidth: 1,
-    borderColor: "#d0d5dd",
+    borderColor: COLORS.CARD_BORDER,
     borderRadius: 10,
     paddingVertical: 8,
     paddingHorizontal: 6,
     alignItems: "center",
     marginBottom: 8,
-    backgroundColor: "#fff"
+    backgroundColor: COLORS.CARD
   },
-  modalIconItemActive: { borderColor: "#12b76a", backgroundColor: "#ecfdf3" },
+  modalIconItemActive: { borderColor: COLORS.PRIMARY, backgroundColor: COLORS.ROSE_MIST },
   modalIconItemLabel: {
     marginTop: 4,
     fontSize: 11,
-    color: "#344054",
+    color: COLORS.TEXT,
     textAlign: "center"
   },
   modalActions: { marginTop: 8, flexDirection: "row", justifyContent: "flex-end" },
   modalCancelBtn: {
     borderWidth: 1,
-    borderColor: "#d0d5dd",
+    borderColor: COLORS.CARD_BORDER,
     borderRadius: 10,
     paddingVertical: 10,
     paddingHorizontal: 14,
     marginRight: 8
   },
-  modalCancelText: { color: "#344054", fontWeight: "700" },
+  modalCancelText: { color: COLORS.TEXT, fontWeight: "700" },
   modalSaveBtn: {
-    backgroundColor: "#0f766e",
+    backgroundColor: COLORS.PRIMARY,
     borderRadius: 10,
     paddingVertical: 10,
     paddingHorizontal: 14
   },
-  modalSaveText: { color: "#fff", fontWeight: "700" }
+  modalSaveText: { color: COLORS.WHITE, fontWeight: "700" }
 });

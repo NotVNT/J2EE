@@ -1,5 +1,6 @@
 ﻿import React from "react";
 import { Image, StyleSheet, View } from "react-native";
+import { COLORS } from "../constants/colors";
 import bannerImage from "../assets/moneymanagerbanner.avif";
 
 export default function HomeBanner() {
@@ -16,8 +17,8 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: "#dbe3f2",
-    backgroundColor: "#ffffff"
+    borderColor: COLORS.CARD_BORDER,
+    backgroundColor: COLORS.CARD
   },
   banner: {
     width: "100%",

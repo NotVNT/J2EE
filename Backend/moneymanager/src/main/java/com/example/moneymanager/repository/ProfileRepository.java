@@ -14,6 +14,8 @@ public interface ProfileRepository extends JpaRepository<ProfileEntity, Long> {
 
     Optional<ProfileEntity> findByResetPasswordToken(String resetPasswordToken);
 
+    Optional<ProfileEntity> findByOtpCode(String otpCode);
+
     Boolean existsByEmail(String email);
 
     long countBySubscriptionStatus(SubscriptionStatus status);

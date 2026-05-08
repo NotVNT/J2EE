@@ -36,6 +36,10 @@ public class ProfileEntity {
     private String activationToken;
     private String resetPasswordToken;
     private LocalDateTime resetPasswordTokenExpiry;
+    private String otpCode;
+    private LocalDateTime otpExpiry;
+    private LocalDateTime otpSentAt;
+    private Integer otpAttempts;
     @Enumerated(EnumType.STRING)
     private SubscriptionPlan subscriptionPlan;
     @Enumerated(EnumType.STRING)

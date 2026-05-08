@@ -16,6 +16,7 @@ import Loader from "../components/Loader";
 import { getApiErrorMessage } from "../utils/format";
 import { tokenStorage } from "../storage/tokenStorage";
 import devbotLogo from "../assets/devbot.png";
+import { COLORS } from "../constants/colors";
 
 export default function LoginScreen() {
   const navigation = useNavigation();
@@ -86,6 +87,22 @@ export default function LoginScreen() {
           "Không kết nối được với máy chủ",
           "Hệ thống đang gặp sự cố kết nối. Vui lòng kiểm tra kết nối mạng của bạn hoặc thử lại sau ít phút."
         );
+      } else if (
+        statusCode === 403 &&
+        error?.response?.data?.needsActivation
+      ) {
+        const emailValue = error?.response?.data?.email || normalizedEmail;
+        Alert.alert(
+          "Tài khoản chưa được kích hoạt",
+          "Tài khoản này đã được đăng ký nhưng chưa xác thực OTP. Bạn có muốn tiếp tục xác thực?",
+          [
+            { text: "Để sau", style: "cancel" },
+            {
+              text: "Xác thực ngay",
+              onPress: () => navigation.navigate("VerifyOtp", { email: emailValue })
+            }
+          ]
+        );
       } else {
         const message = getApiErrorMessage(error, "Không thể đăng nhập. Vui lòng kiểm tra lại tài khoản.");
         Alert.alert("Đăng nhập thất bại", message);
@@ -147,8 +164,8 @@ export default function LoginScreen() {
               <Switch
                 value={rememberMe}
                 onValueChange={onToggleRemember}
-                thumbColor={rememberMe ? "#3aec43" : "#9ca3af"}
-                trackColor={{ false: "#374151", true: "#14532d" }}
+                thumbColor={rememberMe ? COLORS.PRIMARY : "#9ca3af"}
+                trackColor={{ false: "#374151", true: COLORS.PRIMARY_DARK }}
                 style={styles.switch}
               />
               <Text style={styles.rememberText}>Ghi nhớ đăng nhập</Text>
@@ -190,7 +207,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#05070b"
+    backgroundColor: COLORS.DARK_BG
   },
   bgGlowTop: {
     position: "absolute",
@@ -199,7 +216,7 @@ const styles = StyleSheet.create({
     width: 300,
     height: 300,
     borderRadius: 150,
-    backgroundColor: "rgba(58, 255, 98, 0.24)"
+    backgroundColor: COLORS.PRIMARY_GLOW
   },
   bgGlowBottom: {
     position: "absolute",
@@ -208,7 +225,7 @@ const styles = StyleSheet.create({
     width: 320,
     height: 320,
     borderRadius: 160,
-    backgroundColor: "rgba(58, 255, 98, 0.18)"
+    backgroundColor: COLORS.PRIMARY_GLOW
   },
   content: {
     flexGrow: 1,
@@ -226,14 +243,14 @@ const styles = StyleSheet.create({
     height: 72
   },
   title: {
-    color: "#f3faf4",
+    color: COLORS.DARK_TEXT,
     fontSize: 24,
     fontWeight: "700",
     textAlign: "center"
   },
   subtitle: {
     marginTop: 8,
-    color: "#9ca9a1",
+    color: COLORS.DARK_TEXT_SECONDARY,
     fontSize: 13,
     textAlign: "center"
   },
@@ -241,21 +258,21 @@ const styles = StyleSheet.create({
     marginTop: 24,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "rgba(57, 220, 61, 0.2)",
-    backgroundColor: "rgba(7, 12, 10, 0.84)",
+    borderColor: COLORS.DARK_BORDER_LIGHT,
+    backgroundColor: COLORS.DARK_CARD,
     padding: 14
   },
   inputWrap: {
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#1f2b23",
-    backgroundColor: "#0d1512",
+    borderColor: COLORS.DARK_BORDER,
+    backgroundColor: COLORS.DARK_INPUT_BG,
     marginBottom: 10
   },
   input: {
     paddingVertical: 12,
     paddingHorizontal: 12,
-    color: "#f0f5f2"
+    color: COLORS.DARK_TEXT
   },
   rowBetween: {
     marginTop: 2,
@@ -271,19 +288,19 @@ const styles = StyleSheet.create({
     transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }]
   },
   rememberText: {
-    color: "#9da8a1",
+    color: COLORS.DARK_TEXT_SECONDARY,
     fontSize: 12,
     marginLeft: 2
   },
   forgotText: {
-    color: "#47ec55",
+    color: COLORS.PRIMARY_LIGHT,
     fontSize: 12,
     fontWeight: "600"
   },
   loginButton: {
     marginTop: 14,
     borderRadius: 10,
-    backgroundColor: "#39dc3d",
+    backgroundColor: COLORS.PRIMARY,
     paddingVertical: 12,
     alignItems: "center"
   },
@@ -291,7 +308,7 @@ const styles = StyleSheet.create({
     opacity: 0.7
   },
   loginButtonText: {
-    color: "#082209",
+    color: COLORS.DARK_TEXT,
     fontSize: 15,
     fontWeight: "800"
   },
@@ -305,10 +322,10 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: "#1d2620"
+    backgroundColor: COLORS.DARK_BORDER
   },
   dividerText: {
-    color: "#7f8c84",
+    color: COLORS.DARK_TEXT_SECONDARY,
     fontSize: 12
   },
   socialRow: {
@@ -319,8 +336,8 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#1f2b23",
-    backgroundColor: "#0e1612",
+    borderColor: COLORS.DARK_BORDER,
+    backgroundColor: COLORS.DARK_INPUT_BG,
     paddingVertical: 11,
     flexDirection: "row",
     alignItems: "center",
@@ -328,12 +345,12 @@ const styles = StyleSheet.create({
     gap: 8
   },
   socialIcon: {
-    color: "#f3f6f4",
+    color: COLORS.DARK_TEXT,
     fontSize: 16,
     fontWeight: "700"
   },
   socialLabel: {
-    color: "#dde5df",
+    color: COLORS.DARK_TEXT,
     fontWeight: "600",
     fontSize: 13
   },
@@ -344,11 +361,11 @@ const styles = StyleSheet.create({
     justifyContent: "center"
   },
   signupText: {
-    color: "#95a29b",
+    color: COLORS.DARK_TEXT_SECONDARY,
     fontSize: 12
   },
   signupLink: {
-    color: "#39dc3d",
+    color: COLORS.PRIMARY_LIGHT,
     fontSize: 12,
     fontWeight: "700"
   }

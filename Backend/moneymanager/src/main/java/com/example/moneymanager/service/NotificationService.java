@@ -33,7 +33,7 @@ public class NotificationService {
     private final ProfileRepository profileRepository;
     private final NotificationRepository notificationRepository;
     private final NotificationReadRepository notificationReadRepository;
-    private final EmailService emailService;
+    private final AwsSesEmailService awsSesEmailService;
     private final ProfileService profileService;
     
     @Autowired
@@ -197,7 +197,7 @@ public class NotificationService {
                     + "Đây là lời nhắc để bạn cập nhật các khoản thu và chi trong hôm nay trên Money Manager.<br><br>"
                     + "<a href=" + frontendUrl + " style='display:inline-block;padding:10px 20px;background-color:#4CAF50;color:#fff;text-decoration:none;border-radius:5px;font-weight:bold;'>Mở Money Manager</a>"
                     + "<br><br>Trân trọng,<br>Đội ngũ Money Manager";
-            emailService.sendEmail(profile.getEmail(), "Nhắc nhở hằng ngày: cập nhật thu chi", body);
+            awsSesEmailService.sendEmail(profile.getEmail(), "Nhắc nhở hằng ngày: cập nhật thu chi", body);
         }
         log.info("Job completed: sendDailyIncomeExpenseReminder()");
     }
@@ -225,7 +225,7 @@ public class NotificationService {
                 String body = "Xin chào " + profile.getFullName() + ",<br/><br/>Dưới đây là tổng hợp các khoản chi của bạn trong hôm nay:<br/><br/>"
                         + table
                         + "<br/><br/>Trân trọng,<br/>Đội ngũ Money Manager";
-                emailService.sendEmail(profile.getEmail(), "Tổng hợp chi tiêu hằng ngày", body);
+                awsSesEmailService.sendEmail(profile.getEmail(), "Tổng hợp chi tiêu hằng ngày", body);
             }
         }
         log.info("Job completed: sendDailyExpenseSummary()");

@@ -1,6 +1,7 @@
 ﻿import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { COLORS } from "../constants/colors";
 
 export default function HomeTopHeader({ onMenuPress, onBellPress }) {
   const insets = useSafeAreaInsets();
@@ -27,7 +28,7 @@ const styles = StyleSheet.create({
     paddingBottom: 8
   },
   title: {
-    color: "#0f172a",
+    color: COLORS.PRIMARY,
     fontSize: 23,
     fontWeight: "800",
     flex: 1,
@@ -39,9 +40,9 @@ const styles = StyleSheet.create({
     borderRadius: 19,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#ffffff",
+    backgroundColor: COLORS.ROSE_MIST,
     borderWidth: 1,
-    borderColor: "#dbe3f2"
+    borderColor: COLORS.CARD_BORDER
   },
   iconText: {
     fontSize: 18

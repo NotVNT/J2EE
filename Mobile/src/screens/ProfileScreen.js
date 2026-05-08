@@ -2,6 +2,7 @@ import React, { useContext } from "react";
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { AuthContext } from "../components/AuthContext";
+import { COLORS } from "../constants/colors";
 
 function InfoRow({ label, value }) {
   return (
@@ -66,7 +67,7 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f3f5f9"
+    backgroundColor: COLORS.BG
   },
   content: {
     paddingHorizontal: 16,
@@ -74,10 +75,10 @@ const styles = StyleSheet.create({
     paddingBottom: 24
   },
   heroCard: {
-    backgroundColor: "#ffffff",
+    backgroundColor: COLORS.CARD,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
+    borderColor: COLORS.CARD_BORDER,
     padding: 14,
     flexDirection: "row",
     alignItems: "center",
@@ -87,7 +88,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 18,
-    backgroundColor: "#0f766e",
+    backgroundColor: COLORS.PRIMARY,
     alignItems: "center",
     justifyContent: "center"
   },
@@ -95,7 +96,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 18,
-    backgroundColor: "#e2e8f0"
+    backgroundColor: COLORS.CARD_BORDER
   },
   avatarText: {
     color: "#ffffff",
@@ -107,12 +108,12 @@ const styles = StyleSheet.create({
     flex: 1
   },
   heroName: {
-    color: "#0f172a",
+    color: COLORS.TEXT,
     fontSize: 18,
     fontWeight: "800"
   },
   heroEmail: {
-    color: "#64748b",
+    color: COLORS.TEXT_SECONDARY,
     marginTop: 2
   },
   planChip: {
@@ -121,25 +122,25 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 4,
-    backgroundColor: "#ecfdf3",
+    backgroundColor: COLORS.ROSE_MIST,
     borderWidth: 1,
-    borderColor: "#bbf7d0"
+    borderColor: COLORS.CARD_BORDER
   },
   planChipText: {
-    color: "#047857",
+    color: COLORS.PRIMARY,
     fontWeight: "800",
     fontSize: 12
   },
   sectionCard: {
-    backgroundColor: "#ffffff",
+    backgroundColor: COLORS.CARD,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
+    borderColor: COLORS.CARD_BORDER,
     padding: 12,
     marginBottom: 12
   },
   sectionTitle: {
-    color: "#0f172a",
+    color: COLORS.TEXT,
     fontSize: 16,
     fontWeight: "800",
     marginBottom: 8
@@ -150,13 +151,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: "#f1f5f9"
+    borderBottomColor: COLORS.BG
   },
   infoLabel: {
-    color: "#64748b"
+    color: COLORS.TEXT_SECONDARY
   },
   infoValue: {
-    color: "#0f172a",
+    color: COLORS.TEXT,
     fontWeight: "700",
     maxWidth: "62%",
     textAlign: "right"
@@ -164,38 +165,38 @@ const styles = StyleSheet.create({
   primaryButton: {
     marginTop: 2,
     marginBottom: 10,
-    backgroundColor: "#0f766e",
+    backgroundColor: COLORS.PRIMARY,
     borderRadius: 12,
     alignItems: "center",
     paddingVertical: 13
   },
   primaryButtonText: {
-    color: "#ffffff",
+    color: COLORS.WHITE,
     fontWeight: "800"
   },
   secondaryButton: {
-    backgroundColor: "#ffffff",
+    backgroundColor: COLORS.CARD,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#cbd5e1",
+    borderColor: COLORS.CARD_BORDER,
     alignItems: "center",
     paddingVertical: 13,
     marginBottom: 10
   },
   secondaryButtonText: {
-    color: "#334155",
+    color: COLORS.TEXT,
     fontWeight: "700"
   },
   logoutButton: {
-    backgroundColor: "#fee2e2",
+    backgroundColor: COLORS.EXPENSE_LIGHT,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#fecaca",
+    borderColor: "#fecdca",
     alignItems: "center",
     paddingVertical: 13
   },
   logoutText: {
-    color: "#b91c1c",
+    color: COLORS.EXPENSE,
     fontWeight: "800"
   }
 });

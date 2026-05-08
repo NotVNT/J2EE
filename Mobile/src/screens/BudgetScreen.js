@@ -5,12 +5,13 @@ import http from "../services/http";
 import { API_ENDPOINTS } from "../constants/api";
 import { SUCCESS_ALERT_MESSAGES, SUCCESS_ALERT_TITLE } from "../constants/alertMessages";
 import { formatCurrencyInput, formatMoney, getApiErrorMessage, parseCurrencyInput } from "../utils/format";
+import { COLORS } from "../constants/colors";
 
 function getBudgetVisual(progressRatio) {
   if (progressRatio >= 1) {
     return {
-      color: "#b42318",
-      bg: "#fef3f2",
+      color: COLORS.EXPENSE,
+      bg: COLORS.EXPENSE_LIGHT,
       border: "#fecdca",
       label: "Vượt hạn mức"
     };
@@ -18,16 +19,16 @@ function getBudgetVisual(progressRatio) {
 
   if (progressRatio >= 0.8) {
     return {
-      color: "#b54708",
-      bg: "#fffaeb",
+      color: COLORS.WARNING,
+      bg: COLORS.WARNING_LIGHT,
       border: "#fedf89",
       label: "Sắp chạm hạn mức"
     };
   }
 
   return {
-    color: "#067647",
-    bg: "#ecfdf3",
+    color: COLORS.INCOME,
+    bg: COLORS.INCOME_LIGHT,
     border: "#abefc6",
     label: "Trong giới hạn"
   };
@@ -349,53 +350,53 @@ const styles = StyleSheet.create({
     paddingTop: 24
   },
   overviewCard: {
-    backgroundColor: "#0e3642",
+    backgroundColor: COLORS.PRIMARY,
     borderRadius: 18,
     padding: 14,
     marginBottom: 12
   },
   overviewTitle: {
-    color: "#cbd5e1",
+    color: COLORS.PEACH,
     fontWeight: "700",
     fontSize: 13
   },
   overviewLimit: {
     marginTop: 6,
-    color: "#d61010",
+    color: COLORS.WHITE,
     fontWeight: "800",
     fontSize: 20
   },
   overviewSpent: {
     marginTop: 2,
-    color: "#fecaca",
+    color: COLORS.PEACH,
     fontWeight: "700"
   },
   overviewHint: {
     marginTop: 8,
-    color: "#94a3b8",
+    color: COLORS.ROSE_MIST,
     fontSize: 12
   },
   formCard: {
-    backgroundColor: "#fff",
+    backgroundColor: COLORS.CARD,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#e4e7ec",
+    borderColor: COLORS.CARD_BORDER,
     padding: 12,
     marginBottom: 12
   },
   formTitle: {
-    color: "#0f172a",
+    color: COLORS.TEXT,
     fontWeight: "800",
     fontSize: 18,
     marginBottom: 4
   },
   formSubTitle: {
-    color: "#667085",
+    color: COLORS.TEXT_SECONDARY,
     marginBottom: 10,
     fontSize: 12
   },
   label: {
-    color: "#344054",
+    color: COLORS.TEXT,
     marginBottom: 6,
     fontWeight: "700"
   },
@@ -406,11 +407,11 @@ const styles = StyleSheet.create({
   },
   chip: {
     borderWidth: 1,
-    borderColor: "#d0d5dd",
+    borderColor: COLORS.CARD_BORDER,
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 7,
-    backgroundColor: "#fff",
+    backgroundColor: COLORS.CARD,
     marginRight: 8,
     marginBottom: 8,
     flexDirection: "row",
@@ -418,31 +419,31 @@ const styles = StyleSheet.create({
     maxWidth: "48%"
   },
   chipActive: {
-    borderColor: "#0f766e",
-    backgroundColor: "#ccfbf1"
+    borderColor: COLORS.PRIMARY,
+    backgroundColor: COLORS.ROSE_MIST
   },
   chipIcon: {
     marginRight: 5
   },
   chipText: {
-    color: "#334155",
+    color: COLORS.TEXT,
     fontSize: 12,
     fontWeight: "600",
     flexShrink: 1
   },
   chipTextActive: {
-    color: "#115e59",
+    color: COLORS.PRIMARY,
     fontWeight: "800"
   },
   input: {
-    backgroundColor: "#f9fafb",
+    backgroundColor: COLORS.BG,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#d0d5dd",
+    borderColor: COLORS.CARD_BORDER,
     paddingHorizontal: 14,
     paddingVertical: 11,
     marginBottom: 10,
-    color: "#101828"
+    color: COLORS.TEXT
   },
   dateRow: {
     flexDirection: "row"
@@ -454,7 +455,7 @@ const styles = StyleSheet.create({
     marginRight: 8
   },
   saveButton: {
-    backgroundColor: "#0f766e",
+    backgroundColor: COLORS.PRIMARY,
     borderRadius: 12,
     paddingVertical: 12,
     alignItems: "center"
@@ -463,7 +464,7 @@ const styles = StyleSheet.create({
     opacity: 0.6
   },
   saveButtonText: {
-    color: "#fff",
+    color: COLORS.WHITE,
     fontWeight: "800"
   },
   listContent: {
@@ -477,14 +478,14 @@ const styles = StyleSheet.create({
     marginBottom: 8
   },
   listTitle: {
-    color: "#101828",
+    color: COLORS.TEXT,
     fontWeight: "800",
     fontSize: 16
   },
   itemCard: {
-    backgroundColor: "#fff",
+    backgroundColor: COLORS.CARD,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
+    borderColor: COLORS.CARD_BORDER,
     borderRadius: 14,
     padding: 12,
     marginBottom: 10
@@ -504,7 +505,7 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 10,
-    backgroundColor: "#f2f4f7",
+    backgroundColor: COLORS.ROSE_MIST,
     justifyContent: "center",
     alignItems: "center",
     marginRight: 10
@@ -516,16 +517,16 @@ const styles = StyleSheet.create({
     flex: 1
   },
   itemName: {
-    color: "#0f172a",
+    color: COLORS.TEXT,
     fontWeight: "800",
     marginBottom: 2
   },
   itemSubTitle: {
-    color: "#667085",
+    color: COLORS.TEXT_SECONDARY,
     fontSize: 12
   },
   deleteButton: {
-    backgroundColor: "#fef3f2",
+    backgroundColor: COLORS.EXPENSE_LIGHT,
     borderWidth: 1,
     borderColor: "#fecdca",
     borderRadius: 999,
@@ -533,7 +534,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4
   },
   deleteText: {
-    color: "#b42318",
+    color: COLORS.EXPENSE,
     fontWeight: "700",
     fontSize: 12
   },
@@ -546,11 +547,11 @@ const styles = StyleSheet.create({
     alignItems: "flex-end"
   },
   statLabel: {
-    color: "#667085",
+    color: COLORS.TEXT_SECONDARY,
     fontSize: 12
   },
   statValue: {
-    color: "#0f172a",
+    color: COLORS.TEXT,
     marginTop: 2,
     fontWeight: "700"
   },
@@ -558,7 +559,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     height: 8,
     borderRadius: 8,
-    backgroundColor: "#e2e8f0",
+    backgroundColor: COLORS.CARD_BORDER,
     overflow: "hidden"
   },
   progressFill: {
@@ -594,12 +595,12 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 16,
     fontWeight: "800",
-    color: "#101828",
+    color: COLORS.TEXT,
     marginBottom: 6
   },
   emptyText: {
     textAlign: "center",
-    color: "#667085",
+    color: COLORS.TEXT_SECONDARY,
     lineHeight: 19
   }
 });

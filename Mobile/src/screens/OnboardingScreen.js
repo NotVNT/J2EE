@@ -11,6 +11,7 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import devbotLogo from "../assets/devbot.png";
+import { COLORS } from "../constants/colors";
 
 const { width } = Dimensions.get("window");
 
@@ -116,7 +117,7 @@ export default function OnboardingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#05070b",
+    backgroundColor: COLORS.DARK_BG,
     paddingHorizontal: 20,
     paddingTop: 18,
     paddingBottom: 26
@@ -128,7 +129,7 @@ const styles = StyleSheet.create({
     width: 260,
     height: 260,
     borderRadius: 130,
-    backgroundColor: "rgba(58, 255, 98, 0.24)"
+    backgroundColor: COLORS.PRIMARY_GLOW
   },
   bgGlowBottom: {
     position: "absolute",
@@ -137,7 +138,7 @@ const styles = StyleSheet.create({
     width: 280,
     height: 280,
     borderRadius: 140,
-    backgroundColor: "rgba(58, 255, 98, 0.14)"
+    backgroundColor: COLORS.PRIMARY_GLOW
   },
   headerRow: {
     flexDirection: "row",
@@ -149,7 +150,7 @@ const styles = StyleSheet.create({
     height: 46
   },
   skipText: {
-    color: "#9bb0a1",
+    color: COLORS.DARK_TEXT_SECONDARY,
     fontSize: 14,
     fontWeight: "600"
   },
@@ -164,19 +165,19 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: 60,
     borderWidth: 1,
-    borderColor: "rgba(110, 255, 139, 0.32)",
-    backgroundColor: "rgba(84, 255, 111, 0.15)",
+    borderColor: COLORS.PRIMARY_GLOW_STRONG,
+    backgroundColor: COLORS.PRIMARY_GLOW,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 26
   },
   iconText: {
-    color: "#58f05d",
+    color: COLORS.PRIMARY_LIGHT,
     fontSize: 52,
     fontWeight: "800"
   },
   title: {
-    color: "#f2f8f3",
+    color: COLORS.DARK_TEXT,
     fontSize: 30,
     fontWeight: "800",
     textAlign: "center",
@@ -184,7 +185,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     marginTop: 12,
-    color: "#a5b2ac",
+    color: COLORS.DARK_TEXT_SECONDARY,
     textAlign: "center",
     lineHeight: 22,
     fontSize: 15
@@ -203,20 +204,20 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: "#35413a"
+    backgroundColor: COLORS.DARK_BORDER
   },
   dotActive: {
     width: 18,
-    backgroundColor: "#58f05d"
+    backgroundColor: COLORS.PRIMARY
   },
   ctaButton: {
     borderRadius: 12,
-    backgroundColor: "#39dc3d",
+    backgroundColor: COLORS.PRIMARY,
     paddingVertical: 14,
     alignItems: "center"
   },
   ctaText: {
-    color: "#082209",
+    color: COLORS.DARK_TEXT,
     fontWeight: "800",
     fontSize: 15
   }

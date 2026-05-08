@@ -6,6 +6,9 @@ import com.example.moneymanager.dto.ForgotPasswordRequestDTO;
 import com.example.moneymanager.dto.ProfileDTO;
 import com.example.moneymanager.dto.ProfileUpdateDTO;
 import com.example.moneymanager.dto.ResetPasswordRequestDTO;
+import com.example.moneymanager.dto.ResendOtpRequestDTO;
+import com.example.moneymanager.dto.SetupProfileDTO;
+import com.example.moneymanager.dto.VerifyOtpRequestDTO;
 import com.example.moneymanager.service.ProfileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,6 +39,30 @@ public class ProfileController {
         }
     }
 
+    @PostMapping("/verify-otp")
+    public ResponseEntity<Map<String, String>> verifyOtp(@RequestBody VerifyOtpRequestDTO requestDTO) {
+        try {
+            profileService.verifyOtp(requestDTO.getEmail(), requestDTO.getOtpCode());
+            return ResponseEntity.ok(Map.of("message", "Xác thực tài khoản thành công."));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                    "message", e.getMessage()
+            ));
+        }
+    }
+
+    @PostMapping("/resend-otp")
+    public ResponseEntity<Map<String, String>> resendOtp(@RequestBody ResendOtpRequestDTO requestDTO) {
+        try {
+            profileService.resendOtp(requestDTO.getEmail());
+            return ResponseEntity.ok(Map.of("message", "Mã OTP đã được gửi lại tới email của bạn."));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                    "message", e.getMessage()
+            ));
+        }
+    }
+
     @GetMapping("/activate")
     public ResponseEntity<String> activateProfile(@RequestParam String token) {
         boolean isActivated = profileService.activateProfile(token);
@@ -51,7 +78,9 @@ public class ProfileController {
         try {
             if (!profileService.isAccountActive(authDTO.getEmail())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
-                        "message", "Tài khoản chưa được kích hoạt. Vui lòng kích hoạt tài khoản trước."
+                        "message", "Tài khoản chưa được kích hoạt. Vui lòng kích hoạt tài khoản trước.",
+                        "needsActivation", true,
+                        "email", authDTO.getEmail()
                 ));
             }
             Map<String, Object> response = profileService.authenticateAndGenerateToken(authDTO);
@@ -67,6 +96,18 @@ public class ProfileController {
     public ResponseEntity<ProfileDTO> getPublicProfile() {
         ProfileDTO profileDTO = profileService.getPublicProfile(null);
         return ResponseEntity.ok(profileDTO);
+    }
+
+    @PutMapping("/complete-profile")
+    public ResponseEntity<Map<String, Object>> completeProfile(@RequestBody SetupProfileDTO requestDTO) {
+        try {
+            Map<String, Object> response = profileService.completeProfile(requestDTO);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                    "message", e.getMessage()
+            ));
+        }
     }
 
     @PutMapping("/profile")

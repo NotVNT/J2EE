@@ -26,7 +26,7 @@ public class BudgetService {
     private final BudgetRepository budgetRepository;
     private final CategoryRepository categoryRepository;
     private final ProfileService profileService;
-    private final EmailService emailService;
+    private final AwsSesEmailService awsSesEmailService;
 
     // ─────────────────────────────────────────────────────────────
     // LUỒNG 1: THIẾT LẬP HẠN MỨC
@@ -186,7 +186,7 @@ public class BudgetService {
                     + "Trân trọng,<br>Đội ngũ devbot";
 
             String subject = "[devbot] " + alertType + " – Ngân sách danh mục " + status.getCategoryName();
-            emailService.sendHtmlEmail(profile.getEmail(), subject, body);
+            awsSesEmailService.sendHtmlEmail(profile.getEmail(), subject, body);
             log.info("Budget alert HTML email sent to {} for category {}", profile.getEmail(), status.getCategoryName());
         } catch (Exception e) {
             log.error("Failed to send budget alert email: {}", e.getMessage());

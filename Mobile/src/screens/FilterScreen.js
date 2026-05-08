@@ -4,6 +4,7 @@ import http from "../services/http";
 import { API_ENDPOINTS } from "../constants/api";
 import { formatDate, formatMoney, getApiErrorMessage, todayIso } from "../utils/format";
 import { PickDateField } from "../utils/pickDate";
+import { COLORS } from "../constants/colors";
 
 function TransactionItem({ item, type }) {
   return (
@@ -139,25 +140,25 @@ export default function FilterScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f8fafc", padding: 16 },
+  container: { flex: 1, backgroundColor: COLORS.BG, padding: 16 },
   formCard: {
-    backgroundColor: "#fff",
+    backgroundColor: COLORS.CARD,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
+    borderColor: COLORS.CARD_BORDER,
     padding: 12,
     marginBottom: 12
   },
-  formTitle: { color: "#0f172a", fontWeight: "700", fontSize: 16, marginBottom: 10 },
+  formTitle: { color: COLORS.TEXT, fontWeight: "700", fontSize: 16, marginBottom: 10 },
   input: {
-    backgroundColor: "#fff",
+    backgroundColor: COLORS.CARD,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
+    borderColor: COLORS.CARD_BORDER,
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 11,
     marginBottom: 10,
-    color: "#101828"
+    color: COLORS.TEXT
   },
   row: { flexDirection: "row", gap: 8, marginBottom: 10, flexWrap: "wrap" },
   typeButton: {
@@ -165,25 +166,25 @@ const styles = StyleSheet.create({
     minWidth: 120,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#cbd5e1",
+    borderColor: COLORS.CARD_BORDER,
     borderRadius: 10,
     paddingVertical: 10
   },
-  typeButtonActiveExpense: { backgroundColor: "#fee2e2", borderColor: "#dc2626" },
-  typeButtonActiveIncome: { backgroundColor: "#dcfce7", borderColor: "#16a34a" },
-  typeText: { color: "#334155", fontWeight: "600" },
-  typeTextActive: { color: "#0f172a", fontWeight: "700" },
+  typeButtonActiveExpense: { backgroundColor: COLORS.EXPENSE_LIGHT, borderColor: COLORS.EXPENSE },
+  typeButtonActiveIncome: { backgroundColor: COLORS.INCOME_LIGHT, borderColor: COLORS.INCOME },
+  typeText: { color: COLORS.TEXT, fontWeight: "600" },
+  typeTextActive: { color: COLORS.TEXT, fontWeight: "700" },
   chip: {
     borderWidth: 1,
-    borderColor: "#cbd5e1",
+    borderColor: COLORS.CARD_BORDER,
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 7,
-    backgroundColor: "#fff"
+    backgroundColor: COLORS.CARD
   },
-  chipActive: { borderColor: "#0f766e", backgroundColor: "#ccfbf1" },
-  chipText: { color: "#334155" },
-  chipTextActive: { color: "#115e59", fontWeight: "700" },
+  chipActive: { borderColor: COLORS.PRIMARY, backgroundColor: COLORS.ROSE_MIST },
+  chipText: { color: COLORS.TEXT },
+  chipTextActive: { color: COLORS.PRIMARY, fontWeight: "700" },
   actionRow: {
     flexDirection: "row",
     justifyContent: "flex-end",
@@ -192,34 +193,34 @@ const styles = StyleSheet.create({
   },
   secondaryButton: {
     borderWidth: 1,
-    borderColor: "#cbd5e1",
+    borderColor: COLORS.CARD_BORDER,
     borderRadius: 10,
     paddingVertical: 10,
     paddingHorizontal: 14
   },
-  secondaryButtonText: { color: "#334155", fontWeight: "700" },
+  secondaryButtonText: { color: COLORS.TEXT, fontWeight: "700" },
   primaryButton: {
-    backgroundColor: "#0f766e",
+    backgroundColor: COLORS.PRIMARY,
     borderRadius: 10,
     paddingVertical: 10,
     paddingHorizontal: 14
   },
-  primaryButtonText: { color: "#fff", fontWeight: "700" },
+  primaryButtonText: { color: COLORS.WHITE, fontWeight: "700" },
   listContent: { gap: 10, paddingBottom: 24 },
   item: {
-    backgroundColor: "#fff",
+    backgroundColor: COLORS.CARD,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
+    borderColor: COLORS.CARD_BORDER,
     borderRadius: 12,
     padding: 12,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center"
   },
-  itemName: { color: "#0f172a", fontWeight: "700" },
-  itemDate: { color: "#64748b", marginTop: 3, fontSize: 12 },
+  itemName: { color: COLORS.TEXT, fontWeight: "700" },
+  itemDate: { color: COLORS.TEXT_SECONDARY, marginTop: 3, fontSize: 12 },
   itemAmount: { fontWeight: "700" },
-  expense: { color: "#b91c1c" },
-  income: { color: "#15803d" },
-  emptyText: { textAlign: "center", color: "#64748b", marginTop: 20 }
+  expense: { color: COLORS.EXPENSE },
+  income: { color: COLORS.INCOME },
+  emptyText: { textAlign: "center", color: COLORS.TEXT_SECONDARY, marginTop: 20 }
 });

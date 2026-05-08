@@ -37,8 +37,9 @@ public class SecurityConfig {
                                 "/status",
                                 "/health",
                                 "/register",
-                                "/activate",
-                                "/login",
+                                "/activate",                                "/verify-otp",
+                                "/resend-otp",                                "/login",
+                                "/complete-profile",
                                 "/forgot-password",   // ✅ thêm
                                 "/reset-password",    // ✅ thêm
                                 "/gemini/test",

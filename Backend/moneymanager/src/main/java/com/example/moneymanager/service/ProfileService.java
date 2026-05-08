@@ -19,6 +19,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
@@ -28,7 +29,7 @@ import java.util.UUID;
 public class ProfileService {
 
     private final ProfileRepository profileRepository;
-    private final EmailService emailService;
+    private final AwsSesEmailService awsSesEmailService;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
@@ -40,27 +41,157 @@ public class ProfileService {
     @Value("${app.reset-password.url}")
     private String resetPasswordURL;
 
+    private static final SecureRandom secureRandom = new SecureRandom();
+    private static final int OTP_EXPIRY_MINUTES = 30;
+    private static final int MAX_OTP_ATTEMPTS = 5;
+    private static final int RESEND_COOLDOWN_SECONDS = 90;
+
     public ProfileDTO registerProfile(ProfileDTO profileDTO) {
         profileRepository.findByEmail(profileDTO.getEmail()).ifPresent(profile -> {
             throw new RuntimeException("Email này đã được sử dụng.");
         });
 
-        ProfileEntity newProfile = toEntity(profileDTO);
+        // Tự động tạo dữ liệu tạm nếu thiếu (trường hợp mobile chỉ nhập email)
+        String tempPassword = (profileDTO.getPassword() == null || profileDTO.getPassword().isBlank())
+                ? UUID.randomUUID().toString().substring(0, 12)
+                : profileDTO.getPassword();
+        String tempFullName = (profileDTO.getFullName() == null || profileDTO.getFullName().isBlank())
+                ? profileDTO.getEmail().substring(0, profileDTO.getEmail().indexOf('@'))
+                : profileDTO.getFullName();
+
+        ProfileEntity newProfile = ProfileEntity.builder()
+                .fullName(tempFullName)
+                .email(profileDTO.getEmail())
+                .password(passwordEncoder.encode(tempPassword))
+                .profileImageUrl(profileDTO.getProfileImageUrl())
+                .build();
         newProfile.setIsActive(false);
         newProfile.setSubscriptionPlan(com.example.moneymanager.entity.SubscriptionPlan.FREE);
         newProfile.setSubscriptionStatus(com.example.moneymanager.entity.SubscriptionStatus.INACTIVE);
         newProfile.setAutoRenew(false);
-        newProfile.setActivationToken(UUID.randomUUID().toString());
         newProfile = profileRepository.save(newProfile);
-        // Gửi email kích hoạt tài khoản
-        String normalizedActivationUrl = activationURL.endsWith("/")
-                ? activationURL.substring(0, activationURL.length() - 1)
-                : activationURL;
-        String activationLink = normalizedActivationUrl + "/activate?token=" + newProfile.getActivationToken();
-        String subject = "Kích hoạt tài khoản Money Manager";
-        String body = "Nhấn vào liên kết sau để kích hoạt tài khoản của bạn: " + activationLink;
-        emailService.sendEmail(newProfile.getEmail(), subject, body);
+
+        // Tạo và gửi mã OTP
+        sendOtpEmail(newProfile);
+
         return toDTO(newProfile);
+    }
+
+    private void sendOtpEmail(ProfileEntity profile) {
+        String otpCode = String.valueOf(100000 + secureRandom.nextInt(900000));
+        profile.setOtpCode(otpCode);
+        profile.setOtpExpiry(LocalDateTime.now().plusMinutes(OTP_EXPIRY_MINUTES));
+        profile.setOtpSentAt(LocalDateTime.now());
+        profile.setOtpAttempts(0);
+        profileRepository.save(profile);
+
+        String subject = "Mã xác thực tài khoản Money Manager";
+        String body = buildOtpEmailBody(otpCode, profile.getFullName());
+        awsSesEmailService.sendHtmlEmail(profile.getEmail(), subject, body);
+    }
+
+    private String buildOtpEmailBody(String otpCode, String fullName) {
+        return """
+            <!DOCTYPE html>
+            <html>
+            <head><meta charset="UTF-8"></head>
+            <body style="font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0;">
+                <div style="max-width: 600px; margin: 20px auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                    <div style="background: linear-gradient(135deg, #dc2626, #1e1b4b); padding: 30px; text-align: center;">
+                        <h1 style="color: #ffffff; margin: 0; font-size: 24px;">Money Manager</h1>
+                    </div>
+                    <div style="padding: 30px;">
+                        <h2 style="color: #333; margin-top: 0;">Xác thực tài khoản</h2>
+                        <p style="color: #666; font-size: 16px; line-height: 1.6;">Xin chào <strong>%s</strong>,</p>
+                        <p style="color: #666; font-size: 16px; line-height: 1.6;">
+                            Cảm ơn bạn đã đăng ký tài khoản Money Manager. Vui lòng nhập mã OTP dưới đây để xác thực tài khoản của bạn:
+                        </p>
+                        <div style="text-align: center; margin: 30px 0;">
+                            <div style="display: inline-block; background: #f0f0f0; border-radius: 12px; padding: 20px 40px; letter-spacing: 12px; font-size: 36px; font-weight: bold; color: #dc2626;">
+                                %s
+                            </div>
+                        </div>
+                        <p style="color: #666; font-size: 16px; line-height: 1.6;">
+                            Mã OTP này có hiệu lực trong <strong>%d phút</strong>. Vui lòng không chia sẻ mã này với bất kỳ ai.
+                        </p>
+                        <p style="color: #999; font-size: 14px; line-height: 1.6; margin-top: 30px;">
+                            Nếu bạn không yêu cầu thao tác này, vui lòng bỏ qua email này.
+                        </p>
+                    </div>
+                    <div style="background: #f8f8f8; padding: 20px; text-align: center; border-top: 1px solid #eee;">
+                        <p style="color: #999; font-size: 12px; margin: 0;">© 2024 Money Manager. Tất cả quyền được bảo lưu.</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """.formatted(fullName, otpCode, OTP_EXPIRY_MINUTES);
+    }
+
+    public void verifyOtp(String email, String otpCode) {
+        ProfileEntity profile = profileRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản với email này."));
+
+        if (profile.getIsActive()) {
+            throw new RuntimeException("Tài khoản này đã được kích hoạt.");
+        }
+
+        if (profile.getOtpCode() == null || profile.getOtpExpiry() == null) {
+            throw new RuntimeException("Mã OTP chưa được gửi hoặc đã hết hạn. Vui lòng yêu cầu gửi lại mã.");
+        }
+
+        if (profile.getOtpExpiry().isBefore(LocalDateTime.now())) {
+            profile.setOtpCode(null);
+            profile.setOtpExpiry(null);
+            profile.setOtpSentAt(null);
+            profile.setOtpAttempts(null);
+            profileRepository.save(profile);
+            throw new RuntimeException("Mã OTP đã hết hạn. Vui lòng yêu cầu gửi lại mã.");
+        }
+
+        if (profile.getOtpAttempts() != null && profile.getOtpAttempts() >= MAX_OTP_ATTEMPTS) {
+            profile.setOtpCode(null);
+            profile.setOtpExpiry(null);
+            profile.setOtpSentAt(null);
+            profile.setOtpAttempts(null);
+            profileRepository.save(profile);
+            throw new RuntimeException("Bạn đã nhập sai mã OTP quá " + MAX_OTP_ATTEMPTS + " lần. Vui lòng yêu cầu gửi lại mã.");
+        }
+
+        if (!otpCode.equals(profile.getOtpCode())) {
+            profile.setOtpAttempts(profile.getOtpAttempts() == null ? 1 : profile.getOtpAttempts() + 1);
+            profileRepository.save(profile);
+            int remaining = MAX_OTP_ATTEMPTS - profile.getOtpAttempts();
+            throw new RuntimeException("Mã OTP không đúng. Còn " + remaining + " lần thử.");
+        }
+
+        // OTP đúng -> kích hoạt tài khoản
+        profile.setIsActive(true);
+        profile.setOtpCode(null);
+        profile.setOtpExpiry(null);
+        profile.setOtpSentAt(null);
+        profile.setOtpAttempts(null);
+        profileRepository.save(profile);
+    }
+
+    public void resendOtp(String email) {
+        ProfileEntity profile = profileRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản với email này."));
+
+        if (profile.getIsActive()) {
+            throw new RuntimeException("Tài khoản này đã được kích hoạt.");
+        }
+
+        // Kiểm tra thời gian chờ giữa các lần gửi lại
+        if (profile.getOtpSentAt() != null) {
+            long secondsElapsed = java.time.Duration.between(profile.getOtpSentAt(), LocalDateTime.now()).getSeconds();
+            if (secondsElapsed < RESEND_COOLDOWN_SECONDS) {
+                long remaining = RESEND_COOLDOWN_SECONDS - secondsElapsed;
+                throw new RuntimeException("Vui lòng đợi " + remaining + " giây trước khi yêu cầu gửi lại mã OTP.");
+            }
+        }
+
+        // Tạo và gửi lại mã OTP mới
+        sendOtpEmail(profile);
     }
 
     public ProfileEntity toEntity(ProfileDTO profileDTO) {
@@ -135,6 +266,37 @@ public class ProfileService {
         }
 
         return toDTO(currentUser);
+    }
+
+    public Map<String, Object> completeProfile(com.example.moneymanager.dto.SetupProfileDTO requestDTO) {
+        ProfileEntity profile = profileRepository.findByEmail(requestDTO.getEmail())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản với email này."));
+
+        if (!profile.getIsActive()) {
+            throw new RuntimeException("Tài khoản chưa được kích hoạt. Vui lòng xác thực OTP trước.");
+        }
+
+        String fullName = requestDTO.getFullName() != null ? requestDTO.getFullName().trim() : "";
+        if (fullName.isBlank()) {
+            throw new RuntimeException("Họ và tên không được để trống.");
+        }
+
+        String password = requestDTO.getPassword();
+        if (password == null || password.isBlank()) {
+            throw new RuntimeException("Mật khẩu không được để trống.");
+        }
+        if (password.length() < 6) {
+            throw new RuntimeException("Mật khẩu phải có ít nhất 6 ký tự.");
+        }
+
+        profile.setFullName(fullName);
+        profile.setPassword(passwordEncoder.encode(password));
+        profile = profileRepository.save(profile);
+
+        return Map.of(
+                "token", jwtUtil.generateToken(profile.getEmail()),
+                "user", toDTO(profile)
+        );
     }
 
     public Map<String, Object> updateProfile(ProfileUpdateDTO requestDTO) {
@@ -240,7 +402,7 @@ public class ProfileService {
                 "\n\nLiên kết này sẽ hết hạn sau 24 giờ.\n" +
                 "Nếu bạn không yêu cầu thao tác này, vui lòng bỏ qua email này.";
 
-        emailService.sendEmail(profile.getEmail(), subject, body);
+        awsSesEmailService.sendEmail(profile.getEmail(), subject, body);
     }
 
     public void resetPassword(ResetPasswordRequestDTO requestDTO) {

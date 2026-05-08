@@ -7,9 +7,13 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AuthContext } from "../components/AuthContext";
 import LoadingScreen from "../components/LoadingScreen";
 import FloatingQuickMenu, { FloatingTabButton } from "./FloatingQuickMenu";
+import { COLORS } from "../constants/colors";
 import LoginScreen from "../screens/LoginScreen";
 import SignupScreen from "../screens/SignupScreen";
+import SetupProfileScreen from "../screens/CreateNameScreen";
+import CreatePasswordScreen from "../screens/CreatePasswordScreen";
 import ForgotPasswordScreen from "../screens/ForgotPasswordScreen";
+import VerifyOtpScreen from "../screens/VerifyOtpScreen";
 import DashboardScreen from "../screens/DashboardScreen";
 import ExpenseScreen from "../screens/ExpenseScreen";
 import AddExpenseScreen from "../screens/AddExpenseScreen";
@@ -58,8 +62,8 @@ function MainTabs() {
       <Tab.Navigator
         screenOptions={{
           headerShown: false,
-          tabBarActiveTintColor: "#22c55e",
-          tabBarInactiveTintColor: "#7b8a82",
+          tabBarActiveTintColor: COLORS.TAB_ACTIVE,
+          tabBarInactiveTintColor: COLORS.TAB_INACTIVE,
           tabBarLabelStyle: {
             fontSize: 11,
             fontWeight: "600",
@@ -67,8 +71,8 @@ function MainTabs() {
           },
           tabBarStyle: {
             height: 66,
-            backgroundColor: "#060a09",
-            borderTopColor: "#143225"
+            backgroundColor: COLORS.TAB_BG,
+            borderTopColor: COLORS.TAB_BORDER
           },
           tabBarItemStyle: {
             flex: 1
@@ -168,7 +172,33 @@ function AuthStack({ shouldShowOnboarding }) {
           headerShadowVisible: false,
           headerBackVisible: false,
           headerBackTitleVisible: false,
-          headerTintColor: "#e8f6ea"
+          headerTintColor: COLORS.DARK_TEXT
+        }}
+      />
+      <Stack.Screen
+        name="VerifyOtp"
+        component={VerifyOtpScreen}
+        options={{
+          title: "",
+          headerTransparent: true,
+          headerShadowVisible: false,
+          headerBackVisible: false,
+          headerBackTitleVisible: false,
+        headerTintColor: COLORS.DARK_TEXT
+        }}
+      />
+      <Stack.Screen
+        name="SetupProfile"
+        component={SetupProfileScreen}
+        options={{
+          headerShown: false
+        }}
+      />
+      <Stack.Screen
+        name="CreatePassword"
+        component={CreatePasswordScreen}
+        options={{
+          headerShown: false
         }}
       />
       <Stack.Screen
@@ -180,7 +210,7 @@ function AuthStack({ shouldShowOnboarding }) {
           headerShadowVisible: false,
           headerBackVisible: false,
           headerBackTitleVisible: false,
-          headerTintColor: "#e8f6ea"
+          headerTintColor: COLORS.DARK_TEXT
         }}
       />
     </Stack.Navigator>

@@ -5,6 +5,7 @@ import { AuthContext } from "../components/AuthContext";
 import { API_ENDPOINTS } from "../constants/api";
 import http from "../services/http";
 import { formatMoney, getApiErrorMessage } from "../utils/format";
+import { COLORS } from "../constants/colors";
 
 const PAYMENT_STATUS_LABELS = {
   PAID: "Đã thanh toán thành công",
@@ -115,22 +116,22 @@ export default function PaymentResultScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8fafc"
+    backgroundColor: COLORS.BG
   },
   content: {
     padding: 16,
     gap: 14
   },
   statusCard: {
-    backgroundColor: "#ffffff",
+    backgroundColor: COLORS.CARD,
     borderRadius: 18,
     padding: 18,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
+    borderColor: COLORS.CARD_BORDER,
     gap: 12
   },
   sectionTitle: {
-    color: "#334155",
+    color: COLORS.TEXT,
     fontWeight: "600"
   },
   statusValue: {
@@ -138,10 +139,10 @@ const styles = StyleSheet.create({
     fontWeight: "700"
   },
   statusPaid: {
-    color: "#15803d"
+    color: COLORS.INCOME
   },
   statusNormal: {
-    color: "#1e293b"
+    color: COLORS.TEXT
   },
   detailRow: {
     flexDirection: "row",
@@ -149,32 +150,32 @@ const styles = StyleSheet.create({
     gap: 12
   },
   detailLabel: {
-    color: "#64748b"
+    color: COLORS.TEXT_SECONDARY
   },
   detailValue: {
     flex: 1,
     textAlign: "right",
-    color: "#0f172a",
+    color: COLORS.TEXT,
     fontWeight: "600"
   },
   errorBox: {
-    backgroundColor: "#fef2f2",
+    backgroundColor: COLORS.EXPENSE_LIGHT,
     borderWidth: 1,
     borderColor: "#fecaca",
     borderRadius: 14,
     padding: 14
   },
   errorText: {
-    color: "#b91c1c"
+    color: COLORS.EXPENSE
   },
   homeButton: {
-    backgroundColor: "#2563eb",
+    backgroundColor: COLORS.PRIMARY,
     borderRadius: 12,
     paddingVertical: 13,
     alignItems: "center"
   },
   homeButtonText: {
-    color: "#ffffff",
+    color: COLORS.WHITE,
     fontWeight: "700"
   }
 });

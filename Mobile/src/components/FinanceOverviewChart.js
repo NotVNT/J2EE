@@ -3,34 +3,35 @@ import { View, Text, StyleSheet, Dimensions, Pressable } from "react-native";
 import Svg, { Path, G, Defs, LinearGradient, Stop, Text as SvgText } from "react-native-svg";
 import { buildRecentMonthKeys, formatMonthKeyLabel, formatMonthShortLabel, toMonthKey } from "../utils/financeStats";
 import { formatMoney } from "../utils/format";
+import { COLORS } from "../constants/colors";
 
 const screenWidth = Dimensions.get("window").width;
 
 const SLICE_COLORS = {
-  income: "#22c55e",
-  expense: "#f97316",
-  balance: "#3b82f6",
+  income: COLORS.INCOME,
+  expense: COLORS.EXPENSE,
+  balance: COLORS.PRIMARY,
 };
 
 const VALUE_COLORS = {
-  income: "#15803d",
-  expense: "#dc2626",
-  balance: "#2563eb",
+  income: COLORS.INCOME,
+  expense: COLORS.EXPENSE,
+  balance: COLORS.PRIMARY_DARK,
 };
 
 const SLICE_GRADIENTS = {
-  income: ["#34d399", "#059669"],
-  expense: ["#fb923c", "#ea580c"],
-  balance: ["#60a5fa", "#2563eb"],
+  income: ["#4DB6AC", "#2A9D8F"],
+  expense: ["#F4A261", "#E76F51"],
+  balance: ["#FF8FA3", "#E8597A"],
 };
 
 const VALUE_GRADIENTS = {
-  income: ["#34d399", "#059669"],
-  expense: ["#fb923c", "#ea580c"],
-  balance: ["#60a5fa", "#2563eb"],
+  income: ["#4DB6AC", "#2A9D8F"],
+  expense: ["#F4A261", "#E76F51"],
+  balance: ["#FF8FA3", "#E8597A"],
 };
 
-const CENTER_GRADIENT = ["#2563eb", "#059669"];
+const CENTER_GRADIENT = ["#FF8FA3", "#E8597A"];
 const SLICE_GAP_ANGLE = 1.2;
 
 // ─── Helpers ─────────────────────────────────────────────────────
@@ -218,7 +219,7 @@ function MonthlyBarsPlaceholder({ monthlySeries = [] }) {
                       width: 10,
                       height: incomeHeight,
                       borderRadius: 4,
-                      backgroundColor: "#22c55e",
+                      backgroundColor: COLORS.INCOME,
                       opacity: 0.8,
                     }}
                   />
@@ -235,7 +236,7 @@ function MonthlyBarsPlaceholder({ monthlySeries = [] }) {
                       width: 10,
                       height: expenseHeight,
                       borderRadius: 4,
-                      backgroundColor: "#f97316",
+                      backgroundColor: COLORS.EXPENSE,
                       opacity: 0.8,
                     }}
                   />
@@ -478,10 +479,10 @@ const FinanceOverviewChart = ({ totalBalance, totalIncome, totalExpense, monthly
 // ─── Styles ──────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "#fff",
+    backgroundColor: COLORS.CARD,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#dbe3f2",
+    borderColor: COLORS.CARD_BORDER,
     padding: 14,
   },
   monthSwitcherRow: {
@@ -495,23 +496,23 @@ const styles = StyleSheet.create({
     height: 28,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#dbe3f2",
+    borderColor: COLORS.CARD_BORDER,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#f8fafc",
+    backgroundColor: COLORS.ROSE_MIST,
   },
   monthNavBtnDisabled: {
     opacity: 0.4,
   },
   monthNavText: {
-    color: "#334155",
+    color: COLORS.TEXT,
     fontWeight: "800",
   },
   monthNavTextDisabled: {
-    color: "#94a3b8",
+    color: COLORS.TEXT_MUTED,
   },
   monthYearText: {
-    color: "#64748b",
+    color: COLORS.TEXT_SECONDARY,
     fontSize: 12,
     fontWeight: "700",
     textAlign: "center",
@@ -532,7 +533,7 @@ const styles = StyleSheet.create({
   },
   legendLabel: {
     flex: 1,
-    color: "#334155",
+    color: COLORS.TEXT,
     fontSize: 13,
     fontWeight: "600",
   },
@@ -552,9 +553,9 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
+    borderColor: COLORS.CARD_BORDER,
     borderRadius: 12,
-    backgroundColor: "#f8fafc",
+    backgroundColor: COLORS.BG,
     paddingVertical: 18,
     paddingHorizontal: 12,
     alignItems: "center",
@@ -563,14 +564,14 @@ const styles = StyleSheet.create({
   },
   currentMonthBtn: {
     borderWidth: 1,
-    borderColor: "#bbf7d0",
-    backgroundColor: "#f0fdf4",
+    borderColor: COLORS.CARD_BORDER,
+    backgroundColor: COLORS.ROSE_MIST,
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
   currentMonthBtnText: {
-    color: "#15803d",
+    color: COLORS.PRIMARY,
     fontSize: 12,
     fontWeight: "700",
   },
@@ -578,7 +579,7 @@ const styles = StyleSheet.create({
   // Tooltip
   tooltip: {
     position: "absolute",
-    backgroundColor: "#1e293b",
+    backgroundColor: COLORS.DARK_BG,
     borderRadius: 10,
     paddingHorizontal: 10,
     paddingVertical: 8,
@@ -600,7 +601,7 @@ const styles = StyleSheet.create({
     marginRight: 6,
   },
   tooltipName: {
-    color: "#e2e8f0",
+    color: COLORS.DARK_TEXT,
     fontSize: 12,
     fontWeight: "700",
   },
@@ -610,7 +611,7 @@ const styles = StyleSheet.create({
     marginBottom: 1,
   },
   tooltipPercent: {
-    color: "#94a3b8",
+    color: COLORS.DARK_TEXT_SECONDARY,
     fontSize: 11,
     fontWeight: "600",
   },
@@ -620,7 +621,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   monthlyTitle: {
-    color: "#64748b",
+    color: COLORS.TEXT_SECONDARY,
     fontSize: 13,
     fontWeight: "600",
     marginBottom: 8,
@@ -641,7 +642,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   monthlyBarLabel: {
-    color: "#94a3b8",
+    color: COLORS.TEXT_MUTED,
     fontSize: 11,
     fontWeight: "600",
     marginTop: 4,
@@ -649,15 +650,15 @@ const styles = StyleSheet.create({
 
   // Empty state
   emptyContainer: {
-    backgroundColor: "#fff",
+    backgroundColor: COLORS.CARD,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#dbe3f2",
+    borderColor: COLORS.CARD_BORDER,
     padding: 24,
     alignItems: "center",
   },
   emptyText: {
-    color: "#64748b",
+    color: COLORS.TEXT_SECONDARY,
     fontSize: 14,
     textAlign: "center",
   },

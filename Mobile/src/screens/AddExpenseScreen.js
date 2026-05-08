@@ -6,6 +6,7 @@ import { API_ENDPOINTS } from "../constants/api";
 import { SUCCESS_ALERT_MESSAGES, SUCCESS_ALERT_TITLE } from "../constants/alertMessages";
 import { formatCurrencyInput, getApiErrorMessage, parseCurrencyInput, todayIso } from "../utils/format";
 import { PickDateField } from "../utils/pickDate";
+import { COLORS } from "../constants/colors";
 
 export default function AddExpenseScreen() {
   const navigation = useNavigation();
@@ -123,21 +124,21 @@ export default function AddExpenseScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8fafc"
+    backgroundColor: COLORS.BG
   },
   content: {
     padding: 16
   },
   label: {
-    color: "#334155",
+    color: COLORS.TEXT,
     marginBottom: 6,
     fontWeight: "600"
   },
   input: {
-    backgroundColor: "#fff",
+    backgroundColor: COLORS.CARD,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
+    borderColor: COLORS.CARD_BORDER,
     paddingHorizontal: 14,
     paddingVertical: 11,
     marginBottom: 12
@@ -151,28 +152,28 @@ const styles = StyleSheet.create({
   categoryChip: {
     width: "48%",
     borderWidth: 1,
-    borderColor: "#cbd5e1",
+    borderColor: COLORS.CARD_BORDER,
     borderRadius: 12,
     paddingHorizontal: 10,
     paddingVertical: 8,
-    backgroundColor: "#fff",
+    backgroundColor: COLORS.CARD,
     marginBottom: 8,
     alignItems: "center"
   },
   categoryChipActive: {
-    borderColor: "#0f766e",
-    backgroundColor: "#ccfbf1"
+    borderColor: COLORS.PRIMARY,
+    backgroundColor: COLORS.ROSE_MIST
   },
   categoryText: {
-    color: "#334155",
+    color: COLORS.TEXT,
     textAlign: "center"
   },
   categoryTextActive: {
-    color: "#115e59",
+    color: COLORS.PRIMARY,
     fontWeight: "700"
   },
   saveButton: {
-    backgroundColor: "#0f766e",
+    backgroundColor: COLORS.PRIMARY,
     borderRadius: 12,
     paddingVertical: 13,
     alignItems: "center"
@@ -181,7 +182,7 @@ const styles = StyleSheet.create({
     opacity: 0.6
   },
   saveButtonText: {
-    color: "#fff",
+    color: COLORS.WHITE,
     fontWeight: "700"
   }
 });

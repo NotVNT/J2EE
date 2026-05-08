@@ -5,6 +5,7 @@ import http from "../services/http";
 import { API_ENDPOINTS } from "../constants/api";
 import { getApiErrorMessage } from "../utils/format";
 import devbotLogo from "../assets/devbot.png";
+import { COLORS } from "../constants/colors";
 
 export default function ForgotPasswordScreen() {
   const navigation = useNavigation();
@@ -76,7 +77,7 @@ export default function ForgotPasswordScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#05070b"
+    backgroundColor: COLORS.DARK_BG
   },
   bgGlowTop: {
     position: "absolute",
@@ -85,7 +86,7 @@ const styles = StyleSheet.create({
     width: 300,
     height: 300,
     borderRadius: 150,
-    backgroundColor: "rgba(58, 255, 98, 0.24)"
+    backgroundColor: COLORS.PRIMARY_GLOW
   },
   bgGlowBottom: {
     position: "absolute",
@@ -94,7 +95,7 @@ const styles = StyleSheet.create({
     width: 320,
     height: 320,
     borderRadius: 160,
-    backgroundColor: "rgba(58, 255, 98, 0.18)"
+    backgroundColor: COLORS.PRIMARY_GLOW
   },
   content: {
     flexGrow: 1,
@@ -112,14 +113,14 @@ const styles = StyleSheet.create({
     height: 72
   },
   title: {
-    color: "#f3faf4",
+    color: COLORS.DARK_TEXT,
     fontSize: 24,
     fontWeight: "700",
     textAlign: "center"
   },
   subtitle: {
     marginTop: 8,
-    color: "#9ca9a1",
+    color: COLORS.DARK_TEXT_SECONDARY,
     fontSize: 13,
     textAlign: "center"
   },
@@ -127,26 +128,26 @@ const styles = StyleSheet.create({
     marginTop: 24,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "rgba(57, 220, 61, 0.2)",
-    backgroundColor: "rgba(7, 12, 10, 0.84)",
+    borderColor: COLORS.DARK_BORDER_LIGHT,
+    backgroundColor: COLORS.DARK_CARD,
     padding: 14
   },
   inputWrap: {
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#1f2b23",
-    backgroundColor: "#0d1512",
+    borderColor: COLORS.DARK_BORDER,
+    backgroundColor: COLORS.DARK_INPUT_BG,
     marginBottom: 10
   },
   input: {
     paddingVertical: 12,
     paddingHorizontal: 12,
-    color: "#f0f5f2"
+    color: COLORS.DARK_TEXT
   },
   actionButton: {
     marginTop: 4,
     borderRadius: 10,
-    backgroundColor: "#39dc3d",
+    backgroundColor: COLORS.PRIMARY,
     paddingVertical: 12,
     alignItems: "center"
   },
@@ -154,7 +155,7 @@ const styles = StyleSheet.create({
     opacity: 0.7
   },
   actionButtonText: {
-    color: "#082209",
+    color: COLORS.DARK_TEXT,
     fontSize: 15,
     fontWeight: "800"
   },
@@ -163,7 +164,7 @@ const styles = StyleSheet.create({
     alignItems: "center"
   },
   backButtonText: {
-    color: "#39dc3d",
+    color: COLORS.PRIMARY_LIGHT,
     fontSize: 12,
     fontWeight: "700"
   }

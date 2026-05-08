@@ -2,7 +2,6 @@ package com.example.moneymanager.controller;
 
     import com.example.moneymanager.entity.ProfileEntity;
     import com.example.moneymanager.service.*;
-    import jakarta.mail.MessagingException;
     import lombok.RequiredArgsConstructor;
     import org.springframework.http.ResponseEntity;
     import org.springframework.web.bind.annotation.GetMapping;
@@ -20,17 +19,17 @@ package com.example.moneymanager.controller;
         private final ExcelService excelService;
         private final IncomeService incomeService;
         private final ExpenseService expenseService;
-        private final EmailService emailService;
+        private final AwsSesEmailService awsSesEmailService;
         private final ProfileService profileService;
         private final SubscriptionService subscriptionService;
 
         @GetMapping("/income-excel")
-        public ResponseEntity<Void> emailIncomeExcel() throws IOException, MessagingException {
+        public ResponseEntity<Void> emailIncomeExcel() throws IOException {
             subscriptionService.ensureCanExport(profileService.getCurrentProfile());
             ProfileEntity profile = profileService.getCurrentProfile();
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             excelService.writeIncomesToExcel(baos, incomeService.getCurrentMonthIncomesForCurrentUser());
-            emailService.sendEmailWithAttachment(profile.getEmail(),
+            awsSesEmailService.sendEmailWithAttachment(profile.getEmail(),
                     "Your Income Excel Report",
                     "Please find attached your income report",
                     baos.toByteArray(),
@@ -39,12 +38,12 @@ package com.example.moneymanager.controller;
         }
 
         @GetMapping("/expense-excel")
-        public ResponseEntity<Void> emailExpenseExcel() throws IOException, MessagingException {
+        public ResponseEntity<Void> emailExpenseExcel() throws IOException {
             subscriptionService.ensureCanExport(profileService.getCurrentProfile());
             ProfileEntity profile = profileService.getCurrentProfile();
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             excelService.writeExpensesToExcel(baos, expenseService.getCurrentMonthExpensesForCurrentUser());
-            emailService.sendEmailWithAttachment(
+            awsSesEmailService.sendEmailWithAttachment(
                     profile.getEmail(),
                     "Your Expense Excel Report",
                     "Please find attached your expense report.",

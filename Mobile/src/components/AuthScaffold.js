@@ -1,6 +1,7 @@
 import React from "react";
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { COLORS } from "../constants/colors";
 
 export default function AuthScaffold({
   badgeText,
@@ -54,7 +55,7 @@ export const authStyles = StyleSheet.create({
     justifyContent: "space-between"
   },
   inputLabel: {
-    color: "#234039",
+    color: COLORS.TEXT,
     fontSize: 13,
     fontWeight: "600",
     marginBottom: 8
@@ -62,20 +63,20 @@ export const authStyles = StyleSheet.create({
   input: {
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#d5e2d7",
-    backgroundColor: "#f9fcf8",
+    borderColor: COLORS.CARD_BORDER,
+    backgroundColor: COLORS.BG,
     paddingHorizontal: 14,
     paddingVertical: 13,
-    color: "#16322b"
+    color: COLORS.TEXT
   },
   inlineLink: {
-    color: "#2f7a5a",
+    color: COLORS.PRIMARY_LIGHT,
     fontSize: 13,
     fontWeight: "600"
   },
   primaryButton: {
     marginTop: 20,
-    backgroundColor: "#1f7a5a",
+    backgroundColor: COLORS.PRIMARY,
     borderRadius: 14,
     paddingVertical: 14,
     alignItems: "center"
@@ -84,12 +85,12 @@ export const authStyles = StyleSheet.create({
     opacity: 0.65
   },
   primaryButtonText: {
-    color: "#ffffff",
+    color: COLORS.WHITE,
     fontSize: 15,
     fontWeight: "700"
   },
   helperText: {
-    color: "#5e726c",
+    color: COLORS.TEXT_SECONDARY,
     marginTop: 8,
     fontSize: 12,
     lineHeight: 18
@@ -104,20 +105,20 @@ export const authStyles = StyleSheet.create({
     fontWeight: "600"
   },
   statusPending: {
-    backgroundColor: "#fff5dd",
-    color: "#946a1b"
+    backgroundColor: COLORS.WARNING_LIGHT,
+    color: COLORS.WARNING
   },
   statusSuccess: {
-    backgroundColor: "#dff5e8",
-    color: "#1f7a5a"
+    backgroundColor: COLORS.INCOME_LIGHT,
+    color: COLORS.INCOME
   },
   statusError: {
-    backgroundColor: "#fde8e8",
-    color: "#b42318"
+    backgroundColor: COLORS.EXPENSE_LIGHT,
+    color: COLORS.EXPENSE
   },
   apiHint: {
     marginTop: 8,
-    color: "#7b8d87",
+    color: COLORS.TEXT_MUTED,
     fontSize: 11
   },
   footerRow: {
@@ -126,7 +127,7 @@ export const authStyles = StyleSheet.create({
     alignItems: "center"
   },
   footerText: {
-    color: "#4c5f59",
+    color: COLORS.TEXT_SECONDARY,
     marginRight: 6
   },
   footerLink: {

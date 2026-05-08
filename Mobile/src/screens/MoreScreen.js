@@ -2,6 +2,7 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { AuthContext } from "../components/AuthContext";
+import { COLORS } from "../constants/colors";
 
 function UserAvatar({ fullName }) {
   const initial = (fullName || "U").slice(0, 1).toUpperCase();
@@ -56,7 +57,7 @@ export default function MoreScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f3f5f9",
+    backgroundColor: COLORS.BG,
     paddingTop: 50
   },
   content: {
@@ -65,11 +66,11 @@ const styles = StyleSheet.create({
     paddingBottom: 24
   },
   heroCard: {
-    backgroundColor: "#111827",
+    backgroundColor: COLORS.PRIMARY,
     borderRadius: 18,
     padding: 16,
     marginBottom: 14,
-    shadowColor: "#111827",
+    shadowColor: COLORS.PRIMARY,
     shadowOpacity: 0.2,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
@@ -83,14 +84,14 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 14,
-    backgroundColor: "#1f2937",
+    backgroundColor: COLORS.PRIMARY_DARK,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: "#374151"
+    borderColor: COLORS.PRIMARY_LIGHT
   },
   avatarText: {
-    color: "#ffffff",
+    color: COLORS.WHITE,
     fontWeight: "800",
     fontSize: 20
   },
@@ -99,18 +100,18 @@ const styles = StyleSheet.create({
     flex: 1
   },
   heroTitle: {
-    color: "#9ca3af",
+    color: COLORS.DARK_TEXT_SECONDARY,
     fontSize: 12,
     fontWeight: "600"
   },
   heroName: {
-    color: "#ffffff",
+    color: COLORS.WHITE,
     fontSize: 19,
     fontWeight: "800",
     marginTop: 2
   },
   heroEmail: {
-    color: "#cbd5e1",
+    color: COLORS.PEACH,
     marginTop: 12,
     fontSize: 14
   },
@@ -119,15 +120,15 @@ const styles = StyleSheet.create({
     marginTop: 2
   },
   sectionTitle: {
-    color: "#111827",
+    color: COLORS.TEXT,
     fontSize: 16,
     fontWeight: "800"
   },
   menuCard: {
-    backgroundColor: "#ffffff",
+    backgroundColor: COLORS.CARD,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
+    borderColor: COLORS.CARD_BORDER,
     paddingVertical: 14,
     paddingHorizontal: 12,
     marginBottom: 10,
@@ -139,35 +140,35 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12
   },
   menuTitle: {
-    color: "#0f172a",
+    color: COLORS.TEXT,
     fontSize: 16,
     fontWeight: "700"
   },
   menuDescription: {
-    color: "#64748b",
+    color: COLORS.TEXT_SECONDARY,
     marginTop: 3,
     lineHeight: 18
   },
   menuArrow: {
-    color: "#94a3b8",
+    color: COLORS.TEXT_MUTED,
     fontSize: 24,
     fontWeight: "700"
   },
   noteCard: {
     marginTop: 4,
-    backgroundColor: "#eff6ff",
+    backgroundColor: COLORS.ROSE_MIST,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#bfdbfe",
+    borderColor: COLORS.CARD_BORDER,
     padding: 12
   },
   noteTitle: {
-    color: "#1d4ed8",
+    color: COLORS.PRIMARY,
     fontWeight: "800",
     marginBottom: 4
   },
   noteText: {
-    color: "#1e3a8a",
+    color: COLORS.PRIMARY_DARK,
     lineHeight: 18
   }
 });

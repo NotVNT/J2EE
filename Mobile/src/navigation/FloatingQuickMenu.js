@@ -1,5 +1,6 @@
 ﻿import React, { useEffect, useMemo, useRef } from "react";
 import { Animated, Easing, Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { COLORS } from "../constants/colors";
 
 export function FloatingTabButton({ onPress }) {
   return (
@@ -82,11 +83,11 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: "#22c55e",
+    backgroundColor: COLORS.PRIMARY,
     justifyContent: "center",
     alignItems: "center",
     marginTop: -24,
-    shadowColor: "#22c55e",
+    shadowColor: COLORS.PRIMARY,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.28,
     shadowRadius: 10,
@@ -94,7 +95,7 @@ const styles = StyleSheet.create({
     alignSelf: "center"
   },
   floatingButtonIcon: {
-    color: "#05250f",
+    color: COLORS.DARK_TEXT,
     fontSize: 24,
     fontWeight: "800",
     marginTop: -2
@@ -124,11 +125,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 10,
-    backgroundColor: "#0d1f17",
+    backgroundColor: COLORS.DARK_CARD_SOLID,
     paddingVertical: 10,
     paddingHorizontal: 10,
     borderWidth: 1,
-    borderColor: "#17412d",
+    borderColor: COLORS.DARK_BORDER,
     width: "48%",
     alignSelf: "flex-start"
   },
@@ -137,7 +138,7 @@ const styles = StyleSheet.create({
     marginRight: 10
   },
   quickMenuText: {
-    color: "#e6f6ec",
+    color: COLORS.DARK_TEXT,
     fontSize: 14,
     fontWeight: "600"
   }

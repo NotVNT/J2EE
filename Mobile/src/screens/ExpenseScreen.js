@@ -6,6 +6,7 @@ import { API_ENDPOINTS } from "../constants/api";
 import { SUCCESS_ALERT_MESSAGES, SUCCESS_ALERT_TITLE } from "../constants/alertMessages";
 import { formatDate, formatMoney, getApiErrorMessage } from "../utils/format";
 import IncomeExpenseChart from "../components/IncomeExpenseChart";
+import { COLORS } from "../constants/colors";
 
 function ExpenseItem({ item, onDelete }) {
   const amount = Number(item?.amount || 0);
@@ -108,7 +109,7 @@ export default function ExpenseScreen() {
         ListHeaderComponent={
           expenses.length ? (
             <View>
-              <IncomeExpenseChart data={expenses} title="Tổng quan chi tiêu" colorPrimary="#b42318" />
+              <IncomeExpenseChart data={expenses} title="Tổng quan chi tiêu" colorPrimary={COLORS.EXPENSE} />
               <View style={styles.listHeader}>
                 <Text style={styles.listTitle}>Danh sách chi tiêu</Text>
               </View>
@@ -133,18 +134,18 @@ export default function ExpenseScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f2f4f7",
+    backgroundColor: COLORS.BG,
     padding: 16,
     paddingTop: 50
   },
   summaryCard: {
-    backgroundColor: "#ffffff",
+    backgroundColor: COLORS.CARD,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: "#e4e7ec",
+    borderColor: COLORS.CARD_BORDER,
     padding: 14,
     marginBottom: 12,
-    shadowColor: "#101828",
+    shadowColor: COLORS.TEXT,
     shadowOpacity: 0.06,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
@@ -155,34 +156,34 @@ const styles = StyleSheet.create({
   },
   summaryLabel: {
     fontSize: 13,
-    color: "#667085",
+    color: COLORS.TEXT_SECONDARY,
     fontWeight: "700"
   },
   summaryAmount: {
     marginTop: 4,
     fontSize: 26,
-    color: "#b42318",
+    color: COLORS.EXPENSE,
     fontWeight: "800"
   },
   summaryHint: {
     marginTop: 4,
     fontSize: 12,
-    color: "#667085"
+    color: COLORS.TEXT_SECONDARY
   },
   addButton: {
     marginTop: 12,
-    backgroundColor: "#0f766e",
+    backgroundColor: COLORS.PRIMARY,
     borderRadius: 12,
     paddingVertical: 12,
     alignItems: "center",
-    shadowColor: "#0f766e",
+    shadowColor: COLORS.PRIMARY,
     shadowOpacity: 0.25,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },
     elevation: 3
   },
   addButtonText: {
-    color: "#fff",
+    color: COLORS.WHITE,
     fontWeight: "800",
     fontSize: 15
   },
@@ -197,15 +198,15 @@ const styles = StyleSheet.create({
     marginBottom: 8
   },
   listTitle: {
-    color: "#101828",
+    color: COLORS.TEXT,
     fontWeight: "800",
     fontSize: 16
   },
   itemCard: {
-    backgroundColor: "#fff",
+    backgroundColor: COLORS.CARD,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#e4e7ec",
+    borderColor: COLORS.CARD_BORDER,
     padding: 12,
     flexDirection: "row",
     justifyContent: "space-between",
@@ -222,7 +223,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: "#f2f4f7",
+    backgroundColor: COLORS.ROSE_MIST,
     alignItems: "center",
     justifyContent: "center",
     marginRight: 10
@@ -235,24 +236,24 @@ const styles = StyleSheet.create({
   },
   itemName: {
     fontWeight: "700",
-    color: "#0f172a",
+    color: COLORS.TEXT,
     fontSize: 15
   },
   itemMeta: {
     marginTop: 4,
-    color: "#667085",
+    color: COLORS.TEXT_SECONDARY,
     fontSize: 12
   },
   itemRight: {
     alignItems: "flex-end"
   },
   itemAmount: {
-    color: "#b42318",
+    color: COLORS.EXPENSE,
     fontWeight: "800"
   },
   deleteButton: {
     marginTop: 8,
-    backgroundColor: "#fef3f2",
+    backgroundColor: COLORS.EXPENSE_LIGHT,
     borderColor: "#fecdca",
     borderWidth: 1,
     borderRadius: 999,
@@ -260,7 +261,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4
   },
   deleteText: {
-    color: "#b42318",
+    color: COLORS.EXPENSE,
     fontWeight: "700",
     fontSize: 12
   },
@@ -275,23 +276,23 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 16,
     fontWeight: "800",
-    color: "#101828",
+    color: COLORS.TEXT,
     marginBottom: 6
   },
   emptyText: {
     textAlign: "center",
-    color: "#667085",
+    color: COLORS.TEXT_SECONDARY,
     lineHeight: 19,
     marginBottom: 14
   },
   emptyAction: {
-    backgroundColor: "#0f766e",
+    backgroundColor: COLORS.PRIMARY,
     borderRadius: 10,
     paddingHorizontal: 16,
     paddingVertical: 10
   },
   emptyActionText: {
-    color: "#ffffff",
+    color: COLORS.WHITE,
     fontWeight: "800"
   }
 });

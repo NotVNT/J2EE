@@ -6,6 +6,7 @@ import { API_ENDPOINTS } from "../constants/api";
 import { SUCCESS_ALERT_MESSAGES, SUCCESS_ALERT_TITLE } from "../constants/alertMessages";
 import { formatDate, formatMoney, getApiErrorMessage } from "../utils/format";
 import IncomeExpenseChart from "../components/IncomeExpenseChart";
+import { COLORS } from "../constants/colors";
 
 const FILTER_TYPES = {
   current: "current",
@@ -175,7 +176,7 @@ export default function IncomeScreen() {
         ListHeaderComponent={
           incomes.length ? (
             <View>
-              <IncomeExpenseChart data={incomes} title="Tổng quan thu nhập" colorPrimary="#15803d" />
+              <IncomeExpenseChart data={incomes} title="Tổng quan thu nhập" colorPrimary={COLORS.INCOME} />
               <View style={styles.listHeader}>
                 <Text style={styles.listTitle}>Danh sách thu nhập</Text>
               </View>
@@ -204,22 +205,22 @@ export default function IncomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f2f4f7",
+    backgroundColor: COLORS.BG,
     padding: 16,
     paddingTop: 24
   },
   filterCard: {
-    backgroundColor: "#ffffff",
+    backgroundColor: COLORS.CARD,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#e4e7ec",
+    borderColor: COLORS.CARD_BORDER,
     padding: 12,
     marginBottom: 12
   },
   filterTitle: {
     fontSize: 14,
     fontWeight: "800",
-    color: "#101828",
+    color: COLORS.TEXT,
     marginBottom: 10
   },
   filterRow: {
@@ -228,8 +229,8 @@ const styles = StyleSheet.create({
   filterChip: {
     flex: 1,
     borderWidth: 1,
-    borderColor: "#d0d5dd",
-    backgroundColor: "#ffffff",
+    borderColor: COLORS.CARD_BORDER,
+    backgroundColor: COLORS.CARD,
     borderRadius: 10,
     paddingVertical: 10,
     alignItems: "center",
@@ -239,35 +240,35 @@ const styles = StyleSheet.create({
     marginRight: 0
   },
   filterChipActive: {
-    borderColor: "#22c55e",
-    backgroundColor: "#ecfdf3"
+    borderColor: COLORS.PRIMARY,
+    backgroundColor: COLORS.ROSE_MIST
   },
   filterChipText: {
-    color: "#344054",
+    color: COLORS.TEXT,
     fontWeight: "700",
     fontSize: 12
   },
   filterChipTextActive: {
-    color: "#067647"
+    color: COLORS.PRIMARY
   },
   monthInput: {
     marginTop: 10,
-    backgroundColor: "#f9fafb",
+    backgroundColor: COLORS.BG,
     borderWidth: 1,
-    borderColor: "#d0d5dd",
+    borderColor: COLORS.CARD_BORDER,
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 11,
-    color: "#101828"
+    color: COLORS.TEXT
   },
   summaryCard: {
-    backgroundColor: "#ffffff",
+    backgroundColor: COLORS.CARD,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: "#e4e7ec",
+    borderColor: COLORS.CARD_BORDER,
     padding: 14,
     marginBottom: 14,
-    shadowColor: "#101828",
+    shadowColor: COLORS.TEXT,
     shadowOpacity: 0.06,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
@@ -281,23 +282,23 @@ const styles = StyleSheet.create({
   summaryAmount: {
     marginTop: 4,
     fontSize: 26,
-    color: "#067647",
+    color: COLORS.INCOME,
     fontWeight: "800"
   },
   summaryHint: {
     marginTop: 4,
     fontSize: 12,
-    color: "#667085"
+    color: COLORS.TEXT_SECONDARY
   },
   addButton: {
     marginTop: 12,
-    backgroundColor: "#15803d",
+    backgroundColor: COLORS.PRIMARY,
     borderRadius: 12,
     paddingVertical: 12,
     alignItems: "center"
   },
   addButtonText: {
-    color: "#fff",
+    color: COLORS.WHITE,
     fontWeight: "800",
     fontSize: 15
   },
@@ -312,15 +313,15 @@ const styles = StyleSheet.create({
     marginBottom: 8
   },
   listTitle: {
-    color: "#101828",
+    color: COLORS.TEXT,
     fontWeight: "800",
     fontSize: 16
   },
   itemCard: {
-    backgroundColor: "#fff",
+    backgroundColor: COLORS.CARD,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#e4e7ec",
+    borderColor: COLORS.CARD_BORDER,
     padding: 12,
     flexDirection: "row",
     justifyContent: "space-between",
@@ -337,7 +338,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: "#f2f4f7",
+    backgroundColor: COLORS.ROSE_MIST,
     alignItems: "center",
     justifyContent: "center",
     marginRight: 10
@@ -350,19 +351,19 @@ const styles = StyleSheet.create({
   },
   itemName: {
     fontWeight: "700",
-    color: "#0f172a",
+    color: COLORS.TEXT,
     fontSize: 15
   },
   itemMeta: {
     marginTop: 4,
-    color: "#667085",
+    color: COLORS.TEXT_SECONDARY,
     fontSize: 12
   },
   itemRight: {
     alignItems: "flex-end"
   },
   itemAmount: {
-    color: "#067647",
+    color: COLORS.INCOME,
     fontWeight: "800"
   },
   deleteButton: {
@@ -390,12 +391,12 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 16,
     fontWeight: "800",
-    color: "#101828",
+    color: COLORS.TEXT,
     marginBottom: 6
   },
   emptyText: {
     textAlign: "center",
-    color: "#667085",
+    color: COLORS.TEXT_SECONDARY,
     lineHeight: 19,
     marginBottom: 14
   },
