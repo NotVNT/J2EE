@@ -23,6 +23,21 @@ public class S3Service {
     @Value("${aws.region}")
     private String region;
 
+    public String uploadBytes(byte[] data, String filename, String contentType, String username) {
+        String safeUsername = username != null ? username.replaceAll("[^a-zA-Z0-9@.-]", "_") : "anonymous";
+        String key = "userData/" + safeUsername + "/" + UUID.randomUUID() + "_" + filename;
+
+        PutObjectRequest request = PutObjectRequest.builder()
+                .bucket(bucketName)
+                .key(key)
+                .contentType(contentType)
+                .build();
+
+        s3Client.putObject(request, RequestBody.fromBytes(data));
+
+        return String.format("https://%s.s3.%s.amazonaws.com/%s", bucketName, region, key);
+    }
+
     public String uploadFile(MultipartFile file, String username) throws IOException {
         String originalFilename = file.getOriginalFilename();
         String extension = "";
