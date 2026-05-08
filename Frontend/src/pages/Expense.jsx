@@ -105,33 +105,32 @@ const Expense = () => {
 
   const handleDownloadExpenseDetails = async () => {
     if (exportLocked) { toast.error(exportUpgradeMessage); return; }
-    const loadingToast = toast.loading("Đang tạo báo cáo Excel qua AWS Lambda...");
     try {
-      const today = new Date();
-      const response = await axiosConfig.post(API_ENDPOINTS.GENERATE_EXPENSE_REPORT, {
-        month: today.getMonth() + 1,
-        year: today.getFullYear()
-      });
-      toast.dismiss(loadingToast);
-      if (response.data?.presignedUrl) {
-        window.open(response.data.presignedUrl, "_blank");
-        toast.success("Báo cáo Excel đã được tạo thành công!");
-      } else {
-        toast.error("Không tìm thấy link báo cáo");
-      }
+      const response = await axiosConfig.get(API_ENDPOINTS.EXPENSE_EXCEL_DOWNLOAD, { responseType: "blob" });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "expense_details.xlsx");
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success("Đã tải báo cáo Excel về máy!");
     } catch (error) {
-      toast.dismiss(loadingToast);
-      toast.error(error.response?.data?.message || "Lỗi khi tạo báo cáo. Vui lòng kiểm tra AWS Lambda.");
+      toast.error(error.response?.data?.message || "Lỗi khi tải báo cáo Excel.");
     }
   };
 
   const handleEmailExpenseDetails = async () => {
     if (exportLocked) { toast.error(exportUpgradeMessage); return; }
+    const loadingToast = toast.loading("Đang tạo và lưu báo cáo lên S3 qua AWS Lambda để gửi Email...");
     try {
       const response = await axiosConfig.get(API_ENDPOINTS.EMAIL_EXPENSE);
-      if (response.status === 200) toast.success("Email sent");
+      toast.dismiss(loadingToast);
+      if (response.status === 200) toast.success("Đã lưu trên S3 và gửi Email thành công!");
     } catch (e) {
-      toast.error(e.response?.data?.message || "Failed to email expense details.");
+      toast.dismiss(loadingToast);
+      toast.error(e.response?.data?.message || "Lỗi khi gửi email báo cáo.");
     }
   };
 
