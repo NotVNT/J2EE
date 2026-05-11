@@ -12,5 +12,7 @@ public enum NotificationType {
     MONTHLY_REPORT,
     PAYMENT,
     SYSTEM,
-    ADMIN
+    ADMIN,
+    GROUP_EXPENSE,
+    GROUP_SETTLEMENT
 }

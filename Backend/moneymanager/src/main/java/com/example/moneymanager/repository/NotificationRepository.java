@@ -26,4 +26,6 @@ public interface NotificationRepository extends JpaRepository<NotificationEntity
 
     // Find notifications by profile, type, and created after a specific time (for duplicate check)
     List<NotificationEntity> findByProfileIdAndTypeAndCreatedAtAfter(Long profileId, NotificationType type, LocalDateTime after);
+
+    void deleteByProfileId(Long profileId);
 }

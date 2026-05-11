@@ -40,4 +40,6 @@ public interface BudgetRepository extends JpaRepository<BudgetEntity, Long> {
 
     // Xoá toàn bộ budget thuộc một danh mục (dùng khi xoá danh mục)
     void deleteByCategoryId(Long categoryId);
+
+    void deleteByProfileId(Long profileId);
 }

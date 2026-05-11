@@ -56,8 +56,8 @@ const Signup = () => {
         profileImageUrl,
       });
       if (response.status === 201) {
-        toast.success("Tạo tài khoản thành công.");
-        navigate("/login");
+        toast.success("Đăng ký thành công! Vui lòng kiểm tra email để lấy mã OTP.");
+        navigate("/activate", { state: { email } });
       }
     } catch (err) {
       console.error("Something went wrong", err);

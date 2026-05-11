@@ -37,7 +37,11 @@ public class ExpenseService {
     public ExpenseResponseDTO addExpense(ExpenseDTO dto) {
         ProfileEntity profile = profileService.getCurrentProfile();
         subscriptionService.ensureCanCreateTransaction(profile, dto.getDate());
+        return addExpenseInternal(dto, profile);
+    }
 
+    // Internal method bypassing plan limits (used by cron)
+    public ExpenseResponseDTO addExpenseInternal(ExpenseDTO dto, ProfileEntity profile) {
         CategoryEntity category = categoryRepository.findById(dto.getCategoryId())
                 .orElseThrow(() -> new RuntimeException("Category not found"));
 

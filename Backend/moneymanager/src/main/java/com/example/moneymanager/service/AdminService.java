@@ -1,17 +1,8 @@
 package com.example.moneymanager.service;
 
-import com.example.moneymanager.dto.AdminOverviewDTO;
-import com.example.moneymanager.dto.AdminPaymentDTO;
-import com.example.moneymanager.entity.PaymentEntity;
-import com.example.moneymanager.entity.ProfileEntity;
-import com.example.moneymanager.entity.SubscriptionStatus;
-import com.example.moneymanager.repository.PaymentRepository;
-import com.example.moneymanager.repository.ProfileRepository;
-import com.example.moneymanager.dto.AdminBroadcastDTO;
-import com.example.moneymanager.dto.NotificationDTO;
-import com.example.moneymanager.entity.NotificationEntity;
-import com.example.moneymanager.repository.NotificationReadRepository;
-import com.example.moneymanager.repository.NotificationRepository;
+import com.example.moneymanager.dto.*;
+import com.example.moneymanager.entity.*;
+import com.example.moneymanager.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +21,13 @@ public class AdminService {
     private final NotificationService notificationService;
     private final NotificationRepository notificationRepository;
     private final NotificationReadRepository notificationReadRepository;
+    private final ExpenseRepository expenseRepository;
+    private final IncomeRepository incomeRepository;
+    private final BudgetRepository budgetRepository;
+    private final CategoryRepository categoryRepository;
+    private final SavingGoalRepository savingGoalRepository;
+    private final SavingGoalContributionRepository savingGoalContributionRepository;
+    private final EmailNotificationPreferenceRepository emailNotificationPreferenceRepository;
 
     @Transactional(readOnly = true)
     public AdminOverviewDTO getOverview() {
@@ -143,6 +141,123 @@ public class AdminService {
         // Delete all read records first
         notificationReadRepository.deleteByNotificationId(id);
         notificationRepository.delete(notification);
+    }
+
+    // ─── User CRUD ───────────────────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public List<AdminUserDTO> getUsers(String search, String plan, String status, Integer limit) {
+        ensureAdmin();
+
+        Stream<ProfileEntity> stream = profileRepository.findAll().stream();
+
+        if (search != null && !search.isBlank()) {
+            String kw = search.trim().toLowerCase(Locale.ROOT);
+            stream = stream.filter(p ->
+                    (p.getFullName() != null && p.getFullName().toLowerCase(Locale.ROOT).contains(kw))
+                    || (p.getEmail() != null && p.getEmail().toLowerCase(Locale.ROOT).contains(kw)));
+        }
+        if (plan != null && !plan.isBlank() && !"ALL".equalsIgnoreCase(plan)) {
+            stream = stream.filter(p -> plan.equalsIgnoreCase(p.getSubscriptionPlan() != null ? p.getSubscriptionPlan().name() : ""));
+        }
+        if (status != null && !status.isBlank() && !"ALL".equalsIgnoreCase(status)) {
+            if ("active".equalsIgnoreCase(status)) stream = stream.filter(p -> Boolean.TRUE.equals(p.getIsActive()));
+            else if ("inactive".equalsIgnoreCase(status)) stream = stream.filter(p -> !Boolean.TRUE.equals(p.getIsActive()));
+        }
+        if (limit != null && limit > 0) stream = stream.limit(limit);
+
+        return stream.map(this::toAdminUserDTO).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public AdminUserDTO getUserById(Long id) {
+        ensureAdmin();
+        ProfileEntity profile = profileRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng."));
+        return toAdminUserDTO(profile);
+    }
+
+    @Transactional
+    public AdminUserDTO updateUser(Long id, AdminUserUpdateDTO dto) {
+        ensureAdmin();
+        ProfileEntity profile = profileRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng."));
+
+        // Prevent admin from deactivating themselves
+        ProfileEntity self = profileService.getCurrentProfile();
+        if (self.getId().equals(id) && Boolean.FALSE.equals(dto.getIsActive())) {
+            throw new RuntimeException("Không thể vô hiệu hóa tài khoản của chính mình.");
+        }
+
+        if (dto.getFullName() != null && !dto.getFullName().isBlank()) {
+            profile.setFullName(dto.getFullName().trim());
+        }
+        if (dto.getIsActive() != null) {
+            profile.setIsActive(dto.getIsActive());
+        }
+        if (dto.getSubscriptionPlan() != null && !dto.getSubscriptionPlan().isBlank()) {
+            try {
+                profile.setSubscriptionPlan(SubscriptionPlan.valueOf(dto.getSubscriptionPlan().toUpperCase(Locale.ROOT)));
+            } catch (IllegalArgumentException e) {
+                throw new RuntimeException("Gói đăng ký không hợp lệ: " + dto.getSubscriptionPlan());
+            }
+        }
+        if (dto.getRole() != null && !dto.getRole().isBlank()) {
+            if ("admin".equalsIgnoreCase(dto.getRole())) {
+                profile.setRole(RoleEntity.builder().id(1L).name("admin").build());
+            } else {
+                profile.setRole(RoleEntity.builder().id(2L).name("user").build());
+            }
+        }
+
+        return toAdminUserDTO(profileRepository.save(profile));
+    }
+
+    @Transactional
+    public void deleteUser(Long id) {
+        ensureAdmin();
+        ProfileEntity self = profileService.getCurrentProfile();
+        if (self.getId().equals(id)) {
+            throw new RuntimeException("Không thể xóa tài khoản của chính mình.");
+        }
+        if (!profileRepository.existsById(id)) {
+            throw new RuntimeException("Không tìm thấy người dùng.");
+        }
+
+        // Delete in dependency order to satisfy FK constraints
+        notificationReadRepository.deleteByProfileId(id);
+        notificationRepository.deleteByProfileId(id);
+
+        List<Long> goalIds = savingGoalRepository.findByProfileId(id)
+                .stream().map(SavingGoalEntity::getId).toList();
+        if (!goalIds.isEmpty()) {
+            savingGoalContributionRepository.deleteByGoalIdIn(goalIds);
+        }
+        savingGoalRepository.deleteByProfileId(id);
+
+        expenseRepository.deleteByProfileId(id);
+        incomeRepository.deleteByProfileId(id);
+        budgetRepository.deleteByProfileId(id);
+        categoryRepository.deleteByProfileId(id);
+        paymentRepository.deleteByProfileId(id);
+        emailNotificationPreferenceRepository.deleteByProfileId(id);
+
+        profileRepository.deleteById(id);
+    }
+
+    private AdminUserDTO toAdminUserDTO(ProfileEntity p) {
+        return AdminUserDTO.builder()
+                .id(p.getId())
+                .fullName(p.getFullName())
+                .email(p.getEmail())
+                .profileImageUrl(p.getProfileImageUrl())
+                .isActive(p.getIsActive())
+                .role(p.getRole() != null ? p.getRole().getName() : "user")
+                .subscriptionPlan(p.getSubscriptionPlan())
+                .subscriptionStatus(p.getSubscriptionStatus())
+                .subscriptionExpiresAt(p.getSubscriptionExpiresAt())
+                .createdAt(p.getCreatedAt())
+                .build();
     }
 
     private void ensureAdmin() {

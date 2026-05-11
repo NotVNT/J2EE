@@ -9,13 +9,14 @@ export const API_ENDPOINTS = {
     // Auth endpoints
     LOGIN: "/login",
     REGISTER: "/register",
-    ACTIVATE: "/activate",
+    VERIFY_ACTIVATION: "/verify-activation",
+    OTP_RESEND: "/otp/resend",
     FORGOT_PASSWORD: "/forgot-password",
+    VERIFY_RESET_OTP: "/verify-reset-otp",
     RESET_PASSWORD: "/reset-password",
     GOOGLE_AUTH: "/auth/google",
 
     // User profile endpoints
-    ACTIVATE_ACCOUNT: (token) => `/activate?token=${token}`,
     GET_USER_INFO: "/profile",
     UPDATE_PROFILE: "/profile",
     UPDATE_AUTO_RENEW: "/profile/subscription/auto-renew",
@@ -73,6 +74,10 @@ export const API_ENDPOINTS = {
     ADMIN_NOTIFICATIONS: "/admin/notifications",
     ADMIN_NOTIFICATION_UPDATE: (id) => `/admin/notifications/${id}`,
     ADMIN_NOTIFICATION_DELETE: (id) => `/admin/notifications/${id}`,
+    ADMIN_USERS: "/admin/users",
+    ADMIN_USER_DETAIL: (id) => `/admin/users/${id}`,
+    ADMIN_USER_UPDATE: (id) => `/admin/users/${id}`,
+    ADMIN_USER_DELETE: (id) => `/admin/users/${id}`,
 
     // Notification endpoints
     GET_NOTIFICATIONS: "/notifications",
@@ -94,5 +99,39 @@ export const API_ENDPOINTS = {
     GENERATE_EXPENSE_REPORT: "/documents/report/expense",
 
     // Image upload
-    UPLOAD_IMAGE: "/files/upload"
+    UPLOAD_IMAGE: "/files/upload",
+
+    // Email Notification Preferences
+    GET_EMAIL_PREFERENCES: "/profile/email-preferences",
+    UPDATE_EMAIL_PREFERENCES: "/profile/email-preferences",
+    RESET_EMAIL_PREFERENCES: "/profile/email-preferences/reset",
+
+    // Recurring Transactions endpoints
+    RECURRING_TRANSACTIONS: "/recurring-transactions",
+    TOGGLE_RECURRING_TRANSACTION: (id) => `/recurring-transactions/${id}/toggle`,
+    UPDATE_RECURRING_TRANSACTION: (id) => `/recurring-transactions/${id}`,
+    DELETE_RECURRING_TRANSACTION: (id) => `/recurring-transactions/${id}`,
+
+    // Forecast endpoints
+    FORECAST_MONTHLY: (year, month) => `/forecast/monthly?year=${year}&month=${month}`,
+    FORECAST_ANOMALIES: "/forecast/anomalies",
+    FORECAST_CATEGORY_TREND: (categoryId, months) => `/forecast/category-trend/${categoryId}?months=${months}`,
+    FORECAST_INSIGHTS: "/forecast/insights",
+
+    // Group endpoints
+    GET_GROUPS: "/groups",
+    CREATE_GROUP: "/groups",
+    GET_GROUP_DETAILS: (id) => `/groups/${id}`,
+    UPDATE_GROUP: (id) => `/groups/${id}`,
+    GET_GROUP_MEMBERS: (id) => `/groups/${id}/members`,
+    ADD_GROUP_MEMBER: (id) => `/groups/${id}/members`,
+
+    // Group Expense endpoints
+    GET_GROUP_EXPENSES: (groupId) => `/groups/${groupId}/expenses`,
+    ADD_GROUP_EXPENSE: (groupId) => `/groups/${groupId}/expenses`,
+
+    // Group Settlement endpoints
+    GET_GROUP_BALANCES: (groupId) => `/groups/${groupId}/settlements/balances`,
+    GET_GROUP_SETTLEMENTS: (groupId) => `/groups/${groupId}/settlements`,
+    ADD_GROUP_SETTLEMENT: (groupId) => `/groups/${groupId}/settlements`,
 }

@@ -38,13 +38,17 @@ public class SecurityConfig {
                                 "/health",
                                 "/register",
                                 "/activate",
+                                "/verify-activation",
+                                "/otp/resend",
                                 "/login",
-                                "/forgot-password",   // ✅ thêm
-                                "/reset-password",    // ✅ thêm
+                                "/forgot-password",
+                                "/verify-reset-otp",
+                                "/reset-password",
                                 "/gemini/test",
                                 "/payments/payos/webhook",
-                                "/auth/google"        // ✅ Google OAuth2
+                                "/auth/google"
                         ).permitAll()
+                        .requestMatchers("/api/recurring-transactions/**", "/api/forecast/**", "/api/groups/**").authenticated()
                         .anyRequest().authenticated())
                         .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                         .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);

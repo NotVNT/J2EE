@@ -27,6 +27,11 @@ public class IncomeService {
     public IncomeDTO addIncome(IncomeDTO dto) {
         ProfileEntity profile = profileService.getCurrentProfile();
         subscriptionService.ensureCanCreateTransaction(profile, dto.getDate());
+        return addIncomeInternal(dto, profile);
+    }
+
+    // Internal method bypassing plan limits (used by cron)
+    public IncomeDTO addIncomeInternal(IncomeDTO dto, ProfileEntity profile) {
         CategoryEntity category = categoryRepository.findById(dto.getCategoryId())
                 .orElseThrow(() -> new RuntimeException("Category not found"));
         IncomeEntity newIncome = toEntity(dto, profile, category);

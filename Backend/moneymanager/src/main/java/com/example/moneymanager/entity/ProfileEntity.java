@@ -46,6 +46,14 @@ public class ProfileEntity {
     private Boolean autoRenew;
     private String googleId;
 
+    // OTP fields (shared for both ACCOUNT_ACTIVATION and PASSWORD_RESET flows)
+    private String otpCode;                   // BCrypt-hashed OTP
+    private LocalDateTime otpExpiry;          // 200s from generation
+    private LocalDateTime otpResendAllowedAt; // 180s cooldown gate
+    @Enumerated(EnumType.STRING)
+    private OtpPurpose otpPurpose;
+    private Integer otpAttempts;              // failed attempt counter (max 5)
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id")
     private RoleEntity role;

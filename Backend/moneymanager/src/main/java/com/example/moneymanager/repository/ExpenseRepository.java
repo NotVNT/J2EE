@@ -45,4 +45,6 @@ public interface ExpenseRepository extends JpaRepository<ExpenseEntity, Long> {
 
     // Xoá toàn bộ expense thuộc một danh mục (dùng khi xoá danh mục)
     void deleteByCategoryId(Long categoryId);
+
+    void deleteByProfileId(Long profileId);
 }

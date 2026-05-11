@@ -33,6 +33,7 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final NotificationReadRepository notificationReadRepository;
     private final EmailService emailService;
+    private final MailTemplateService mailTemplateService;
     private final ProfileService profileService;
     private final ExpenseRepository expenseRepository;
     private final IncomeRepository incomeRepository;
@@ -40,6 +41,7 @@ public class NotificationService {
     private final SavingGoalRepository savingGoalRepository;
     private final BudgetRepository budgetRepository;
     private final MonthlyReportCardService monthlyReportCardService;
+    private final EmailNotificationPreferenceService emailNotificationPreferenceService;
     
     @Autowired
     @Lazy
@@ -60,6 +62,21 @@ public class NotificationService {
                 .isRead(false)
                 .build();
         notificationRepository.save(notification);
+    }
+
+    @Async
+    @Transactional
+    public void sendWelcomeAsync(ProfileEntity profile) {
+        try {
+            createNotification(profile,
+                    "Chào mừng bạn đến với Money Manager! 🎉",
+                    "Tài khoản của bạn đã được kích hoạt thành công. Bắt đầu theo dõi thu chi và quản lý tài chính thông minh hơn ngay hôm nay!",
+                    NotificationType.SYSTEM);
+            String htmlBody = mailTemplateService.buildWelcomeEmail(profile.getFullName());
+            emailService.sendHtmlEmail(profile.getEmail(), "Chào mừng bạn đến với Money Manager!", htmlBody);
+        } catch (Exception e) {
+            log.error("Failed to send welcome notification/email to {}: {}", profile.getEmail(), e.getMessage());
+        }
     }
 
     @Transactional
@@ -279,11 +296,11 @@ public class NotificationService {
         log.info("Job started: sendDailyIncomeExpenseReminder()");
         List<ProfileEntity> profiles = profileRepository.findAll();
         for(ProfileEntity profile : profiles) {
-            String body = "Xin chào " + profile.getFullName() + ",<br><br>"
-                    + "Đây là lời nhắc để bạn cập nhật các khoản thu và chi trong hôm nay trên Money Manager.<br><br>"
-                    + "<a href=" + frontendUrl + " style='display:inline-block;padding:10px 20px;background-color:#4CAF50;color:#fff;text-decoration:none;border-radius:5px;font-weight:bold;'>Mở Money Manager</a>"
-                    + "<br><br>Trân trọng,<br>Đội ngũ Money Manager";
-            emailService.sendEmail(profile.getEmail(), "Nhắc nhở hằng ngày: cập nhật thu chi", body);
+            if (!emailNotificationPreferenceService.isNotificationEnabled(profile.getId(), EmailNotificationType.DAILY_EXPENSE_REPORT)) {
+                continue;
+            }
+            String htmlBody = mailTemplateService.buildDailyReminderEmail(profile.getFullName(), frontendUrl);
+            emailService.sendHtmlEmail(profile.getEmail(), "[Money Manager] Nhắc nhở hằng ngày: cập nhật thu chi", htmlBody);
         }
         log.info("Job completed: sendDailyIncomeExpenseReminder()");
     }
@@ -293,25 +310,32 @@ public class NotificationService {
         log.info("Job started: sendDailyExpenseSummary()");
         List<ProfileEntity> profiles = profileRepository.findAll();
         for (ProfileEntity profile : profiles) {
+            if (!emailNotificationPreferenceService.isNotificationEnabled(profile.getId(), EmailNotificationType.DAILY_EXPENSE_REPORT)) {
+                continue;
+            }
             List<ExpenseDTO> todaysExpenses = expenseService.getExpensesForUserOnDate(profile.getId(), LocalDate.now());
             if (!todaysExpenses.isEmpty()) {
                 StringBuilder table = new StringBuilder();
-                table.append("<table style='border-collapse:collapse;width:100%;'>");
-                table.append("<tr style='background-color:#f2f2f2;'><th style='border:1px solid #ddd;padding:8px;'>STT</th><th style='border:1px solid #ddd;padding:8px;'>Tên khoản chi</th><th style='border:1px solid #ddd;padding:8px;'>Số tiền</th><th style='border:1px solid #ddd;padding:8px;'>Danh mục</th></tr>");
+                table.append("<table role=\"presentation\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\" width=\"100%\" style=\"border-collapse:collapse;margin-bottom:8px;\">");
+                table.append("<tr style=\"background:#f0f0ff;\">")
+                     .append("<th style=\"padding:10px 12px;border:1px solid #e2e8f0;font-size:13px;color:#374151;text-align:left;\">STT</th>")
+                     .append("<th style=\"padding:10px 12px;border:1px solid #e2e8f0;font-size:13px;color:#374151;text-align:left;\">Tên khoản chi</th>")
+                     .append("<th style=\"padding:10px 12px;border:1px solid #e2e8f0;font-size:13px;color:#374151;text-align:right;\">Số tiền</th>")
+                     .append("<th style=\"padding:10px 12px;border:1px solid #e2e8f0;font-size:13px;color:#374151;text-align:left;\">Danh mục</th>")
+                     .append("</tr>");
                 int i = 1;
-                for(ExpenseDTO expense : todaysExpenses) {
-                    table.append("<tr>");
-                    table.append("<td style='border:1px solid #ddd;padding:8px;'>").append(i++).append("</td>");
-                    table.append("<td style='border:1px solid #ddd;padding:8px;'>").append(expense.getName()).append("</td>");
-                    table.append("<td style='border:1px solid #ddd;padding:8px;'>").append(expense.getAmount()).append("</td>");
-                    table.append("<td style='border:1px solid #ddd;padding:8px;'>").append(expense.getCategoryId() != null ? expense.getCategoryName() : "Không có").append("</td>");
+                for (ExpenseDTO expense : todaysExpenses) {
+                    String rowBg = (i % 2 == 0) ? "background:#f8fafc;" : "";
+                    table.append("<tr style=\"").append(rowBg).append("\">");
+                    table.append("<td style=\"padding:9px 12px;border:1px solid #e2e8f0;font-size:13px;color:#6b7280;\">").append(i++).append("</td>");
+                    table.append("<td style=\"padding:9px 12px;border:1px solid #e2e8f0;font-size:13px;color:#374151;\">").append(expense.getName()).append("</td>");
+                    table.append("<td style=\"padding:9px 12px;border:1px solid #e2e8f0;font-size:13px;color:#374151;text-align:right;\">").append(expense.getAmount()).append("</td>");
+                    table.append("<td style=\"padding:9px 12px;border:1px solid #e2e8f0;font-size:13px;color:#374151;\">").append(expense.getCategoryId() != null ? expense.getCategoryName() : "Không có").append("</td>");
                     table.append("</tr>");
                 }
                 table.append("</table>");
-                String body = "Xin chào " + profile.getFullName() + ",<br/><br/>Dưới đây là tổng hợp các khoản chi của bạn trong hôm nay:<br/><br/>"
-                        + table
-                        + "<br/><br/>Trân trọng,<br/>Đội ngũ Money Manager";
-                emailService.sendEmail(profile.getEmail(), "Tổng hợp chi tiêu hằng ngày", body);
+                String htmlBody = mailTemplateService.buildDailyExpenseSummaryEmail(profile.getFullName(), table.toString());
+                emailService.sendHtmlEmail(profile.getEmail(), "[Money Manager] Tổng hợp chi tiêu hằng ngày", htmlBody);
             }
         }
         log.info("Job completed: sendDailyExpenseSummary()");
@@ -390,5 +414,21 @@ public class NotificationService {
             }
         }
         log.info("Job completed: sendDailySavingStreakReminder()");
+    }
+
+    // ─── Group Budget Notifications ─────────────────────
+
+    @Transactional
+    public void notifyGroupExpenseAdded(ProfileEntity profile, String groupName, String expenseName, BigDecimal amount) {
+        String formattedAmount = NumberFormat.getInstance(new Locale("vi", "VN")).format(amount);
+        String message = String.format("Khoản chi mới '%s' (%s VNĐ) vừa được thêm vào nhóm '%s'.", expenseName, formattedAmount, groupName);
+        createNotification(profile, "Chi tiêu nhóm mới", message, NotificationType.GROUP_EXPENSE);
+    }
+
+    @Transactional
+    public void notifyGroupSettlement(ProfileEntity profile, String groupName, String payerName, BigDecimal amount) {
+        String formattedAmount = NumberFormat.getInstance(new Locale("vi", "VN")).format(amount);
+        String message = String.format("%s vừa thanh toán khoản nợ %s VNĐ trong nhóm '%s'.", payerName, formattedAmount, groupName);
+        createNotification(profile, "Thanh toán trong nhóm", message, NotificationType.GROUP_SETTLEMENT);
     }
 }
