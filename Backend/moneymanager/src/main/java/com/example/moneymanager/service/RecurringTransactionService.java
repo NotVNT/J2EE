@@ -32,6 +32,7 @@ public class RecurringTransactionService {
     private final SubscriptionService subscriptionService;
     private final ProfileService profileService;
 
+    @Transactional
     public RecurringTransactionDTO createRecurring(RecurringTransactionDTO dto) {
         ProfileEntity profile = profileService.getCurrentProfile();
         subscriptionService.ensureCanUseRecurring(profile);
@@ -67,6 +68,7 @@ public class RecurringTransactionService {
                 .stream().map(this::toDTO).toList();
     }
 
+    @Transactional
     public RecurringTransactionDTO update(Long id, RecurringTransactionDTO dto) {
         ProfileEntity profile = profileService.getCurrentProfile();
         subscriptionService.ensureCanUseRecurring(profile);
@@ -99,6 +101,7 @@ public class RecurringTransactionService {
         return toDTO(recurringTransactionRepository.save(entity));
     }
 
+    @Transactional
     public void delete(Long id) {
         ProfileEntity profile = profileService.getCurrentProfile();
         RecurringTransactionEntity entity = recurringTransactionRepository.findById(id)
@@ -111,6 +114,7 @@ public class RecurringTransactionService {
         recurringTransactionRepository.delete(entity);
     }
 
+    @Transactional
     public RecurringTransactionDTO toggle(Long id) {
         ProfileEntity profile = profileService.getCurrentProfile();
         subscriptionService.ensureCanUseRecurring(profile);

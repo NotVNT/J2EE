@@ -12,12 +12,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -39,6 +42,7 @@ public class BudgetService {
      * Tạo mới hoặc cập nhật hạn mức ngân sách.
      * Chỉ chấp nhận danh mục loại "expense".
      */
+    @Transactional
     public BudgetDTO setBudget(BudgetDTO dto) {
         ProfileEntity profile = profileService.getCurrentProfile();
 
@@ -91,8 +95,18 @@ public class BudgetService {
         int year  = LocalDate.now().getYear();
 
         List<BudgetEntity> budgets = budgetRepository.findByProfileIdAndMonthAndYear(profile.getId(), month, year);
+
+        // Batch load all spent amounts in a single query (avoid N+1)
+        Map<Long, BigDecimal> spentByCategoryId = budgetRepository
+                .getTotalSpentByCategoryForProfileAndMonth(profile.getId(), month, year)
+                .stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> (BigDecimal) row[1]
+                ));
+
         return budgets.stream().map(b -> {
-            BigDecimal spent = getTotalSpent(profile.getId(), b.getCategory().getId(), month, year);
+            BigDecimal spent = spentByCategoryId.getOrDefault(b.getCategory().getId(), BigDecimal.ZERO);
             return toDTO(b, spent);
         }).toList();
     }
@@ -100,6 +114,7 @@ public class BudgetService {
     /**
      * Xóa một hạn mức.
      */
+    @Transactional
     public void deleteBudget(Long budgetId) {
         ProfileEntity profile = profileService.getCurrentProfile();
         BudgetEntity entity = budgetRepository.findById(budgetId)

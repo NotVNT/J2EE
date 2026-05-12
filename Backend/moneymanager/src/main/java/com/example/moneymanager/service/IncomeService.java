@@ -9,6 +9,7 @@ import com.example.moneymanager.repository.IncomeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -65,6 +66,7 @@ public class IncomeService {
     }
 
     //delete income by id for current user
+    @Transactional
     public void deleteIncome(Long incomeId) {
         ProfileEntity profile = profileService.getCurrentProfile();
         IncomeEntity entity = incomeRepository.findById(incomeId)
@@ -85,7 +87,7 @@ public class IncomeService {
     // Get total incomes for current user
     public BigDecimal getTotalIncomeForCurrentUser() {
         ProfileEntity profile = profileService.getCurrentProfile();
-        BigDecimal total = incomeRepository.findTotalExpenseByProfileId(profile.getId());
+        BigDecimal total = incomeRepository.findTotalIncomeByProfileId(profile.getId());
         return total != null ? total : BigDecimal.ZERO;
     }
 

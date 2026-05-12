@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/recurring-transactions")
+@RequestMapping("/recurring-transactions")
 @RequiredArgsConstructor
 public class RecurringTransactionController {
 

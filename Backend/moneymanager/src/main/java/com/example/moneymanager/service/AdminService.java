@@ -17,6 +17,7 @@ public class AdminService {
 
     private final ProfileService profileService;
     private final ProfileRepository profileRepository;
+    private final RoleRepository roleRepository;
     private final PaymentRepository paymentRepository;
     private final NotificationService notificationService;
     private final NotificationRepository notificationRepository;
@@ -203,11 +204,10 @@ public class AdminService {
             }
         }
         if (dto.getRole() != null && !dto.getRole().isBlank()) {
-            if ("admin".equalsIgnoreCase(dto.getRole())) {
-                profile.setRole(RoleEntity.builder().id(1L).name("admin").build());
-            } else {
-                profile.setRole(RoleEntity.builder().id(2L).name("user").build());
-            }
+            String roleName = "admin".equalsIgnoreCase(dto.getRole()) ? "admin" : "user";
+            RoleEntity role = roleRepository.findByNameIgnoreCase(roleName)
+                    .orElseThrow(() -> new RuntimeException("Role not found: " + roleName));
+            profile.setRole(role);
         }
 
         return toAdminUserDTO(profileRepository.save(profile));

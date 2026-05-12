@@ -65,7 +65,6 @@ const PaymentSuccess = () => {
     return searchParams.get("orderCode") || savedPayment?.orderCode || "";
   }, [searchParams]);
 
-  const returnStatus = (searchParams.get("status") || "").toUpperCase();
   const transactionIdFromUrl = searchParams.get("id");
 
   useEffect(() => {
@@ -76,7 +75,8 @@ const PaymentSuccess = () => {
         ...parsedSavedPayment,
         orderCode: searchParams.get("orderCode") || parsedSavedPayment?.orderCode || "",
         paymentLinkId: transactionIdFromUrl || parsedSavedPayment?.paymentLinkId || "",
-        status: returnStatus === "PAID" ? "PAID" : parsedSavedPayment?.status || "PENDING",
+        // Do NOT trust URL status param — always use backend as source of truth
+        status: parsedSavedPayment?.status || "PENDING",
       };
       setPayment(nextPayment);
       localStorage.setItem(PAYMENT_STORAGE_KEY, JSON.stringify(nextPayment));
@@ -86,7 +86,8 @@ const PaymentSuccess = () => {
         const mergedPayment = {
           ...nextPayment,
           ...paymentResponse.data,
-          status: returnStatus === "PAID" ? "PAID" : paymentResponse.data.status,
+          // Always use backend-confirmed status, never the URL parameter
+          status: paymentResponse.data.status,
         };
         setPayment(mergedPayment);
         localStorage.setItem(PAYMENT_STORAGE_KEY, JSON.stringify(mergedPayment));
@@ -97,9 +98,9 @@ const PaymentSuccess = () => {
       }
     };
     syncPaymentAndProfile();
-  }, [orderCode, returnStatus, searchParams, setUser, transactionIdFromUrl]);
+  }, [orderCode, searchParams, setUser, transactionIdFromUrl]);
 
-  const displayStatus = returnStatus === "PAID" ? "PAID" : payment?.status || "PENDING";
+  const displayStatus = payment?.status || "PENDING";
   const isPaid = displayStatus === "PAID";
   const transactionId = transactionIdFromUrl || payment?.paymentLinkId || "--";
   const amount = payment?.amount;

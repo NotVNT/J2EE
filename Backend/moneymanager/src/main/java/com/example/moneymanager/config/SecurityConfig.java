@@ -3,6 +3,7 @@ package com.example.moneymanager.config;
 import com.example.moneymanager.security.JwtRequestFilter;
 import com.example.moneymanager.service.AppUserDetailsService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -20,6 +21,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Configuration
@@ -29,11 +31,15 @@ public class SecurityConfig {
     private final AppUserDetailsService appUserDetailsService;
     private final JwtRequestFilter jwtRequestFilter;
 
+    @Value("${money.manager.frontend.url:http://localhost:5173}")
+    private String frontendUrl;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(auth -> auth.requestMatchers(
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(
                                 "/status",
                                 "/health",
                                 "/register",
@@ -44,14 +50,15 @@ public class SecurityConfig {
                                 "/forgot-password",
                                 "/verify-reset-otp",
                                 "/reset-password",
-                                "/gemini/test",
                                 "/payments/payos/webhook",
                                 "/auth/google"
                         ).permitAll()
-                        .requestMatchers("/api/recurring-transactions/**", "/api/forecast/**", "/api/groups/**").authenticated()
+                        // Admin-only endpoints — enforced at Spring Security level
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/payments/payos/confirm-webhook").hasRole("ADMIN")
                         .anyRequest().authenticated())
-                        .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                        .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
         return httpSecurity.build();
     }
 
@@ -63,9 +70,18 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("*"));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("Authorization","Content-Type", "Accept"));
+        List<String> allowedOrigins = new ArrayList<>(List.of(
+                "http://localhost:5173",
+                "http://localhost:3000"
+        ));
+        // Add production frontend URL if it's different from localhost
+        if (frontendUrl != null && !frontendUrl.isBlank()
+                && !frontendUrl.startsWith("http://localhost")) {
+            allowedOrigins.add(frontendUrl);
+        }
+        configuration.setAllowedOriginPatterns(allowedOrigins);
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
         configuration.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

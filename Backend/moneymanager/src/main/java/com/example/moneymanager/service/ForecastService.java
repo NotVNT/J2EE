@@ -120,31 +120,42 @@ public class ForecastService {
         }
 
         List<AnomalyDTO> anomalies = new ArrayList<>();
-        
+
         for (ExpenseEntity e : expenses) {
             if (e.getCategory() == null) continue;
             Long catId = e.getCategory().getId();
             List<BigDecimal> amounts = categoryAmounts.get(catId);
-            
+
             if (amounts.size() < 3) continue; // Need enough data points
 
-            double sum = amounts.stream().mapToDouble(BigDecimal::doubleValue).sum();
-            double mean = sum / amounts.size();
-            
-            double variance = amounts.stream()
-                .mapToDouble(a -> Math.pow(a.doubleValue() - mean, 2))
-                .sum() / amounts.size();
-            double stdDev = Math.sqrt(variance);
+            // Leave-one-out: compute mean/stdDev excluding the current expense
+            List<BigDecimal> others = amounts.stream()
+                    .filter(a -> a != e.getAmount()) // identity comparison (same reference from list)
+                    .collect(Collectors.toList());
+            // Fallback: if all amounts are identical objects, remove one by index
+            if (others.size() == amounts.size()) {
+                others = new ArrayList<>(amounts);
+                others.remove(amounts.indexOf(e.getAmount()));
+            }
+            if (others.isEmpty()) continue;
 
-            if (e.getAmount().doubleValue() > mean + 2 * stdDev && e.getAmount().doubleValue() > 50000) {
+            double otherSum = others.stream().mapToDouble(BigDecimal::doubleValue).sum();
+            double otherMean = otherSum / others.size();
+
+            double otherVariance = others.stream()
+                    .mapToDouble(a -> Math.pow(a.doubleValue() - otherMean, 2))
+                    .sum() / others.size();
+            double otherStdDev = Math.sqrt(otherVariance);
+
+            if (e.getAmount().doubleValue() > otherMean + 2 * otherStdDev && e.getAmount().doubleValue() > 50000) {
                 anomalies.add(AnomalyDTO.builder()
                         .transactionId(e.getId())
                         .type("EXPENSE")
                         .amount(e.getAmount())
                         .categoryName(e.getCategory().getName())
                         .date(e.getDate().toString())
-                        .meanAmount(BigDecimal.valueOf(mean))
-                        .stdDev(BigDecimal.valueOf(stdDev))
+                        .meanAmount(BigDecimal.valueOf(otherMean))
+                        .stdDev(BigDecimal.valueOf(otherStdDev))
                         .build());
             }
         }

@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -41,6 +42,7 @@ public class ExpenseService {
     }
 
     // Internal method bypassing plan limits (used by cron)
+    @Transactional
     public ExpenseResponseDTO addExpenseInternal(ExpenseDTO dto, ProfileEntity profile) {
         CategoryEntity category = categoryRepository.findById(dto.getCategoryId())
                 .orElseThrow(() -> new RuntimeException("Category not found"));
@@ -95,6 +97,7 @@ public class ExpenseService {
     }
 
     // Delete expense by id for current user
+    @Transactional
     public void deleteExpense(Long expenseId) {
         ProfileEntity profile = profileService.getCurrentProfile();
         ExpenseEntity entity = expenseRepository.findById(expenseId)

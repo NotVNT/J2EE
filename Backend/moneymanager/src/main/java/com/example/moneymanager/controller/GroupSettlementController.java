@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/groups/{groupId}/settlements")
+@RequestMapping("/groups/{groupId}/settlements")
 @RequiredArgsConstructor
 public class GroupSettlementController {
 

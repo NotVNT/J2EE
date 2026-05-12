@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class OtpService {
 
-    private static final int OTP_VALIDITY_SECONDS = 200;
+    private static final int OTP_VALIDITY_SECONDS = 210; // > OTP_RESEND_COOLDOWN_SECONDS to prevent stuck state
     private static final int OTP_RESEND_COOLDOWN_SECONDS = 180;
     private static final int MAX_FAILED_ATTEMPTS = 5;
 

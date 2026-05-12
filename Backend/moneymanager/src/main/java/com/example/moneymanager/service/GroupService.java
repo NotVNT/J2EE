@@ -14,6 +14,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -51,8 +53,19 @@ public class GroupService {
     @Transactional(readOnly = true)
     public List<GroupDTO> getMyGroups() {
         ProfileEntity currentProfile = profileService.getCurrentProfile();
-        return groupMemberRepository.findByProfileId(currentProfile.getId()).stream()
-                .map(m -> mapToDTO(m.getGroup(), currentProfile.getId()))
+        List<GroupMemberEntity> myMemberships = groupMemberRepository.findByProfileId(currentProfile.getId());
+        if (myMemberships.isEmpty()) return List.of();
+
+        List<Long> groupIds = myMemberships.stream().map(m -> m.getGroup().getId()).toList();
+
+        // Batch load all members for all groups in one query (avoid N+1)
+        Map<Long, List<GroupMemberEntity>> membersByGroupId = groupMemberRepository.findByGroupIdIn(groupIds)
+                .stream()
+                .collect(Collectors.groupingBy(m -> m.getGroup().getId()));
+
+        return myMemberships.stream()
+                .map(m -> mapToDTO(m.getGroup(), currentProfile.getId(),
+                        membersByGroupId.getOrDefault(m.getGroup().getId(), List.of())))
                 .toList();
     }
 
@@ -139,7 +152,14 @@ public class GroupService {
     }
 
     private GroupDTO mapToDTO(GroupEntity group, Long currentProfileId) {
-        List<GroupMemberEntity> members = groupMemberRepository.findByGroupId(group.getId());
+        return mapToDTO(group, currentProfileId, null);
+    }
+
+    private GroupDTO mapToDTO(GroupEntity group, Long currentProfileId, List<GroupMemberEntity> preloadedMembers) {
+        List<GroupMemberEntity> members = preloadedMembers != null
+                ? preloadedMembers
+                : groupMemberRepository.findByGroupId(group.getId());
+
         String myRole = members.stream()
                 .filter(m -> m.getProfile().getId().equals(currentProfileId))
                 .map(m -> m.getRole().name())

@@ -5,6 +5,7 @@ import com.example.moneymanager.entity.RoleEntity;
 import com.example.moneymanager.entity.SubscriptionPlan;
 import com.example.moneymanager.entity.SubscriptionStatus;
 import com.example.moneymanager.repository.ProfileRepository;
+import com.example.moneymanager.repository.RoleRepository;
 import com.example.moneymanager.util.JwtUtil;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
@@ -23,6 +24,7 @@ import java.util.Optional;
 public class GoogleAuthService {
 
     private final ProfileRepository profileRepository;
+    private final RoleRepository roleRepository;
     private final JwtUtil jwtUtil;
     private final ProfileService profileService;
 
@@ -98,6 +100,8 @@ public class GoogleAuthService {
     }
 
     private ProfileEntity createGoogleUser(String email, String name, String picture, String googleId) {
+        RoleEntity userRole = roleRepository.findByNameIgnoreCase("user")
+                .orElseThrow(() -> new RuntimeException("Role 'user' not found in database"));
         ProfileEntity newProfile = ProfileEntity.builder()
                 .email(email)
                 .fullName(name != null ? name : email.split("@")[0])
@@ -109,7 +113,7 @@ public class GoogleAuthService {
                 .subscriptionPlan(SubscriptionPlan.FREE)
                 .subscriptionStatus(SubscriptionStatus.INACTIVE)
                 .autoRenew(false)
-                .role(RoleEntity.builder().id(2L).name("user").build())
+                .role(userRole)
                 .build();
         return profileRepository.save(newProfile);
     }
