@@ -197,10 +197,24 @@ public class AdminService {
             profile.setIsActive(dto.getIsActive());
         }
         if (dto.getSubscriptionPlan() != null && !dto.getSubscriptionPlan().isBlank()) {
+            SubscriptionPlan newPlan;
             try {
-                profile.setSubscriptionPlan(SubscriptionPlan.valueOf(dto.getSubscriptionPlan().toUpperCase(Locale.ROOT)));
+                newPlan = SubscriptionPlan.valueOf(dto.getSubscriptionPlan().toUpperCase(Locale.ROOT));
             } catch (IllegalArgumentException e) {
                 throw new RuntimeException("Gói đăng ký không hợp lệ: " + dto.getSubscriptionPlan());
+            }
+            profile.setSubscriptionPlan(newPlan);
+            if (newPlan == SubscriptionPlan.FREE) {
+                profile.setSubscriptionStatus(SubscriptionStatus.INACTIVE);
+                profile.setSubscriptionActivatedAt(null);
+                profile.setSubscriptionExpiresAt(null);
+            } else {
+                // Admin-granted paid plan: activate immediately with appropriate cycle
+                java.time.LocalDate today = java.time.LocalDate.now();
+                int cycleMonths = (newPlan == SubscriptionPlan.PREMIUM) ? 12 : 1;
+                profile.setSubscriptionStatus(SubscriptionStatus.ACTIVE);
+                profile.setSubscriptionActivatedAt(today);
+                profile.setSubscriptionExpiresAt(today.plusMonths(cycleMonths));
             }
         }
         if (dto.getRole() != null && !dto.getRole().isBlank()) {
