@@ -1,8 +1,8 @@
 import { useState, useEffect, useContext } from "react";
-import axios from "axios";
+import axiosConfig from "../util/axiosConfig";
 import toast from "react-hot-toast";
 import { Plus, Trash2, Edit, Calendar, RefreshCw, Power, Crown } from "lucide-react";
-import { API_ENDPOINTS, BASE_URL } from "../util/apiEndpoints";
+import { API_ENDPOINTS } from "../util/apiEndpoints";
 import { AppContext } from "../context/AppContext";
 import Dashboard from "../components/Dashboard";
 import RecurringTransactionForm from "../components/RecurringTransactionForm";
@@ -13,23 +13,21 @@ import { usePageTitle } from "../hooks/usePageTitle";
 const RecurringTransactions = () => {
     useUser();
     usePageTitle("Giao dịch định kỳ");
-    const { user, token } = useContext(AppContext);
+    const { user } = useContext(AppContext);
     const [transactions, setTransactions] = useState([]);
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editTransaction, setEditTransaction] = useState(null);
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (user && token && user.subscriptionPlan === "PREMIUM") {
+        if (user && user.subscriptionPlan === "PREMIUM") {
             fetchTransactions();
         }
-    }, [user, token]);
+    }, [user]);
 
     const fetchTransactions = async () => {
         try {
-            const res = await axios.get(BASE_URL + API_ENDPOINTS.RECURRING_TRANSACTIONS, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const res = await axiosConfig.get(API_ENDPOINTS.RECURRING_TRANSACTIONS);
             setTransactions(res.data);
         } catch (error) {
             toast.error("Lỗi khi tải danh sách giao dịch định kỳ");
@@ -39,9 +37,7 @@ const RecurringTransactions = () => {
     const handleDelete = async (id) => {
         if (!window.confirm("Bạn có chắc muốn xoá giao dịch này?")) return;
         try {
-            await axios.delete(BASE_URL + API_ENDPOINTS.DELETE_RECURRING_TRANSACTION(id), {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            await axiosConfig.delete(API_ENDPOINTS.DELETE_RECURRING_TRANSACTION(id));
             toast.success("Xoá thành công");
             fetchTransactions();
         } catch (error) {
@@ -51,9 +47,7 @@ const RecurringTransactions = () => {
 
     const handleToggle = async (id) => {
         try {
-            await axios.patch(BASE_URL + API_ENDPOINTS.TOGGLE_RECURRING_TRANSACTION(id), {}, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            await axiosConfig.patch(API_ENDPOINTS.TOGGLE_RECURRING_TRANSACTION(id), {});
             fetchTransactions();
         } catch (error) {
             toast.error("Cập nhật trạng thái thất bại");

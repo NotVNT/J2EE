@@ -1,8 +1,8 @@
 import { useState, useEffect, useContext } from "react";
-import axios from "axios";
+import axiosConfig from "../util/axiosConfig";
 import toast from "react-hot-toast";
 import { AlertTriangle, Lightbulb, Activity, Crown } from "lucide-react";
-import { API_ENDPOINTS, BASE_URL } from "../util/apiEndpoints";
+import { API_ENDPOINTS } from "../util/apiEndpoints";
 import { AppContext } from "../context/AppContext";
 import Dashboard from "../components/Dashboard";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
@@ -13,7 +13,7 @@ import { usePageTitle } from "../hooks/usePageTitle";
 const Forecast = () => {
     useUser();
     usePageTitle("Dự báo thông minh");
-    const { user, token } = useContext(AppContext);
+    const { user } = useContext(AppContext);
     const [monthlyForecast, setMonthlyForecast] = useState(null);
     const [anomalies, setAnomalies] = useState([]);
     const [insights, setInsights] = useState(null);
@@ -23,25 +23,21 @@ const Forecast = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (user && token && user.subscriptionPlan === "PREMIUM") {
+        if (user && user.subscriptionPlan === "PREMIUM") {
             fetchData();
         } else {
             setIsLoading(false);
         }
-    }, [user, token, selectedMonth, selectedYear]);
+    }, [user, selectedMonth, selectedYear]);
 
     const fetchData = async () => {
         setIsLoading(true);
         try {
             const [forecastRes, anomaliesRes] = await Promise.all([
-                axios.get(BASE_URL + API_ENDPOINTS.FORECAST_MONTHLY(selectedYear, selectedMonth), {
-                    headers: { Authorization: `Bearer ${token}` }
-                }),
-                axios.get(BASE_URL + API_ENDPOINTS.FORECAST_ANOMALIES, {
-                    headers: { Authorization: `Bearer ${token}` }
-                })
+                axiosConfig.get(API_ENDPOINTS.FORECAST_MONTHLY(selectedYear, selectedMonth)),
+                axiosConfig.get(API_ENDPOINTS.FORECAST_ANOMALIES)
             ]);
-            
+
             setMonthlyForecast(forecastRes.data);
             setAnomalies(anomaliesRes.data);
 
@@ -58,9 +54,7 @@ const Forecast = () => {
 
     const fetchInsights = async (forecastData) => {
         try {
-            const res = await axios.post(BASE_URL + API_ENDPOINTS.FORECAST_INSIGHTS, forecastData, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const res = await axiosConfig.post(API_ENDPOINTS.FORECAST_INSIGHTS, forecastData);
             setInsights(res.data);
         } catch (error) {
             console.error("Error fetching insights:", error);

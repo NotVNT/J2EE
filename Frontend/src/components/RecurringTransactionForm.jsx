@@ -1,12 +1,10 @@
-import { useState, useEffect, useContext } from "react";
-import axios from "axios";
+import { useState, useEffect } from "react";
+import axiosConfig from "../util/axiosConfig";
 import toast from "react-hot-toast";
 import { X } from "lucide-react";
-import { API_ENDPOINTS, BASE_URL } from "../util/apiEndpoints";
-import { AppContext } from "../context/AppContext";
+import { API_ENDPOINTS } from "../util/apiEndpoints";
 
 const RecurringTransactionForm = ({ isOpen, onClose, onSuccess, editData }) => {
-    const { token } = useContext(AppContext);
     const [categories, setCategories] = useState([]);
     const [formData, setFormData] = useState({
         name: "",
@@ -37,9 +35,7 @@ const RecurringTransactionForm = ({ isOpen, onClose, onSuccess, editData }) => {
 
     const fetchCategories = async () => {
         try {
-            const res = await axios.get(BASE_URL + API_ENDPOINTS.GET_ALL_CATEGORIES, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const res = await axiosConfig.get(API_ENDPOINTS.GET_ALL_CATEGORIES);
             setCategories(res.data);
         } catch (error) {
             console.error("Error fetching categories:", error);
@@ -50,14 +46,10 @@ const RecurringTransactionForm = ({ isOpen, onClose, onSuccess, editData }) => {
         e.preventDefault();
         try {
             if (editData) {
-                await axios.put(BASE_URL + API_ENDPOINTS.UPDATE_RECURRING_TRANSACTION(editData.id), formData, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                await axiosConfig.put(API_ENDPOINTS.UPDATE_RECURRING_TRANSACTION(editData.id), formData);
                 toast.success("Cập nhật thành công");
             } else {
-                await axios.post(BASE_URL + API_ENDPOINTS.RECURRING_TRANSACTIONS, formData, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                await axiosConfig.post(API_ENDPOINTS.RECURRING_TRANSACTIONS, formData);
                 toast.success("Thêm mới thành công");
             }
             onSuccess();

@@ -1,8 +1,8 @@
 import { useState, useEffect, useContext } from "react";
-import axios from "axios";
+import axiosConfig from "../util/axiosConfig";
 import toast from "react-hot-toast";
 import { Plus, Users, Crown, ArrowRight, ChevronLeft } from "lucide-react";
-import { API_ENDPOINTS, BASE_URL } from "../util/apiEndpoints";
+import { API_ENDPOINTS } from "../util/apiEndpoints";
 import { AppContext } from "../context/AppContext";
 import Dashboard from "../components/Dashboard";
 import GroupDetail from "../components/group/GroupDetail";
@@ -13,7 +13,7 @@ import { usePageTitle } from "../hooks/usePageTitle";
 const GroupBudget = () => {
     useUser();
     usePageTitle("Nhóm chi tiêu");
-    const { user, token } = useContext(AppContext);
+    const { user } = useContext(AppContext);
     const [groups, setGroups] = useState([]);
     const [selectedGroup, setSelectedGroup] = useState(null);
     const [isCreating, setIsCreating] = useState(false);
@@ -21,16 +21,14 @@ const GroupBudget = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (user && token && user.subscriptionPlan === "PREMIUM") {
+        if (user && user.subscriptionPlan === "PREMIUM") {
             fetchGroups();
         }
-    }, [user, token]);
+    }, [user]);
 
     const fetchGroups = async () => {
         try {
-            const res = await axios.get(BASE_URL + API_ENDPOINTS.GET_GROUPS, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const res = await axiosConfig.get(API_ENDPOINTS.GET_GROUPS);
             setGroups(res.data);
         } catch (error) {
             toast.error("Lỗi khi tải danh sách nhóm");
@@ -40,9 +38,7 @@ const GroupBudget = () => {
     const handleCreateGroup = async (e) => {
         e.preventDefault();
         try {
-            await axios.post(BASE_URL + API_ENDPOINTS.CREATE_GROUP, newGroup, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            await axiosConfig.post(API_ENDPOINTS.CREATE_GROUP, newGroup);
             toast.success("Tạo nhóm thành công!");
             setIsCreating(false);
             setNewGroup({ name: "", description: "", avatarIcon: "👥" });

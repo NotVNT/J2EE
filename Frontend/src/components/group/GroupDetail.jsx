@@ -1,12 +1,12 @@
 import { useState, useEffect, useContext } from "react";
-import axios from "axios";
+import axiosConfig from "../../util/axiosConfig";
 import toast from "react-hot-toast";
 import { Plus, UserPlus, Receipt, ArrowRightLeft, Wallet, TrendingUp, TrendingDown, Minus } from "lucide-react";
-import { API_ENDPOINTS, BASE_URL } from "../../util/apiEndpoints";
+import { API_ENDPOINTS } from "../../util/apiEndpoints";
 import { AppContext } from "../../context/AppContext";
 
 const GroupDetail = ({ group, onUpdate }) => {
-    const { user, token } = useContext(AppContext);
+    const { user } = useContext(AppContext);
     const [activeTab, setActiveTab] = useState("expenses");
     const [members, setMembers] = useState([]);
     const [expenses, setExpenses] = useState([]);
@@ -30,32 +30,30 @@ const GroupDetail = ({ group, onUpdate }) => {
         }
     }, [group]);
 
-    const authHeaders = { headers: { Authorization: `Bearer ${token}` } };
-
     const fetchMembers = async () => {
         try {
-            const res = await axios.get(BASE_URL + API_ENDPOINTS.GET_GROUP_MEMBERS(group.id), authHeaders);
+            const res = await axiosConfig.get(API_ENDPOINTS.GET_GROUP_MEMBERS(group.id));
             setMembers(res.data);
         } catch (err) { console.error(err); }
     };
 
     const fetchExpenses = async () => {
         try {
-            const res = await axios.get(BASE_URL + API_ENDPOINTS.GET_GROUP_EXPENSES(group.id), authHeaders);
+            const res = await axiosConfig.get(API_ENDPOINTS.GET_GROUP_EXPENSES(group.id));
             setExpenses(res.data);
         } catch (err) { console.error(err); }
     };
 
     const fetchBalances = async () => {
         try {
-            const res = await axios.get(BASE_URL + API_ENDPOINTS.GET_GROUP_BALANCES(group.id), authHeaders);
+            const res = await axiosConfig.get(API_ENDPOINTS.GET_GROUP_BALANCES(group.id));
             setBalances(res.data);
         } catch (err) { console.error(err); }
     };
 
     const fetchSettlements = async () => {
         try {
-            const res = await axios.get(BASE_URL + API_ENDPOINTS.GET_GROUP_SETTLEMENTS(group.id), authHeaders);
+            const res = await axiosConfig.get(API_ENDPOINTS.GET_GROUP_SETTLEMENTS(group.id));
             setSettlements(res.data);
         } catch (err) { console.error(err); }
     };
@@ -63,7 +61,7 @@ const GroupDetail = ({ group, onUpdate }) => {
     const handleAddMember = async (e) => {
         e.preventDefault();
         try {
-            await axios.post(BASE_URL + API_ENDPOINTS.ADD_GROUP_MEMBER(group.id), { email: newMemberEmail }, authHeaders);
+            await axiosConfig.post(API_ENDPOINTS.ADD_GROUP_MEMBER(group.id), { email: newMemberEmail });
             toast.success("Đã thêm thành viên!");
             setNewMemberEmail("");
             setShowAddMember(false);
@@ -77,7 +75,7 @@ const GroupDetail = ({ group, onUpdate }) => {
     const handleAddExpense = async (e) => {
         e.preventDefault();
         try {
-            await axios.post(BASE_URL + API_ENDPOINTS.ADD_GROUP_EXPENSE(group.id), newExpense, authHeaders);
+            await axiosConfig.post(API_ENDPOINTS.ADD_GROUP_EXPENSE(group.id), newExpense);
             toast.success("Đã thêm chi tiêu nhóm!");
             setShowAddExpense(false);
             setNewExpense({ amount: "", description: "", date: new Date().toISOString().split("T")[0], splitType: "EQUAL" });
@@ -91,7 +89,7 @@ const GroupDetail = ({ group, onUpdate }) => {
     const handleSettle = async (e) => {
         e.preventDefault();
         try {
-            await axios.post(BASE_URL + API_ENDPOINTS.ADD_GROUP_SETTLEMENT(group.id), newSettlement, authHeaders);
+            await axiosConfig.post(API_ENDPOINTS.ADD_GROUP_SETTLEMENT(group.id), newSettlement);
             toast.success("Đã ghi nhận thanh toán!");
             setShowSettle(false);
             setNewSettlement({ payerId: "", payeeId: "", amount: "", note: "" });
