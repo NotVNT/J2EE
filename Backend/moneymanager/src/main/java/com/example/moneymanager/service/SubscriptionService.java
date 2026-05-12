@@ -114,24 +114,10 @@ public class SubscriptionService {
         }
     }
 
-    public void ensureCanUseRecurring(ProfileEntity profile) {
-        PlanFeatures features = getPlanFeatures(profile);
-        if (features.getPlan() != SubscriptionPlan.PREMIUM) {
-            throw new RuntimeException("Tính năng Giao dịch định kỳ chỉ có ở gói Premium. Vui lòng nâng cấp để sử dụng.");
-        }
-    }
-
     public void ensureCanUseForecast(ProfileEntity profile) {
         PlanFeatures features = getPlanFeatures(profile);
         if (features.getPlan() != SubscriptionPlan.PREMIUM) {
             throw new RuntimeException("Tính năng Dự báo và Cảnh báo bất thường chỉ có ở gói Premium. Vui lòng nâng cấp để sử dụng.");
-        }
-    }
-
-    public void ensureCanUseGroupBudgeting(ProfileEntity profile) {
-        PlanFeatures features = getPlanFeatures(profile);
-        if (features.getPlan() != SubscriptionPlan.PREMIUM) {
-            throw new RuntimeException("Tính năng Quản lý chi tiêu nhóm chỉ có ở gói Premium. Vui lòng nâng cấp để sử dụng.");
         }
     }
 

@@ -1,5 +1,5 @@
 import logo from "./logo/devbot.png";
-import {BadgeDollarSign, ChartBar, Coins, FunnelPlus, LayoutDashboard, List, PiggyBank, Target, Wallet, Repeat, Activity, Users} from "lucide-react";
+import {BadgeDollarSign, ChartBar, Coins, FunnelPlus, LayoutDashboard, List, PiggyBank, Target, Wallet, Activity} from "lucide-react";
 
 export const assets = {
     logo,
@@ -56,24 +56,12 @@ export const SIDE_BAR_DATA = [
     },
     {
         id: "09",
-        label: "Giao dịch định kỳ",
-        icon: Repeat,
-        path: "/recurring-transactions",
-    },
-    {
-        id: "10",
         label: "Dự báo",
         icon: Activity,
         path: "/forecast",
     },
     {
-        id: "11",
-        label: "Nhóm chi tiêu",
-        icon: Users,
-        path: "/group-budget",
-    },
-    {
-        id: "12",
+        id: "10",
         label: "Thanh toán",
         icon: BadgeDollarSign,
         path: "/payment",

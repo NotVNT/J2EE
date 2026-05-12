@@ -106,32 +106,9 @@ export const API_ENDPOINTS = {
     UPDATE_EMAIL_PREFERENCES: "/profile/email-preferences",
     RESET_EMAIL_PREFERENCES: "/profile/email-preferences/reset",
 
-    // Recurring Transactions endpoints
-    RECURRING_TRANSACTIONS: "/recurring-transactions",
-    TOGGLE_RECURRING_TRANSACTION: (id) => `/recurring-transactions/${id}/toggle`,
-    UPDATE_RECURRING_TRANSACTION: (id) => `/recurring-transactions/${id}`,
-    DELETE_RECURRING_TRANSACTION: (id) => `/recurring-transactions/${id}`,
-
     // Forecast endpoints
     FORECAST_MONTHLY: (year, month) => `/forecast/monthly?year=${year}&month=${month}`,
     FORECAST_ANOMALIES: "/forecast/anomalies",
     FORECAST_CATEGORY_TREND: (categoryId, months) => `/forecast/category-trend/${categoryId}?months=${months}`,
     FORECAST_INSIGHTS: "/forecast/insights",
-
-    // Group endpoints
-    GET_GROUPS: "/groups",
-    CREATE_GROUP: "/groups",
-    GET_GROUP_DETAILS: (id) => `/groups/${id}`,
-    UPDATE_GROUP: (id) => `/groups/${id}`,
-    GET_GROUP_MEMBERS: (id) => `/groups/${id}/members`,
-    ADD_GROUP_MEMBER: (id) => `/groups/${id}/members`,
-
-    // Group Expense endpoints
-    GET_GROUP_EXPENSES: (groupId) => `/groups/${groupId}/expenses`,
-    ADD_GROUP_EXPENSE: (groupId) => `/groups/${groupId}/expenses`,
-
-    // Group Settlement endpoints
-    GET_GROUP_BALANCES: (groupId) => `/groups/${groupId}/settlements/balances`,
-    GET_GROUP_SETTLEMENTS: (groupId) => `/groups/${groupId}/settlements`,
-    ADD_GROUP_SETTLEMENT: (groupId) => `/groups/${groupId}/settlements`,
 }
