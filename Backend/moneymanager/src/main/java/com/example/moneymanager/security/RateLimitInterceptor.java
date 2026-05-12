@@ -29,7 +29,8 @@ public class RateLimitInterceptor implements HandlerInterceptor {
             new RateRule(CTX + "/otp/resend",                 3,  60_000),
             new RateRule(CTX + "/register",                   5,  60_000),
             new RateRule(CTX + "/payments/payos/create",      3,  60_000),
-            new RateRule(CTX + "/gemini/chat",               15,  60_000)
+            new RateRule(CTX + "/gemini/chat",               15,  60_000),
+            new RateRule(CTX + "/gemini/spending-tips",       5,  60_000)
     );
 
     // key: "fullPath:clientIp" → sliding window of request timestamps

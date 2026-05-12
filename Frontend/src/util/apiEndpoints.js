@@ -62,6 +62,7 @@ export const API_ENDPOINTS = {
 
     // AI assistant endpoints
     GEMINI_CHAT: "/gemini/chat",
+    GEMINI_SPENDING_TIPS: "/gemini/spending-tips",
 
     // Monthly Report endpoints
     MONTHLY_REPORT_CURRENT: "/reports/monthly",
