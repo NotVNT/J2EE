@@ -9,11 +9,14 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGri
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../hooks/useUser";
 import { usePageTitle } from "../hooks/usePageTitle";
+import { useTheme } from "../context/ThemeContext";
 
 const Forecast = () => {
     useUser();
     usePageTitle("Dự báo thông minh");
     const { user } = useContext(AppContext);
+    const { theme } = useTheme();
+    const isDark = theme === "dark";
     const [monthlyForecast, setMonthlyForecast] = useState(null);
     const [anomalies, setAnomalies] = useState([]);
     const [insights, setInsights] = useState(null);
@@ -102,22 +105,22 @@ const Forecast = () => {
                         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Dựa trên phân tích AI từ dữ liệu lịch sử của bạn</p>
                     </div>
                     <div className="flex gap-3">
-                        <select 
+                        <select
                             value={selectedMonth}
                             onChange={(e) => setSelectedMonth(Number(e.target.value))}
-                            className="border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-hidden bg-white dark:bg-white/5 text-slate-800 dark:text-white"
+                            className="border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-hidden bg-white dark:bg-slate-800 text-slate-800 dark:text-white"
                         >
                             {Array.from({length: 12}, (_, i) => i + 1).map(m => (
-                                <option key={m} value={m}>Tháng {m}</option>
+                                <option key={m} value={m} className="bg-white dark:bg-slate-800 text-slate-800 dark:text-white">Tháng {m}</option>
                             ))}
                         </select>
-                        <select 
+                        <select
                             value={selectedYear}
                             onChange={(e) => setSelectedYear(Number(e.target.value))}
-                            className="border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-hidden bg-white dark:bg-white/5 text-slate-800 dark:text-white"
+                            className="border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-hidden bg-white dark:bg-slate-800 text-slate-800 dark:text-white"
                         >
                             {[selectedYear - 1, selectedYear, selectedYear + 1].map(y => (
-                                <option key={y} value={y}>Năm {y}</option>
+                                <option key={y} value={y} className="bg-white dark:bg-slate-800 text-slate-800 dark:text-white">Năm {y}</option>
                             ))}
                         </select>
                     </div>
@@ -141,15 +144,21 @@ const Forecast = () => {
                                     <div className="h-80">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
-                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} dy={10} />
-                                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} tickFormatter={(val) => `${val/1000}k`} />
-                                                <Tooltip 
-                                                    cursor={{ fill: '#f8fafc' }}
-                                                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? '#1e293b' : '#f1f5f9'} />
+                                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: isDark ? '#94a3b8' : '#64748b' }} dy={10} />
+                                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: isDark ? '#94a3b8' : '#64748b' }} tickFormatter={(val) => `${val/1000}k`} />
+                                                <Tooltip
+                                                    cursor={{ fill: isDark ? 'rgba(255,255,255,0.04)' : '#f8fafc' }}
+                                                    contentStyle={{
+                                                        borderRadius: '12px',
+                                                        border: 'none',
+                                                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.3)',
+                                                        backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                                                        color: isDark ? '#f1f5f9' : '#1e293b'
+                                                    }}
                                                     formatter={(value) => new Intl.NumberFormat('vi-VN').format(value) + ' đ'}
                                                 />
-                                                <Bar dataKey="average" name="Trung bình" fill="#cbd5e1" radius={[4, 4, 0, 0]} barSize={20} />
+                                                <Bar dataKey="average" name="Trung bình" fill={isDark ? '#334155' : '#cbd5e1'} radius={[4, 4, 0, 0]} barSize={20} />
                                                 <Bar dataKey="predicted" name="Dự báo" fill="#6366f1" radius={[4, 4, 0, 0]} barSize={20} />
                                             </BarChart>
                                         </ResponsiveContainer>
