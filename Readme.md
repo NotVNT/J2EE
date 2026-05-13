@@ -1,65 +1,128 @@
-# Subscription Plans And Limits
+# Money Manager
 
-The project currently supports 3 subscription levels:
+Ứng dụng quản lý tài chính cá nhân đa nền tảng (Web + Mobile), hỗ trợ theo dõi thu chi, lập ngân sách, mục tiêu tiết kiệm, dự báo tài chính và trợ lý AI.
 
-- `FREE`
-- `BASIC`
-- `PREMIUM`
+## Tech Stack
 
-## Plan Rules
+| Layer | Công nghệ |
+|---|---|
+| Backend | Spring Boot, Java 21, Maven, MySQL, Redis |
+| Frontend | React 19, Vite, Tailwind CSS 4, Recharts |
+| Mobile | React Native (Expo), React Navigation, AsyncStorage |
 
-### `FREE`
-- Maximum `10` categories per account
-- Maximum `100` income/expense transactions per month
-- Transaction filtering is limited to the last `3 months`
-- Excel export is not allowed
-- Emailing Excel reports is not allowed
+---
 
-### `BASIC`
-- Maximum `30` categories per account
-- Maximum `1000` income/expense transactions per month
-- Transaction filtering is limited to the last `12 months`
-- Excel export is allowed
-- Emailing Excel reports is allowed
+## Subscription Plans
 
-### `PREMIUM`
-- Unlimited categories
-- Unlimited monthly transactions
-- Unlimited transaction history filtering
-- Excel export is allowed
-- Emailing Excel reports is allowed
+Hệ thống hỗ trợ 3 gói đăng ký: `FREE`, `BASIC`, `PREMIUM`.
 
-## Current Backend Enforcement
+### Plan Rules
 
-The backend now applies plan restrictions in these areas:
+| Tính năng | FREE | BASIC | PREMIUM |
+|---|---|---|---|
+| Danh mục | 10 | 30 | Không giới hạn |
+| Giao dịch / tháng | 100 | 1.000 | Không giới hạn |
+| Lọc lịch sử | 3 tháng | 12 tháng | Không giới hạn |
+| Xuất Excel | ❌ | ✅ | ✅ |
+| Gửi báo cáo qua Email | ❌ | ✅ | ✅ |
+| Nhập hóa đơn (AI) | ❌ | ❌ | ✅ |
+| AI Coach chi tiết | ❌ | ✅ | ✅ |
+| Dự báo tài chính | ❌ | ❌ | ✅ |
 
-- Creating categories
-- Creating incomes
-- Creating expenses
-- Filtering transactions
-- Downloading Excel reports
-- Emailing Excel reports
+### Backend Enforcement
 
-## Subscription Activation Logic
+Backend áp dụng giới hạn gói đăng ký tại các điểm:
+- Tạo danh mục
+- Tạo thu nhập / chi tiêu
+- Lọc giao dịch
+- Tải báo cáo Excel
+- Gửi báo cáo qua Email
+- Nhập hóa đơn
+- AI Coach
+- Dự báo tài chính
 
-- New users start with plan `FREE`
-- When a PayOS payment is confirmed as `PAID`, the backend activates the purchased plan
-- Supported paid plans:
-  - `basic` -> `BASIC`
-  - `premium` -> `PREMIUM`
+### Subscription Activation
 
-## Subscription State Stored On Profile
+- Người dùng mới bắt đầu với gói `FREE`
+- Khi thanh toán PayOS được xác nhận `PAID`, backend tự động kích hoạt gói đã mua
+- Gói hỗ trợ: `basic` → `BASIC`, `premium` → `PREMIUM`
+- Mỗi profile lưu: `subscriptionPlan`, `subscriptionStatus`, `subscriptionActivatedAt`, `subscriptionExpiresAt`, `autoRenew`
 
-Each profile now stores:
+---
 
-- `subscriptionPlan`
-- `subscriptionStatus`
-- `subscriptionActivatedAt`
-- `subscriptionExpiresAt`
-- `autoRenew`
+## Features
 
-## Notes
+### 🤖 Smart Spending Tips (AI Coach)
 
-- `FREE` is intended for product trial and basic personal usage
-- `BASIC` is for regular users who need exports and longer history
-- `PREMIUM` is for advanced users who want no practical limits
+Phân tích chi tiêu 3 tháng gần nhất bằng Google Gemini, đưa ra gợi ý tiết kiệm cá nhân hóa bằng tiếng Việt.
+
+- **PREMIUM**: Phân tích real-time
+- **BASIC**: Cache 6 giờ
+- **FREE**: Cache 24 giờ, kết quả cơ bản
+
+### 🛡️ Spam Protection
+
+Hệ thống chống spam 2 lớp:
+- **Redis-based**: Đếm số lần gửi email theo tài khoản. Trên 5 lần/phút → khóa 10 phút, trên 10 lần → khóa 5 giờ
+- **Rate Limiter (in-memory)**: Giới hạn theo IP cho từng endpoint (login: 5/phút, quên mật khẩu: 5/phút, gửi lại OTP: 3/phút, chat AI: 15/phút...). Trả về HTTP 429 khi vượt ngưỡng
+
+### 📊 Email Reports
+
+Gửi báo cáo Excel qua email dưới dạng file đính kèm, sử dụng Spring Mail (Brevo/Sendinblue SMTP). Hỗ trợ thẻ báo cáo hàng tháng (Monthly Report Card) đánh giá điểm chi tiêu A-F, phân tích danh mục và tiến độ tiết kiệm.
+
+### 📥 Excel Export
+
+Xuất báo cáo thu/chi dạng XLSX với Apache POI. Định dạng tiếng Việt, bảng mã màu (xanh = thu nhập, đỏ = chi tiêu), màu xen kẽ dòng, dòng tổng kèm định dạng VNĐ.
+
+### 🔐 OTP
+
+Mã OTP 6 chữ số (BCrypt hash) dùng cho kích hoạt tài khoản và đặt lại mật khẩu. Hiệu lực 210 giây, cooldown gửi lại 180 giây, tối đa 5 lần nhập sai, so sánh constant-time.
+
+### 💰 Payment (PayOS)
+
+Tích hợp cổng thanh toán PayOS: tạo link thanh toán, webhook xác nhận, đồng bộ trạng thái tự động mỗi 30 giây, tự động kích hoạt gói khi thanh toán thành công.
+
+### 🧾 Receipt Import (Gemini Vision)
+
+Tải ảnh hóa đơn → Gemini Vision trích xuất nơi bán, mặt hàng, số tiền → tự động tạo chi tiêu. **PREMIUM-only**. Hỗ trợ ảnh ≤10MB.
+
+### 📈 Financial Forecasting
+
+Dự báo chi tiêu tháng tới dựa trên 6 tháng lịch sử, phát hiện bất thường (2+ độ lệch chuẩn), phân tích xu hướng danh mục. **PREMIUM-only**.
+
+### 🎯 Budget Management
+
+Đặt hạn mức chi tiêu hàng tháng theo từng danh mục, theo dõi % đã sử dụng, cảnh báo khi vượt ngân sách.
+
+### 💎 Saving Goals
+
+Theo dõi mục tiêu tiết kiệm với đóng góp định kỳ. Tự động tính mục tiêu hàng tháng, quản lý trạng thái (ACTIVE/COMPLETED/CANCELLED).
+
+### 🔔 Notifications
+
+Thông báo in-app + email notification với tùy chọn bật/tắt theo loại. Hỗ trợ cảnh báo ngân sách, nhắc nhở mục tiêu tiết kiệm, thông báo thanh toán thành công.
+
+### 🔑 Google OAuth2
+
+Đăng nhập bằng Google. Xác thực Google ID Token, tự động tạo profile cho người dùng mới, cấp JWT.
+
+### 🛠️ Admin Panel
+
+Dashboard quản trị với thống kê tổng quan, quản lý người dùng (CRUD), theo dõi thanh toán, broadcast notification, quản lý subscription. Phân quyền theo role `ADMIN`.
+
+### 📱 Mobile App
+
+Ứng dụng React Native (Expo) đa nền tảng. Bottom tab navigation (Dashboard + Expenses), JWT auth + AsyncStorage, pull-to-refresh.
+
+---
+
+## Additional
+
+| Tính năng | Chi tiết |
+|---|---|
+| JWT Auth | Spring Security + JWT filter, axios interceptor tự động refresh |
+| Dark Mode | ThemeContext + Tailwind CSS dark mode toàn ứng dụng |
+| File Upload | AWS S3 upload ảnh đại diện, xác thực magic bytes (JPEG/PNG/GIF/WebP) |
+| Document Generation | AWS Lambda sinh PDF hóa đơn sau thanh toán |
+| Dashboard Widgets | Widget tùy chỉnh kéo-thả, báo cáo tháng với xếp hạng A-F |
+| Quick Expense | Mẫu chi tiêu nhanh, emoji picker cho danh mục |
