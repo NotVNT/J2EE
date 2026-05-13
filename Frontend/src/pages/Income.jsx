@@ -103,7 +103,21 @@ const Income = () => {
       window.URL.revokeObjectURL(url);
       toast.success("Tải xuống thành công");
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to download income");
+      if (error.response?.status === 429) {
+        // Blob is used, so we need to parse the JSON error
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const data = JSON.parse(reader.result);
+            toast.error(data.message || "Bạn thao tác quá nhanh.");
+          } catch (e) {
+            toast.error("Bạn đã bị giới hạn tính năng này.");
+          }
+        };
+        reader.readAsText(error.response.data);
+      } else {
+        toast.error(error.response?.data?.message || "Failed to download income");
+      }
     }
   };
 
