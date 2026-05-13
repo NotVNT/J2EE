@@ -1,16 +1,24 @@
-import { useContext, useEffect, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { MessageCircle, SendHorizontal, Sparkles, X } from "lucide-react";
+import { ChevronDown, ChevronUp, MessageCircle, RotateCcw, SendHorizontal, X } from "lucide-react";
 import axiosConfig from "../util/axiosConfig.jsx";
 import { API_ENDPOINTS } from "../util/apiEndpoints.js";
 import { AppContext } from "../context/AppContext.jsx";
+import { useRouteContext } from "../context/RouteContext.jsx";
+import { parseIntentResponse, isCrudIntent, isActionIntent, INTENT_ICONS, INTENT_LABELS } from "../util/aiIntentParser.js";
+import AIConfirmationForm from "./AIConfirmationForm.jsx";
 
-const SPENDING_TIPS_LABEL = "💡 Gợi ý tiết kiệm cho tôi";
+const WELCOME_MESSAGE = {
+  id: "welcome",
+  role: "assistant",
+  content: "Xin chào! Tôi là Nova Agent — trợ lý AI của Money Manager. Tôi có thể trò chuyện, hỗ trợ tài chính, và giúp bạn tạo/sửa/xóa dữ liệu nhanh chóng.",
+};
 
-const QUICK_PROMPTS = [
-  "Hãy giới thiệu ngắn gọn về chức năng của bạn",
-  "Gợi ý cách quản lý chi tiêu hiệu quả",
-  "Tôi nên bắt đầu theo dõi tài chính cá nhân từ đâu?"
+const QUICK_ACTIONS = [
+  { label: "💰 Gợi ý tiết kiệm", text: "Gợi ý cách tiết kiệm dựa trên thói quen chi tiêu của tôi" },
+  { label: "🧠 Tâm lý chi tiêu", text: "Tại sao tôi hay mua sắm bốc đồng và làm sao để kiểm soát?" },
+  { label: "💬 Tôi đang lo về tiền", text: "Tôi đang stress và lo lắng về tài chính, bạn có thể lắng nghe không?" },
+  { label: "🎯 Lập kế hoạch mục tiêu", text: "Giúp tôi lên kế hoạch tiết kiệm cho một mục tiêu lớn" },
 ];
 
 const PUBLIC_PATHS = new Set([
@@ -38,20 +46,25 @@ const formatAssistantMessage = (content) => {
   return normalizedContent.split("\n").map((line) => line.trim()).filter(Boolean);
 };
 
+const buildHistory = (msgs) =>
+  msgs
+    .filter((m) => m.id !== "welcome" && !m.isSystem && !m.isIntent && !m.isConfirmation)
+    .filter((m) => m.role === "user" || m.role === "assistant")
+    .map((m) => ({ role: m.role, content: m.content }))
+    .slice(-20);
+
 const ChatWidget = () => {
   const { user } = useContext(AppContext);
+  const { currentPage, pageLabel } = useRouteContext();
   const location = useLocation();
   const messagesEndRef = useRef(null);
   const [isOpen, setIsOpen] = useState(false);
-  const [message, setMessage] = useState("");
+  const [messages, setMessages] = useState([WELCOME_MESSAGE]);
+  const [selectedProvider, setProvider] = useState("gemini");
+  const [inputMessage, setInputMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
-  const [messages, setMessages] = useState([
-    {
-      id: "assistant-welcome",
-      role: "assistant",
-      content: "Xin chào. Tôi là trợ lý AI của Money Manager, có thể trò chuyện và hỗ trợ bạn về quản lý chi tiêu."
-    }
-  ]);
+  const [isProcessingCrud, setIsProcessingCrud] = useState(false);
+  const [pendingIntent, setPendingIntent] = useState(null);
 
   const token = localStorage.getItem("token") || sessionStorage.getItem("token");
   const shouldHideWidget = !token || PUBLIC_PATHS.has(location.pathname);
@@ -61,27 +74,116 @@ const ChatWidget = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isOpen]);
 
+  useEffect(() => {
+    if (currentPage) {
+      setMessages((prev) => {
+        const lastContextMsg = prev.find((m) => m.id === "page-context");
+        if (lastContextMsg) return prev;
+        return [...prev, {
+          id: "page-context",
+          role: "assistant",
+          content: `📍 Bạn đang ở trang ${pageLabel}. Tôi có thể giúp bạn thao tác nhanh với dữ liệu trên trang này.`,
+          isSystem: true
+        }];
+      });
+    }
+  }, [currentPage, pageLabel]);
+
   if (shouldHideWidget) return null;
 
   const sendMessage = async (promptText) => {
     const trimmedMessage = promptText.trim();
     if (!trimmedMessage || isSending) return;
 
-    const userMessage = { id: `user-${Date.now()}`, role: "user", content: trimmedMessage };
-    setMessages((prev) => [...prev, userMessage]);
-    setMessage("");
+    const userMessage = { id: `user-${Date.now()}`, role: "user", content: trimmedMessage, provider: selectedProvider };
+    const updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages);
+    setInputMessage("");
     setIsSending(true);
 
     try {
-      const response = await axiosConfig.post(API_ENDPOINTS.GEMINI_CHAT, { message: trimmedMessage });
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `assistant-${Date.now()}`,
-          role: "assistant",
-          content: response.data?.reply || "Tôi đã nhận câu hỏi nhưng hiện chưa tạo được câu trả lời phù hợp."
-        }
-      ]);
+      const conversationHistory = buildHistory(updatedMessages);
+
+      if (selectedProvider === "gptoss") {
+        const response = await axiosConfig.post(API_ENDPOINTS.AI_CHAT, {
+          provider: selectedProvider,
+          messages: buildHistory(updatedMessages)
+        });
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `assistant-${Date.now()}`,
+            role: "assistant",
+            content: response.data?.reply || "Tôi đã nhận câu hỏi nhưng hiện chưa tạo được câu trả lời phù hợp.",
+            provider: response.data?.provider || selectedProvider,
+            modelUsed: response.data?.modelUsed
+          }
+        ]);
+        setIsSending(false);
+        return;
+      }
+
+      const intentResponse = await axiosConfig.post(API_ENDPOINTS.AI_PARSE_INTENT, {
+        provider: selectedProvider,
+        userMessage: trimmedMessage,
+        pageContext: currentPage || "dashboard",
+        conversationHistory
+      });
+
+      const parsed = parseIntentResponse(intentResponse.data);
+
+      if (isCrudIntent(parsed.intent) || isActionIntent(parsed.intent)) {
+        setPendingIntent(parsed);
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `intent-${Date.now()}`,
+            role: "assistant",
+            isIntent: true,
+            intent: parsed.intent,
+            extractedFields: parsed.extractedFields,
+            suggestedValues: parsed.suggestedValues,
+            confirmationPrompt: parsed.confirmationPrompt
+          }
+        ]);
+      } else if (parsed.intent === "ANSWER_QUESTION") {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `assistant-${Date.now()}`,
+            role: "assistant",
+            content: parsed.answer || intentResponse.data?.reply || "Tôi đã nhận câu hỏi nhưng chưa tạo được câu trả lời phù hợp.",
+            provider: selectedProvider,
+            modelUsed: intentResponse.data?.modelUsed
+          }
+        ]);
+      } else if (parsed.intent === "INVALID_REQUEST") {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `assistant-error-${Date.now()}`,
+            role: "assistant",
+            content: parsed.validationErrors?.[0] || "Yêu cầu không hợp lệ hoặc ngoài phạm vi hỗ trợ.",
+            isError: true,
+            provider: selectedProvider
+          }
+        ]);
+      } else {
+        const response = await axiosConfig.post(API_ENDPOINTS.AI_CHAT, {
+          provider: selectedProvider,
+          messages: buildHistory(updatedMessages)
+        });
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `assistant-${Date.now()}`,
+            role: "assistant",
+            content: response.data?.reply || "Tôi đã nhận câu hỏi nhưng hiện chưa tạo được câu trả lời phù hợp.",
+            provider: response.data?.provider || selectedProvider,
+            modelUsed: response.data?.modelUsed
+          }
+        ]);
+      }
     } catch (error) {
       setMessages((prev) => [
         ...prev,
@@ -89,7 +191,8 @@ const ChatWidget = () => {
           id: `assistant-error-${Date.now()}`,
           role: "assistant",
           content: error.response?.data?.message || "Hiện tại tôi chưa phản hồi được. Bạn thử lại sau giúp mình nhé.",
-          isError: true
+          isError: true,
+          provider: selectedProvider
         }
       ]);
     } finally {
@@ -97,134 +200,355 @@ const ChatWidget = () => {
     }
   };
 
-  const sendSpendingTips = async () => {
-    if (isSending) return;
+  const executeExportAction = async (intent) => {
+    if (intent === "EXPORT_EXCEL_INCOME" || intent === "EXPORT_EXCEL_EXPENSE") {
+      const endpoint = intent === "EXPORT_EXCEL_INCOME"
+        ? API_ENDPOINTS.INCOME_EXCEL_DOWNLOAD
+        : API_ENDPOINTS.EXPENSE_EXCEL_DOWNLOAD;
+      const filename = intent === "EXPORT_EXCEL_INCOME" ? "income_details.xlsx" : "expense_details.xlsx";
+      const response = await axiosConfig.get(endpoint, { responseType: "blob" });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", filename);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      return intent === "EXPORT_EXCEL_INCOME"
+        ? "📥 Đã tải xuống báo cáo Excel thu nhập tháng này!"
+        : "📥 Đã tải xuống báo cáo Excel chi tiêu tháng này!";
+    }
+    if (intent === "EMAIL_INCOME_REPORT" || intent === "EMAIL_EXPENSE_REPORT") {
+      const endpoint = intent === "EMAIL_INCOME_REPORT"
+        ? API_ENDPOINTS.EMAIL_INCOME
+        : API_ENDPOINTS.EMAIL_EXPENSE;
+      await axiosConfig.get(endpoint);
+      return intent === "EMAIL_INCOME_REPORT"
+        ? "📧 Đã gửi báo cáo thu nhập tháng này đến email của bạn!"
+        : "📧 Đã gửi báo cáo chi tiêu tháng này đến email của bạn!";
+    }
+    throw new Error("Không xác định được hành động.");
+  };
 
-    const userMessage = { id: `user-${Date.now()}`, role: "user", content: SPENDING_TIPS_LABEL };
-    setMessages((prev) => [...prev, userMessage]);
-    setIsSending(true);
-
+  const handleConfirmAction = async (intent, confirmedData) => {
+    setIsProcessingCrud(true);
     try {
-      const response = await axiosConfig.post(API_ENDPOINTS.GEMINI_SPENDING_TIPS);
-      const data = response.data;
-      const tips = data?.tips || [];
-      const disclaimer = data?.disclaimer || "";
+      let resultContent;
+      let undoData = null;
 
-      const content = tips.length > 0
-        ? tips.map((tip) => `💰 ${tip}`).join("\n") + (disclaimer ? "\n\n" + disclaimer : "")
-        : "Tôi chưa có đủ dữ liệu chi tiêu để đưa ra gợi ý. Hãy thêm transaction trước nhé!";
+      if (isActionIntent(intent)) {
+        resultContent = await executeExportAction(intent);
+      } else {
+        const { data } = await axiosConfig.post(API_ENDPOINTS.AI_CONFIRM_ACTION, {
+          intent,
+          extractedData: confirmedData
+        });
+        const intentIcon = INTENT_ICONS[intent] || "✅";
+        resultContent = `${intentIcon} ${data.message || "Thao tác thành công!"}`;
+        if (data.undoable && data.operationId) undoData = data;
+      }
 
+      setMessages((prev) => prev.map((m) => m.isIntent ? { ...m, isConfirmation: true } : m));
       setMessages((prev) => [
         ...prev,
-        { id: `assistant-${Date.now()}`, role: "assistant", content }
+        { id: `result-${Date.now()}`, role: "assistant", content: resultContent, isSystem: true }
       ]);
+      if (undoData) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `undo-${Date.now()}`,
+            role: "assistant",
+            isUndoAction: true,
+            operationId: undoData.operationId,
+            content: "Bạn có thể hoàn tác thao tác này trong vài phút."
+          }
+        ]);
+      }
     } catch (error) {
+      let errorMsg = "Không thể thực hiện thao tác. Vui lòng thử lại.";
+      if (error.response?.data instanceof Blob) {
+        try {
+          const text = await error.response.data.text();
+          errorMsg = JSON.parse(text).message || errorMsg;
+        } catch { /* keep default */ }
+      } else {
+        errorMsg = error.response?.data?.message || error.message || errorMsg;
+      }
+      setMessages((prev) => [
+        ...prev,
+        { id: `result-error-${Date.now()}`, role: "assistant", content: `❌ ${errorMsg}`, isError: true }
+      ]);
+    } finally {
+      setIsProcessingCrud(false);
+      setPendingIntent(null);
+    }
+  };
+
+  const handleCancelConfirmation = () => {
+    setPendingIntent(null);
+    setMessages((prev) => prev.map((m) => {
+      if (m.isIntent) return { ...m, isConfirmation: true };
+      return m;
+    }));
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: `cancel-${Date.now()}`,
+        role: "assistant",
+        content: "Đã hủy thao tác.",
+        isSystem: true
+      }
+    ]);
+  };
+
+  const handleUndo = async (operationId) => {
+    try {
+      await axiosConfig.post(`/ai/undo/${operationId}`);
       setMessages((prev) => [
         ...prev,
         {
-          id: `assistant-error-${Date.now()}`,
+          id: `undo-result-${Date.now()}`,
           role: "assistant",
-          content: error.response?.data?.message || "Hiện tại tôi chưa phản hồi được. Bạn thử lại sau giúp mình nhé.",
+          content: "↩️ Đã hoàn tác thao tác thành công.",
+          isSystem: true
+        }
+      ]);
+    } catch {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `undo-error-${Date.now()}`,
+          role: "assistant",
+          content: "❌ Không thể hoàn tác. Có thể đã quá thời gian cho phép.",
           isError: true
         }
       ]);
-    } finally {
-      setIsSending(false);
     }
+  };
+
+  const handleProviderSwitch = (provider) => {
+    if (provider === selectedProvider) return;
+    setProvider(provider);
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: `system-${Date.now()}`,
+        role: "assistant",
+        content: provider === "gemini"
+          ? "🤖 Đã chuyển sang chế độ Agent — có thể tạo/sửa/xóa dữ liệu, xuất báo cáo."
+          : "💬 Đã chuyển sang chế độ Chat — hỏi đáp thông thường.",
+        isSystem: true,
+        provider
+      }
+    ]);
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    await sendMessage(message);
+    await sendMessage(inputMessage);
   };
 
   return (
     <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-3">
       {isOpen && (
-        <div className="flex h-[min(32rem,80dvh)] w-88 max-w-[calc(100vw-1.5rem)] flex-col overflow-hidden rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0F172A] shadow-2xl shadow-slate-900/20">
+        <div className="flex h-[min(36rem,80dvh)] w-96 max-w-[calc(100vw-1.5rem)] flex-col overflow-hidden rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0F172A] shadow-2xl shadow-slate-900/20">
           {/* Header */}
           <div className="flex items-start justify-between gap-3 bg-linear-to-br from-amber-500 via-amber-400 to-yellow-500 px-5 py-4 text-white">
-            <div>
-              <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.24em] text-white/80">
-                <Sparkles size={16} />
-                Trợ lý AI
+            <div className="flex items-center gap-3">
+              <div className="relative flex-shrink-0">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-lg font-bold text-white">
+                  N
+                </div>
+                <div className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-amber-400 bg-green-400" />
               </div>
-              <h3 className="mt-2 text-lg font-semibold">
-                {user?.fullName ? `Chào ${user.fullName}` : "Xin chào"}
-              </h3>
-              <p className="mt-1 text-sm text-white/85">
-                Hỏi về quản lý chi tiêu, tiết kiệm và cách sử dụng Money Manager.
-              </p>
+              <div>
+                <h3 className="text-base font-semibold leading-tight">Nova Agent · Trợ lý AI</h3>
+                <p className="mt-0.5 text-xs text-white/75">
+                  {user?.fullName ? `Chào ${user.fullName}` : "Xin chào"}
+                </p>
+              </div>
             </div>
-            <button
-              type="button"
-              onClick={() => setIsOpen(false)}
-              className="rounded-full bg-white/15 p-2 text-white transition hover:bg-white/25"
-              aria-label="Đóng hộp chat"
-            >
-              <X size={18} />
-            </button>
+            <div className="flex items-center gap-2">
+              <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-medium text-white">
+                Nova Agent
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsOpen(false)}
+                className="rounded-full bg-white/15 p-1.5 text-white transition hover:bg-white/25"
+                aria-label="Đóng hộp chat"
+              >
+                <X size={16} />
+              </button>
+            </div>
           </div>
 
           {/* Messages area */}
-          <div className="flex-1 space-y-4 overflow-y-auto bg-slate-50 dark:bg-[#0A0E1A] px-4 py-4">
-            <div className="rounded-2xl border border-amber-100 dark:border-amber-500/20 bg-amber-50 dark:bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-300">
-              Bạn có thể bắt đầu bằng một trong các gợi ý bên dưới hoặc nhập câu hỏi của riêng mình.
-            </div>
+          <div className="flex-1 space-y-3 overflow-y-auto bg-slate-50 dark:bg-[#0A0E1A] px-4 py-4">
+            {/* Nova Agent capabilities */}
+            <details className="group rounded-2xl border border-amber-100 dark:border-amber-500/20 bg-amber-50 dark:bg-amber-500/10">
+              <summary className="flex cursor-pointer items-center gap-2 px-4 py-3 text-sm font-semibold text-amber-900 dark:text-amber-300 select-none">
+                <span className="text-base">✨</span> Nova Agent có thể làm gì?
+                <ChevronDown size={14} className="ml-auto transition-transform group-open:rotate-180" />
+              </summary>
+              <div className="px-4 pb-3 space-y-2 text-xs text-amber-800 dark:text-amber-400">
+                <p className="font-medium text-amber-900 dark:text-amber-300">📊 Quản lý dữ liệu</p>
+                <ul className="list-disc pl-4 space-y-0.5">
+                  <li>Tạo/Sửa/Xóa chi tiêu, thu nhập</li>
+                  <li>Tạo/Sửa/Xóa danh mục</li>
+                  <li>Tạo/Sửa/Xóa ngân sách</li>
+                  <li>Tạo/Sửa/Xóa mục tiêu tiết kiệm</li>
+                </ul>
+                <p className="font-medium text-amber-900 dark:text-amber-300 pt-1">📁 Xuất báo cáo</p>
+                <ul className="list-disc pl-4 space-y-0.5">
+                  <li>Xuất Excel chi tiêu / thu nhập</li>
+                  <li>Gửi email báo cáo chi tiêu / thu nhập</li>
+                </ul>
+                <p className="font-medium text-amber-900 dark:text-amber-300 pt-1">💡 Hỗ trợ thông minh</p>
+                <ul className="list-disc pl-4 space-y-0.5">
+                  <li>Tư vấn tài chính cá nhân</li>
+                  <li>Phân tích tâm lý chi tiêu</li>
+                  <li>Hỗ trợ cảm xúc về tiền bạc</li>
+                  <li>Lập kế hoạch mục tiêu dài hạn</li>
+                </ul>
+              </div>
+            </details>
 
-            <div className="flex flex-wrap gap-2">
+            {/* Example command */}
+            <div className="rounded-2xl border border-dashed border-amber-200 dark:border-amber-500/30 bg-amber-50/30 dark:bg-amber-500/5 px-4 py-3 text-xs">
+              <p className="font-medium text-amber-700 dark:text-amber-400 mb-2">💬 Thử gõ lệnh mẫu:</p>
               <button
                 type="button"
-                onClick={sendSpendingTips}
+                onClick={() => sendMessage("Tạo chi tiêu 50000đ ăn trưa hôm nay")}
                 disabled={isSending}
-                className="rounded-full border border-amber-300 dark:border-amber-500/50 bg-amber-50 dark:bg-amber-500/10 px-3 py-2 text-left text-xs font-semibold text-amber-700 dark:text-amber-400 transition hover:bg-amber-100 dark:hover:bg-amber-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                className="w-full text-left rounded-xl border border-amber-200 dark:border-amber-500/30 bg-white dark:bg-white/5 px-3 py-2 text-amber-700 dark:text-amber-400 transition hover:bg-amber-50 dark:hover:bg-amber-500/10 disabled:opacity-60"
               >
-                {SPENDING_TIPS_LABEL}
+                "Tạo chi tiêu 50000đ ăn trưa hôm nay"
               </button>
-              {QUICK_PROMPTS.map((prompt) => (
+              <button
+                type="button"
+                onClick={() => sendMessage("Xuất báo cáo Excel chi tiêu tháng này")}
+                disabled={isSending}
+                className="mt-1.5 w-full text-left rounded-xl border border-amber-200 dark:border-amber-500/30 bg-white dark:bg-white/5 px-3 py-2 text-amber-700 dark:text-amber-400 transition hover:bg-amber-50 dark:hover:bg-amber-500/10 disabled:opacity-60"
+              >
+                "Xuất báo cáo Excel chi tiêu tháng này"
+              </button>
+            </div>
+
+            {/* Quick action chips */}
+            <div className="flex flex-wrap gap-2">
+              {QUICK_ACTIONS.map((action) => (
                 <button
-                  key={prompt}
+                  key={action.label}
                   type="button"
-                  onClick={() => sendMessage(prompt)}
+                  onClick={() => sendMessage(action.text)}
                   disabled={isSending}
-                  className="rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-3 py-2 text-left text-xs font-medium text-slate-700 dark:text-slate-300 transition hover:border-amber-300 dark:hover:border-amber-500/50 hover:text-amber-700 dark:hover:text-amber-400 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="rounded-full border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 px-3 py-1.5 text-left text-xs font-medium text-amber-700 dark:text-amber-400 transition hover:bg-amber-100 dark:hover:bg-amber-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {prompt}
+                  {action.label}
                 </button>
               ))}
             </div>
 
+            {/* Message list */}
             {messages.map((chatMessage) => (
               <div
                 key={chatMessage.id}
                 className={`flex ${chatMessage.role === "user" ? "justify-end" : "justify-start"}`}
               >
+                {chatMessage.role === "assistant" && (
+                  <div className="mr-2 flex-shrink-0 pt-1">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-500/20 text-xs font-bold text-amber-600 dark:text-amber-400">
+                      N
+                    </div>
+                  </div>
+                )}
                 <div
-                  className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-6 shadow-sm ${
+                  className={`max-w-[80%] rounded-2xl px-3.5 py-2.5 text-sm leading-6 shadow-sm ${
                     chatMessage.role === "user"
-                      ? "bg-slate-900 dark:bg-amber-500 text-white"
+                      ? "bg-amber-500 text-white"
                       : chatMessage.isError
                         ? "border border-rose-200 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 text-rose-900 dark:text-rose-300"
-                        : "border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-800 dark:text-slate-200"
+                        : chatMessage.isSystem
+                          ? "border border-amber-100 dark:border-amber-500/20 bg-amber-50/50 dark:bg-amber-500/5 text-amber-600 dark:text-amber-400"
+                          : "border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-800 dark:text-slate-200"
                   }`}
                 >
-                  {chatMessage.role === "assistant" ? (
-                    <div className="space-y-2 wrap-break-word">
+                  {/* Intent Confirmation Form */}
+                  {chatMessage.isIntent && !chatMessage.isConfirmation && (
+                    <AIConfirmationForm
+                      intent={chatMessage.intent}
+                      extractedFields={chatMessage.extractedFields}
+                      suggestedValues={chatMessage.suggestedValues}
+                      confirmationPrompt={chatMessage.confirmationPrompt}
+                      onConfirm={handleConfirmAction}
+                      onCancel={handleCancelConfirmation}
+                      isProcessing={isProcessingCrud}
+                    />
+                  )}
+
+                  {/* Confirmed intent */}
+                  {chatMessage.isIntent && chatMessage.isConfirmation && (
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400">
+                        <span>{INTENT_ICONS[chatMessage.intent]}</span>
+                        <span>{INTENT_LABELS[chatMessage.intent] || chatMessage.intent}</span>
+                        <span className="text-green-600 dark:text-green-400">đã xác nhận</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Normal assistant message */}
+                  {chatMessage.role === "assistant" && !chatMessage.isIntent && !chatMessage.isUndoAction && (
+                    <div className="space-y-1.5 break-words">
                       {formatAssistantMessage(chatMessage.content).map((line, index) => (
                         <p key={`${chatMessage.id}-${index}`}>{line}</p>
                       ))}
+                      {!chatMessage.isError && !chatMessage.isSystem && chatMessage.modelUsed && (
+                        <span className="block text-[10px] text-slate-400 dark:text-slate-500 mt-1">
+                          Nova Agent · {chatMessage.provider === "gemini" ? "Gemini 2.5 Flash" : "GPT-OSS 120B"}
+                        </span>
+                      )}
                     </div>
-                  ) : (
-                    chatMessage.content
                   )}
+
+                  {/* Undo button */}
+                  {chatMessage.isUndoAction && (
+                    <div className="space-y-2">
+                      <p className="text-xs text-amber-600 dark:text-amber-400">{chatMessage.content}</p>
+                      <button
+                        type="button"
+                        onClick={() => handleUndo(chatMessage.operationId)}
+                        className="inline-flex items-center gap-1 rounded-lg border border-amber-300 dark:border-amber-500/40 bg-amber-100 dark:bg-amber-500/15 px-3 py-1 text-xs font-medium text-amber-700 dark:text-amber-400 transition hover:bg-amber-200 dark:hover:bg-amber-500/25"
+                      >
+                        <RotateCcw size={12} />
+                        Hoàn tác
+                      </button>
+                    </div>
+                  )}
+
+                  {/* User message */}
+                  {chatMessage.role === "user" && chatMessage.content}
                 </div>
               </div>
             ))}
 
+            {/* Typing indicator */}
             {isSending && (
               <div className="flex justify-start">
-                <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-4 py-3 text-sm text-slate-500 dark:text-slate-400 shadow-sm">
-                  Trợ lý đang trả lời...
+                <div className="mr-2 flex-shrink-0 pt-1">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-500/20 text-xs font-bold text-amber-600 dark:text-amber-400">
+                    N
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-4 py-3 shadow-sm">
+                  <div className="flex gap-1">
+                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-amber-400" style={{ animationDelay: "0ms" }} />
+                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-amber-400" style={{ animationDelay: "150ms" }} />
+                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-amber-400" style={{ animationDelay: "300ms" }} />
+                  </div>
                 </div>
               </div>
             )}
@@ -232,17 +556,19 @@ const ChatWidget = () => {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input */}
+          {/* Input area */}
           <form onSubmit={handleSubmit} className="border-t border-slate-200 dark:border-white/10 bg-white dark:bg-[#0F172A] p-3">
             <label htmlFor="chat-message" className="sr-only">Nhập tin nhắn</label>
             <div className="flex items-end gap-2">
               <textarea
                 id="chat-message"
-                value={message}
-                onChange={(event) => setMessage(event.target.value)}
-                placeholder="Nhập câu hỏi của bạn..."
+                value={inputMessage}
+                onChange={(event) => setInputMessage(event.target.value)}
+                placeholder={selectedProvider === "gemini"
+                  ? "Nhập thao tác: tạo/sửa/xóa dữ liệu, xuất báo cáo..."
+                  : "Nhập câu hỏi hoặc trò chuyện..."}
                 rows={2}
-                className="min-h-13 flex-1 resize-none rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-4 py-3 text-sm text-slate-800 dark:text-slate-200 outline-none transition focus:border-amber-400 dark:focus:border-amber-500 placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                className="min-h-12 flex-1 resize-none rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-4 py-3 text-sm text-slate-800 dark:text-slate-200 outline-none transition focus:border-amber-400 dark:focus:border-amber-500 placeholder:text-slate-400 dark:placeholder:text-slate-500"
                 onKeyDown={(event) => {
                   if (event.key === "Enter" && !event.shiftKey) {
                     event.preventDefault();
@@ -252,17 +578,51 @@ const ChatWidget = () => {
               />
               <button
                 type="submit"
-                disabled={isSending || !message.trim()}
-                className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-500 text-white transition hover:bg-amber-600 disabled:cursor-not-allowed disabled:bg-slate-300 dark:disabled:bg-white/10"
+                disabled={isSending || !inputMessage.trim()}
+                className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-500 text-white transition hover:bg-amber-600 disabled:cursor-not-allowed disabled:bg-slate-300 dark:disabled:bg-white/10"
                 aria-label="Gửi tin nhắn"
               >
                 <SendHorizontal size={18} />
               </button>
             </div>
+
+            {/* Mode toggle */}
+            <div className="mt-2 flex rounded-xl bg-slate-100 dark:bg-white/5 p-0.5 text-xs font-medium">
+              <button
+                type="button"
+                onClick={() => handleProviderSwitch("gemini")}
+                className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 transition ${
+                  selectedProvider === "gemini"
+                    ? "bg-amber-500 text-white shadow-sm"
+                    : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+                }`}
+              >
+                <span>🤖</span>
+                <span>Agent</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleProviderSwitch("gptoss")}
+                className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 transition ${
+                  selectedProvider === "gptoss"
+                    ? "bg-amber-500 text-white shadow-sm"
+                    : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+                }`}
+              >
+                <span>💬</span>
+                <span>Chat</span>
+              </button>
+            </div>
+            <p className="mt-1 text-[10px] text-slate-400 dark:text-slate-500 text-center">
+              {selectedProvider === "gemini"
+                ? "Agent: Tạo/sửa/xóa dữ liệu, xuất báo cáo · Gemini 2.5 Flash"
+                : "Chat: Hỏi đáp thông thường · GPT-OSS 120B"}
+            </p>
           </form>
         </div>
       )}
 
+      {/* Floating toggle */}
       <button
         type="button"
         onClick={() => setIsOpen((v) => !v)}
