@@ -14,7 +14,7 @@
 
 ## Subscription Plans
 
-Hệ thống hỗ trợ 3 gói đăng ký: `FREE`, `BASIC`, `PREMIUM`.
+Hệ thống hỗ trợ 3 gói đăng ký: `FREE`, `BASIC`, `PREMIUM`. Nova Agent (chat + agent mode) khả dụng trên tất cả các gói.
 
 ### Plan Rules
 
@@ -25,6 +25,8 @@ Hệ thống hỗ trợ 3 gói đăng ký: `FREE`, `BASIC`, `PREMIUM`.
 | Lọc lịch sử | 3 tháng | 12 tháng | Không giới hạn |
 | Xuất Excel | ❌ | ✅ | ✅ |
 | Gửi báo cáo qua Email | ❌ | ✅ | ✅ |
+| Nova Agent (Agent mode) | ✅ | ✅ | ✅ |
+| Nova Agent (Chat mode) | ✅ | ✅ | ✅ |
 | Nhập hóa đơn (AI) | ❌ | ❌ | ✅ |
 | AI Coach chi tiết | ❌ | ✅ | ✅ |
 | Dự báo tài chính | ❌ | ❌ | ✅ |
@@ -52,9 +54,35 @@ Backend áp dụng giới hạn gói đăng ký tại các điểm:
 
 ## Features
 
-### 🤖 Smart Spending Tips (AI Coach)
+### 🤖 Nova Agent AI
 
-Phân tích chi tiêu 3 tháng gần nhất bằng Google Gemini, đưa ra gợi ý tiết kiệm cá nhân hóa bằng tiếng Việt.
+Trợ lý AI tích hợp trực tiếp trong ứng dụng, hỗ trợ 2 chế độ hoạt động với 2 model riêng biệt:
+
+#### Chế độ Agent (Gemini 2.5 Flash)
+Tự động phân tích intent và thực hiện các tác vụ CRUD, xuất báo cáo:
+
+| Nhóm | Thao tác |
+|---|---|
+| Chi tiêu | Tạo, Sửa, Xóa |
+| Thu nhập | Tạo, Sửa, Xóa |
+| Danh mục | Tạo, Sửa, Xóa |
+| Ngân sách | Tạo, Sửa, Xóa |
+| Mục tiêu tiết kiệm | Tạo, Sửa, Xóa |
+| Xuất báo cáo | Xuất Excel chi tiêu / thu nhập |
+| Gửi email | Gửi báo cáo chi tiêu / thu nhập qua email |
+
+Cơ chế: Intent Parsing → Xác nhận từ người dùng → Thực thi → Hoàn tác (undo) trong vài phút.
+
+#### Chế độ Chat (GPT-OSS 120B)
+Hỏi đáp thông thường, không thực hiện thao tác dữ liệu:
+- Tư vấn tài chính cá nhân
+- Phân tích tâm lý chi tiêu
+- Hỗ trợ cảm xúc về tiền bạc
+- Lập kế hoạch mục tiêu dài hạn
+
+#### Smart Spending Tips (AI Coach)
+
+Phân tích chi tiêu 3 tháng gần nhất, đưa ra gợi ý tiết kiệm cá nhân hóa bằng tiếng Việt.
 
 - **PREMIUM**: Phân tích real-time
 - **BASIC**: Cache 6 giờ
