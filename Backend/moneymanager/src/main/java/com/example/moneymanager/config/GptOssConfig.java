@@ -9,12 +9,12 @@ import org.springframework.web.client.RestClient;
 import java.time.Duration;
 
 @Configuration
-@EnableConfigurationProperties(GeminiProperties.class)
-public class GeminiConfig {
+@EnableConfigurationProperties(GptOssProperties.class)
+public class GptOssConfig {
 
     @Bean
-    public RestClient geminiRestClient(GeminiProperties properties) {
-        int timeoutSeconds = properties.timeoutSeconds() != null ? properties.timeoutSeconds() : 30;
+    public RestClient gptOssRestClient(GptOssProperties properties) {
+        int timeoutSeconds = properties.timeoutSeconds() != null ? properties.timeoutSeconds() : 45;
 
         SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
         requestFactory.setConnectTimeout(Duration.ofSeconds(timeoutSeconds));
@@ -23,6 +23,8 @@ public class GeminiConfig {
         return RestClient.builder()
                 .baseUrl(properties.baseUrl())
                 .defaultHeader("Content-Type", "application/json;charset=UTF-8")
+                .defaultHeader("HTTP-Referer", properties.appReferer())
+                .defaultHeader("X-Title", properties.appTitle())
                 .requestFactory(requestFactory)
                 .build();
     }

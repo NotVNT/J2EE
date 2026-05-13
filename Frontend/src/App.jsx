@@ -3,6 +3,7 @@ import { lazy, Suspense } from "react";
 import { LoaderCircle } from "lucide-react";
 import AdminRoute from "./components/AdminRoute.jsx";
 import ChatWidget from "./components/ChatWidget.jsx";
+import { RouteContextProvider } from "./context/RouteContext.jsx";
 
 const AdminLayout = lazy(() => import("./pages/Admin/AdminLayout.jsx"));
 const AdminDashboard = lazy(() => import("./pages/Admin/AdminDashboard.jsx"));
@@ -24,7 +25,7 @@ const LandingPage = lazy(() => import("./pages/LandingPage.jsx"));
 const Payment = lazy(() => import("./pages/Payment.jsx"));
 const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess.jsx"));
 const PaymentCancel = lazy(() => import("./pages/PaymentCancel.jsx"));
-const ForgotPassword = lazy(() => import("./pages/ForgotPassword.jsx")); // Ensure jsx extension if needed or it's resolved by vite
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword.jsx"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword.jsx"));
 const AccountActivation = lazy(() => import("./pages/AccountActivation.jsx"));
 const Profile = lazy(() => import("./pages/Profile.jsx"));
@@ -40,7 +41,7 @@ const LoadingFallback = () => (
 
 const App = () => {
     return (
-        <>
+        <RouteContextProvider>
             <Suspense fallback={<LoadingFallback />}>
                 <Routes>
                     <Route path="/" element={<Root />} />
@@ -77,8 +78,8 @@ const App = () => {
                 </Routes>
             </Suspense>
             <ChatWidget />
-        </>
-    )
+        </RouteContextProvider>
+    );
 }
 
 const Root = () => {

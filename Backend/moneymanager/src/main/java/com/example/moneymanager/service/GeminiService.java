@@ -1,9 +1,11 @@
 package com.example.moneymanager.service;
 
 import com.example.moneymanager.config.GeminiProperties;
+import com.example.moneymanager.dto.AIChatMessageDTO;
 import com.example.moneymanager.dto.AssistantChatResponseDTO;
 import com.example.moneymanager.dto.ExpenseDTO;
 import com.example.moneymanager.dto.IncomeDTO;
+import com.example.moneymanager.dto.SpendingTipsResponseDTO;
 import com.example.moneymanager.entity.ProfileEntity;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,8 +20,10 @@ import org.springframework.web.client.RestClient;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.Normalizer;
+import java.util.Arrays;
 import java.text.NumberFormat;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -37,7 +41,7 @@ public class GeminiService {
     private final IncomeService incomeService;
     private final ExpenseService expenseService;
 
-    // Helper method để chia an toàn
+    // Helper method Ä‘á»ƒ chia an toÃ n
     private BigDecimal safeDivide(BigDecimal numerator, BigDecimal denominator, int scale) {
         if (denominator == null || denominator.compareTo(BigDecimal.ZERO) == 0) {
             return BigDecimal.ZERO;
@@ -63,14 +67,14 @@ public class GeminiService {
 
     public AssistantChatResponseDTO testConnection(String message) {
         String prompt = (message == null || message.isBlank())
-                ? "Trả lời đúng 5 từ: Gemini đang hoạt động tốt."
+                ? "Tráº£ lá»i Ä‘Ãºng 5 tá»«: Gemini Ä‘ang hoáº¡t Ä‘á»™ng tá»‘t."
                 : message.trim();
 
         JsonNode responseBody = executeGenerateContentRequest(buildPublicRequestBody(prompt));
         String outputText = extractOutputText(responseBody);
 
         if (outputText == null || outputText.isBlank()) {
-            throw new RuntimeException("Gemini không trả về nội dung hợp lệ.");
+            throw new RuntimeException("Gemini khÃ´ng tráº£ vá» ná»™i dung há»£p lá»‡.");
         }
 
         return AssistantChatResponseDTO.builder()
@@ -83,14 +87,14 @@ public class GeminiService {
         validateConfiguration();
 
         if (message == null || message.isBlank()) {
-            throw new RuntimeException("Nội dung tin nhắn không được để trống.");
+            throw new RuntimeException("Ná»™i dung tin nháº¯n khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng.");
         }
 
         String trimmedMessage = message.trim();
         if (!isSupportedQuestion(trimmedMessage)) {
             return AssistantChatResponseDTO.builder()
-                    .reply("Tôi chỉ hỗ trợ các câu hỏi về quản lý chi tiêu, tài chính cá nhân và cách sử dụng Money Manager. Bạn hãy hỏi một nội dung liên quan đến các chủ đề này nhé.")
-                    .model("Trợ lý Money Manager")
+                    .reply("TÃ´i chá»‰ há»— trá»£ cÃ¡c cÃ¢u há»i vá» quáº£n lÃ½ chi tiÃªu, tÃ i chÃ­nh cÃ¡ nhÃ¢n vÃ  cÃ¡ch sá»­ dá»¥ng Money Manager. Báº¡n hÃ£y há»i má»™t ná»™i dung liÃªn quan Ä‘áº¿n cÃ¡c chá»§ Ä‘á» nÃ y nhÃ©.")
+                    .model("Trá»£ lÃ½ Money Manager")
                     .build();
         }
 
@@ -101,7 +105,7 @@ public class GeminiService {
         String outputText = extractOutputText(responseBody);
 
         if (outputText == null || outputText.isBlank()) {
-            throw new RuntimeException("Gemini không trả về nội dung hợp lệ.");
+            throw new RuntimeException("Gemini khÃ´ng tráº£ vá» ná»™i dung há»£p lá»‡.");
         }
 
         return AssistantChatResponseDTO.builder()
@@ -110,13 +114,58 @@ public class GeminiService {
                 .build();
     }
 
-    // Dashboard insight - phiên bản ngắn gọn
+    public SpendingTipsResponseDTO getSpendingTips() {
+        List<ExpenseDTO> expenses = expenseService.getCurrentMonthExpensesForCurrentUser();
+
+        if (expenses.isEmpty()) {
+            return SpendingTipsResponseDTO.builder()
+                    .tips(List.of())
+                    .timestamp(LocalDateTime.now())
+                    .disclaimer("ChÆ°a cÃ³ Ä‘á»§ dá»¯ liá»‡u chi tiÃªu thÃ¡ng nÃ y Ä‘á»ƒ Ä‘Æ°a ra gá»£i Ã½.")
+                    .build();
+        }
+
+        Map<String, BigDecimal> categorySpending = expenses.stream()
+                .filter(e -> e.getCategoryName() != null && e.getAmount() != null)
+                .collect(Collectors.groupingBy(
+                        ExpenseDTO::getCategoryName,
+                        Collectors.reducing(BigDecimal.ZERO, ExpenseDTO::getAmount, BigDecimal::add)
+                ));
+
+        StringBuilder context = new StringBuilder("Chi tiÃªu thÃ¡ng nÃ y theo danh má»¥c:\n");
+        categorySpending.entrySet().stream()
+                .sorted(Map.Entry.<String, BigDecimal>comparingByValue().reversed())
+                .forEach(e -> context.append("- ").append(e.getKey()).append(": ")
+                        .append(formatCurrency(e.getValue())).append(" VND\n"));
+
+        String systemPrompt = "Báº¡n lÃ  chuyÃªn gia tÃ i chÃ­nh cÃ¡ nhÃ¢n. Dá»±a vÃ o dá»¯ liá»‡u chi tiÃªu, hÃ£y Ä‘Æ°a ra Ä‘Ãºng 5 gá»£i Ã½ thá»±c táº¿ Ä‘á»ƒ tiáº¿t kiá»‡m. Má»—i gá»£i Ã½ báº¯t Ä‘áº§u báº±ng dáº¥u '-' trÃªn má»™t dÃ²ng riÃªng. KhÃ´ng dÃ¹ng markdown, khÃ´ng giáº£i thÃ­ch thÃªm. Tráº£ lá»i báº±ng tiáº¿ng Viá»‡t.";
+        String response = callGeminiWithPrompt(systemPrompt, context.toString(), 500);
+
+        List<String> tips = Arrays.stream(response.split("\n"))
+                .map(String::trim)
+                .filter(line -> line.startsWith("-"))
+                .map(line -> line.substring(1).trim())
+                .filter(line -> !line.isBlank())
+                .collect(Collectors.toList());
+
+        if (tips.isEmpty()) {
+            tips = List.of(response.trim());
+        }
+
+        return SpendingTipsResponseDTO.builder()
+                .tips(tips)
+                .timestamp(LocalDateTime.now())
+                .disclaimer("Gá»£i Ã½ Ä‘Æ°á»£c táº¡o bá»Ÿi AI, chá»‰ mang tÃ­nh tham kháº£o.")
+                .build();
+    }
+
+    // Dashboard insight - phiÃªn báº£n ngáº¯n gá»n
     public AssistantChatResponseDTO getDashboardInsight(Map<String, Object> dashboardData, String fullName) {
         validateConfiguration();
         ObjectNode requestBody = objectMapper.createObjectNode();
 
         String statsInfo = String.format(
-                "Thu nhập: %s VND. Chi tiêu: %s VND. Số dư: %s VND. Số mục tiêu tiết kiệm đang chạy: %s. Tổng tiền tiết kiệm: %s VND.",
+                "Thu nháº­p: %s VND. Chi tiÃªu: %s VND. Sá»‘ dÆ°: %s VND. Sá»‘ má»¥c tiÃªu tiáº¿t kiá»‡m Ä‘ang cháº¡y: %s. Tá»•ng tiá»n tiáº¿t kiá»‡m: %s VND.",
                 dashboardData.get("totalIncome"),
                 dashboardData.get("totalExpense"),
                 dashboardData.get("totalBalance"),
@@ -125,20 +174,20 @@ public class GeminiService {
         );
 
         requestBody.set("systemInstruction", buildSystemInstruction(
-                "Bạn là chuyên gia tài chính AI của Money Manager. Dựa vào số liệu tháng này của " + fullName + ":\n" +
+                "Báº¡n lÃ  chuyÃªn gia tÃ i chÃ­nh AI cá»§a Money Manager. Dá»±a vÃ o sá»‘ liá»‡u thÃ¡ng nÃ y cá»§a " + fullName + ":\n" +
                         statsInfo + "\n" +
-                        "Nhiệm vụ: Đưa ra đúng 1 câu dự đoán rủi ro/xu hướng và 1 câu khuyên hành động thực tế.\n" +
-                        "Quy tắc nghiêm ngặt: Trả lời tối đa 40 chữ. Không dùng markdown, không dùng ký tự đặc biệt (*, #). Nói thẳng vấn đề."
+                        "Nhiá»‡m vá»¥: ÄÆ°a ra Ä‘Ãºng 1 cÃ¢u dá»± Ä‘oÃ¡n rá»§i ro/xu hÆ°á»›ng vÃ  1 cÃ¢u khuyÃªn hÃ nh Ä‘á»™ng thá»±c táº¿.\n" +
+                        "Quy táº¯c nghiÃªm ngáº·t: Tráº£ lá»i tá»‘i Ä‘a 40 chá»¯. KhÃ´ng dÃ¹ng markdown, khÃ´ng dÃ¹ng kÃ½ tá»± Ä‘áº·c biá»‡t (*, #). NÃ³i tháº³ng váº¥n Ä‘á»."
         ));
 
-        requestBody.set("contents", buildUserContents("Hãy phân tích nhanh số liệu và cho tôi dự đoán."));
+        requestBody.set("contents", buildUserContents("HÃ£y phÃ¢n tÃ­ch nhanh sá»‘ liá»‡u vÃ  cho tÃ´i dá»± Ä‘oÃ¡n."));
         requestBody.set("generationConfig", buildGenerationConfig());
 
         JsonNode responseBody = executeGenerateContentRequest(requestBody);
         String outputText = extractOutputText(responseBody);
 
         if (outputText == null || outputText.isBlank()) {
-            outputText = "Hiện tại dữ liệu đang được cập nhật, AI sẽ sớm có dự đoán cho bạn.";
+            outputText = "Hiá»‡n táº¡i dá»¯ liá»‡u Ä‘ang Ä‘Æ°á»£c cáº­p nháº­t, AI sáº½ sá»›m cÃ³ dá»± Ä‘oÃ¡n cho báº¡n.";
         }
 
         return AssistantChatResponseDTO.builder()
@@ -147,7 +196,7 @@ public class GeminiService {
                 .build();
     }
 
-    // Dashboard insight CHI TIẾT - DỰ ĐOÁN TƯƠNG LAI
+    // Dashboard insight CHI TIáº¾T - Dá»° ÄOÃN TÆ¯Æ NG LAI
     public Map<String, Object> getDetailedDashboardInsight(Map<String, Object> dashboardData, String fullName) {
         validateConfiguration();
 
@@ -158,7 +207,7 @@ public class GeminiService {
         }
 
         if (fullName == null || fullName.isBlank()) {
-            fullName = "bạn";
+            fullName = "báº¡n";
         }
 
         Map<String, Object> detailedInsight = new LinkedHashMap<>();
@@ -188,14 +237,43 @@ public class GeminiService {
             log.error("Error generating detailed insight: {}", e.getMessage(), e);
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("error", e.getMessage());
-            errorResponse.put("message", "Không thể tạo phân tích chi tiết");
+            errorResponse.put("message", "KhÃ´ng thá»ƒ táº¡o phÃ¢n tÃ­ch chi tiáº¿t");
             return errorResponse;
         }
 
         return detailedInsight;
     }
 
-    // Lấy dữ liệu các tháng gần đây
+    public String generateMultiTurn(String systemPrompt, List<AIChatMessageDTO> messages, int maxOutputTokens) {
+        validateConfiguration();
+        ObjectNode requestBody = objectMapper.createObjectNode();
+        requestBody.set("systemInstruction", buildSystemInstruction(systemPrompt));
+        ArrayNode contents = objectMapper.createArrayNode();
+        for (AIChatMessageDTO msg : messages) {
+            ObjectNode contentNode = objectMapper.createObjectNode();
+            String role = "assistant".equals(msg.getRole()) ? "model" : msg.getRole();
+            contentNode.put("role", role);
+            ArrayNode parts = objectMapper.createArrayNode();
+            ObjectNode part = objectMapper.createObjectNode();
+            part.put("text", msg.getContent());
+            parts.add(part);
+            contentNode.set("parts", parts);
+            contents.add(contentNode);
+        }
+        requestBody.set("contents", contents);
+        ObjectNode genConfig = objectMapper.createObjectNode();
+        genConfig.put("temperature", 0.4);
+        genConfig.put("maxOutputTokens", maxOutputTokens);
+        requestBody.set("generationConfig", genConfig);
+        JsonNode responseBody = executeGenerateContentRequest(requestBody);
+        String outputText = extractOutputText(responseBody);
+        if (outputText == null || outputText.isBlank()) {
+            throw new RuntimeException("Gemini kh\u00F4ng tr\u1EA3 v\u1EC1 n\u1ED9i dung h\u1EE3p l\u1EC7.");
+        }
+        return outputText.trim();
+    }
+
+    // Láº¥y dá»¯ liá»‡u cÃ¡c thÃ¡ng gáº§n Ä‘Ã¢y
     private List<MonthlyData> getMonthlyTrends(int months) {
         List<MonthlyData> trends = new ArrayList<>();
         LocalDate now = LocalDate.now();
@@ -232,13 +310,13 @@ public class GeminiService {
         return trends;
     }
 
-    // DỰ ĐOÁN TƯƠNG LAI - ĐÃ SỬA AN TOÀN
+    // Dá»° ÄOÃN TÆ¯Æ NG LAI - ÄÃƒ Sá»¬A AN TOÃ€N
     private ForecastResult predictFuture(List<MonthlyData> monthlyTrends,
                                          List<ExpenseDTO> currentExpenses,
                                          List<IncomeDTO> currentIncomes) {
         ForecastResult result = new ForecastResult();
 
-        // Giá trị mặc định
+        // GiÃ¡ trá»‹ máº·c Ä‘á»‹nh
         result.setPredictedNextMonthExpense(BigDecimal.ZERO);
         result.setPredictedNextMonthIncome(BigDecimal.ZERO);
         result.setPredictedNextMonthNetCashFlow(BigDecimal.ZERO);
@@ -249,14 +327,14 @@ public class GeminiService {
         result.setDaysLeftInMonth(0);
         result.setAvgDailyExpense(BigDecimal.ZERO);
         result.setRunOutDate(null);
-        result.setRiskLevel("THẤP");
-        result.setRiskMessage("Chưa đủ dữ liệu để dự đoán");
+        result.setRiskLevel("THáº¤P");
+        result.setRiskMessage("ChÆ°a Ä‘á»§ dá»¯ liá»‡u Ä‘á»ƒ dá»± Ä‘oÃ¡n");
 
         if (monthlyTrends == null || monthlyTrends.isEmpty()) {
             return result;
         }
 
-        // Tính tỷ lệ tăng trưởng trung bình
+        // TÃ­nh tá»· lá»‡ tÄƒng trÆ°á»Ÿng trung bÃ¬nh
         BigDecimal avgExpenseGrowth = BigDecimal.ZERO;
         BigDecimal avgIncomeGrowth = BigDecimal.ZERO;
         int expenseCount = 0;
@@ -266,7 +344,7 @@ public class GeminiService {
             MonthlyData prev = monthlyTrends.get(i - 1);
             MonthlyData curr = monthlyTrends.get(i);
 
-            // Tính tăng trưởng chi tiêu an toàn
+            // TÃ­nh tÄƒng trÆ°á»Ÿng chi tiÃªu an toÃ n
             if (prev.getTotalExpense() != null && prev.getTotalExpense().compareTo(BigDecimal.ZERO) > 0) {
                 BigDecimal expenseGrowth = safeDivide(
                         curr.getTotalExpense().subtract(prev.getTotalExpense()),
@@ -277,7 +355,7 @@ public class GeminiService {
                 expenseCount++;
             }
 
-            // Tính tăng trưởng thu nhập an toàn
+            // TÃ­nh tÄƒng trÆ°á»Ÿng thu nháº­p an toÃ n
             if (prev.getTotalIncome() != null && prev.getTotalIncome().compareTo(BigDecimal.ZERO) > 0) {
                 BigDecimal incomeGrowth = safeDivide(
                         curr.getTotalIncome().subtract(prev.getTotalIncome()),
@@ -296,7 +374,7 @@ public class GeminiService {
             avgIncomeGrowth = avgIncomeGrowth.divide(BigDecimal.valueOf(incomeCount), 4, RoundingMode.HALF_UP);
         }
 
-        // Dự đoán cho tháng tiếp theo
+        // Dá»± Ä‘oÃ¡n cho thÃ¡ng tiáº¿p theo
         MonthlyData lastMonth = monthlyTrends.get(monthlyTrends.size() - 1);
         if (lastMonth.getTotalExpense() != null) {
             result.setPredictedNextMonthExpense(lastMonth.getTotalExpense().multiply(BigDecimal.ONE.add(avgExpenseGrowth)));
@@ -306,7 +384,7 @@ public class GeminiService {
         }
         result.setPredictedNextMonthNetCashFlow(result.getPredictedNextMonthIncome().subtract(result.getPredictedNextMonthExpense()));
 
-        // Dự đoán cuối tháng hiện tại
+        // Dá»± Ä‘oÃ¡n cuá»‘i thÃ¡ng hiá»‡n táº¡i
         int currentDay = LocalDate.now().getDayOfMonth();
         int daysInMonth = LocalDate.now().lengthOfMonth();
         int daysLeft = daysInMonth - currentDay;
@@ -336,29 +414,29 @@ public class GeminiService {
         }
         result.setProjectedEndBalance(currentTotalIncome.subtract(result.getProjectedEndExpense()));
 
-        // Dự đoán thời điểm cạn kiệt tiền
+        // Dá»± Ä‘oÃ¡n thá»i Ä‘iá»ƒm cáº¡n kiá»‡t tiá»n
         if (result.getProjectedEndExpense().compareTo(currentTotalIncome) > 0 && avgDailyExpense.compareTo(BigDecimal.ZERO) > 0) {
             BigDecimal daysToRunOut = safeDivide(currentTotalIncome, avgDailyExpense, 0);
             LocalDate runOutDay = LocalDate.now().plusDays(daysToRunOut.longValue());
             result.setRunOutDate(runOutDay.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
         }
 
-        // Đánh giá rủi ro
+        // ÄÃ¡nh giÃ¡ rá»§i ro
         if (currentTotalIncome.compareTo(BigDecimal.ZERO) > 0) {
             if (result.getProjectedEndExpense().compareTo(currentTotalIncome) > 0) {
                 result.setRiskLevel("CAO");
-                result.setRiskMessage(String.format("Dự đoán cuối tháng bạn sẽ chi tiêu vượt thu nhập %.0f VND",
+                result.setRiskMessage(String.format("Dá»± Ä‘oÃ¡n cuá»‘i thÃ¡ng báº¡n sáº½ chi tiÃªu vÆ°á»£t thu nháº­p %.0f VND",
                         result.getProjectedEndExpense().subtract(currentTotalIncome)));
             } else if (result.getProjectedEndExpense().compareTo(currentTotalIncome.multiply(BigDecimal.valueOf(0.8))) > 0) {
-                result.setRiskLevel("TRUNG_BÌNH");
-                result.setRiskMessage("Chi tiêu đang ở mức cao, cần theo dõi sát sao");
+                result.setRiskLevel("TRUNG_BÃŒNH");
+                result.setRiskMessage("Chi tiÃªu Ä‘ang á»Ÿ má»©c cao, cáº§n theo dÃµi sÃ¡t sao");
             } else {
-                result.setRiskLevel("THẤP");
-                result.setRiskMessage("Tình hình tài chính ổn định");
+                result.setRiskLevel("THáº¤P");
+                result.setRiskMessage("TÃ¬nh hÃ¬nh tÃ i chÃ­nh á»•n Ä‘á»‹nh");
             }
         } else {
-            result.setRiskLevel("THẤP");
-            result.setRiskMessage("Chưa có dữ liệu thu nhập để đánh giá");
+            result.setRiskLevel("THáº¤P");
+            result.setRiskMessage("ChÆ°a cÃ³ dá»¯ liá»‡u thu nháº­p Ä‘á»ƒ Ä‘Ã¡nh giÃ¡");
         }
 
         result.setAvgExpenseGrowthRate(avgExpenseGrowth.multiply(BigDecimal.valueOf(100)));
@@ -367,7 +445,7 @@ public class GeminiService {
         return result;
     }
 
-    // Phân tích chi tiêu theo danh mục - ĐÃ SỬA AN TOÀN
+    // PhÃ¢n tÃ­ch chi tiÃªu theo danh má»¥c - ÄÃƒ Sá»¬A AN TOÃ€N
     private List<Map<String, Object>> analyzeCategorySpending(List<ExpenseDTO> expenses, Map<String, Object> dashboardData) {
         if (expenses == null || expenses.isEmpty()) {
             return new ArrayList<>();
@@ -410,17 +488,17 @@ public class GeminiService {
                 .collect(Collectors.toList());
     }
 
-    // Phân tích xu hướng theo thời gian - ĐÃ SỬA AN TOÀN
+    // PhÃ¢n tÃ­ch xu hÆ°á»›ng theo thá»i gian - ÄÃƒ Sá»¬A AN TOÃ€N
     private TrendAnalysis analyzeTimeTrend(List<MonthlyData> monthlyTrends) {
         TrendAnalysis analysis = new TrendAnalysis();
 
         if (monthlyTrends == null || monthlyTrends.size() < 2) {
-            analysis.setTrend("CHƯA ĐỦ DỮ LIỆU");
-            analysis.setDescription("Cần thêm dữ liệu các tháng trước để phân tích xu hướng");
-            analysis.setExpenseTrend("CHƯA ĐỦ DỮ LIỆU");
-            analysis.setExpenseTrendMessage("Chưa có đủ dữ liệu chi tiêu");
-            analysis.setIncomeTrend("CHƯA ĐỦ DỮ LIỆU");
-            analysis.setIncomeTrendMessage("Chưa có đủ dữ liệu thu nhập");
+            analysis.setTrend("CHÆ¯A Äá»¦ Dá»® LIá»†U");
+            analysis.setDescription("Cáº§n thÃªm dá»¯ liá»‡u cÃ¡c thÃ¡ng trÆ°á»›c Ä‘á»ƒ phÃ¢n tÃ­ch xu hÆ°á»›ng");
+            analysis.setExpenseTrend("CHÆ¯A Äá»¦ Dá»® LIá»†U");
+            analysis.setExpenseTrendMessage("ChÆ°a cÃ³ Ä‘á»§ dá»¯ liá»‡u chi tiÃªu");
+            analysis.setIncomeTrend("CHÆ¯A Äá»¦ Dá»® LIá»†U");
+            analysis.setIncomeTrendMessage("ChÆ°a cÃ³ Ä‘á»§ dá»¯ liá»‡u thu nháº­p");
             return analysis;
         }
 
@@ -450,90 +528,90 @@ public class GeminiService {
             }
         }
 
-        // Xu hướng chi tiêu
+        // Xu hÆ°á»›ng chi tiÃªu
         if (!expenseChanges.isEmpty()) {
             BigDecimal avgExpenseChange = expenseChanges.stream()
                     .reduce(BigDecimal.ZERO, BigDecimal::add)
                     .divide(BigDecimal.valueOf(expenseChanges.size()), 4, RoundingMode.HALF_UP);
 
             if (avgExpenseChange.compareTo(BigDecimal.valueOf(0.05)) > 0) {
-                analysis.setExpenseTrend("TĂNG MẠNH");
-                analysis.setExpenseTrendMessage(String.format("Chi tiêu đang tăng %.1f%% mỗi tháng",
+                analysis.setExpenseTrend("TÄ‚NG Máº NH");
+                analysis.setExpenseTrendMessage(String.format("Chi tiÃªu Ä‘ang tÄƒng %.1f%% má»—i thÃ¡ng",
                         avgExpenseChange.multiply(BigDecimal.valueOf(100))));
             } else if (avgExpenseChange.compareTo(BigDecimal.ZERO) > 0) {
-                analysis.setExpenseTrend("TĂNG NHẸ");
-                analysis.setExpenseTrendMessage(String.format("Chi tiêu tăng %.1f%% mỗi tháng",
+                analysis.setExpenseTrend("TÄ‚NG NHáº¸");
+                analysis.setExpenseTrendMessage(String.format("Chi tiÃªu tÄƒng %.1f%% má»—i thÃ¡ng",
                         avgExpenseChange.multiply(BigDecimal.valueOf(100))));
             } else if (avgExpenseChange.compareTo(BigDecimal.valueOf(-0.05)) < 0) {
-                analysis.setExpenseTrend("GIẢM MẠNH");
-                analysis.setExpenseTrendMessage(String.format("Chi tiêu giảm %.1f%% mỗi tháng, rất tốt!",
+                analysis.setExpenseTrend("GIáº¢M Máº NH");
+                analysis.setExpenseTrendMessage(String.format("Chi tiÃªu giáº£m %.1f%% má»—i thÃ¡ng, ráº¥t tá»‘t!",
                         avgExpenseChange.abs().multiply(BigDecimal.valueOf(100))));
             } else if (avgExpenseChange.compareTo(BigDecimal.ZERO) < 0) {
-                analysis.setExpenseTrend("GIẢM NHẸ");
-                analysis.setExpenseTrendMessage(String.format("Chi tiêu giảm %.1f%% mỗi tháng",
+                analysis.setExpenseTrend("GIáº¢M NHáº¸");
+                analysis.setExpenseTrendMessage(String.format("Chi tiÃªu giáº£m %.1f%% má»—i thÃ¡ng",
                         avgExpenseChange.abs().multiply(BigDecimal.valueOf(100))));
             } else {
-                analysis.setExpenseTrend("ỔN ĐỊNH");
-                analysis.setExpenseTrendMessage("Chi tiêu ổn định qua các tháng");
+                analysis.setExpenseTrend("á»”N Äá»ŠNH");
+                analysis.setExpenseTrendMessage("Chi tiÃªu á»•n Ä‘á»‹nh qua cÃ¡c thÃ¡ng");
             }
         } else {
-            analysis.setExpenseTrend("CHƯA ĐỦ DỮ LIỆU");
-            analysis.setExpenseTrendMessage("Chưa có đủ dữ liệu chi tiêu");
+            analysis.setExpenseTrend("CHÆ¯A Äá»¦ Dá»® LIá»†U");
+            analysis.setExpenseTrendMessage("ChÆ°a cÃ³ Ä‘á»§ dá»¯ liá»‡u chi tiÃªu");
         }
 
-        // Xu hướng thu nhập
+        // Xu hÆ°á»›ng thu nháº­p
         if (!incomeChanges.isEmpty()) {
             BigDecimal avgIncomeChange = incomeChanges.stream()
                     .reduce(BigDecimal.ZERO, BigDecimal::add)
                     .divide(BigDecimal.valueOf(incomeChanges.size()), 4, RoundingMode.HALF_UP);
 
             if (avgIncomeChange.compareTo(BigDecimal.valueOf(0.05)) > 0) {
-                analysis.setIncomeTrend("TĂNG MẠNH");
-                analysis.setIncomeTrendMessage(String.format("Thu nhập đang tăng %.1f%% mỗi tháng",
+                analysis.setIncomeTrend("TÄ‚NG Máº NH");
+                analysis.setIncomeTrendMessage(String.format("Thu nháº­p Ä‘ang tÄƒng %.1f%% má»—i thÃ¡ng",
                         avgIncomeChange.multiply(BigDecimal.valueOf(100))));
             } else if (avgIncomeChange.compareTo(BigDecimal.ZERO) > 0) {
-                analysis.setIncomeTrend("TĂNG NHẸ");
-                analysis.setIncomeTrendMessage(String.format("Thu nhập tăng %.1f%% mỗi tháng",
+                analysis.setIncomeTrend("TÄ‚NG NHáº¸");
+                analysis.setIncomeTrendMessage(String.format("Thu nháº­p tÄƒng %.1f%% má»—i thÃ¡ng",
                         avgIncomeChange.multiply(BigDecimal.valueOf(100))));
             } else if (avgIncomeChange.compareTo(BigDecimal.valueOf(-0.05)) < 0) {
-                analysis.setIncomeTrend("GIẢM MẠNH");
-                analysis.setIncomeTrendMessage(String.format("Thu nhập đang giảm %.1f%% mỗi tháng, cần lưu ý!",
+                analysis.setIncomeTrend("GIáº¢M Máº NH");
+                analysis.setIncomeTrendMessage(String.format("Thu nháº­p Ä‘ang giáº£m %.1f%% má»—i thÃ¡ng, cáº§n lÆ°u Ã½!",
                         avgIncomeChange.abs().multiply(BigDecimal.valueOf(100))));
             } else if (avgIncomeChange.compareTo(BigDecimal.ZERO) < 0) {
-                analysis.setIncomeTrend("GIẢM NHẸ");
-                analysis.setIncomeTrendMessage(String.format("Thu nhập giảm %.1f%% mỗi tháng",
+                analysis.setIncomeTrend("GIáº¢M NHáº¸");
+                analysis.setIncomeTrendMessage(String.format("Thu nháº­p giáº£m %.1f%% má»—i thÃ¡ng",
                         avgIncomeChange.abs().multiply(BigDecimal.valueOf(100))));
             } else {
-                analysis.setIncomeTrend("ỔN ĐỊNH");
-                analysis.setIncomeTrendMessage("Thu nhập ổn định qua các tháng");
+                analysis.setIncomeTrend("á»”N Äá»ŠNH");
+                analysis.setIncomeTrendMessage("Thu nháº­p á»•n Ä‘á»‹nh qua cÃ¡c thÃ¡ng");
             }
         } else {
-            analysis.setIncomeTrend("CHƯA ĐỦ DỮ LIỆU");
-            analysis.setIncomeTrendMessage("Chưa có đủ dữ liệu thu nhập");
+            analysis.setIncomeTrend("CHÆ¯A Äá»¦ Dá»® LIá»†U");
+            analysis.setIncomeTrendMessage("ChÆ°a cÃ³ Ä‘á»§ dá»¯ liá»‡u thu nháº­p");
         }
 
-        analysis.setTrend("ỔN ĐỊNH");
-        analysis.setDescription("Xu hướng tài chính đang được phân tích");
+        analysis.setTrend("á»”N Äá»ŠNH");
+        analysis.setDescription("Xu hÆ°á»›ng tÃ i chÃ­nh Ä‘ang Ä‘Æ°á»£c phÃ¢n tÃ­ch");
 
         return analysis;
     }
 
-    // Tính các chỉ số tài chính - ĐÃ SỬA AN TOÀN
+    // TÃ­nh cÃ¡c chá»‰ sá»‘ tÃ i chÃ­nh - ÄÃƒ Sá»¬A AN TOÃ€N
     private FinancialRatios calculateFinancialRatios(Map<String, Object> dashboardData, List<MonthlyData> monthlyTrends) {
         FinancialRatios ratios = new FinancialRatios();
 
         ratios.setSavingsRate(BigDecimal.ZERO);
         ratios.setFixedExpenseRatio(BigDecimal.ZERO);
         ratios.setMonthsOfSurvival(BigDecimal.ZERO);
-        ratios.setHealthScore("CHƯA ĐỦ DỮ LIỆU");
-        ratios.setHealthMessage("Chưa có đủ dữ liệu để đánh giá");
+        ratios.setHealthScore("CHÆ¯A Äá»¦ Dá»® LIá»†U");
+        ratios.setHealthMessage("ChÆ°a cÃ³ Ä‘á»§ dá»¯ liá»‡u Ä‘á»ƒ Ä‘Ã¡nh giÃ¡");
 
         try {
             BigDecimal totalIncome = new BigDecimal(dashboardData.get("totalIncome").toString());
             BigDecimal totalExpense = new BigDecimal(dashboardData.get("totalExpense").toString());
             BigDecimal totalBalance = new BigDecimal(dashboardData.get("totalBalance").toString());
 
-            // Tỷ lệ tiết kiệm
+            // Tá»· lá»‡ tiáº¿t kiá»‡m
             if (totalIncome != null && totalIncome.compareTo(BigDecimal.ZERO) > 0) {
                 ratios.setSavingsRate(safeDivide(
                         totalIncome.subtract(totalExpense).multiply(BigDecimal.valueOf(100)),
@@ -542,24 +620,24 @@ public class GeminiService {
                 ));
             }
 
-            // Số tháng có thể sống
+            // Sá»‘ thÃ¡ng cÃ³ thá»ƒ sá»‘ng
             if (totalExpense != null && totalExpense.compareTo(BigDecimal.ZERO) > 0) {
                 ratios.setMonthsOfSurvival(safeDivide(totalBalance, totalExpense, 1));
             }
 
-            // Đánh giá sức khỏe tài chính
+            // ÄÃ¡nh giÃ¡ sá»©c khá»e tÃ i chÃ­nh
             if (ratios.getSavingsRate().compareTo(BigDecimal.valueOf(20)) >= 0) {
-                ratios.setHealthScore("TỐT");
-                ratios.setHealthMessage("Bạn đang tiết kiệm rất tốt! Hãy duy trì.");
+                ratios.setHealthScore("Tá»T");
+                ratios.setHealthMessage("Báº¡n Ä‘ang tiáº¿t kiá»‡m ráº¥t tá»‘t! HÃ£y duy trÃ¬.");
             } else if (ratios.getSavingsRate().compareTo(BigDecimal.valueOf(10)) >= 0) {
-                ratios.setHealthScore("KHÁ");
-                ratios.setHealthMessage("Tiết kiệm ở mức khá, có thể cải thiện thêm.");
+                ratios.setHealthScore("KHÃ");
+                ratios.setHealthMessage("Tiáº¿t kiá»‡m á»Ÿ má»©c khÃ¡, cÃ³ thá»ƒ cáº£i thiá»‡n thÃªm.");
             } else if (ratios.getSavingsRate().compareTo(BigDecimal.ZERO) >= 0) {
-                ratios.setHealthScore("TRUNG BÌNH");
-                ratios.setHealthMessage("Tiết kiệm còn thấp, cần cắt giảm chi tiêu không cần thiết.");
+                ratios.setHealthScore("TRUNG BÃŒNH");
+                ratios.setHealthMessage("Tiáº¿t kiá»‡m cÃ²n tháº¥p, cáº§n cáº¯t giáº£m chi tiÃªu khÃ´ng cáº§n thiáº¿t.");
             } else if (ratios.getSavingsRate().compareTo(BigDecimal.ZERO) < 0) {
-                ratios.setHealthScore("KÉM");
-                ratios.setHealthMessage("Bạn đang chi tiêu nhiều hơn thu nhập! Cần điều chỉnh ngay.");
+                ratios.setHealthScore("KÃ‰M");
+                ratios.setHealthMessage("Báº¡n Ä‘ang chi tiÃªu nhiá»u hÆ¡n thu nháº­p! Cáº§n Ä‘iá»u chá»‰nh ngay.");
             }
 
         } catch (Exception e) {
@@ -574,97 +652,97 @@ public class GeminiService {
                                           FinancialRatios ratios, String userName) {
         StringBuilder advice = new StringBuilder();
 
-        advice.append("🔮 DỰ ĐOÁN TƯƠNG LAI CHO ").append(userName.toUpperCase()).append(":\n\n");
+        advice.append("ðŸ”® Dá»° ÄOÃN TÆ¯Æ NG LAI CHO ").append(userName.toUpperCase()).append(":\n\n");
 
-        advice.append("📊 DỰ BÁO THÁNG TỚI:\n");
-        advice.append(String.format("• Chi tiêu dự kiến: %s VND\n", formatCurrency(forecast.getPredictedNextMonthExpense())));
-        advice.append(String.format("• Thu nhập dự kiến: %s VND\n", formatCurrency(forecast.getPredictedNextMonthIncome())));
-        advice.append(String.format("• Dòng tiền ròng: %s VND\n", formatCurrency(forecast.getPredictedNextMonthNetCashFlow())));
+        advice.append("ðŸ“Š Dá»° BÃO THÃNG Tá»šI:\n");
+        advice.append(String.format("â€¢ Chi tiÃªu dá»± kiáº¿n: %s VND\n", formatCurrency(forecast.getPredictedNextMonthExpense())));
+        advice.append(String.format("â€¢ Thu nháº­p dá»± kiáº¿n: %s VND\n", formatCurrency(forecast.getPredictedNextMonthIncome())));
+        advice.append(String.format("â€¢ DÃ²ng tiá»n rÃ²ng: %s VND\n", formatCurrency(forecast.getPredictedNextMonthNetCashFlow())));
 
         if (forecast.getPredictedNextMonthNetCashFlow().compareTo(BigDecimal.ZERO) < 0) {
-            advice.append("⚠️ CẢNH BÁO: Dự đoán tháng tới sẽ thâm hụt! Hãy chuẩn bị kế hoạch cắt giảm chi tiêu.\n");
+            advice.append("âš ï¸ Cáº¢NH BÃO: Dá»± Ä‘oÃ¡n thÃ¡ng tá»›i sáº½ thÃ¢m há»¥t! HÃ£y chuáº©n bá»‹ káº¿ hoáº¡ch cáº¯t giáº£m chi tiÃªu.\n");
         }
 
-        advice.append("\n📅 DỰ BÁO CUỐI THÁNG NÀY:\n");
-        advice.append(String.format("• Chi tiêu dự kiến: %s VND\n", formatCurrency(forecast.getProjectedEndExpense())));
-        advice.append(String.format("• Số dư dự kiến: %s VND\n", formatCurrency(forecast.getProjectedEndBalance())));
-        advice.append(String.format("• Chi tiêu trung bình/ngày: %s VND\n", formatCurrency(forecast.getAvgDailyExpense())));
+        advice.append("\nðŸ“… Dá»° BÃO CUá»I THÃNG NÃ€Y:\n");
+        advice.append(String.format("â€¢ Chi tiÃªu dá»± kiáº¿n: %s VND\n", formatCurrency(forecast.getProjectedEndExpense())));
+        advice.append(String.format("â€¢ Sá»‘ dÆ° dá»± kiáº¿n: %s VND\n", formatCurrency(forecast.getProjectedEndBalance())));
+        advice.append(String.format("â€¢ Chi tiÃªu trung bÃ¬nh/ngÃ y: %s VND\n", formatCurrency(forecast.getAvgDailyExpense())));
 
         if (forecast.getRunOutDate() != null) {
-            advice.append(String.format("🚨 CẢNH BÁO NGHIÊM TRỌNG: Dự đoán bạn sẽ hết tiền vào ngày %s!\n", forecast.getRunOutDate()));
-            advice.append("→ HÀNH ĐỘNG NGAY: Cắt giảm chi tiêu không thiết yếu, tìm thêm nguồn thu nhập.\n");
+            advice.append(String.format("ðŸš¨ Cáº¢NH BÃO NGHIÃŠM TRá»ŒNG: Dá»± Ä‘oÃ¡n báº¡n sáº½ háº¿t tiá»n vÃ o ngÃ y %s!\n", forecast.getRunOutDate()));
+            advice.append("â†’ HÃ€NH Äá»˜NG NGAY: Cáº¯t giáº£m chi tiÃªu khÃ´ng thiáº¿t yáº¿u, tÃ¬m thÃªm nguá»“n thu nháº­p.\n");
         }
 
-        advice.append("\n📈 PHÂN TÍCH XU HƯỚNG:\n");
-        advice.append(String.format("• %s\n", trend.getExpenseTrendMessage()));
-        advice.append(String.format("• %s\n", trend.getIncomeTrendMessage()));
+        advice.append("\nðŸ“ˆ PHÃ‚N TÃCH XU HÆ¯á»šNG:\n");
+        advice.append(String.format("â€¢ %s\n", trend.getExpenseTrendMessage()));
+        advice.append(String.format("â€¢ %s\n", trend.getIncomeTrendMessage()));
 
-        advice.append("\n💪 CHỈ SỐ TÀI CHÍNH:\n");
-        advice.append(String.format("• Tỷ lệ tiết kiệm: %.1f%% (%s)\n", ratios.getSavingsRate(), ratios.getHealthMessage()));
-        advice.append(String.format("• Số tháng có thể sống nếu không có thu nhập: %.1f tháng\n", ratios.getMonthsOfSurvival()));
+        advice.append("\nðŸ’ª CHá»ˆ Sá» TÃ€I CHÃNH:\n");
+        advice.append(String.format("â€¢ Tá»· lá»‡ tiáº¿t kiá»‡m: %.1f%% (%s)\n", ratios.getSavingsRate(), ratios.getHealthMessage()));
+        advice.append(String.format("â€¢ Sá»‘ thÃ¡ng cÃ³ thá»ƒ sá»‘ng náº¿u khÃ´ng cÃ³ thu nháº­p: %.1f thÃ¡ng\n", ratios.getMonthsOfSurvival()));
 
-        advice.append("\n🎯 KHUYẾN NGHỊ CỤ THỂ:\n");
+        advice.append("\nðŸŽ¯ KHUYáº¾N NGHá»Š Cá»¤ THá»‚:\n");
         if ("CAO".equals(forecast.getRiskLevel())) {
-            advice.append("1. CẮT GIẢM NGAY: Ăn ngoài, mua sắm không cần thiết, giải trí\n");
-            advice.append("2. THEO DÕI SÁT: Cập nhật giao dịch hàng ngày\n");
-            advice.append("3. TĂNG THU NHẬP: Làm thêm, bán đồ không dùng\n");
-        } else if ("TRUNG_BÌNH".equals(forecast.getRiskLevel())) {
-            advice.append("1. ĐẶT NGÂN SÁCH: Giới hạn chi tiêu cho từng danh mục\n");
-            advice.append("2. TIẾT KIỆM 10%: Tự động trích 10% thu nhập vào tiết kiệm\n");
-            advice.append("3. RÀ SOÁT ĐỊNH KỲ: Kiểm tra chi tiêu mỗi tuần\n");
+            advice.append("1. Cáº®T GIáº¢M NGAY: Ä‚n ngoÃ i, mua sáº¯m khÃ´ng cáº§n thiáº¿t, giáº£i trÃ­\n");
+            advice.append("2. THEO DÃ•I SÃT: Cáº­p nháº­t giao dá»‹ch hÃ ng ngÃ y\n");
+            advice.append("3. TÄ‚NG THU NHáº¬P: LÃ m thÃªm, bÃ¡n Ä‘á»“ khÃ´ng dÃ¹ng\n");
+        } else if ("TRUNG_BÃŒNH".equals(forecast.getRiskLevel())) {
+            advice.append("1. Äáº¶T NGÃ‚N SÃCH: Giá»›i háº¡n chi tiÃªu cho tá»«ng danh má»¥c\n");
+            advice.append("2. TIáº¾T KIá»†M 10%: Tá»± Ä‘á»™ng trÃ­ch 10% thu nháº­p vÃ o tiáº¿t kiá»‡m\n");
+            advice.append("3. RÃ€ SOÃT Äá»ŠNH Ká»²: Kiá»ƒm tra chi tiÃªu má»—i tuáº§n\n");
         } else {
-            advice.append("1. DUY TRÌ TỐT: Tiếp tục thói quen chi tiêu hiện tại\n");
-            advice.append("2. ĐẦU TƯ: Cân nhắc đầu tư số tiền dư để sinh lời\n");
-            advice.append("3. MỤC TIÊU LỚN: Đặt mục tiêu tiết kiệm dài hạn\n");
+            advice.append("1. DUY TRÃŒ Tá»T: Tiáº¿p tá»¥c thÃ³i quen chi tiÃªu hiá»‡n táº¡i\n");
+            advice.append("2. Äáº¦U TÆ¯: CÃ¢n nháº¯c Ä‘áº§u tÆ° sá»‘ tiá»n dÆ° Ä‘á»ƒ sinh lá»i\n");
+            advice.append("3. Má»¤C TIÃŠU Lá»šN: Äáº·t má»¥c tiÃªu tiáº¿t kiá»‡m dÃ i háº¡n\n");
         }
 
-        advice.append("\n⭐ ").append(getMotivationalMessage(forecast, ratios));
+        advice.append("\nâ­ ").append(getMotivationalMessage(forecast, ratios));
         return advice.toString();
     }
 
     private String getCategoryIcon(String category) {
         Map<String, String> icons = new HashMap<>();
-        icons.put("Ăn uống", "🍜");
-        icons.put("Mua sắm", "🛍️");
-        icons.put("Di chuyển", "🚗");
-        icons.put("Xăng xe", "⛽");
-        icons.put("Hóa đơn", "📄");
-        icons.put("Tiền điện", "💡");
-        icons.put("Tiền nước", "💧");
-        icons.put("Giải trí", "🎬");
-        icons.put("Sức khỏe", "🏥");
-        icons.put("Giáo dục", "📚");
-        icons.put("Du lịch", "✈️");
-        return icons.getOrDefault(category, "📌");
+        icons.put("Ä‚n uá»‘ng", "ðŸœ");
+        icons.put("Mua sáº¯m", "ðŸ›ï¸");
+        icons.put("Di chuyá»ƒn", "ðŸš—");
+        icons.put("XÄƒng xe", "â›½");
+        icons.put("HÃ³a Ä‘Æ¡n", "ðŸ“„");
+        icons.put("Tiá»n Ä‘iá»‡n", "ðŸ’¡");
+        icons.put("Tiá»n nÆ°á»›c", "ðŸ’§");
+        icons.put("Giáº£i trÃ­", "ðŸŽ¬");
+        icons.put("Sá»©c khá»e", "ðŸ¥");
+        icons.put("GiÃ¡o dá»¥c", "ðŸ“š");
+        icons.put("Du lá»‹ch", "âœˆï¸");
+        return icons.getOrDefault(category, "ðŸ“Œ");
     }
 
     private String getCategoryAdvice(String category, BigDecimal amount, BigDecimal totalExpense) {
         if (totalExpense == null || totalExpense.compareTo(BigDecimal.ZERO) == 0) {
-            return "Chưa có dữ liệu chi tiêu";
+            return "ChÆ°a cÃ³ dá»¯ liá»‡u chi tiÃªu";
         }
 
         BigDecimal percentage = safeDivide(amount.multiply(BigDecimal.valueOf(100)), totalExpense, 1);
 
-        if (category.contains("Ăn uống") && percentage.compareTo(BigDecimal.valueOf(30)) > 0) {
-            return "Chiếm " + percentage + "% tổng chi tiêu. Nên nấu ăn tại nhà để tiết kiệm.";
-        } else if (category.contains("Mua sắm") && percentage.compareTo(BigDecimal.valueOf(20)) > 0) {
-            return "Chiếm " + percentage + "% tổng chi tiêu. Cần lên danh sách trước khi mua sắm.";
-        } else if (category.contains("Giải trí") && percentage.compareTo(BigDecimal.valueOf(15)) > 0) {
-            return "Chiếm " + percentage + "% tổng chi tiêu. Cân nhắc giảm tần suất giải trí.";
+        if (category.contains("Ä‚n uá»‘ng") && percentage.compareTo(BigDecimal.valueOf(30)) > 0) {
+            return "Chiáº¿m " + percentage + "% tá»•ng chi tiÃªu. NÃªn náº¥u Äƒn táº¡i nhÃ  Ä‘á»ƒ tiáº¿t kiá»‡m.";
+        } else if (category.contains("Mua sáº¯m") && percentage.compareTo(BigDecimal.valueOf(20)) > 0) {
+            return "Chiáº¿m " + percentage + "% tá»•ng chi tiÃªu. Cáº§n lÃªn danh sÃ¡ch trÆ°á»›c khi mua sáº¯m.";
+        } else if (category.contains("Giáº£i trÃ­") && percentage.compareTo(BigDecimal.valueOf(15)) > 0) {
+            return "Chiáº¿m " + percentage + "% tá»•ng chi tiÃªu. CÃ¢n nháº¯c giáº£m táº§n suáº¥t giáº£i trÃ­.";
         } else if (percentage.compareTo(BigDecimal.valueOf(10)) > 0) {
-            return "Chiếm " + percentage + "% tổng chi tiêu. Đang ở mức ổn.";
+            return "Chiáº¿m " + percentage + "% tá»•ng chi tiÃªu. Äang á»Ÿ má»©c á»•n.";
         } else {
-            return "Chiếm " + percentage + "% tổng chi tiêu. Tiếp tục duy trì.";
+            return "Chiáº¿m " + percentage + "% tá»•ng chi tiÃªu. Tiáº¿p tá»¥c duy trÃ¬.";
         }
     }
 
     private BigDecimal calculateFixedExpenseRatio() {
         List<ExpenseDTO> fixedExpenses = expenseService.getCurrentMonthExpensesForCurrentUser().stream()
                 .filter(e -> e.getCategoryName() != null &&
-                        (e.getCategoryName().contains("Hóa đơn") ||
-                                e.getCategoryName().contains("Tiền điện") ||
-                                e.getCategoryName().contains("Tiền nước") ||
-                                e.getCategoryName().contains("Tiền nhà")))
+                        (e.getCategoryName().contains("HÃ³a Ä‘Æ¡n") ||
+                                e.getCategoryName().contains("Tiá»n Ä‘iá»‡n") ||
+                                e.getCategoryName().contains("Tiá»n nÆ°á»›c") ||
+                                e.getCategoryName().contains("Tiá»n nhÃ ")))
                 .collect(Collectors.toList());
 
         BigDecimal totalFixedExpense = fixedExpenses.stream()
@@ -683,14 +761,14 @@ public class GeminiService {
 
     private String getMotivationalMessage(ForecastResult forecast, FinancialRatios ratios) {
         if ("CAO".equals(forecast.getRiskLevel())) {
-            return "Hãy bắt đầu ngay hôm nay! Mỗi đồng tiết kiệm đều có giá trị. Bạn có thể làm được! 💪";
-        } else if ("TRUNG_BÌNH".equals(forecast.getRiskLevel())) {
-            return "Bạn đang đi đúng hướng! Hãy kiên trì và cải thiện mỗi ngày. Thành công đang chờ! 🌟";
+            return "HÃ£y báº¯t Ä‘áº§u ngay hÃ´m nay! Má»—i Ä‘á»“ng tiáº¿t kiá»‡m Ä‘á»u cÃ³ giÃ¡ trá»‹. Báº¡n cÃ³ thá»ƒ lÃ m Ä‘Æ°á»£c! ðŸ’ª";
+        } else if ("TRUNG_BÃŒNH".equals(forecast.getRiskLevel())) {
+            return "Báº¡n Ä‘ang Ä‘i Ä‘Ãºng hÆ°á»›ng! HÃ£y kiÃªn trÃ¬ vÃ  cáº£i thiá»‡n má»—i ngÃ y. ThÃ nh cÃ´ng Ä‘ang chá»! ðŸŒŸ";
         } else {
             if (ratios.getSavingsRate().compareTo(BigDecimal.valueOf(20)) >= 0) {
-                return "Tuyệt vời! Bạn đang kiểm soát tài chính rất tốt. Hãy nghĩ đến các mục tiêu lớn hơn! 🎯";
+                return "Tuyá»‡t vá»i! Báº¡n Ä‘ang kiá»ƒm soÃ¡t tÃ i chÃ­nh ráº¥t tá»‘t. HÃ£y nghÄ© Ä‘áº¿n cÃ¡c má»¥c tiÃªu lá»›n hÆ¡n! ðŸŽ¯";
             } else {
-                return "Tình hình tài chính khả quan! Hãy duy trì và nâng cao tỷ lệ tiết kiệm. Cố lên! 🚀";
+                return "TÃ¬nh hÃ¬nh tÃ i chÃ­nh kháº£ quan! HÃ£y duy trÃ¬ vÃ  nÃ¢ng cao tá»· lá»‡ tiáº¿t kiá»‡m. Cá»‘ lÃªn! ðŸš€";
             }
         }
     }
@@ -714,10 +792,10 @@ public class GeminiService {
 
     private void validateConfiguration() {
         if (geminiProperties.apiKey() == null || geminiProperties.apiKey().isBlank()) {
-            throw new RuntimeException("Gemini API key chưa được cấu hình.");
+            throw new RuntimeException("Gemini API key chÆ°a Ä‘Æ°á»£c cáº¥u hÃ¬nh.");
         }
         if (geminiProperties.model() == null || geminiProperties.model().isBlank()) {
-            throw new RuntimeException("Gemini model chưa được cấu hình.");
+            throw new RuntimeException("Gemini model chÆ°a Ä‘Æ°á»£c cáº¥u hÃ¬nh.");
         }
     }
 
@@ -734,18 +812,18 @@ public class GeminiService {
                     .retrieve()
                     .body(String.class);
             if (responseJson == null || responseJson.isBlank()) {
-                throw new RuntimeException("Gemini không trả về dữ liệu.");
+                throw new RuntimeException("Gemini khÃ´ng tráº£ vá» dá»¯ liá»‡u.");
             }
             return objectMapper.readTree(responseJson);
         } catch (Exception exception) {
-            throw new RuntimeException("Không thể gọi Gemini API: " + exception.getMessage(), exception);
+            throw new RuntimeException("KhÃ´ng thá»ƒ gá»i Gemini API: " + exception.getMessage(), exception);
         }
     }
 
     private ObjectNode buildPublicRequestBody(String message) {
         ObjectNode requestBody = objectMapper.createObjectNode();
         requestBody.set("systemInstruction", buildSystemInstruction(
-                "Bạn là trợ lý AI cho ứng dụng Money Manager. Luôn trả lời bằng tiếng Việt, đúng trọng tâm, rõ ràng, dễ hiểu."
+                "Báº¡n lÃ  trá»£ lÃ½ AI cho á»©ng dá»¥ng Money Manager. LuÃ´n tráº£ lá»i báº±ng tiáº¿ng Viá»‡t, Ä‘Ãºng trá»ng tÃ¢m, rÃµ rÃ ng, dá»… hiá»ƒu."
         ));
         requestBody.set("contents", buildUserContents(message));
         requestBody.set("generationConfig", buildGenerationConfig());
@@ -755,8 +833,8 @@ public class GeminiService {
     private ObjectNode buildAuthenticatedRequestBody(ProfileEntity profile, String message) {
         ObjectNode requestBody = objectMapper.createObjectNode();
         requestBody.set("systemInstruction", buildSystemInstruction(
-                "Bạn là trợ lý tài chính cho ứng dụng Money Manager.\n" +
-                        "Người dùng: " + safeValue(profile.getFullName()) + ", email: " + safeValue(profile.getEmail()) + "\n" +
+                "Báº¡n lÃ  trá»£ lÃ½ tÃ i chÃ­nh cho á»©ng dá»¥ng Money Manager.\n" +
+                        "NgÆ°á»i dÃ¹ng: " + safeValue(profile.getFullName()) + ", email: " + safeValue(profile.getEmail()) + "\n" +
                         buildFinancialContext()
         ));
         requestBody.set("contents", buildUserContents(message));
@@ -765,7 +843,7 @@ public class GeminiService {
     }
 
     private String buildFinancialContext() {
-        // Giữ nguyên method này
+        // Giá»¯ nguyÃªn method nÃ y
         return "";
     }
 
@@ -821,7 +899,7 @@ public class GeminiService {
     }
 
     private String safeValue(String value) {
-        return value == null || value.isBlank() ? "Không có" : value;
+        return value == null || value.isBlank() ? "KhÃ´ng cÃ³" : value;
     }
 
     private boolean isSupportedQuestion(String message) {
@@ -840,7 +918,7 @@ public class GeminiService {
         return normalizedValue.replaceAll("\\s+", " ").trim();
     }
 
-    // Inner classes (ĐÃ SỬA VÀ THÊM @DATA LOMBOK)
+    // Inner classes (ÄÃƒ Sá»¬A VÃ€ THÃŠM @DATA LOMBOK)
     @Data
     public static class MonthlyData {
         private int year;

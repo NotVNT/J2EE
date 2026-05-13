@@ -436,9 +436,9 @@ const Home = () => {
                           <Sparkles size={18} className="text-violet-400" />
                           <h4 className="font-semibold text-white">Lời khuyên chiến lược</h4>
                         </div>
-                        <p className="text-white/80 text-sm leading-relaxed italic border-l-2 border-violet-400 pl-4">
-                          "{detailedInsight.detailedAdvice}"
-                        </p>
+                        <div className="text-white/80 text-sm leading-relaxed border-l-2 border-violet-400 pl-4 max-h-64 overflow-y-auto whitespace-pre-wrap">
+                          {detailedInsight.detailedAdvice}
+                        </div>
                       </div>
                     )}
                   </div>

@@ -32,4 +32,5 @@ public class GeminiController {
     ) {
         return ResponseEntity.ok(geminiService.chat(requestDTO.getMessage()));
     }
+
 }
