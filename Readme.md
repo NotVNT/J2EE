@@ -14,7 +14,7 @@
 
 ## Subscription Plans
 
-Hệ thống hỗ trợ 3 gói đăng ký: `FREE`, `BASIC`, `PREMIUM`. Nova Agent (chat + agent mode) khả dụng trên tất cả các gói.
+Hệ thống hỗ trợ 3 gói đăng ký: `FREE`, `BASIC`, `PREMIUM`. Các tính năng AI (Nova Agent, AI Coach) chỉ khả dụng trên gói **PREMIUM**.
 
 ### Plan Rules
 
@@ -25,10 +25,10 @@ Hệ thống hỗ trợ 3 gói đăng ký: `FREE`, `BASIC`, `PREMIUM`. Nova Agen
 | Lọc lịch sử | 3 tháng | 12 tháng | Không giới hạn |
 | Xuất Excel | ❌ | ✅ | ✅ |
 | Gửi báo cáo qua Email | ❌ | ✅ | ✅ |
-| Nova Agent (Agent mode) | ✅ | ✅ | ✅ |
-| Nova Agent (Chat mode) | ✅ | ✅ | ✅ |
+| Nova Agent (Agent mode) | ❌ | ❌ | ✅ |
+| Nova Agent (Chat mode) | ❌ | ❌ | ✅ |
 | Nhập hóa đơn (AI) | ❌ | ❌ | ✅ |
-| AI Coach chi tiết | ❌ | ✅ | ✅ |
+| AI Coach chi tiết | ❌ | ❌ | ✅ |
 | Dự báo tài chính | ❌ | ❌ | ✅ |
 
 ### Backend Enforcement
@@ -82,11 +82,7 @@ Hỏi đáp thông thường, không thực hiện thao tác dữ liệu:
 
 #### Smart Spending Tips (AI Coach)
 
-Phân tích chi tiêu 3 tháng gần nhất, đưa ra gợi ý tiết kiệm cá nhân hóa bằng tiếng Việt.
-
-- **PREMIUM**: Phân tích real-time
-- **BASIC**: Cache 6 giờ
-- **FREE**: Cache 24 giờ, kết quả cơ bản
+Phân tích chi tiêu 3 tháng gần nhất, đưa ra gợi ý tiết kiệm cá nhân hóa bằng tiếng Việt. **PREMIUM-only**.
 
 ### 🛡️ Spam Protection
 
