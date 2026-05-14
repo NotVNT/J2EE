@@ -56,9 +56,19 @@ Backend áp dụng giới hạn gói đăng ký tại các điểm:
 
 ### 🤖 Nova Agent AI
 
-Trợ lý AI tích hợp trực tiếp trong ứng dụng, hỗ trợ 2 chế độ hoạt động với 2 model riêng biệt:
+Trợ lý AI tích hợp trực tiếp trong ứng dụng, hỗ trợ 2 chế độ hoạt động với đa dạng model AI:
 
-#### Chế độ Agent (Gemini 2.5 Flash)
+#### Hạ tầng AI
+
+| Provider | Model | Cơ chế |
+|---|---|---|
+| Gemini (Google) | Gemini 2.5 Flash | API key rotation qua Redis |
+| DeepSeek (OpenRouter) | DeepSeek V4 Flash | API key rotation qua Redis |
+| GPT-OSS (OpenRouter) | GPT-OSS 120B | API key rotation qua Redis |
+
+Cơ chế **key rotation**: Redis lưu trữ quota và trạng thái từng API key. Khi một key hết quota hoặc lỗi, hệ thống tự động chuyển sang key tiếp theo trong pool. Hỗ trợ cooldown và tự động khôi phục key khi hết thời gian chờ.
+
+#### Chế độ Agent (Gemini 2.5 Flash / DeepSeek V4 Flash)
 Tự động phân tích intent và thực hiện các tác vụ CRUD, xuất báo cáo:
 
 | Nhóm | Thao tác |
@@ -72,6 +82,12 @@ Tự động phân tích intent và thực hiện các tác vụ CRUD, xuất b�
 | Gửi email | Gửi báo cáo chi tiêu / thu nhập qua email |
 
 Cơ chế: Intent Parsing → Xác nhận từ người dùng → Thực thi → Hoàn tác (undo) trong vài phút.
+
+Giao diện Nova Agent được thiết kế lại với:
+- **Model selector**: Chọn giữa Gemini 2.5 Flash và DeepSeek V4 Flash với icon và mô tả riêng
+- **Loading skeleton**: Hoạt ảnh khi AI đang xử lý, tránh hiển thị đột ngột
+- **Status indicator**: Dot xanh (sẵn sàng) / dot vàng nhấp nháy (đang xử lý)
+- **AI Dashboard Banner**: Thiết kế 2 tầng rõ ràng — header gradient tím + body card trắng/sáng
 
 #### Chế độ Chat (GPT-OSS 120B)
 Hỏi đáp thông thường, không thực hiện thao tác dữ liệu:
