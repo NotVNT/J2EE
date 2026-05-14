@@ -30,7 +30,7 @@ class ForecastServiceTest {
     @Mock
     private ExpenseRepository expenseRepository;
     @Mock
-    private GeminiService geminiService;
+    private GptOssService gptOssService;
     @Mock
     private SubscriptionService subscriptionService;
     @Mock
@@ -331,7 +331,7 @@ class ForecastServiceTest {
                 ))
                 .build();
 
-        when(geminiService.chat(any())).thenReturn(
+        when(gptOssService.chat(any())).thenReturn(
                 AssistantChatResponseDTO.builder().reply("Hãy cắt giảm chi tiêu ăn uống.").build()
         );
 
@@ -339,7 +339,7 @@ class ForecastServiceTest {
 
         assertThat(result.getNarrative()).isEqualTo("Hãy cắt giảm chi tiêu ăn uống.");
         assertThat(result.getGeneratedAt()).isNotNull();
-        verify(geminiService).chat(any());
+        verify(gptOssService).chat(any());
     }
 
     @Test
@@ -356,13 +356,13 @@ class ForecastServiceTest {
                 ))
                 .build();
 
-        when(geminiService.chat(any())).thenReturn(
+        when(gptOssService.chat(any())).thenReturn(
                 AssistantChatResponseDTO.builder().reply("OK").build()
         );
 
         forecastService.getGeminiInsights(forecast);
 
-        verify(geminiService).chat(argThat(prompt ->
+        verify(gptOssService).chat(argThat(prompt ->
                 prompt.contains("Transport") && prompt.contains("5/2026")
         ));
     }

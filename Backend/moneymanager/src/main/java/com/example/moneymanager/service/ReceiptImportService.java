@@ -1,5 +1,6 @@
 package com.example.moneymanager.service;
 
+import com.example.moneymanager.config.GeminiKeyRotator;
 import com.example.moneymanager.config.GeminiProperties;
 import com.example.moneymanager.dto.ExpenseDTO;
 import com.example.moneymanager.dto.ExpenseResponseDTO;
@@ -39,6 +40,7 @@ public class ReceiptImportService {
 
     private final RestClient geminiRestClient;
     private final GeminiProperties geminiProperties;
+    private final GeminiKeyRotator geminiKeyRotator;
     private final ObjectMapper objectMapper;
     private final ProfileService profileService;
     private final CategoryRepository categoryRepository;
@@ -215,7 +217,7 @@ public class ReceiptImportService {
             String responseJson = geminiRestClient.post()
                     .uri(uriBuilder -> uriBuilder
                             .path("/v1beta/models/{model}:generateContent")
-                            .queryParam("key", geminiProperties.apiKey())
+                            .queryParam("key", geminiKeyRotator.nextKey())
                             .build(geminiProperties.model()))
                     .body(requestJson)
                     .retrieve()

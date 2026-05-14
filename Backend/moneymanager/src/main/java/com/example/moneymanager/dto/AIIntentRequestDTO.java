@@ -14,6 +14,7 @@ import java.util.Map;
 @AllArgsConstructor
 public class AIIntentRequestDTO {
     private String provider;
+    private String model;
     private String userMessage;
     private String pageContext;
     private List<AIChatMessageDTO> conversationHistory;

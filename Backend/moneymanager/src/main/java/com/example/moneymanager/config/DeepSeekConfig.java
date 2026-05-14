@@ -10,12 +10,12 @@ import java.net.http.HttpClient;
 import java.time.Duration;
 
 @Configuration
-@EnableConfigurationProperties(GptOssProperties.class)
-public class GptOssConfig {
+@EnableConfigurationProperties(DeepSeekProperties.class)
+public class DeepSeekConfig {
 
     @Bean
-    public RestClient gptOssRestClient(GptOssProperties properties) {
-        int timeoutSeconds = properties.timeoutSeconds() != null ? properties.timeoutSeconds() : 60;
+    public RestClient deepSeekRestClient(DeepSeekProperties properties) {
+        int timeoutSeconds = properties.timeoutSeconds() != null ? properties.timeoutSeconds() : 90;
 
         HttpClient httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(timeoutSeconds))

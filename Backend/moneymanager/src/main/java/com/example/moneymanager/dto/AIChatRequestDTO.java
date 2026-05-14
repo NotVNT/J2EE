@@ -13,5 +13,6 @@ import java.util.List;
 @AllArgsConstructor
 public class AIChatRequestDTO {
     private String provider;
+    private String model;
     private List<AIChatMessageDTO> messages;
 }

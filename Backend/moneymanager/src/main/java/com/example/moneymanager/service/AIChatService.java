@@ -1,9 +1,11 @@
 package com.example.moneymanager.service;
 
+import com.example.moneymanager.config.GptOssKeyRotator;
 import com.example.moneymanager.config.GptOssProperties;
 import com.example.moneymanager.dto.AIChatMessageDTO;
 import com.example.moneymanager.dto.AIChatRequestDTO;
 import com.example.moneymanager.dto.AIChatResponseDTO;
+import com.example.moneymanager.util.OpenRouterResponseParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -22,16 +24,18 @@ public class AIChatService {
 
     private static final String SYSTEM_PROMPT =
             "B\u1EA1n l\u00E0 Nova \u2014 tr\u1EE3 l\u00FD AI \u0111\u1ED3ng h\u00E0nh c\u1EE7a Money Manager.\n" +
-                    "H\u1ED7 tr\u1EE3: t\u00E0i ch\u00EDnh c\u00E1 nh\u00E2n, t\u00E2m l\u00FD chi ti\u00EAu, h\u1ED7 tr\u1EE3 c\u1EA3m x\u00FAc/stress, l\u1EDDi khuy\u00EAn cu\u1ED9c s\u1ED1ng, h\u01B0\u1EDBng d\u1EABn app.\n" +
-                    "T\u1EEB ch\u1ED1i l\u1ECBch s\u1EF1: ch\u00EDnh tr\u1ECB, ch\u1EA9n \u0111o\u00E1n y t\u1EBF, t\u01B0 v\u1EA5n ph\u00E1p l\u00FD c\u1EE5 th\u1EC3.\n" +
-                    "Phong c\u00E1ch: ti\u1EBFng Vi\u1EC7t, th\u00E2n thi\u1EC7n, kh\u00F4ng ph\u00E1n x\u00E9t, kh\u00F4ng d\u00F9ng markdown (**, #, `).\n" +
-                    "T\u1ED1i \u0111a 200 ch\u1EEF tr\u1EEB khi \u0111\u01B0\u1EE3c y\u00EAu c\u1EA7u gi\u1EA3i th\u00EDch d\u00E0i h\u01A1n.";
+            "H\u1ED7 tr\u1EE3: t\u00E0i ch\u00EDnh c\u00E1 nh\u00E2n, t\u00E2m l\u00FD chi ti\u00EAu, h\u1ED7 tr\u1EE3 c\u1EA3m x\u00FAc/stress, l\u1EDDi khuy\u00EAn cu\u1ED9c s\u1ED1ng, h\u01B0\u1EDBng d\u1EABn app.\n" +
+            "T\u1EEB ch\u1ED1i l\u1ECBch s\u1EF1: ch\u00EDnh tr\u1ECB, ch\u1EA9n \u0111o\u00E1n y t\u1EBF, t\u01B0 v\u1EA5n ph\u00E1p l\u00FD c\u1EE5 th\u1EC3.\n" +
+            "Phong c\u00E1ch: ti\u1EBFng Vi\u1EC7t, th\u00E2n thi\u1EC7n, kh\u00F4ng ph\u00E1n x\u00E9t, kh\u00F4ng d\u00F9ng markdown (**, #, `).\n" +
+            "T\u1ED1i \u0111a 200 ch\u1EEF tr\u1EEB khi \u0111\u01B0\u1EE3c y\u00EAu c\u1EA7u gi\u1EA3i th\u00EDch d\u00E0i h\u01A1n.";
 
     private static final int MAX_HISTORY_TURNS = 20;
 
     private final GeminiService geminiService;
+    private final DeepSeekService deepSeekService;
     private final RestClient gptOssRestClient;
     private final GptOssProperties gptOssProperties;
+    private final GptOssKeyRotator gptOssKeyRotator;
     private final ObjectMapper objectMapper;
 
     public AIChatResponseDTO chat(AIChatRequestDTO request) {
@@ -42,12 +46,20 @@ public class AIChatService {
         if ("gptoss".equalsIgnoreCase(provider)) {
             return chatWithGptOss(trimmedMessages);
         }
+        if ("openrouter".equalsIgnoreCase(provider)) {
+            return chatWithDeepSeek(trimmedMessages);
+        }
         return chatWithGemini(trimmedMessages);
     }
 
     public String chatWithSystemPrompt(String systemPrompt, AIChatRequestDTO request) {
         validateRequest(request);
         List<AIChatMessageDTO> trimmedMessages = trimHistory(request.getMessages());
+
+        String provider = request.getProvider();
+        if ("openrouter".equalsIgnoreCase(provider)) {
+            return deepSeekService.chatWithSystemPrompt(systemPrompt, trimmedMessages, 1024);
+        }
         return geminiService.generateMultiTurn(systemPrompt, trimmedMessages, 1024);
     }
 
@@ -90,10 +102,28 @@ public class AIChatService {
         }
     }
 
-    private AIChatResponseDTO chatWithGptOss(List<AIChatMessageDTO> messages) {
-        if (gptOssProperties.apiKey() == null || gptOssProperties.apiKey().isBlank()) {
+    private AIChatResponseDTO chatWithDeepSeek(List<AIChatMessageDTO> messages) {
+        try {
+            String reply = deepSeekService.chat(messages);
             return AIChatResponseDTO.builder()
-                    .reply("GPT-OSS chưa được cấu hình. Vui lòng dùng Gemini hoặc liên hệ quản trị viên.")
+                    .reply(reply)
+                    .provider("openrouter")
+                    .modelUsed("deepseek-v4-flash")
+                    .build();
+        } catch (Exception e) {
+            log.error("DeepSeek chat error: {}", e.getMessage(), e);
+            return AIChatResponseDTO.builder()
+                    .reply("Xin l\u1ED7i, t\u00F4i \u0111ang g\u1EB7p s\u1EF1 c\u1ED1 v\u1EDBi DeepSeek. B\u1EA1n th\u1EED l\u1EA1i sau nh\u00E9.")
+                    .provider("openrouter")
+                    .modelUsed("deepseek-v4-flash")
+                    .build();
+        }
+    }
+
+    private AIChatResponseDTO chatWithGptOss(List<AIChatMessageDTO> messages) {
+        if (!gptOssKeyRotator.hasKeys()) {
+            return AIChatResponseDTO.builder()
+                    .reply("GPT-OSS ch\u01B0a \u0111\u01B0\u1EE3c c\u1EA5u h\u00ECnh. Vui l\u00F2ng d\u00F9ng Gemini ho\u1EB7c li\u00EAn h\u1EC7 qu\u1EA3n tr\u1ECB vi\u00EAn.")
                     .provider("gptoss")
                     .modelUsed(gptOssProperties.model())
                     .build();
@@ -116,19 +146,55 @@ public class AIChatService {
             }
             requestBody.set("messages", msgArray);
 
-            String responseJson = gptOssRestClient.post()
+            String requestJson = objectMapper.writeValueAsString(requestBody);
+            log.debug("GPT-OSS request body: {}", requestJson);
+
+            // Read raw string first to avoid deserialization issues
+            String rawResponse = gptOssRestClient.post()
                     .uri("/chat/completions")
-                    .header("Authorization", "Bearer " + gptOssProperties.apiKey())
-                    .body(objectMapper.writeValueAsString(requestBody))
+                    .header("Authorization", "Bearer " + gptOssKeyRotator.nextKey())
+                    .body(requestJson)
                     .retrieve()
+                    .onStatus(status -> !status.is2xxSuccessful(), (req, res) -> {
+                        String errorBody = "";
+                        try { errorBody = new String(res.getBody().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8); } catch (Exception ignored) {}
+                        log.error("GPT-OSS HTTP error {}: {}", res.getStatusCode().value(), errorBody);
+                        throw new RuntimeException("GPT-OSS API HTTP " + res.getStatusCode().value() + ": " + errorBody);
+                    })
                     .body(String.class);
 
-            JsonNode root = objectMapper.readTree(responseJson);
+            if (rawResponse == null || rawResponse.isBlank()) {
+                log.error("GPT-OSS returned null/empty response body");
+                return AIChatResponseDTO.builder()
+                        .reply("Xin l\u1ED7i, d\u1ECBch v\u1EE5 AI \u0111ang b\u1EADn. B\u1EA1n th\u1EED l\u1EA1i sau nh\u00E9.")
+                        .provider("gptoss")
+                        .modelUsed(gptOssProperties.model())
+                        .build();
+            }
+            log.info("GPT-OSS raw response (first 500 chars): {}", rawResponse.length() > 500 ? rawResponse.substring(0, 500) : rawResponse);
+
+            JsonNode root;
+            try {
+                root = objectMapper.readTree(rawResponse);
+            } catch (Exception parseEx) {
+                log.error("GPT-OSS JSON parse failed. Raw response: {}", rawResponse, parseEx);
+                // If raw response looks like plain text, return it directly
+                String cleaned = rawResponse.trim();
+                if (!cleaned.startsWith("{") && !cleaned.startsWith("[")) {
+                    return AIChatResponseDTO.builder()
+                            .reply(cleaned)
+                            .provider("gptoss")
+                            .modelUsed(gptOssProperties.model())
+                            .build();
+                }
+                throw parseEx;
+            }
 
             JsonNode errorNode = root.get("error");
             if (errorNode != null && !errorNode.isNull()) {
                 String errorMsg = errorNode.has("message") ? errorNode.get("message").asText() : errorNode.asText();
-                log.error("GPT-OSS API error: {}", errorMsg);
+                String errorCode = errorNode.has("code") ? errorNode.get("code").asText() : "unknown";
+                log.error("GPT-OSS API error [code={}]: {}", errorCode, errorMsg);
                 return AIChatResponseDTO.builder()
                         .reply("Xin l\u1ED7i, d\u1ECBch v\u1EE5 AI \u0111ang b\u1EADn. B\u1EA1n th\u1EED l\u1EA1i sau nh\u00E9.")
                         .provider("gptoss")
@@ -136,20 +202,10 @@ public class AIChatService {
                         .build();
             }
 
-            JsonNode choices = root.get("choices");
-            String reply = null;
-            if (choices != null && choices.isArray() && !choices.isEmpty()) {
-                JsonNode firstChoice = choices.get(0);
-                JsonNode messageNode = firstChoice.get("message");
-                if (messageNode != null) {
-                    JsonNode contentNode = messageNode.get("content");
-                    if (contentNode != null && !contentNode.isNull()) {
-                        reply = contentNode.asText().trim();
-                    }
-                }
-            }
+            String reply = OpenRouterResponseParser.extractAssistantText(root);
 
             if (reply == null || reply.isBlank()) {
+                log.warn("GPT-OSS returned empty content. Full response: {}", root.toString());
                 reply = "T\u00F4i \u0111\u00E3 nh\u1EADn c\u00E2u h\u1ECFi nh\u01B0ng ch\u01B0a t\u1EA1o \u0111\u01B0\u1EE3c c\u00E2u tr\u1EA3 l\u1EDDi ph\u00F9 h\u1EE3p.";
             }
 

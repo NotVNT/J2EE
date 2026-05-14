@@ -1,11 +1,13 @@
 package com.example.moneymanager.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
 
+@Slf4j
 @Service
 public class SpamProtectionService {
 
@@ -18,6 +20,18 @@ public class SpamProtectionService {
     public record SpamCheckResult(boolean isAllowed, LocalDateTime blockedUntil, String message) {}
 
     public SpamCheckResult checkSpam(String email) {
+        try {
+            return doCheckSpam(email);
+        } catch (Exception e) {
+            // Graceful fallback: nếu Redis không kết nối được, cho phép request đi qua
+            // thay vì crash toàn bộ chức năng Excel/Email
+            log.warn("Redis unavailable for spam check (email={}). Allowing request through. Error: {}",
+                    email, e.getMessage());
+            return new SpamCheckResult(true, null, "OK");
+        }
+    }
+
+    private SpamCheckResult doCheckSpam(String email) {
         String blockKey = "block:" + email;
         String countKey = "count:" + email;
 
