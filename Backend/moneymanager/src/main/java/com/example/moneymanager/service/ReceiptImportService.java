@@ -193,6 +193,11 @@ public class ReceiptImportService {
                 .build();
     }
 
+    private static final byte[] MAGIC_JPEG = {(byte) 0xFF, (byte) 0xD8, (byte) 0xFF};
+    private static final byte[] MAGIC_PNG  = {(byte) 0x89, 0x50, 0x4E, 0x47};
+    private static final byte[] MAGIC_GIF  = {0x47, 0x49, 0x46, 0x38};
+    private static final byte[] MAGIC_WEBP_RIFF = {0x52, 0x49, 0x46, 0x46};
+
     private void validateFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new RuntimeException("Vui lòng chọn hình ảnh hóa đơn để import.");
@@ -206,6 +211,32 @@ public class ReceiptImportService {
         if (contentType == null || !contentType.toLowerCase(Locale.ROOT).startsWith("image/")) {
             throw new RuntimeException("Định dạng tệp không hợp lệ. Vui lòng chọn tệp ảnh.");
         }
+
+        try {
+            byte[] header = file.getBytes();
+            if (!hasValidImageMagicBytes(header)) {
+                throw new RuntimeException("Nội dung tệp không hợp lệ. Vui lòng chọn tệp ảnh thực sự.");
+            }
+        } catch (java.io.IOException e) {
+            throw new RuntimeException("Không thể đọc tệp ảnh.", e);
+        }
+    }
+
+    private boolean hasValidImageMagicBytes(byte[] data) {
+        if (data == null || data.length < 4) return false;
+        return startsWith(data, MAGIC_JPEG)
+                || startsWith(data, MAGIC_PNG)
+                || startsWith(data, MAGIC_GIF)
+                || (startsWith(data, MAGIC_WEBP_RIFF) && data.length >= 12
+                        && data[8] == 0x57 && data[9] == 0x45 && data[10] == 0x42 && data[11] == 0x50);
+    }
+
+    private boolean startsWith(byte[] data, byte[] prefix) {
+        if (data.length < prefix.length) return false;
+        for (int i = 0; i < prefix.length; i++) {
+            if (data[i] != prefix[i]) return false;
+        }
+        return true;
     }
 
     private JsonNode analyzeReceiptWithGemini(MultipartFile file) {

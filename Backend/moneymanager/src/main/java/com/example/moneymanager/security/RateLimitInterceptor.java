@@ -30,7 +30,8 @@ public class RateLimitInterceptor implements HandlerInterceptor {
             new RateRule(CTX + "/register",                   5,  60_000),
             new RateRule(CTX + "/payments/payos/create",      3,  60_000),
             new RateRule(CTX + "/gemini/chat",               15,  60_000),
-            new RateRule(CTX + "/gemini/spending-tips",       5,  60_000)
+            new RateRule(CTX + "/gemini/spending-tips",       5,  60_000),
+            new RateRule(CTX + "/gemini/test",                3,  60_000)
     );
 
     // key: "fullPath:clientIp" → sliding window of request timestamps
@@ -75,14 +76,6 @@ public class RateLimitInterceptor implements HandlerInterceptor {
     }
 
     private String resolveClientIp(HttpServletRequest request) {
-        String forwarded = request.getHeader("X-Forwarded-For");
-        if (forwarded != null && !forwarded.isBlank()) {
-            return forwarded.split(",")[0].trim();
-        }
-        String realIp = request.getHeader("X-Real-IP");
-        if (realIp != null && !realIp.isBlank()) {
-            return realIp.trim();
-        }
         return request.getRemoteAddr();
     }
 }

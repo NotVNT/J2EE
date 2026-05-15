@@ -14,6 +14,19 @@ import java.util.Map;
 @Slf4j
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<Map<String, String>> handleForbidden(ForbiddenException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(Map.of("message", ex.getMessage()));
+    }
+
+    @ExceptionHandler(PaymentException.class)
+    public ResponseEntity<Map<String, String>> handlePayment(PaymentException ex) {
+        log.error("Payment error: {}", ex.getMessage(), ex.getCause());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("message", ex.getMessage()));
+    }
+
     @ExceptionHandler(OtpCooldownException.class)
     public ResponseEntity<Map<String, Object>> handleOtpCooldown(OtpCooldownException ex) {
         Map<String, Object> body = new LinkedHashMap<>();

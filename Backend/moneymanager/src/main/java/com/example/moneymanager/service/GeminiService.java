@@ -832,17 +832,11 @@ public class GeminiService {
         ObjectNode requestBody = objectMapper.createObjectNode();
         requestBody.set("systemInstruction", buildSystemInstruction(
                 "Bạn là trợ lý tài chính cho ứng dụng Money Manager.\n" +
-                        "Người dùng: " + safeValue(profile.getFullName()) + ", email: " + safeValue(profile.getEmail()) + "\n" +
-                        buildFinancialContext()
+                        "Người dùng: " + safeValue(profile.getFullName()) + ", email: " + safeValue(profile.getEmail())
         ));
         requestBody.set("contents", buildUserContents(message));
         requestBody.set("generationConfig", buildGenerationConfig());
         return requestBody;
-    }
-
-    private String buildFinancialContext() {
-        // Giá»¯ nguyÃªn method nÃ y
-        return "";
     }
 
     private ObjectNode buildSystemInstruction(String text) {
