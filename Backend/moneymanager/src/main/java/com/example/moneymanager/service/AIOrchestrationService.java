@@ -21,7 +21,6 @@ import java.util.*;
 public class AIOrchestrationService {
 
     private final AIChatService aiChatService;
-    private final DeepSeekService deepSeekService;
     private final ProfileService profileService;
     private final ExpenseService expenseService;
     private final IncomeService incomeService;
@@ -58,12 +57,7 @@ public class AIOrchestrationService {
                     "H\u00E3y ph\u00E2n t\u00EDch y\u00EAu c\u1EA7u tr\u00EAn v\u00E0 tr\u1EA3 v\u1EC1 JSON v\u1EDBi intent v\u00E0 extracted fields. " +
                     "N\u1EBFu l\u00E0 CRUD, bao g\u1ED3m confirmationPrompt b\u1EB1ng ti\u1EBFng Vi\u1EC7t.";
 
-            String rawResponse;
-            if ("openrouter".equalsIgnoreCase(provider)) {
-                rawResponse = callDeepSeekForIntent(systemPrompt, crudInstruction, request.getConversationHistory());
-            } else {
-                rawResponse = callGeminiForIntent(systemPrompt, crudInstruction, request.getConversationHistory());
-            }
+            String rawResponse = callGeminiForIntent(systemPrompt, crudInstruction, request.getConversationHistory());
 
             String cleanedJson = extractJson(rawResponse);
             if (cleanedJson == null || cleanedJson.isBlank()) {
@@ -458,14 +452,6 @@ public class AIOrchestrationService {
                 .build();
 
         return aiChatService.chatWithSystemPrompt(systemPrompt, chatRequest);
-    }
-
-    private String callDeepSeekForIntent(String systemPrompt, String userMessage, List<AIChatMessageDTO> history) {
-        List<AIChatMessageDTO> messages = new ArrayList<>();
-        if (history != null) messages.addAll(history);
-        messages.add(AIChatMessageDTO.builder().role("user").content(userMessage).build());
-
-        return deepSeekService.chatWithSystemPrompt(systemPrompt, messages, 1024);
     }
 
     private List<AIChatMessageDTO> buildMessages(AIIntentRequestDTO request) {

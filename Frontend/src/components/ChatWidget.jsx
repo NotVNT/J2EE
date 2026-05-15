@@ -1,6 +1,6 @@
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { ChevronDown, ChevronUp, MessageCircle, RotateCcw, SendHorizontal, X } from "lucide-react";
+import { ChevronDown, ChevronUp, MessageCircle, RotateCcw, SendHorizontal, X, Maximize2, Minimize2 } from "lucide-react";
 import axiosConfig from "../util/axiosConfig.jsx";
 import { API_ENDPOINTS } from "../util/apiEndpoints.js";
 import { AppContext } from "../context/AppContext.jsx";
@@ -10,7 +10,7 @@ import AIConfirmationForm from "./AIConfirmationForm.jsx";
 
 const AVAILABLE_MODELS = [
   { id: "gemini-2.5-flash", label: "Gemini 2.5 Flash", provider: "gemini" },
-  { id: "deepseek-v4-flash", label: "DeepSeek V4 Flash", provider: "openrouter" },
+  { id: "gemini-3.1-flash-lite", label: "Gemini 3.1 Flash Lite", provider: "gemini" },
 ];
 
 // SVG icons cho từng model
@@ -26,17 +26,15 @@ const MODEL_ICONS = {
       <path d="M14 2L17.09 8.26L24 9.27L19 14.14L20.18 21.02L14 17.77L7.82 21.02L9 14.14L4 9.27L10.91 8.26L14 2Z" fill="url(#gemini-grad)"/>
     </svg>
   ),
-  "deepseek-v4-flash": (
+  "gemini-3.1-flash-lite": (
     <svg width="18" height="18" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <linearGradient id="deepseek-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#4ECDC4"/>
-          <stop offset="50%" stopColor="#1A535C"/>
-          <stop offset="100%" stopColor="#FF6B6B"/>
+        <linearGradient id="gemini-lite-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#34A853"/>
+          <stop offset="100%" stopColor="#A8D8A8"/>
         </linearGradient>
       </defs>
-      <circle cx="14" cy="14" r="10" fill="url(#deepseek-grad)" opacity="0.9"/>
-      <path d="M9 14 Q14 7 19 14 Q14 21 9 14Z" fill="white" opacity="0.85"/>
+      <path d="M14 2L17.09 8.26L24 9.27L19 14.14L20.18 21.02L14 17.77L7.82 21.02L9 14.14L4 9.27L10.91 8.26L14 2Z" fill="url(#gemini-lite-grad)"/>
     </svg>
   ),
 };
@@ -44,7 +42,7 @@ const MODEL_ICONS = {
 const WELCOME_MESSAGE = {
   id: "welcome",
   role: "assistant",
-  content: "Xin chào! Tôi là Nova Agent — trợ lý AI của Money Manager. Tôi có thể trò chuyện, hỗ trợ tài chính, và giúp bạn tạo/sửa/xóa dữ liệu nhanh chóng.",
+  content: "Xin chào! Tôi là Nova Money - Trợ lý AI của Money Manager. Tôi có thể trò chuyện, hỗ trợ tài chính, và giúp bạn tạo/sửa/xóa dữ liệu nhanh chóng.",
 };
 
 const QUICK_ACTIONS = [
@@ -93,8 +91,14 @@ const ChatWidget = () => {
   const messagesEndRef = useRef(null);
   const modelDropdownRef = useRef(null);
   const [isOpen, setIsOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+  const shouldHideWidget = !token || PUBLIC_PATHS.has(location.pathname);
+
+  const isFreePlan = !user?.subscriptionPlan || user?.subscriptionPlan === "FREE";
+  
   const [messages, setMessages] = useState([WELCOME_MESSAGE]);
-  const [selectedProvider, setProvider] = useState("gemini");
+  const [selectedProvider, setProvider] = useState(isFreePlan ? "gptoss" : "gemini");
   const [selectedModel, setSelectedModel] = useState("gemini-2.5-flash");
   const [modelDropdownOpen, setModelDropdownOpen] = useState(false);
   const [inputMessage, setInputMessage] = useState("");
@@ -102,28 +106,16 @@ const ChatWidget = () => {
   const [isProcessingCrud, setIsProcessingCrud] = useState(false);
   const [pendingIntent, setPendingIntent] = useState(null);
 
-  const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-  const shouldHideWidget = !token || PUBLIC_PATHS.has(location.pathname);
+  useEffect(() => {
+    if (isFreePlan && selectedProvider === "gemini") {
+      setProvider("gptoss");
+    }
+  }, [isFreePlan, selectedProvider]);
 
   useEffect(() => {
     if (!isOpen) return;
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isOpen]);
-
-  useEffect(() => {
-    if (currentPage) {
-      setMessages((prev) => {
-        const lastContextMsg = prev.find((m) => m.id === "page-context");
-        if (lastContextMsg) return prev;
-        return [...prev, {
-          id: "page-context",
-          role: "assistant",
-          content: `📍 Bạn đang ở trang ${pageLabel}. Tôi có thể giúp bạn thao tác nhanh với dữ liệu trên trang này.`,
-          isSystem: true
-        }];
-      });
-    }
-  }, [currentPage, pageLabel]);
 
   useEffect(() => {
     if (!modelDropdownOpen) return;
@@ -397,36 +389,27 @@ const ChatWidget = () => {
 
   const handleProviderSwitch = (provider) => {
     if (provider === selectedProvider) return;
+    
+    if (provider === "gemini" && isFreePlan) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `system-error-${Date.now()}`,
+          role: "assistant",
+          content: "❌ Tính năng Agent của Nova Money (Tạo/sửa/xóa dữ liệu tự động) chỉ khả dụng cho gói BASIC trở lên. Vui lòng nâng cấp gói để sử dụng.",
+          isError: true,
+          provider
+        }
+      ]);
+      return;
+    }
+
     setProvider(provider);
-    const currentModelLabel = AVAILABLE_MODELS.find(m => m.id === selectedModel)?.label || "Gemini 2.5 Flash";
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: `system-${Date.now()}`,
-        role: "assistant",
-        content: provider === "gemini"
-          ? `🤖 Đã chuyển sang chế độ Agent — có thể tạo/sửa/xóa dữ liệu, xuất báo cáo. Model: ${currentModelLabel}`
-          : "💬 Đã chuyển sang chế độ Chat — hỏi đáp thông thường. Model: GPT-OSS 120B",
-        isSystem: true,
-        provider
-      }
-    ]);
   };
 
   const handleModelSwitch = (modelId) => {
     if (modelId === selectedModel) return;
     setSelectedModel(modelId);
-    const modelObj = AVAILABLE_MODELS.find(m => m.id === modelId);
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: `system-${Date.now()}`,
-        role: "assistant",
-        content: `🔄 Đã chuyển sang model ${modelObj.label}. Tôi sẽ sử dụng model này để xử lý yêu cầu của bạn.`,
-        isSystem: true,
-        model: modelId
-      }
-    ]);
   };
 
   const handleSubmit = async (event) => {
@@ -437,7 +420,13 @@ const ChatWidget = () => {
   return (
     <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-3">
       {isOpen && (
-        <div className="flex h-[min(36rem,80dvh)] w-96 max-w-[calc(100vw-1.5rem)] flex-col overflow-hidden rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0F172A] shadow-2xl shadow-slate-900/20">
+        <div 
+          className={`flex flex-col overflow-hidden rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0F172A] shadow-2xl shadow-slate-900/20 transition-all duration-300 ease-in-out ${
+            isExpanded 
+              ? "h-[85vh] w-[800px] max-w-[calc(100vw-2.5rem)]" 
+              : "h-[min(38rem,80dvh)] w-[420px] max-w-[calc(100vw-1.5rem)]"
+          }`}
+        >
           {/* Header */}
           <div className="flex items-start justify-between gap-3 bg-linear-to-br from-amber-500 via-amber-400 to-yellow-500 px-5 py-4 text-white">
             <div className="flex items-center gap-3">
@@ -448,16 +437,22 @@ const ChatWidget = () => {
                 <div className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-amber-400 bg-green-400" />
               </div>
               <div>
-                <h3 className="text-base font-semibold leading-tight">Nova Agent · Trợ lý AI</h3>
+                <h3 className="text-base font-semibold leading-tight">Nova Money - Trợ lý AI</h3>
                 <p className="mt-0.5 text-xs text-white/75">
                   {user?.fullName ? `Chào ${user.fullName}` : "Xin chào"}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-medium text-white">
-                Nova Agent
-              </span>
+
+              <button
+                type="button"
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="rounded-full bg-white/15 p-1.5 text-white transition hover:bg-white/25"
+                aria-label={isExpanded ? "Thu nhỏ" : "Phóng to"}
+              >
+                {isExpanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+              </button>
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
@@ -471,10 +466,10 @@ const ChatWidget = () => {
 
           {/* Messages area */}
           <div className="flex-1 space-y-3 overflow-y-auto bg-slate-50 dark:bg-[#0A0E1A] px-4 py-4">
-            {/* Nova Agent capabilities */}
+            {/* Nova Money capabilities */}
             <details className="group rounded-2xl border border-amber-100 dark:border-amber-500/20 bg-amber-50 dark:bg-amber-500/10">
               <summary className="flex cursor-pointer items-center gap-2 px-4 py-3 text-sm font-semibold text-amber-900 dark:text-amber-300 select-none">
-                <span className="text-base">✨</span> Nova Agent có thể làm gì?
+                <span className="text-base">✨</span> Nova Money có thể làm gì?
                 <ChevronDown size={14} className="ml-auto transition-transform group-open:rotate-180" />
               </summary>
               <div className="px-4 pb-3 space-y-2 text-xs text-amber-800 dark:text-amber-400">
@@ -592,7 +587,7 @@ const ChatWidget = () => {
                       ))}
                       {!chatMessage.isError && !chatMessage.isSystem && chatMessage.modelUsed && (
                         <span className="block text-[10px] text-slate-400 dark:text-slate-500 mt-1">
-                          Nova Agent · {chatMessage.modelLabel || (chatMessage.provider === "gemini" ? "Gemini 2.5 Flash" : "GPT-OSS 120B")}
+                          Nova Money · {chatMessage.modelLabel || (chatMessage.provider === "gemini" ? "Gemini 2.5 Flash" : "GPT-OSS 120B")}
                         </span>
                       )}
                     </div>
@@ -689,7 +684,7 @@ const ChatWidget = () => {
                             <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
                               {model.id === "gemini-2.5-flash"
                                 ? "Nhanh, chính xác — Google AI"
-                                : "Mạnh mẽ, miễn phí — OpenRouter"}
+                                : "Nhẹ, tiết kiệm — Google AI"}
                             </div>
                           </div>
                           {model.id === selectedModel && (
@@ -741,10 +736,10 @@ const ChatWidget = () => {
                   selectedProvider === "gemini"
                     ? "bg-amber-500 text-white shadow-sm"
                     : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
-                }`}
+                } ${isFreePlan ? "opacity-50" : ""}`}
               >
                 <span>🤖</span>
-                <span>Agent</span>
+                <span>Agent {isFreePlan && "🔒"}</span>
               </button>
               <button
                 type="button"
@@ -763,6 +758,9 @@ const ChatWidget = () => {
               {selectedProvider === "gemini"
                 ? `Agent: Tạo/sửa/xóa dữ liệu, xuất báo cáo · ${AVAILABLE_MODELS.find(m => m.id === selectedModel)?.label}`
                 : "Chat: Hỏi đáp thông thường · GPT-OSS 120B"}
+            </p>
+            <p className="mt-1 text-[10px] text-slate-400 dark:text-slate-500 text-center">
+              ⚠️ Nova Money là AI có thể trả lời sai sót, vui lòng kiểm tra lại thông tin.
             </p>
           </form>
         </div>

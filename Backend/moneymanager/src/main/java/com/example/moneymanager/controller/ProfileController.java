@@ -3,6 +3,7 @@ package com.example.moneymanager.controller;
 import com.example.moneymanager.dto.*;
 import com.example.moneymanager.service.EmailNotificationPreferenceService;
 import com.example.moneymanager.service.ProfileService;
+import com.example.moneymanager.service.AIRateLimitService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -18,12 +19,13 @@ public class ProfileController {
 
     private final ProfileService profileService;
     private final EmailNotificationPreferenceService emailNotificationPreferenceService;
+    private final AIRateLimitService aiRateLimitService;
 
     // ─── Registration ─────────────────────────────────────────────────
 
     @PostMapping("/register")
-    public ResponseEntity<?> registerProfile(@RequestBody ProfileDTO profileDTO) {
-        ProfileDTO registered = profileService.registerProfile(profileDTO);
+    public ResponseEntity<?> registerProfile(@Valid @RequestBody RegisterRequestDTO registerDTO) {
+        ProfileDTO registered = profileService.registerProfile(registerDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
                 "message", "Đăng ký thành công. Mã OTP đã được gửi tới email của bạn.",
                 "user", registered
@@ -63,7 +65,7 @@ public class ProfileController {
     @PostMapping("/login")
     public ResponseEntity<Map<String, Object>> login(@RequestBody AuthDTO authDTO) {
         if (!profileService.isAccountActive(authDTO.getEmail())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
                     "message", "Tài khoản chưa được kích hoạt. Vui lòng nhập mã OTP trong email."
             ));
         }
@@ -144,5 +146,12 @@ public class ProfileController {
         Long userId = profileService.getCurrentProfile().getId();
         emailNotificationPreferenceService.resetToDefaults(userId);
         return ResponseEntity.ok(Map.of("message", "Đặt lại cài đặt email về mặc định thành công."));
+    }
+
+    // ─── AI Usage ────────────────────────────────────────────────────
+
+    @GetMapping("/profile/ai-usage")
+    public ResponseEntity<AIUsageStatsDTO> getAIUsageStats() {
+        return ResponseEntity.ok(aiRateLimitService.getAIUsageStats());
     }
 }

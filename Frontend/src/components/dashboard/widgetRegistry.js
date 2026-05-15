@@ -10,8 +10,8 @@ import {
 
 export const WIDGET_REGISTRY = {
   ai_assistant: {
-    label: "Nova Agent",
-    description: "Gợi ý thông minh từ Nova Agent",
+    label: "Nova Money - Trợ lý AI",
+    description: "Gợi ý thông minh từ Nova Money - Trợ lý AI",
     icon: Sparkles,
     pinned: true,
   },

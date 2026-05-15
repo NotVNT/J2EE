@@ -63,7 +63,7 @@ const Income = () => {
     if (!amount || isNaN(amount) || Number(amount) <= 0) { toast.error("Số tiền phải lớn hơn 0"); return; }
     if (!date) { toast.error("Vui lòng chọn ngày"); return; }
     const today = new Date().toISOString().split("T")[0];
-    if (date > today) { toast.error("Date cannot be in the future"); return; }
+    if (date > today) { toast.error("Ngày không được chọn ở tương lai."); return; }
     if (!categoryId) { toast.error("Vui lòng chọn danh mục"); return; }
     try {
       const response = await axiosConfig.post(API_ENDPOINTS.ADD_INCOME, { name, amount: Number(amount), date, icon, categoryId });
@@ -116,7 +116,7 @@ const Income = () => {
         };
         reader.readAsText(error.response.data);
       } else {
-        toast.error(error.response?.data?.message || "Failed to download income");
+        toast.error(error.response?.data?.message || "Lỗi khi tải báo cáo Excel.");
       }
     }
   };
@@ -127,7 +127,7 @@ const Income = () => {
       const response = await axiosConfig.get(API_ENDPOINTS.EMAIL_INCOME);
       if (response.status === 200) toast.success("Gửi email chi tiết thu nhập thành công");
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to email income");
+      toast.error(error.response?.data?.message || "Lỗi khi gửi email báo cáo.");
     }
   };
 

@@ -32,7 +32,6 @@ public class AIChatService {
     private static final int MAX_HISTORY_TURNS = 20;
 
     private final GeminiService geminiService;
-    private final DeepSeekService deepSeekService;
     private final RestClient gptOssRestClient;
     private final GptOssProperties gptOssProperties;
     private final GptOssKeyRotator gptOssKeyRotator;
@@ -46,9 +45,6 @@ public class AIChatService {
         if ("gptoss".equalsIgnoreCase(provider)) {
             return chatWithGptOss(trimmedMessages);
         }
-        if ("openrouter".equalsIgnoreCase(provider)) {
-            return chatWithDeepSeek(trimmedMessages);
-        }
         return chatWithGemini(trimmedMessages);
     }
 
@@ -56,10 +52,6 @@ public class AIChatService {
         validateRequest(request);
         List<AIChatMessageDTO> trimmedMessages = trimHistory(request.getMessages());
 
-        String provider = request.getProvider();
-        if ("openrouter".equalsIgnoreCase(provider)) {
-            return deepSeekService.chatWithSystemPrompt(systemPrompt, trimmedMessages, 1024);
-        }
         return geminiService.generateMultiTurn(systemPrompt, trimmedMessages, 1024);
     }
 
@@ -98,24 +90,6 @@ public class AIChatService {
                     .reply("Xin l\u1ED7i, t\u00F4i \u0111ang g\u1EB7p s\u1EF1 c\u1ED1. B\u1EA1n th\u1EED l\u1EA1i sau nh\u00E9.")
                     .provider("gemini")
                     .modelUsed("gemini-2.5-flash")
-                    .build();
-        }
-    }
-
-    private AIChatResponseDTO chatWithDeepSeek(List<AIChatMessageDTO> messages) {
-        try {
-            String reply = deepSeekService.chat(messages);
-            return AIChatResponseDTO.builder()
-                    .reply(reply)
-                    .provider("openrouter")
-                    .modelUsed("deepseek-v4-flash")
-                    .build();
-        } catch (Exception e) {
-            log.error("DeepSeek chat error: {}", e.getMessage(), e);
-            return AIChatResponseDTO.builder()
-                    .reply("Xin l\u1ED7i, t\u00F4i \u0111ang g\u1EB7p s\u1EF1 c\u1ED1 v\u1EDBi DeepSeek. B\u1EA1n th\u1EED l\u1EA1i sau nh\u00E9.")
-                    .provider("openrouter")
-                    .modelUsed("deepseek-v4-flash")
                     .build();
         }
     }

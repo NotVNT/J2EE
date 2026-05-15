@@ -200,8 +200,6 @@ public class GeminiService {
 
     // Dashboard insight CHI TIáº¾T - Dá»° ÄOÃN TÆ¯Æ NG LAI
     public Map<String, Object> getDetailedDashboardInsight(Map<String, Object> dashboardData, String fullName) {
-        validateConfiguration();
-
         if (dashboardData == null) {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("error", "No dashboard data available");
@@ -832,17 +830,11 @@ public class GeminiService {
         ObjectNode requestBody = objectMapper.createObjectNode();
         requestBody.set("systemInstruction", buildSystemInstruction(
                 "Bạn là trợ lý tài chính cho ứng dụng Money Manager.\n" +
-                        "Người dùng: " + safeValue(profile.getFullName()) + ", email: " + safeValue(profile.getEmail()) + "\n" +
-                        buildFinancialContext()
+                        "Người dùng: " + safeValue(profile.getFullName()) + ", email: " + safeValue(profile.getEmail())
         ));
         requestBody.set("contents", buildUserContents(message));
         requestBody.set("generationConfig", buildGenerationConfig());
         return requestBody;
-    }
-
-    private String buildFinancialContext() {
-        // Giá»¯ nguyÃªn method nÃ y
-        return "";
     }
 
     private ObjectNode buildSystemInstruction(String text) {
