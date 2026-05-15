@@ -188,7 +188,7 @@ const Forecast = () => {
                                         </div>
                                         <h3 className="text-lg font-bold mb-4 flex items-center gap-2 relative z-10">
                                             <Lightbulb size={20} className="text-amber-300" />
-                                            AI đang phân tích dữ liệu...
+                                            Nova Money đang phân tích dữ liệu của bạn, vui lòng chờ nhé...
                                         </h3>
                                         <div className="space-y-3 relative z-10">
                                             <div className="h-3 bg-white/20 rounded-full w-full animate-pulse" />
@@ -208,6 +208,9 @@ const Forecast = () => {
                                         </h3>
                                         <p className="text-indigo-50 leading-relaxed relative z-10 text-sm whitespace-pre-wrap">
                                             {insights.narrative}
+                                        </p>
+                                        <p className="mt-3 text-xs text-indigo-200/70 relative z-10 flex items-center gap-1">
+                                            <span>⚠️</span> Nova Money là AI có thể trả lời sai sót, vui lòng kiểm tra lại thông tin.
                                         </p>
                                     </div>
                                 ) : null

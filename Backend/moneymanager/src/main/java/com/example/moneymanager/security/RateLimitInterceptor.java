@@ -3,6 +3,7 @@ package com.example.moneymanager.security;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
@@ -77,5 +78,19 @@ public class RateLimitInterceptor implements HandlerInterceptor {
 
     private String resolveClientIp(HttpServletRequest request) {
         return request.getRemoteAddr();
+    }
+
+    // Evict stale window entries every 5 minutes to prevent memory leak
+    @Scheduled(fixedDelay = 300_000)
+    public void evictExpiredWindows() {
+        long maxWindowMs = RULES.stream().mapToLong(RateRule::windowMs).max().orElse(60_000);
+        long cutoff = System.currentTimeMillis() - maxWindowMs;
+        windowMap.entrySet().removeIf(entry -> {
+            Deque<Long> deque = entry.getValue();
+            while (!deque.isEmpty() && deque.peekFirst() < cutoff) {
+                deque.pollFirst();
+            }
+            return deque.isEmpty();
+        });
     }
 }

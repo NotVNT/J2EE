@@ -23,6 +23,7 @@ import java.util.Map;
 public class AdminController {
 
     private final AdminService adminService;
+    private final com.example.moneymanager.service.AIRateLimitService aiRateLimitService;
 
     @GetMapping("/overview")
     public ResponseEntity<?> getOverview() {
@@ -88,5 +89,19 @@ public class AdminController {
     public ResponseEntity<?> deleteBroadcast(@PathVariable Long id) {
         adminService.deleteBroadcast(id);
         return ResponseEntity.ok(Map.of("message", "Xoá thông báo thành công"));
+    }
+
+    // ─── AI Limit Reset ────────────────────────────────────────────
+
+    @PostMapping("/reset-ai-limits/all")
+    public ResponseEntity<?> resetAllAILimits() {
+        aiRateLimitService.resetAllAILimits();
+        return ResponseEntity.ok(Map.of("message", "Đã reset toàn bộ hạn mức AI cho tất cả người dùng."));
+    }
+
+    @PostMapping("/users/{id}/reset-ai-limits")
+    public ResponseEntity<?> resetUserAILimits(@PathVariable Long id) {
+        aiRateLimitService.resetAILimitsForUser(id);
+        return ResponseEntity.ok(Map.of("message", "Đã reset hạn mức AI cho người dùng."));
     }
 }

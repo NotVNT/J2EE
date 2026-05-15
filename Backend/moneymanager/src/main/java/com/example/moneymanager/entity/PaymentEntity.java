@@ -61,7 +61,8 @@ public class PaymentEntity {
     private boolean subscriptionActivated = false;
 
     @Version
-    private Long version;
+    @Column(nullable = false, columnDefinition = "BIGINT DEFAULT 0")
+    private long version;
 
     @Column(updatable = false)
     @CreationTimestamp

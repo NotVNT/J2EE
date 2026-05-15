@@ -387,7 +387,7 @@ const Home = () => {
                   <Sparkles className={`w-5 h-5 ${aiLoading ? "animate-spin" : ""} text-amber-300`} />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-white">Nova AI · Trợ lý tài chính</h2>
+                  <h2 className="text-lg font-bold text-white">Nova Money - Trợ lý AI</h2>
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className="inline-flex items-center gap-1 text-xs text-white/70">
                       <span className={`inline-block w-1.5 h-1.5 rounded-full ${aiLoading ? "bg-amber-400 animate-pulse" : "bg-emerald-400"}`} />
@@ -437,6 +437,9 @@ const Home = () => {
                   <p className="text-slate-800 dark:text-slate-200 leading-relaxed">
                     {aiInsight || "Hãy thêm vài giao dịch để AI có thể đưa ra nhận xét cho bạn!"}
                   </p>
+                  <p className="mt-2 text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                    <span>⚠️</span> Nova Money là AI có thể trả lời sai sót, vui lòng kiểm tra lại thông tin.
+                  </p>
                 </div>
               </div>
             )}
@@ -451,7 +454,7 @@ const Home = () => {
                     <div className="flex items-center justify-center py-6">
                       <div className="flex flex-col items-center gap-3">
                         <div className="w-10 h-10 rounded-full border-[3px] border-violet-200 dark:border-violet-500/30 border-t-violet-600 dark:border-t-violet-400 animate-spin" />
-                        <p className="text-sm text-slate-500 dark:text-slate-400">AI đang phân tích chuyên sâu dữ liệu của bạn...</p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">Nova Money đang phân tích chuyên sâu dữ liệu của bạn, vui lòng chờ nhé...</p>
                       </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -521,6 +524,9 @@ const Home = () => {
                         </div>
                       </div>
                     )}
+                    <p className="col-span-full mt-1 text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                      <span>⚠️</span> Nova Money là AI có thể trả lời sai sót, vui lòng kiểm tra lại thông tin.
+                    </p>
                   </div>
                 ) : (
                   <div className="text-center py-8">

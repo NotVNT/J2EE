@@ -200,8 +200,6 @@ public class GeminiService {
 
     // Dashboard insight CHI TIáº¾T - Dá»° ÄOÃN TÆ¯Æ NG LAI
     public Map<String, Object> getDetailedDashboardInsight(Map<String, Object> dashboardData, String fullName) {
-        validateConfiguration();
-
         if (dashboardData == null) {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("error", "No dashboard data available");

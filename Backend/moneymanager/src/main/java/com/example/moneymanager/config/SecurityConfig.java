@@ -44,6 +44,8 @@ public class SecurityConfig {
                         .httpStrictTransportSecurity(hsts -> hsts
                                 .includeSubDomains(true)
                                 .maxAgeInSeconds(31536000))
+                        .contentSecurityPolicy(csp -> csp
+                                .policyDirectives("default-src 'none'; frame-ancestors 'none'"))
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
@@ -58,7 +60,8 @@ public class SecurityConfig {
                                 "/verify-reset-otp",
                                 "/reset-password",
                                 "/payments/payos/webhook",
-                                "/auth/google"
+                                "/auth/google",
+                                "/subscription-plans"
                         ).permitAll()
                         // Admin-only endpoints — enforced at Spring Security level
                         .requestMatchers("/admin/**").hasRole("ADMIN")

@@ -3,6 +3,7 @@ package com.example.moneymanager.controller;
 import com.example.moneymanager.dto.*;
 import com.example.moneymanager.service.EmailNotificationPreferenceService;
 import com.example.moneymanager.service.ProfileService;
+import com.example.moneymanager.service.AIRateLimitService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -18,6 +19,7 @@ public class ProfileController {
 
     private final ProfileService profileService;
     private final EmailNotificationPreferenceService emailNotificationPreferenceService;
+    private final AIRateLimitService aiRateLimitService;
 
     // ─── Registration ─────────────────────────────────────────────────
 
@@ -144,5 +146,12 @@ public class ProfileController {
         Long userId = profileService.getCurrentProfile().getId();
         emailNotificationPreferenceService.resetToDefaults(userId);
         return ResponseEntity.ok(Map.of("message", "Đặt lại cài đặt email về mặc định thành công."));
+    }
+
+    // ─── AI Usage ────────────────────────────────────────────────────
+
+    @GetMapping("/profile/ai-usage")
+    public ResponseEntity<AIUsageStatsDTO> getAIUsageStats() {
+        return ResponseEntity.ok(aiRateLimitService.getAIUsageStats());
     }
 }
