@@ -124,9 +124,8 @@ Nova Money là trợ lý AI tích hợp sẵn, có thể truy cập từ nút ch
 
 | Nhà Cung Cấp | Mô Hình | Được Sử Dụng Cho | Giới Hạn Tốc Độ |
 |---|---|---|---|
-| Google Gemini | gemini-2.0-flash-lite | Chế độ Agent (phân tích ý định + thực thi) | Xoay vòng khóa Redis |
-| OpenRouter | GPT-OSS 120B | Chế độ Chat (trò chuyện) | Xoay vòng khóa Redis |
-| Google Gemini Vision | gemini-2.0-flash-lite | Phân Tích Hình Ảnh Hóa Đơn | Xoay vòng khóa Redis |
+| Google Gemini | gemini-3.1-flash-lite | Chế độ Agent (phân tích ý định + thực thi) |
+| OpenRouter | GPT-OSS 120B | Chế độ Chat (trò chuyện) |
 
 **Xoay Vòng Khóa API (Redis)**  
 Mỗi nhà cung cấp có một nhóm khóa API được lưu trữ trong Redis. Hệ thống theo dõi sử dụng hạn ngạch cho mỗi khóa và trạng thái cooldown. Khi một khóa vượt quá hạn ngạch hoặc trả về lỗi, khóa đó sẽ bị bỏ qua tự động và khóa có sẵn tiếp theo sẽ được sử dụng. Các khóa tự phục hồi sau khi thời gian cooldown hết hạn.
