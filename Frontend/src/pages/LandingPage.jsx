@@ -49,7 +49,7 @@ const LandingPage = () => {
                     <div className="h-16 flex items-center justify-between">
                         {/* Logo */}
                         <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => scrollTo('hero')}>
-                            <img src="/favicon.svg" alt="Money Manager Logo" className="w-8 h-8 drop-shadow-md" />
+                            <img src="/favicon.png" alt="Money Manager Logo" className="w-8 h-8 drop-shadow-md" />
                             <span className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
                                 Money<span className="text-amber-500">Manager</span>
                             </span>
@@ -474,7 +474,7 @@ const LandingPage = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
                         <div className="lg:col-span-2">
                             <div className="flex items-center gap-2 mb-6 cursor-pointer" onClick={() => scrollTo('hero')}>
-                                <img src="/favicon.svg" alt="Money Manager Logo" className="w-8 h-8" />
+                                <img src="/favicon.png" alt="Money Manager Logo" className="w-8 h-8" />
                                 <span className="text-xl font-bold text-slate-900 dark:text-white">
                                     Money<span className="text-amber-500">Manager</span>
                                 </span>

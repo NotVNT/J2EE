@@ -67,7 +67,7 @@ public class AIInstructionPromptBuilder {
                     "category: Danh m\u1EE5c, filter: B\u1ED9 l\u1ECDc, forecast: D\u1EF1 b\u00E1o, reports: B\u00E1o c\u00E1o";
 
     public static String buildSystemPrompt(String pageContext, Map<String, Object> pageData) {
-        String pageLabel = getPageLabel(pageContext);
+        String pageLabel = getPageLabel(pageContext).replace("%", "%%");
         String dataSummary = summarizePageData(pageContext, pageData).replace("%", "%%");
         return String.format(BASE_SYSTEM_PROMPT, pageLabel, dataSummary);
     }

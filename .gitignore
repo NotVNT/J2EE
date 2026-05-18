@@ -177,3 +177,4 @@ $RECYCLE.BIN/
 coverage/
 test-results/
 playwright-report/
+.mcp.json

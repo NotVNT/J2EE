@@ -1,4 +1,4 @@
-import logo from "./logo/devbot.png";
+import logo from "./logo/AI_favicon.png";
 import {BadgeDollarSign, ChartBar, Coins, FunnelPlus, LayoutDashboard, List, PiggyBank, Target, Wallet, Activity} from "lucide-react";
 
 export const assets = {

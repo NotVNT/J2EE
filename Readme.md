@@ -1,167 +1,300 @@
 # Money Manager
 
-Ứng dụng quản lý tài chính cá nhân đa nền tảng (Web + Mobile), hỗ trợ theo dõi thu chi, lập ngân sách, mục tiêu tiết kiệm, dự báo tài chính và trợ lý AI.
+Full-stack personal finance application — Web + Mobile. Supports income/expense tracking, budgets, saving goals, financial forecasting, Excel/email reports, and an embedded AI assistant (Nova Money).
+
+---
+
+## Architecture Overview
+
+```
+┌─────────────────┐     REST API / JWT      ┌──────────────────────┐
+│   Frontend      │ ◄──────────────────────► │   Backend            │
+│   React 19      │                          │   Spring Boot 4.0.3  │
+│   Vite 8        │                          │   Java 21 / MySQL    │
+└─────────────────┘                          └──────────┬───────────┘
+                                                        │
+┌─────────────────┐     REST API / JWT                  │
+│   Mobile        │ ◄──────────────────────────────────►│
+│   React Native  │                          ┌──────────┴───────────┐
+│   Expo 53       │                          │   External Services  │
+└─────────────────┘                          │   Redis · MySQL      │
+                                             │   PayOS · Gemini API │
+                                             │   OpenRouter · S3    │
+                                             │   AWS Lambda · SMTP  │
+                                             └──────────────────────┘
+```
+
+---
 
 ## Tech Stack
 
-| Layer | Công nghệ |
-|---|---|
-| Backend | Spring Boot, Java 21, Maven, MySQL, Redis |
-| Frontend | React 19, Vite, Tailwind CSS 4, Recharts |
-| Mobile | React Native (Expo), React Navigation, AsyncStorage |
+### Backend — `Backend/moneymanager/`
+
+| Category | Technology | Version |
+|---|---|---|
+| Framework | Spring Boot | 4.0.3 |
+| Language | Java | 21 |
+| Build | Maven | - |
+| Database | MySQL + JPA/Hibernate | - |
+| Cache / Key Store | Redis | - |
+| Auth | Spring Security + JWT | - |
+| Payment | PayOS | - |
+| AI — Gemini | Google Gemini API | gemini-2.0-flash-lite |
+| AI — Chat | OpenRouter (GPT-OSS 120B) | - |
+| Excel | Apache POI | - |
+| Email | Spring Mail (Brevo SMTP) | - |
+| File Storage | AWS S3 | - |
+| PDF Generation | AWS Lambda | - |
+| Lombok | Lombok | - |
+
+**Pattern**: `@Controller → @Service → @Repository` + DTO layer
+
+### Frontend — `Frontend/`
+
+| Category | Technology | Version |
+|---|---|---|
+| Framework | React | 19.2 |
+| Build | Vite | 8.0 (beta) |
+| CSS | Tailwind CSS | 4.2 |
+| Routing | React Router | 7 |
+| HTTP | Axios | 1.13 |
+| Charts | Recharts | 3.8 |
+| Icons | Lucide React | 0.577 |
+| Drag & Drop | @dnd-kit | 6/10 |
+| Markdown | react-markdown + remark-gfm + rehype-sanitize | - |
+| Notifications | react-hot-toast | 2.6 |
+| Emoji Picker | emoji-picker-react | 4.18 |
+
+### Mobile — `Mobile/`
+
+| Category | Technology | Version |
+|---|---|---|
+| Framework | React Native | 0.79.6 |
+| Build Platform | Expo | 53 |
+| Navigation | React Navigation (bottom tabs + native stack) | 7 |
+| Local Storage | AsyncStorage | 2.1 |
+| HTTP | Axios | 1.13 |
 
 ---
 
 ## Subscription Plans
 
-Hệ thống hỗ trợ 3 gói đăng ký: `FREE`, `BASIC`, `PREMIUM`. Các tính năng AI (Nova Agent, AI Coach) chỉ khả dụng trên gói **PREMIUM**.
+Three tiers control feature access. Restrictions are enforced **at the backend service layer** — frontend only hides UI elements.
 
-### Plan Rules
+| Feature | FREE | BASIC | PREMIUM |
+|---|:---:|:---:|:---:|
+| Categories | 10 | 30 | Unlimited |
+| Transactions / month | 100 | 1,000 | Unlimited |
+| History filter depth | 3 months | 12 months | Unlimited |
+| Excel export | ❌ | ✅ | ✅ |
+| Email reports | ❌ | ✅ | ✅ |
+| Nova Money Chat mode | ✅ | ✅ | ✅ |
+| Nova Money Agent mode | ❌ | ✅ | ✅ |
+| Receipt import (Gemini Vision) | ❌ | ❌ | ✅ |
+| AI Smart Spending Tips | ❌ | ❌ | ✅ |
+| Financial Forecasting | ❌ | ❌ | ✅ |
 
-| Tính năng | FREE | BASIC | PREMIUM |
+**Backend enforcement points**: `CategoryService.create()`, `ExpenseService.create()`, `IncomeService.create()`, `FilterController`, `ExcelService`, `EmailService`, `ReceiptService`, `AICoachService`, `ForecastService`
+
+**Subscription flow**: User pays via PayOS → webhook `PAID` → backend activates plan on `ProfileEntity` (`subscriptionPlan`, `subscriptionStatus`, `subscriptionActivatedAt`, `subscriptionExpiresAt`, `autoRenew`)
+
+---
+
+## AI Features — Nova Money
+
+### Overview
+
+Nova Money is the embedded AI assistant, accessible from the floating chat button on every authenticated page. It has two operating modes selectable by the user:
+
+```
+┌─────────────────────────────────────────┐
+│           Nova Money Widget             │
+├────────────────────┬────────────────────┤
+│   Agent Mode       │   Chat Mode        │
+│   (Gemini)         │   (GPT-OSS)        │
+│   BASIC+           │   All plans        │
+│                    │                    │
+│ Intent parsing →   │ Free-form Q&A      │
+│ CRUD / export      │ Finance advice     │
+│ operations         │ No data changes    │
+└────────────────────┴────────────────────┘
+```
+
+### AI Infrastructure
+
+| Provider | Model | Used For | Rate Limiting |
 |---|---|---|---|
-| Danh mục | 10 | 30 | Không giới hạn |
-| Giao dịch / tháng | 100 | 1.000 | Không giới hạn |
-| Lọc lịch sử | 3 tháng | 12 tháng | Không giới hạn |
-| Xuất Excel | ❌ | ✅ | ✅ |
-| Gửi báo cáo qua Email | ❌ | ✅ | ✅ |
-| Nova Agent (Agent mode) | ❌ | ❌ | ✅ |
-| Nova Agent (Chat mode) | ❌ | ❌ | ✅ |
-| Nhập hóa đơn (AI) | ❌ | ❌ | ✅ |
-| AI Coach chi tiết | ❌ | ❌ | ✅ |
-| Dự báo tài chính | ❌ | ❌ | ✅ |
+| Google Gemini | gemini-2.0-flash-lite | Agent mode (intent parsing + execution) | Redis key rotation |
+| OpenRouter | GPT-OSS 120B | Chat mode (conversation) | Redis key rotation |
+| Google Gemini Vision | gemini-2.0-flash-lite | Receipt image analysis | Redis key rotation |
 
-### Backend Enforcement
-
-Backend áp dụng giới hạn gói đăng ký tại các điểm:
-- Tạo danh mục
-- Tạo thu nhập / chi tiêu
-- Lọc giao dịch
-- Tải báo cáo Excel
-- Gửi báo cáo qua Email
-- Nhập hóa đơn
-- AI Coach
-- Dự báo tài chính
-
-### Subscription Activation
-
-- Người dùng mới bắt đầu với gói `FREE`
-- Khi thanh toán PayOS được xác nhận `PAID`, backend tự động kích hoạt gói đã mua
-- Gói hỗ trợ: `basic` → `BASIC`, `premium` → `PREMIUM`
-- Mỗi profile lưu: `subscriptionPlan`, `subscriptionStatus`, `subscriptionActivatedAt`, `subscriptionExpiresAt`, `autoRenew`
+**API Key Rotation (Redis)**  
+Each provider has a pool of API keys stored in Redis. The system tracks per-key quota usage and cooldown state. When a key hits its quota or returns an error, it is automatically skipped and the next available key is used. Keys auto-recover after their cooldown period expires.
 
 ---
 
-## Features
+### Agent Mode — Intent → CRUD Pipeline
 
-### 🤖 Nova Agent AI
+**Available from BASIC plan.** User types a natural-language command → Gemini parses the intent → frontend shows a confirmation form → user approves → backend executes → undo available for a few minutes.
 
-Trợ lý AI tích hợp trực tiếp trong ứng dụng, hỗ trợ 2 chế độ hoạt động với đa dạng model AI:
+**Pipeline**:
+```
+User message
+    │
+    ▼
+POST /ai/parse-intent
+(Gemini, system prompt includes current page data)
+    │
+    ▼
+Intent JSON returned
+    │
+    ├── CRUD / Action intent → show AIConfirmationForm to user
+    │       │
+    │       ▼  (user confirms)
+    │   POST /ai/confirm-action
+    │       │
+    │       ▼
+    │   Backend executes → returns operationId for undo
+    │
+    └── ANSWER_QUESTION → render answer inline (no confirmation)
+```
 
-#### Hạ tầng AI
+**Supported intents**:
 
-| Provider | Model | Cơ chế |
-|---|---|---|
-| Gemini (Google) | Gemini 3.1 Flash Lite | API key rotation qua Redis |
-| GPT-OSS (OpenRouter) | GPT-OSS 120B | API key rotation qua Redis |
-
-Cơ chế **key rotation**: Redis lưu trữ quota và trạng thái từng API key. Khi một key hết quota hoặc lỗi, hệ thống tự động chuyển sang key tiếp theo trong pool. Hỗ trợ cooldown và tự động khôi phục key khi hết thời gian chờ.
-
-#### Chế độ Agent (Gemini 3.1 Flash Lite)
-Tự động phân tích intent và thực hiện các tác vụ CRUD, xuất báo cáo:
-
-| Nhóm | Thao tác |
+| Group | Intents |
 |---|---|
-| Chi tiêu | Tạo, Sửa, Xóa |
-| Thu nhập | Tạo, Sửa, Xóa |
-| Danh mục | Tạo, Sửa, Xóa |
-| Ngân sách | Tạo, Sửa, Xóa |
-| Mục tiêu tiết kiệm | Tạo, Sửa, Xóa |
-| Xuất báo cáo | Xuất Excel chi tiêu / thu nhập |
-| Gửi email | Gửi báo cáo chi tiêu / thu nhập qua email |
+| Expense | `CREATE_EXPENSE`, `UPDATE_EXPENSE`, `DELETE_EXPENSE` |
+| Income | `CREATE_INCOME`, `UPDATE_INCOME`, `DELETE_INCOME` |
+| Category | `CREATE_CATEGORY`, `UPDATE_CATEGORY`, `DELETE_CATEGORY` |
+| Budget | `CREATE_BUDGET`, `UPDATE_BUDGET`, `DELETE_BUDGET` |
+| Saving Goal | `CREATE_SAVING_GOAL`, `UPDATE_SAVING_GOAL`, `DELETE_SAVING_GOAL` |
+| Export | `EXPORT_EXCEL_INCOME`, `EXPORT_EXCEL_EXPENSE` |
+| Email | `EMAIL_INCOME_REPORT`, `EMAIL_EXPENSE_REPORT` |
+| Q&A | `ANSWER_QUESTION` |
+| Guard | `INVALID_REQUEST` |
 
-Cơ chế: Intent Parsing → Xác nhận từ người dùng → Thực thi → Hoàn tác (undo) trong vài phút.
+**Context-awareness**: The system prompt includes real data from the user's current page (e.g., their category list when on the Category page) so Gemini can resolve references like "delete the food category" to an actual ID.
 
-Giao diện Nova Agent được thiết kế lại với:
-- **Model cố định**: Gemini 3.1 Flash Lite — không có dropdown chọn model
-- **Loading skeleton**: Hoạt ảnh khi AI đang xử lý, tránh hiển thị đột ngột
-- **Status indicator**: Dot xanh (sẵn sàng) / dot vàng nhấp nháy (đang xử lý)
-- **AI Dashboard Banner**: Thiết kế 2 tầng rõ ràng — header gradient tím + body card trắng/sáng
-
-#### Chế độ Chat (GPT-OSS 120B)
-Hỏi đáp thông thường, không thực hiện thao tác dữ liệu:
-- Tư vấn tài chính cá nhân
-- Phân tích tâm lý chi tiêu
-- Hỗ trợ cảm xúc về tiền bạc
-- Lập kế hoạch mục tiêu dài hạn
-
-#### Smart Spending Tips (AI Coach)
-
-Phân tích chi tiêu 3 tháng gần nhất, đưa ra gợi ý tiết kiệm cá nhân hóa bằng tiếng Việt. **PREMIUM-only**.
-
-### 🛡️ Spam Protection
-
-Hệ thống chống spam 2 lớp:
-- **Redis-based**: Đếm số lần gửi email theo tài khoản. Trên 5 lần/phút → khóa 10 phút, trên 10 lần → khóa 5 giờ
-- **Rate Limiter (in-memory)**: Giới hạn theo IP cho từng endpoint (login: 5/phút, quên mật khẩu: 5/phút, gửi lại OTP: 3/phút, chat AI: 15/phút...). Trả về HTTP 429 khi vượt ngưỡng
-
-### 📊 Email Reports
-
-Gửi báo cáo Excel qua email dưới dạng file đính kèm, sử dụng Spring Mail (Brevo/Sendinblue SMTP). Hỗ trợ thẻ báo cáo hàng tháng (Monthly Report Card) đánh giá điểm chi tiêu A-F, phân tích danh mục và tiến độ tiết kiệm.
-
-### 📥 Excel Export
-
-Xuất báo cáo thu/chi dạng XLSX với Apache POI. Định dạng tiếng Việt, bảng mã màu (xanh = thu nhập, đỏ = chi tiêu), màu xen kẽ dòng, dòng tổng kèm định dạng VNĐ.
-
-### 🔐 OTP
-
-Mã OTP 6 chữ số (BCrypt hash) dùng cho kích hoạt tài khoản và đặt lại mật khẩu. Hiệu lực 210 giây, cooldown gửi lại 180 giây, tối đa 5 lần nhập sai, so sánh constant-time.
-
-### 💰 Payment (PayOS)
-
-Tích hợp cổng thanh toán PayOS: tạo link thanh toán, webhook xác nhận, đồng bộ trạng thái tự động mỗi 30 giây, tự động kích hoạt gói khi thanh toán thành công.
-
-### 🧾 Receipt Import (Gemini Vision)
-
-Tải ảnh hóa đơn → Gemini Vision trích xuất nơi bán, mặt hàng, số tiền → tự động tạo chi tiêu. **PREMIUM-only**. Hỗ trợ ảnh ≤10MB.
-
-### 📈 Financial Forecasting
-
-Dự báo chi tiêu tháng tới dựa trên 6 tháng lịch sử, phát hiện bất thường (2+ độ lệch chuẩn), phân tích xu hướng danh mục. **PREMIUM-only**.
-
-### 🎯 Budget Management
-
-Đặt hạn mức chi tiêu hàng tháng theo từng danh mục, theo dõi % đã sử dụng, cảnh báo khi vượt ngân sách.
-
-### 💎 Saving Goals
-
-Theo dõi mục tiêu tiết kiệm với đóng góp định kỳ. Tự động tính mục tiêu hàng tháng, quản lý trạng thái (ACTIVE/COMPLETED/CANCELLED).
-
-### 🔔 Notifications
-
-Thông báo in-app + email notification với tùy chọn bật/tắt theo loại. Hỗ trợ cảnh báo ngân sách, nhắc nhở mục tiêu tiết kiệm, thông báo thanh toán thành công.
-
-### 🔑 Google OAuth2
-
-Đăng nhập bằng Google. Xác thực Google ID Token, tự động tạo profile cho người dùng mới, cấp JWT.
-
-### 🛠️ Admin Panel
-
-Dashboard quản trị với thống kê tổng quan, quản lý người dùng (CRUD), theo dõi thanh toán, broadcast notification, quản lý subscription. Phân quyền theo role `ADMIN`.
-
-### 📱 Mobile App
-
-Ứng dụng React Native (Expo) đa nền tảng. Bottom tab navigation (Dashboard + Expenses), JWT auth + AsyncStorage, pull-to-refresh.
+**Undo**: After a successful CRUD operation, the backend stores an `operationId`. The frontend shows an undo button; calling `POST /ai/undo/{operationId}` within the allowed window reverses the action.
 
 ---
 
-## Additional
+### Chat Mode — Free-form Conversation
 
-| Tính năng | Chi tiết |
+**Available to all plans (FREE included).** Uses GPT-OSS 120B via OpenRouter. Does not perform any data operations — pure conversational Q&A.
+
+Capabilities:
+- Personal finance advice
+- Spending psychology analysis
+- Emotional support about money
+- Long-term goal planning
+- General financial questions
+
+Conversation history: last 20 messages are sent as context on each request.
+
+---
+
+### Smart Spending Tips (AI Coach)
+
+**PREMIUM only.** Analyzes the user's last 3 months of transactions and returns personalized Vietnamese-language saving tips. Powered by Gemini.
+
+---
+
+### Receipt Import (Gemini Vision)
+
+**PREMIUM only.** User uploads a receipt image (≤ 10 MB, JPEG/PNG/WebP) → Gemini Vision extracts merchant name, items, and total amount → auto-populates the create-expense form.
+
+---
+
+### Nova Money Widget — UI Details
+
+The floating chat button sits bottom-right on all authenticated pages.
+
+- **Greeting bubble**: After 5 seconds of inactivity, a speech bubble appears with a random funny message (30 messages in rotation, changes every 20 seconds). Disappears when chat opens.
+- **Avatar**: Uses `AI_favicon.png` throughout — floating button, chat header, and per-message avatars.
+- **Two-panel layout**: Chat panel supports normal and expanded (800px wide) modes.
+- **Markdown rendering**: AI responses support tables, code blocks, lists, blockquotes via `react-markdown` + `remark-gfm` + `rehype-sanitize`.
+- **Typing indicator**: Three-dot bounce animation while waiting for response.
+- **Pending intent guard**: While a CRUD confirmation form is open, new messages are blocked until the user confirms or cancels.
+
+---
+
+## Other Features
+
+### Financial Forecasting
+Predicts next month's spending based on 6 months of history. Detects anomalies (2+ standard deviations from mean). Category-level trend analysis. **PREMIUM only.**
+
+### Budget Management
+Monthly spending limits per category. Tracks % used. Alerts when budget is exceeded.
+
+### Saving Goals
+Create goals with target amount and deadline. Log contributions. Tracks ACTIVE / COMPLETED / CANCELLED status. Auto-calculates required monthly contribution.
+
+### Dashboard Widgets
+Drag-and-drop customizable widget layout (via `@dnd-kit`). Monthly report card with A–F spending grade, category breakdown, savings progress.
+
+### Excel Export
+XLSX reports via Apache POI. Vietnamese locale, color-coded rows (green = income, red = expense), alternating row colors, VND-formatted totals. **BASIC+ only.**
+
+### Email Reports
+Excel report sent as email attachment via Spring Mail (Brevo SMTP). Includes monthly report card with spending score. **BASIC+ only.**
+
+### OTP Authentication
+6-digit OTP (BCrypt-hashed) for account activation and password reset. 210-second validity, 180-second resend cooldown, 5 max attempts, constant-time comparison.
+
+### Google OAuth2
+Sign in with Google. Validates Google ID token, auto-creates profile for new users, issues JWT.
+
+### PayOS Payment
+Creates payment links, handles webhooks, auto-syncs payment status every 30 seconds, activates subscription on successful payment.
+
+### Spam Protection
+Two-layer protection:
+- **Redis-based**: Per-account email send counter. Over 5/minute → 10-minute lock. Over 10 → 5-hour lock.
+- **In-memory rate limiter**: Per-IP limits per endpoint (login: 5/min, forgot-password: 5/min, resend OTP: 3/min, AI chat: 15/min). Returns HTTP 429 when exceeded.
+
+### File Upload
+Profile photos uploaded to AWS S3. Magic bytes validation (JPEG/PNG/GIF/WebP only).
+
+### PDF Invoice
+AWS Lambda generates PDF invoice after successful payment.
+
+### Notifications
+In-app + email notifications with per-type toggles. Budget alerts, saving goal reminders, payment confirmations.
+
+### Admin Panel
+Role `ADMIN` only. User management (CRUD), payment monitoring, subscription management, broadcast notifications, overview statistics.
+
+### Mobile App
+React Native (Expo). Bottom tab navigation (Dashboard + Expenses). JWT auth stored in AsyncStorage. Pull-to-refresh.
+
+---
+
+## Default Ports
+
+| Service | Port |
 |---|---|
-| JWT Auth | Spring Security + JWT filter, axios interceptor tự động refresh |
-| Dark Mode | ThemeContext + Tailwind CSS dark mode toàn ứng dụng |
-| File Upload | AWS S3 upload ảnh đại diện, xác thực magic bytes (JPEG/PNG/GIF/WebP) |
-| Document Generation | AWS Lambda sinh PDF hóa đơn sau thanh toán |
-| Dashboard Widgets | Widget tùy chỉnh kéo-thả, báo cáo tháng với xếp hạng A-F |
-| Quick Expense | Mẫu chi tiêu nhanh, emoji picker cho danh mục |
+| Backend (Spring Boot) | 8080 |
+| Frontend (Vite dev) | 5173 |
+| MySQL | 3306 |
+| Redis | 6379 |
+
+---
+
+## Quick Start
+
+```bash
+# Backend
+cd Backend/moneymanager
+mvn spring-boot:run
+
+# Frontend
+cd Frontend
+npm install
+npm run dev
+
+# Mobile
+cd Mobile
+npm install
+npm start
+```
