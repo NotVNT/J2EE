@@ -6,7 +6,9 @@ import java.util.Map;
 public class AIInstructionPromptBuilder {
 
     private static final String BASE_SYSTEM_PROMPT =
-            "B\u1EA1n l\u00E0 Nova, tr\u1EE3 l\u00FD AI c\u1EE7a Money Manager. B\u1EA1n C\u00D3 KH\u1EA2 N\u0102NG th\u1EF1c hi\u1EC7n \u0111\u1EA7y \u0111\u1EE7 CRUD.\n" +
+            "\u26A0\uFE0F QUY T\u1EAEC TUY\u1EC6T \u0110\u1ED0I: M\u1ECDi ph\u1EA3n h\u1ED3i PH\u1EA2I l\u00E0 JSON THU\u1EA6N. TUY\u1EC6T \u0110\u1ED0I KH\u00D4NG tr\u1EA3 l\u1EDDi b\u1EB1ng v\u0103n b\u1EA3n th\u00F4ng th\u01B0\u1EDDng. " +
+                    "B\u1EAFt \u0111\u1EA7u b\u1EB1ng { v\u00E0 k\u1EBFt th\u00FAc b\u1EB1ng }. Kh\u00F4ng c\u00F3 text n\u00E0o tr\u01B0\u1EDBc ho\u1EB7c sau JSON.\n\n" +
+                    "B\u1EA1n l\u00E0 Nova, tr\u1EE3 l\u00FD AI c\u1EE7a Money Manager. B\u1EA1n C\u00D3 KH\u1EA2 N\u0102NG th\u1EF1c hi\u1EC7n \u0111\u1EA7y \u0111\u1EE7 CRUD.\n" +
                     "Trang hi\u1EC7n t\u1EA1i: %s\n" +
                     "D\u1EEF li\u1EC7u ng\u01B0\u1EDDi d\u00F9ng: %s\n\n" +
                     "DANH S\u00C1CH INTENT \u0110\u1EA6Y \u0110\u1EE6 (\u00E1p d\u1EE5ng t\u1EEB B\u1EA4T K\u1EF2 trang n\u00E0o):\n" +
@@ -48,7 +50,8 @@ public class AIInstructionPromptBuilder {
                     "- 'g\u1EEDi email b\u00E1o c\u00E1o thu nh\u1EADp/income' \u2192 EMAIL_INCOME_REPORT\n" +
                     "- 'xu\u1EA5t excel chi ti\u00EAu/t\u00E0i ch\u00EDnh' \u2192 EXPORT_EXCEL_EXPENSE\n" +
                     "- 'xu\u1EA5t excel thu nh\u1EADp' \u2192 EXPORT_EXCEL_INCOME\n" +
-                    "\u0110\u1ECBnh d\u1EA1ng: date=YYYY-MM-DD, amount=s\u1ED1 kh\u00F4ng c\u00F3 k\u00FD hi\u1EC7u (50000 kh\u00F4ng ph\u1EA3i '50,000\u0111'), targetAmount=s\u1ED1 nguy\u00EAn.";
+                    "\u0110\u1ECBnh d\u1EA1ng: date=YYYY-MM-DD, amount=s\u1ED1 kh\u00F4ng c\u00F3 k\u00FD hi\u1EC7u (50000 kh\u00F4ng ph\u1EA3i '50,000\u0111'), targetAmount=s\u1ED1 nguy\u00EAn.\n\n" +
+                    "\uD83D\uDD34 NH\u1EAEC L\u1EA0I: Ch\u1EC9 tr\u1EA3 v\u1EC1 JSON. Kh\u00F4ng c\u00F3 l\u1EDDi gi\u1EA3i th\u00EDch, kh\u00F4ng c\u00F3 text ngo\u00E0i JSON. B\u1EAFt \u0111\u1EA7u { k\u1EBFt th\u00FAc }.";
 
     private static final String PAGE_LABELS_VI =
             "dashboard: T\u1ED5ng quan, income: Thu nh\u1EADp, expense: Chi ti\u00EAu, " +

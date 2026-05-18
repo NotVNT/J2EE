@@ -53,18 +53,30 @@ public class AIOrchestrationService {
             String systemPrompt = AIInstructionPromptBuilder.buildSystemPrompt(pageContext, pageData);
 
             String crudInstruction = userMessage + "\n\n" +
-                    "H\u00E3y ph\u00E2n t\u00EDch y\u00EAu c\u1EA7u tr\u00EAn v\u00E0 tr\u1EA3 v\u1EC1 JSON v\u1EDBi intent v\u00E0 extracted fields. " +
+                    "CH\u1EC8 TR\u1EA2 V\u1EC0 JSON THU\u1EA6N. KH\u00D4NG C\u00D3 TEXT N\u00C0O KH\u00C1C. " +
+                    "Ph\u00E2n t\u00EDch y\u00EAu c\u1EA7u v\u00E0 tr\u1EA3 v\u1EC1 m\u1ED9t JSON object theo \u0111\u00FAng format. " +
+                    "B\u1EAFt \u0111\u1EA7u b\u1EB1ng { v\u00E0 k\u1EBFt th\u00FAc b\u1EB1ng }. " +
                     "N\u1EBFu l\u00E0 CRUD, bao g\u1ED3m confirmationPrompt b\u1EB1ng ti\u1EBFng Vi\u1EC7t.";
 
             String rawResponse = callGeminiForIntent(systemPrompt, crudInstruction, request.getConversationHistory());
 
             String cleanedJson = extractJson(rawResponse);
             if (cleanedJson == null || cleanedJson.isBlank()) {
-                if (rawResponse != null && !rawResponse.isBlank()) {
-                    log.warn("AI intent response did not contain JSON, returning it as an answer: {}", rawResponse);
+                // Retry once with explicit JSON-format reminder
+                log.warn("AI returned non-JSON response, retrying with format reminder: {}", rawResponse);
+                String retryInstruction = "Y\u00EAu c\u1EA7u c\u1EE7a ng\u01B0\u1EDDi d\u00F9ng: " + userMessage + "\n\n" +
+                        "B\u1EA1n PH\u1EA2I tr\u1EA3 v\u1EC1 JSON THU\u1EA6N theo format \u0111\u00E3 ch\u1EC9 \u0111\u1ECBnh. " +
+                        "TUY\u1EC6T \u0110\u1ED0I KH\u00D4NG tr\u1EA3 l\u1EDDi b\u1EB1ng v\u0103n b\u1EA3n. Ch\u1EC9 { } JSON.";
+                String retryResponse = callGeminiForIntent(systemPrompt, retryInstruction, null);
+                cleanedJson = extractJson(retryResponse);
+                if (cleanedJson != null && !cleanedJson.isBlank()) {
+                    rawResponse = retryResponse;
+                } else if (rawResponse != null && !rawResponse.isBlank()) {
+                    log.warn("Retry also returned non-JSON, treating as answer: {}", retryResponse);
                     return buildAnswerResponse(rawResponse, provider, model);
+                } else {
+                    throw new RuntimeException("AI kh\u00F4ng tr\u1EA3 v\u1EC1 n\u1ED9i dung.");
                 }
-                throw new RuntimeException("AI kh\u00F4ng tr\u1EA3 v\u1EC1 n\u1ED9i dung.");
             }
 
             Map<String, Object> parsed;
