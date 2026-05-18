@@ -1,6 +1,10 @@
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { ChevronDown, ChevronUp, MessageCircle, RotateCcw, SendHorizontal, X, Maximize2, Minimize2 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
+import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import axiosConfig from "../util/axiosConfig.jsx";
 import { API_ENDPOINTS } from "../util/apiEndpoints.js";
 import { AppContext } from "../context/AppContext.jsx";
@@ -32,19 +36,74 @@ const PUBLIC_PATHS = new Set([
   "/activate"
 ]);
 
-const formatAssistantMessage = (content) => {
-  if (!content) return [];
-  const normalizedContent = content
-    .replace(/\*\*(.*?)\*\*/g, "$1")
-    .replace(/`([^`]+)`/g, "$1")
-    .replace(/\r\n/g, "\n")
-    .replace(/\r/g, "\n")
-    .replace(/([^\n])(\d+\.\s)/g, "$1\n$2")
-    .replace(/([^\n])(-\s)/g, "$1\n$2")
-    .replace(/([^\n])(•\s)/g, "$1\n$2")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
-  return normalizedContent.split("\n").map((line) => line.trim()).filter(Boolean);
+// Sanitize schema: allow safe HTML tags that AI may emit inside markdown
+const sanitizeSchema = {
+  ...defaultSchema,
+  tagNames: [...(defaultSchema.tagNames ?? []), "br", "table", "thead", "tbody", "tr", "th", "td"],
+};
+
+// Fix malformed markdown: blank lines between table rows break GFM parsing
+const fixMarkdown = (content) => {
+  if (!content) return "";
+  const lines = content.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
+  const result = [];
+  let inTable = false;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const isTableRow = /^\s*\|/.test(line);
+    if (isTableRow) {
+      inTable = true;
+      result.push(line);
+    } else if (inTable && line.trim() === "") {
+      // peek ahead: if next non-empty line is a table row, skip this blank line
+      const next = lines.slice(i + 1).find((l) => l.trim() !== "");
+      if (next && /^\s*\|/.test(next)) continue;
+      else { inTable = false; result.push(line); }
+    } else {
+      inTable = false;
+      result.push(line);
+    }
+  }
+  return result.join("\n");
+};
+
+// Custom components for markdown elements styled to amber/dark theme
+const markdownComponents = {
+  table: ({ children }) => (
+    <div className="overflow-x-auto my-2">
+      <table className="min-w-full text-xs border-collapse border border-slate-300 dark:border-white/20">{children}</table>
+    </div>
+  ),
+  thead: ({ children }) => <thead className="bg-amber-50 dark:bg-amber-500/10">{children}</thead>,
+  tbody: ({ children }) => <tbody>{children}</tbody>,
+  tr: ({ children }) => <tr className="border-b border-slate-200 dark:border-white/10">{children}</tr>,
+  th: ({ children }) => (
+    <th className="border border-slate-300 dark:border-white/20 px-2 py-1.5 text-left font-semibold text-slate-700 dark:text-slate-200 whitespace-nowrap">{children}</th>
+  ),
+  td: ({ children }) => (
+    <td className="border border-slate-200 dark:border-white/10 px-2 py-1.5 text-slate-700 dark:text-slate-300">{children}</td>
+  ),
+  p: ({ children }) => <p className="mb-1 last:mb-0 leading-relaxed">{children}</p>,
+  ul: ({ children }) => <ul className="list-disc list-inside space-y-0.5 my-1 pl-1">{children}</ul>,
+  ol: ({ children }) => <ol className="list-decimal list-inside space-y-0.5 my-1 pl-1">{children}</ol>,
+  li: ({ children }) => <li className="leading-relaxed">{children}</li>,
+  strong: ({ children }) => <strong className="font-semibold text-slate-900 dark:text-white">{children}</strong>,
+  em: ({ children }) => <em className="italic">{children}</em>,
+  code: ({ inline, children }) =>
+    inline ? (
+      <code className="rounded bg-slate-100 dark:bg-white/10 px-1 py-0.5 font-mono text-[11px] text-amber-700 dark:text-amber-300">{children}</code>
+    ) : (
+      <pre className="rounded bg-slate-100 dark:bg-white/10 p-2 my-1 overflow-x-auto">
+        <code className="font-mono text-[11px] text-slate-800 dark:text-slate-200">{children}</code>
+      </pre>
+    ),
+  h1: ({ children }) => <h1 className="text-base font-bold mt-2 mb-1 text-slate-900 dark:text-white">{children}</h1>,
+  h2: ({ children }) => <h2 className="text-sm font-bold mt-2 mb-1 text-slate-900 dark:text-white">{children}</h2>,
+  h3: ({ children }) => <h3 className="text-sm font-semibold mt-1.5 mb-0.5 text-slate-800 dark:text-slate-100">{children}</h3>,
+  hr: () => <hr className="my-2 border-slate-200 dark:border-white/10" />,
+  blockquote: ({ children }) => (
+    <blockquote className="border-l-2 border-amber-400 pl-3 my-1 text-slate-600 dark:text-slate-400 italic">{children}</blockquote>
+  ),
 };
 
 const buildHistory = (msgs) =>
@@ -530,10 +589,14 @@ const ChatWidget = () => {
 
                   {/* Normal assistant message */}
                   {chatMessage.role === "assistant" && !chatMessage.isIntent && !chatMessage.isUndoAction && (
-                    <div className="space-y-1.5 break-words">
-                      {formatAssistantMessage(chatMessage.content).map((line, index) => (
-                        <p key={`${chatMessage.id}-${index}`}>{line}</p>
-                      ))}
+                    <div className="break-words text-sm leading-6">
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        rehypePlugins={[rehypeRaw, [rehypeSanitize, sanitizeSchema]]}
+                        components={markdownComponents}
+                      >
+                        {fixMarkdown(chatMessage.content)}
+                      </ReactMarkdown>
                       {!chatMessage.isError && !chatMessage.isSystem && chatMessage.modelUsed && (
                         <span className="block text-[10px] text-slate-400 dark:text-slate-500 mt-1">
                           Nova Money · {chatMessage.modelLabel || (chatMessage.provider === "gemini" ? "Gemini 3.1 Flash Lite" : "GPT-OSS 120B")}
