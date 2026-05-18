@@ -9,8 +9,11 @@ import { LoaderCircle, Zap } from "lucide-react";
 import ProfilePhotoSelector from "../components/ProfilePhotoSelector.jsx";
 import uploadProfileImage from "../util/uploadProfileImage.js";
 import Header from "../components/Header.jsx";
+import { usePageTitle } from "../hooks/usePageTitle.js";
+import Footer from "../components/Footer.jsx";
 
 const Signup = () => {
+  usePageTitle("Đăng ký tài khoản");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -53,8 +56,8 @@ const Signup = () => {
         profileImageUrl,
       });
       if (response.status === 201) {
-        toast.success("Tạo tài khoản thành công. Vui lòng kiểm tra email để xác thực.");
-        navigate("/verify-otp", { state: { email } });
+        toast.success("Đăng ký thành công! Vui lòng kiểm tra email để lấy mã OTP.");
+        navigate("/activate", { state: { email } });
       }
     } catch (err) {
       console.error("Something went wrong", err);
@@ -65,21 +68,17 @@ const Signup = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#0A0E1A]">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#0A0E1A] flex flex-col">
       <Header />
-      <main className="mx-auto flex max-w-lg items-start justify-center px-6 py-10">
+      <main className="mx-auto flex max-w-lg items-start justify-center px-6 py-10 flex-1">
         <div className="w-full rounded-2xl border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden
           bg-white dark:bg-[#0F172A]">
 
           <div className="p-8">
             {/* Header */}
-            <div className="flex items-center gap-2.5 mb-6">
-              <div className="w-7 h-7 rounded-lg bg-amber-500 flex items-center justify-center">
-                <Zap size={14} className="text-white" fill="white" />
-              </div>
-              <span className="font-bold text-slate-900 dark:text-white">
-                Money<span className="text-amber-500">Manager</span>
-              </span>
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <img src="/favicon.svg" alt="Money Manager Logo" className="w-8 h-8" />
+              <span className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Money<span className="text-amber-500">Manager</span></span>
             </div>
 
             <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">Tạo tài khoản</h2>
@@ -150,6 +149,7 @@ const Signup = () => {
           </div>
         </div>
       </main>
+      <Footer />
     </div>
   );
 };

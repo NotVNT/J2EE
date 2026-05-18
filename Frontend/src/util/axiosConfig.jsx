@@ -4,12 +4,12 @@ import { BASE_URL } from "./apiEndpoints.js";
 const axiosConfig = axios.create({
   baseURL: BASE_URL,
   headers: {
-    "Content-Type": "application/json",
+    "Content-Type": "application/json;charset=UTF-8",
     Accept: "application/json"
   }
 });
 
-const excludeEndpoints = ["/login", "/register", "/status", "/activate", "/health", "/forgot-password", "/reset-password"];
+const excludeEndpoints = ["/login", "/register", "/status", "/activate", "/health", "/forgot-password", "/reset-password", "/auth/google"];
 
 axiosConfig.interceptors.request.use(
   (config) => {

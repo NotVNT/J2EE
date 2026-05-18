@@ -7,6 +7,8 @@ import { SUCCESS_ALERT_MESSAGES, SUCCESS_ALERT_TITLE } from "../constants/alertM
 import { formatDate, formatMoney, getApiErrorMessage } from "../utils/format";
 import IncomeExpenseChart from "../components/IncomeExpenseChart";
 import { COLORS } from "../constants/colors";
+import VoiceInputButton from "../components/VoiceInputButton";
+import { downloadAndShareFile } from "../utils/fileDownload";
 
 const FILTER_TYPES = {
   current: "current",
@@ -44,6 +46,7 @@ export default function IncomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [filterType, setFilterType] = useState(FILTER_TYPES.current);
   const [selectedMonth, setSelectedMonth] = useState("");
+  const [isExporting, setIsExporting] = useState(false);
 
   const totalIncome = useMemo(() => {
     return incomes.reduce((sum, item) => sum + Number(item?.amount || 0), 0);
@@ -71,8 +74,12 @@ export default function IncomeScreen() {
       params.month = Number(month);
     }
 
-    const response = await http.get(API_ENDPOINTS.GET_ALL_INCOMES, { params });
-    setIncomes(Array.isArray(response.data) ? response.data : []);
+    try {
+      const response = await http.get(API_ENDPOINTS.GET_ALL_INCOMES, { params });
+      setIncomes(Array.isArray(response.data) ? response.data : []);
+    } catch (error) {
+      console.error("Fetch incomes error:", error);
+    }
   }, [filterType, selectedMonth]);
 
   const onRefresh = useCallback(async () => {
@@ -112,6 +119,42 @@ export default function IncomeScreen() {
       onRefresh();
     }, [onRefresh])
   );
+
+  const handleVoiceResult = async (text) => {
+    try {
+      const response = await http.post(API_ENDPOINTS.VOICE_PARSE, { text });
+      const data = response.data;
+      if (data) {
+        navigation.navigate("AddIncome", { initialData: data });
+      }
+    } catch (error) {
+      Alert.alert("Lỗi AI", getApiErrorMessage(error, "Không thể phân tích nội dung giọng nói"));
+    }
+  };
+
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      const now = new Date();
+      let payload = { month: now.getMonth() + 1, year: now.getFullYear() };
+      
+      if (filterType === FILTER_TYPES.specific && selectedMonth) {
+        const [year, month] = selectedMonth.split("-");
+        payload = { month: Number(month), year: Number(year) };
+      }
+
+      const res = await http.post(API_ENDPOINTS.EXPORT_INCOME, payload);
+      if (res.data && res.data.presignedUrl) {
+        await downloadAndShareFile(res.data.presignedUrl, `income_report_${payload.month}_${payload.year}.xlsx`);
+      } else {
+        throw new Error("Không lấy được link tải file");
+      }
+    } catch (error) {
+      Alert.alert("Lỗi xuất file", getApiErrorMessage(error, "Không thể xuất báo cáo"));
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -162,8 +205,18 @@ export default function IncomeScreen() {
         <Text style={styles.summaryAmount}>{formatMoney(totalIncome)}</Text>
         <Text style={styles.summaryHint}>{incomes.length} giao dịch</Text>
 
-        <Pressable style={styles.addButton} onPress={() => navigation.navigate("AddIncome")}>
-          <Text style={styles.addButtonText}>+ Thêm thu nhập</Text>
+        <View style={styles.actionRowMain}>
+          <Pressable style={styles.addButtonMain} onPress={() => navigation.navigate("AddIncome")}>
+            <Text style={styles.addButtonText}>+ Thêm thu nhập</Text>
+          </Pressable>
+          <VoiceInputButton onResult={handleVoiceResult} />
+        </View>
+        <Pressable 
+          style={[styles.exportButton, isExporting && { opacity: 0.7 }]} 
+          onPress={handleExport}
+          disabled={isExporting}
+        >
+          <Text style={styles.exportText}>{isExporting ? "⏳ Đang tạo báo cáo..." : "📥 Tải báo cáo tháng này"}</Text>
         </Pressable>
       </View>
 
@@ -192,9 +245,11 @@ export default function IncomeScreen() {
                 ? "Nhập tháng theo định dạng YYYY-MM để xem dữ liệu."
                 : "Hãy thêm khoản thu đầu tiên để theo dõi tài chính rõ ràng hơn."}
             </Text>
-            <Pressable style={styles.emptyAction} onPress={() => navigation.navigate("AddIncome")}>
-              <Text style={styles.emptyActionText}>+ Thêm thu nhập</Text>
-            </Pressable>
+            <View style={styles.actionRowMain}>
+              <Pressable style={[styles.emptyAction, { flex: 1 }]} onPress={() => navigation.navigate("AddIncome")}>
+                <Text style={styles.emptyActionText}>+ Thêm thu nhập</Text>
+              </Pressable>
+            </View>
           </View>
         }
       />
@@ -290,8 +345,14 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: COLORS.TEXT_SECONDARY
   },
-  addButton: {
+  actionRowMain: {
+    flexDirection: "row",
+    gap: 10,
     marginTop: 12,
+    alignItems: "center"
+  },
+  addButtonMain: {
+    flex: 1,
     backgroundColor: COLORS.PRIMARY,
     borderRadius: 12,
     paddingVertical: 12,
@@ -301,6 +362,20 @@ const styles = StyleSheet.create({
     color: COLORS.WHITE,
     fontWeight: "800",
     fontSize: 15
+  },
+  exportButton: {
+    backgroundColor: COLORS.BG,
+    borderRadius: 12,
+    paddingVertical: 10,
+    alignItems: "center",
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: COLORS.PRIMARY_LIGHT
+  },
+  exportText: {
+    color: COLORS.PRIMARY,
+    fontWeight: "700",
+    fontSize: 14
   },
   listContent: {
     paddingBottom: 24

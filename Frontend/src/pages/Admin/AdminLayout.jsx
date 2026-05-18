@@ -1,8 +1,9 @@
 import { Outlet, Link, useNavigate, useLocation } from "react-router-dom";
-import { LayoutDashboard, Wallet, Settings, LogOut, Package, Menu, X, ArrowLeft, Sun, Moon, Bell } from "lucide-react";
+import { LayoutDashboard, Wallet, Settings, LogOut, Package, Menu, X, ArrowLeft, Sun, Moon, Bell, Users, Sparkles } from "lucide-react";
 import { useContext, useState } from "react";
 import { AppContext } from "../../context/AppContext";
 import { useTheme } from "../../context/ThemeContext";
+import Footer from "../../components/Footer.jsx";
 
 const AdminLayout = () => {
   const { clearUser } = useContext(AppContext);
@@ -43,7 +44,7 @@ const AdminLayout = () => {
   const sidebarContent = (
     <>
       <div className="p-6 border-b border-slate-100 dark:border-white/10 flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-amber-500">Admin Panel</h2>
+        <h2 className="text-2xl font-bold text-amber-500">Bảng Quản Trị</h2>
         <button
           className="lg:hidden p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors"
           onClick={closeSidebar}
@@ -53,11 +54,13 @@ const AdminLayout = () => {
       </div>
 
       <nav className="flex-1 p-4 space-y-2">
-        <NavItem to="/admin" icon={LayoutDashboard} label="Dashboard" exact onClick={closeSidebar} />
-        <NavItem to="/admin/payments" icon={Wallet} label="Payments" onClick={closeSidebar} />
-        <NavItem to="/admin/subscriptions" icon={Package} label="Subscriptions" onClick={closeSidebar} />
-        <NavItem to="/admin/notifications" icon={Bell} label="Notifications" onClick={closeSidebar} />
-        <NavItem to="/admin/settings" icon={Settings} label="Settings" onClick={closeSidebar} />
+        <NavItem to="/admin" icon={LayoutDashboard} label="Bảng điều khiển" exact onClick={closeSidebar} />
+        <NavItem to="/admin/users" icon={Users} label="Người dùng" onClick={closeSidebar} />
+        <NavItem to="/admin/payments" icon={Wallet} label="Thanh toán" onClick={closeSidebar} />
+        <NavItem to="/admin/subscriptions" icon={Package} label="Gói cước" onClick={closeSidebar} />
+        <NavItem to="/admin/notifications" icon={Bell} label="Thông báo" onClick={closeSidebar} />
+        <NavItem to="/admin/ai-limits" icon={Sparkles} label="Hạn mức AI" onClick={closeSidebar} />
+        <NavItem to="/admin/settings" icon={Settings} label="Cài đặt" onClick={closeSidebar} />
       </nav>
 
       <div className="p-4 border-t border-slate-100 dark:border-white/10 space-y-2">
@@ -66,14 +69,14 @@ const AdminLayout = () => {
           className="flex items-center gap-3 w-full px-4 py-3 text-slate-500 dark:text-slate-400 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-700 dark:hover:text-white transition-colors"
         >
           <ArrowLeft size={20} />
-          <span className="font-medium">Back to App</span>
+          <span className="font-medium">Quay lại ứng dụng</span>
         </Link>
         <button
           onClick={handleLogout}
           className="flex items-center gap-3 w-full px-4 py-3 text-red-600 dark:text-red-400 rounded-xl hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
         >
           <LogOut size={20} className="text-red-500 dark:text-red-400" />
-          <span className="font-medium">Logout</span>
+          <span className="font-medium">Đăng xuất</span>
         </button>
       </div>
     </>
@@ -111,11 +114,12 @@ const AdminLayout = () => {
               <Menu size={20} />
             </button>
             <h1 className="text-lg font-semibold text-slate-800 dark:text-white">
-              {location.pathname === "/admin" && "Dashboard"}
-              {location.pathname.startsWith("/admin/payments") && "Payments"}
-              {location.pathname.startsWith("/admin/subscriptions") && "Subscriptions"}
-              {location.pathname.startsWith("/admin/notifications") && "Notifications"}
-              {location.pathname.startsWith("/admin/settings") && "Settings"}
+              {location.pathname === "/admin" && "Bảng điều khiển"}
+              {location.pathname.startsWith("/admin/users") && "Người dùng"}
+              {location.pathname.startsWith("/admin/payments") && "Thanh toán"}
+              {location.pathname.startsWith("/admin/subscriptions") && "Gói cước"}
+              {location.pathname.startsWith("/admin/notifications") && "Thông báo"}
+              {location.pathname.startsWith("/admin/settings") && "Cài đặt"}
             </h1>
           </div>
 
@@ -123,7 +127,7 @@ const AdminLayout = () => {
             <button
               onClick={toggleTheme}
               className="p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
-              title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              title={theme === "dark" ? "Chuyển sang giao diện sáng" : "Chuyển sang giao diện tối"}
             >
               {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
             </button>
@@ -132,16 +136,17 @@ const AdminLayout = () => {
               className="hidden sm:flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 rounded-xl hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors font-medium"
             >
               <LogOut size={16} />
-              Logout
+              Đăng xuất
             </button>
           </div>
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto">
-          <div className="p-4 lg:p-8 max-w-7xl mx-auto">
+        <main className="flex-1 overflow-y-auto flex flex-col">
+          <div className="p-4 lg:p-8 max-w-7xl mx-auto flex-1">
             <Outlet />
           </div>
+          <Footer />
         </main>
       </div>
     </div>

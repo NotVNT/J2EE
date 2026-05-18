@@ -16,9 +16,10 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Builder
 @Entity
-@Table(name = "tbl_budgets", uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"profile_id", "category_id", "month", "year"})
-})
+@Table(name = "tbl_budgets",
+        uniqueConstraints = {@UniqueConstraint(columnNames = {"profile_id", "category_id", "month", "year"})},
+        indexes = {@Index(name = "idx_budget_profile_month_year", columnList = "profile_id, month, year")}
+)
 public class BudgetEntity {
 
     @Id
@@ -33,6 +34,18 @@ public class BudgetEntity {
 
     @Column(nullable = false)
     private Integer year;
+
+    @Column(name = "notified_70", nullable = false)
+    @Builder.Default
+    private boolean notified70 = false;
+
+    @Column(name = "notified_80", nullable = false)
+    @Builder.Default
+    private boolean notified80 = false;
+
+    @Column(name = "notified_90", nullable = false)
+    @Builder.Default
+    private boolean notified90 = false;
 
     @Column(updatable = false)
     @CreationTimestamp

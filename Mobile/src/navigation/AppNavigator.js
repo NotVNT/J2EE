@@ -13,6 +13,8 @@ import SignupScreen from "../screens/SignupScreen";
 import SetupProfileScreen from "../screens/CreateNameScreen";
 import CreatePasswordScreen from "../screens/CreatePasswordScreen";
 import ForgotPasswordScreen from "../screens/ForgotPasswordScreen";
+import ForgotPasswordOtpScreen from "../screens/ForgotPasswordOtpScreen";
+import ResetPasswordScreen from "../screens/ResetPasswordScreen";
 import VerifyOtpScreen from "../screens/VerifyOtpScreen";
 import DashboardScreen from "../screens/DashboardScreen";
 import ExpenseScreen from "../screens/ExpenseScreen";
@@ -29,6 +31,7 @@ import PaymentCheckoutScreen from "../screens/PaymentCheckoutScreen";
 import PaymentResultScreen from "../screens/PaymentResultScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import EditProfileScreen from "../screens/EditProfileScreen";
+import ForecastScreen from "../screens/ForecastScreen";
 import OnboardingScreen, { ONBOARDING_KEY } from "../screens/OnboardingScreen";
 
 const Stack = createNativeStackNavigator();
@@ -152,6 +155,7 @@ function AppStack() {
       <Stack.Screen name="PaymentResult" component={PaymentResultScreen} options={{ title: "Kết quả thanh toán" }} />
       <Stack.Screen name="Profile" component={ProfileScreen} options={{ title: "Hồ sơ" }} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: "Chỉnh sửa hồ sơ" }} />
+      <Stack.Screen name="Forecast" component={ForecastScreen} options={{ title: "Dự báo & Bất thường" }} />
     </Stack.Navigator>
   );
 }
@@ -211,6 +215,25 @@ function AuthStack({ shouldShowOnboarding }) {
           headerBackVisible: false,
           headerBackTitleVisible: false,
           headerTintColor: COLORS.DARK_TEXT
+        }}
+      />
+      <Stack.Screen
+        name="ForgotPasswordOtp"
+        component={ForgotPasswordOtpScreen}
+        options={{
+          title: "",
+          headerTransparent: true,
+          headerShadowVisible: false,
+          headerBackVisible: false,
+          headerBackTitleVisible: false,
+          headerTintColor: COLORS.DARK_TEXT
+        }}
+      />
+      <Stack.Screen
+        name="ResetPassword"
+        component={ResetPasswordScreen}
+        options={{
+          headerShown: false
         }}
       />
     </Stack.Navigator>

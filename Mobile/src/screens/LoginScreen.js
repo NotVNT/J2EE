@@ -8,23 +8,51 @@ import {
   Switch,
   Text,
   TextInput,
-  View
+  View,
+  KeyboardAvoidingView,
+  Platform
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { AuthContext } from "../components/AuthContext";
 import Loader from "../components/Loader";
 import { getApiErrorMessage } from "../utils/format";
+import {
+  getActivationEmail,
+  isActivationRequiredError,
+  openActivationOtp
+} from "../utils/accountActivation";
 import { tokenStorage } from "../storage/tokenStorage";
 import devbotLogo from "../assets/devbot.png";
 import { COLORS } from "../constants/colors";
 
 export default function LoginScreen() {
   const navigation = useNavigation();
-  const { signIn } = useContext(AuthContext);
+  const { signIn, signInWithGoogle, googleAuthLoading } = useContext(AuthContext);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const showActivationOption = (activationEmail) => {
+    Alert.alert(
+      "Tài khoản chưa được kích hoạt",
+      "Tài khoản này đã được đăng ký nhưng chưa xác thực OTP. Bạn có muốn tiếp tục kích hoạt tài khoản không?",
+      [
+        { text: "Để sau", style: "cancel" },
+        {
+          text: "Xác thực OTP",
+          onPress: async () => {
+            try {
+              await openActivationOtp(navigation, activationEmail);
+            } catch (error) {
+              const message = getApiErrorMessage(error, "Không thể gửi lại mã OTP. Vui lòng thử lại.");
+              Alert.alert("Không thể gửi OTP", message);
+            }
+          }
+        }
+      ]
+    );
+  };
 
   useEffect(() => {
     let active = true;
@@ -87,22 +115,8 @@ export default function LoginScreen() {
           "Không kết nối được với máy chủ",
           "Hệ thống đang gặp sự cố kết nối. Vui lòng kiểm tra kết nối mạng của bạn hoặc thử lại sau ít phút."
         );
-      } else if (
-        statusCode === 403 &&
-        error?.response?.data?.needsActivation
-      ) {
-        const emailValue = error?.response?.data?.email || normalizedEmail;
-        Alert.alert(
-          "Tài khoản chưa được kích hoạt",
-          "Tài khoản này đã được đăng ký nhưng chưa xác thực OTP. Bạn có muốn tiếp tục xác thực?",
-          [
-            { text: "Để sau", style: "cancel" },
-            {
-              text: "Xác thực ngay",
-              onPress: () => navigation.navigate("VerifyOtp", { email: emailValue })
-            }
-          ]
-        );
+      } else if (statusCode === 403 && isActivationRequiredError(error)) {
+        showActivationOption(getActivationEmail(error, normalizedEmail));
       } else {
         const message = getApiErrorMessage(error, "Không thể đăng nhập. Vui lòng kiểm tra lại tài khoản.");
         Alert.alert("Đăng nhập thất bại", message);
@@ -112,13 +126,27 @@ export default function LoginScreen() {
     }
   };
 
-  const onSocialPress = (provider) => {
-    Alert.alert("Sắp có", `Đăng nhập bằng ${provider} chưa được kết nối.`);
+  const onGooglePress = async () => {
+    try {
+      const result = await signInWithGoogle();
+
+      if (!result) return;
+    } catch (error) {
+      const message = getApiErrorMessage(
+        error,
+        "Không thể đăng nhập bằng Google. Vui lòng thử lại."
+      );
+
+      Alert.alert("Đăng nhập thất bại", message);
+    }
   };
 
   return (
-    <View style={styles.screen}>
-      {loading ? <Loader text="Devbot đang xác thực" overlay /> : null}
+    <KeyboardAvoidingView
+      style={styles.screen}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    >
+      {loading || googleAuthLoading ? <Loader text="Devbot đang xác thực" overlay /> : null}
 
       <View style={styles.bgGlowTop} />
       <View style={styles.bgGlowBottom} />
@@ -186,7 +214,11 @@ export default function LoginScreen() {
           </View>
 
           <View style={styles.socialRow}>
-            <Pressable style={styles.socialBtn} onPress={() => onSocialPress("Google")}>
+            <Pressable
+              style={[styles.socialBtn, googleAuthLoading && styles.socialBtnDisabled]}
+              onPress={onGooglePress}
+              disabled={googleAuthLoading}
+            >
               <Text style={styles.socialIcon}>G</Text>
               <Text style={styles.socialLabel}>Google</Text>
             </Pressable>
@@ -200,7 +232,7 @@ export default function LoginScreen() {
           </View>
         </View>
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -343,6 +375,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 8
+  },
+  socialBtnDisabled: {
+    opacity: 0.6
   },
   socialIcon: {
     color: COLORS.DARK_TEXT,

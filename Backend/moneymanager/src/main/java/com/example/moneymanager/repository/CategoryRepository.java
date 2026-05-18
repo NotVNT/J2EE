@@ -19,7 +19,11 @@ public interface CategoryRepository extends JpaRepository<CategoryEntity, Long> 
 
     Optional<CategoryEntity> findByNameIgnoreCaseAndTypeAndProfileId(String name, String type, Long profileId);
 
+    Optional<CategoryEntity> findByNameIgnoreCaseAndProfileId(String name, Long profileId);
+
     Boolean existsByNameAndProfileId(String name, Long profileId);
 
     long countByProfileId(Long profileId);
+
+    void deleteByProfileId(Long profileId);
 }

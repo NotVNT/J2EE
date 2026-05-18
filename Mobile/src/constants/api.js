@@ -12,19 +12,40 @@ export const API_ENDPOINTS = {
   LOGIN: "/login",
   REGISTER: "/register",
   ACTIVATE: "/activate",
-  VERIFY_OTP: "/verify-otp",
-  RESEND_OTP: "/resend-otp",
+  VERIFY_OTP: "/verify-activation",
+  RESEND_OTP: "/otp/resend",
   FORGOT_PASSWORD: "/forgot-password",
+  VERIFY_RESET_OTP: "/verify-reset-otp",
   RESET_PASSWORD: "/reset-password",
   COMPLETE_PROFILE: "/complete-profile",
+  GOOGLE_AUTH: "/auth/google",
 
   // Profile
   GET_USER_INFO: "/profile",
   UPDATE_PROFILE: "/profile",
   UPDATE_AUTO_RENEW: "/profile/subscription/auto-renew",
 
+  // Notifications
+  GET_NOTIFICATIONS: "/notifications",
+  GET_UNREAD_COUNT: "/notifications/unread-count",
+  MARK_NOTIFICATION_READ: (id) => `/notifications/${id}/read`,
+  MARK_ALL_NOTIFICATIONS_READ: "/notifications/read-all",
+
+  // Email Preferences
+  GET_EMAIL_PREFERENCES: "/profile/email-preferences",
+  UPDATE_EMAIL_PREFERENCES: "/profile/email-preferences",
+
+  // Documents/Export
+  EXPORT_EXPENSE: "/documents/report/expense",
+  EXPORT_INCOME: "/documents/report/income",
+
   // Dashboard
   DASHBOARD_DATA: "/dashboard",
+  AI_INSIGHT: "/dashboard/ai-insight",
+  AI_INSIGHT_DETAILED: "/dashboard/ai-insight/detailed",
+
+  // Gemini AI
+  VOICE_PARSE: "/gemini/voice-parse",
 
   // Categories
   GET_ALL_CATEGORIES: "/categories",
@@ -58,6 +79,12 @@ export const API_ENDPOINTS = {
 
   // Filters
   APPLY_FILTERS: "/filter",
+
+  // Forecast (PREMIUM)
+  FORECAST_MONTHLY: (year, month) => `/forecast/monthly?year=${year}&month=${month}`,
+  FORECAST_ANOMALIES: "/forecast/anomalies",
+  FORECAST_CATEGORY_TREND: (categoryId, months = 6) => `/forecast/category-trend/${categoryId}?months=${months}`,
+  FORECAST_INSIGHTS: "/forecast/insights",
 
   // Payment & OTP
   REQUEST_PAYMENT_OTP: "/payments/otp/request",
