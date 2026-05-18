@@ -45,7 +45,7 @@ public class AIOrchestrationService {
         }
 
         String provider = request.getProvider() != null ? request.getProvider() : "gemini";
-        String model = request.getModel() != null ? request.getModel() : "gemini-2.5-flash";
+        String model = request.getModel() != null ? request.getModel() : "gemini-3.1-flash-lite";
 
         try {
             ProfileEntity profile = profileService.getCurrentProfile();
@@ -447,7 +447,7 @@ public class AIOrchestrationService {
 
         AIChatRequestDTO chatRequest = AIChatRequestDTO.builder()
                 .provider("gemini")
-                .model("gemini-2.5-flash")
+                .model("gemini-3.1-flash-lite")
                 .messages(messages)
                 .build();
 

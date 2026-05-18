@@ -82,14 +82,14 @@ public class AIChatService {
             return AIChatResponseDTO.builder()
                     .reply(reply)
                     .provider("gemini")
-                    .modelUsed("gemini-2.5-flash")
+                    .modelUsed("gemini-3.1-flash-lite")
                     .build();
         } catch (Exception e) {
             log.error("Gemini chat error: {}", e.getMessage(), e);
             return AIChatResponseDTO.builder()
                     .reply("Xin l\u1ED7i, t\u00F4i \u0111ang g\u1EB7p s\u1EF1 c\u1ED1. B\u1EA1n th\u1EED l\u1EA1i sau nh\u00E9.")
                     .provider("gemini")
-                    .modelUsed("gemini-2.5-flash")
+                    .modelUsed("gemini-3.1-flash-lite")
                     .build();
         }
     }

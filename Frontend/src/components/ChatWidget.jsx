@@ -8,36 +8,6 @@ import { useRouteContext } from "../context/RouteContext.jsx";
 import { parseIntentResponse, isCrudIntent, isActionIntent, INTENT_ICONS, INTENT_LABELS } from "../util/aiIntentParser.js";
 import AIConfirmationForm from "./AIConfirmationForm.jsx";
 
-const AVAILABLE_MODELS = [
-  { id: "gemini-2.5-flash", label: "Gemini 2.5 Flash", provider: "gemini" },
-  { id: "gemini-3.1-flash-lite", label: "Gemini 3.1 Flash Lite", provider: "gemini" },
-];
-
-// SVG icons cho từng model
-const MODEL_ICONS = {
-  "gemini-2.5-flash": (
-    <svg width="18" height="18" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="gemini-grad" x1="0%" y1="100%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#1A73E8"/>
-          <stop offset="100%" stopColor="#4FC3F7"/>
-        </linearGradient>
-      </defs>
-      <path d="M14 2L17.09 8.26L24 9.27L19 14.14L20.18 21.02L14 17.77L7.82 21.02L9 14.14L4 9.27L10.91 8.26L14 2Z" fill="url(#gemini-grad)"/>
-    </svg>
-  ),
-  "gemini-3.1-flash-lite": (
-    <svg width="18" height="18" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="gemini-lite-grad" x1="0%" y1="100%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#34A853"/>
-          <stop offset="100%" stopColor="#A8D8A8"/>
-        </linearGradient>
-      </defs>
-      <path d="M14 2L17.09 8.26L24 9.27L19 14.14L20.18 21.02L14 17.77L7.82 21.02L9 14.14L4 9.27L10.91 8.26L14 2Z" fill="url(#gemini-lite-grad)"/>
-    </svg>
-  ),
-};
 
 const WELCOME_MESSAGE = {
   id: "welcome",
@@ -89,18 +59,16 @@ const ChatWidget = () => {
   const { currentPage, pageLabel } = useRouteContext();
   const location = useLocation();
   const messagesEndRef = useRef(null);
-  const modelDropdownRef = useRef(null);
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const token = localStorage.getItem("token") || sessionStorage.getItem("token");
   const shouldHideWidget = !token || PUBLIC_PATHS.has(location.pathname);
 
   const isFreePlan = !user?.subscriptionPlan || user?.subscriptionPlan === "FREE";
-  
+  const selectedModel = "gemini-3.1-flash-lite";
+
   const [messages, setMessages] = useState([WELCOME_MESSAGE]);
   const [selectedProvider, setProvider] = useState(isFreePlan ? "gptoss" : "gemini");
-  const [selectedModel, setSelectedModel] = useState("gemini-2.5-flash");
-  const [modelDropdownOpen, setModelDropdownOpen] = useState(false);
   const [inputMessage, setInputMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [isProcessingCrud, setIsProcessingCrud] = useState(false);
@@ -117,29 +85,15 @@ const ChatWidget = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isOpen]);
 
-  useEffect(() => {
-    if (!modelDropdownOpen) return;
-    const handleClickOutside = (e) => {
-      if (modelDropdownRef.current && !modelDropdownRef.current.contains(e.target)) {
-        setModelDropdownOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [modelDropdownOpen]);
-
   if (shouldHideWidget) return null;
 
   const sendMessage = async (promptText) => {
     const trimmedMessage = promptText.trim();
     if (!trimmedMessage || isSending) return;
 
-    const modelObj = AVAILABLE_MODELS.find(m => m.id === selectedModel);
-    const activeProvider = selectedProvider === "gemini" ? modelObj.provider : "gptoss";
-    const activeModel = selectedProvider === "gemini" ? selectedModel : "gpt-oss-120b";
-    const activeModelLabel = selectedProvider === "gemini"
-      ? (modelObj?.label || "Gemini 2.5 Flash")
-      : "GPT-OSS 120B";
+    const activeProvider = selectedProvider === "gemini" ? "gemini" : "gptoss";
+    const activeModel = selectedProvider === "gemini" ? "gemini-3.1-flash-lite" : "gpt-oss-120b";
+    const activeModelLabel = selectedProvider === "gemini" ? "Gemini 3.1 Flash Lite" : "GPT-OSS 120B";
 
     const userMessage = {
       id: `user-${Date.now()}`,
@@ -407,11 +361,6 @@ const ChatWidget = () => {
     setProvider(provider);
   };
 
-  const handleModelSwitch = (modelId) => {
-    if (modelId === selectedModel) return;
-    setSelectedModel(modelId);
-  };
-
   const handleSubmit = async (event) => {
     event.preventDefault();
     await sendMessage(inputMessage);
@@ -587,7 +536,7 @@ const ChatWidget = () => {
                       ))}
                       {!chatMessage.isError && !chatMessage.isSystem && chatMessage.modelUsed && (
                         <span className="block text-[10px] text-slate-400 dark:text-slate-500 mt-1">
-                          Nova Money · {chatMessage.modelLabel || (chatMessage.provider === "gemini" ? "Gemini 2.5 Flash" : "GPT-OSS 120B")}
+                          Nova Money · {chatMessage.modelLabel || (chatMessage.provider === "gemini" ? "Gemini 3.1 Flash Lite" : "GPT-OSS 120B")}
                         </span>
                       )}
                     </div>
@@ -639,66 +588,6 @@ const ChatWidget = () => {
           <form onSubmit={handleSubmit} className="border-t border-slate-200 dark:border-white/10 bg-white dark:bg-[#0F172A] p-3">
             <label htmlFor="chat-message" className="sr-only">Nhập tin nhắn</label>
 
-            {/* Model Selection Dropdown (chỉ hiển thị khi Agent mode) */}
-            {selectedProvider === "gemini" && (
-              <div className="mb-2" ref={modelDropdownRef}>
-                <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">
-                  Chọn Model AI:
-                </label>
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setModelDropdownOpen((v) => !v)}
-                    className="flex w-full items-center justify-between rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-3 py-2 text-sm text-slate-800 dark:text-slate-200 outline-none transition hover:border-amber-400 dark:hover:border-amber-500"
-                  >
-                    <span className="flex items-center gap-2">
-                      {MODEL_ICONS[selectedModel] || MODEL_ICONS["gemini-2.5-flash"]}
-                      {AVAILABLE_MODELS.find((m) => m.id === selectedModel)?.label || "Gemini 2.5 Flash"}
-                    </span>
-                    <ChevronDown
-                      size={14}
-                      className={`text-slate-400 dark:text-slate-500 transition-transform ${modelDropdownOpen ? "rotate-180" : ""}`}
-                    />
-                  </button>
-                  {modelDropdownOpen && (
-                    <div className="absolute left-0 right-0 top-full mt-1 z-20 overflow-hidden rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1E293B] shadow-xl shadow-slate-900/10 dark:shadow-black/30 py-1">
-                      {AVAILABLE_MODELS.map((model) => (
-                        <button
-                          key={model.id}
-                          type="button"
-                          onClick={() => {
-                            handleModelSwitch(model.id);
-                            setModelDropdownOpen(false);
-                          }}
-                          className={`flex w-full items-center gap-2.5 px-3 py-2.5 text-sm transition cursor-pointer ${
-                            model.id === selectedModel
-                              ? "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 font-medium"
-                              : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5"
-                          }`}
-                        >
-                          <div className="flex items-center justify-center w-5 h-5 flex-shrink-0">
-                            {MODEL_ICONS[model.id]}
-                          </div>
-                          <div className="text-left">
-                            <div className="font-medium">{model.label}</div>
-                            <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
-                              {model.id === "gemini-2.5-flash"
-                                ? "Nhanh, chính xác — Google AI"
-                                : "Nhẹ, tiết kiệm — Google AI"}
-                            </div>
-                          </div>
-                          {model.id === selectedModel && (
-                            <span className="ml-auto text-amber-500">
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                            </span>
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
 
             <div className="flex items-end gap-2">
               <textarea
@@ -706,7 +595,7 @@ const ChatWidget = () => {
                 value={inputMessage}
                 onChange={(event) => setInputMessage(event.target.value)}
                 placeholder={selectedProvider === "gemini"
-                  ? `Nhập thao tác: tạo/sửa/xóa dữ liệu, xuất báo cáo... [${AVAILABLE_MODELS.find(m => m.id === selectedModel)?.label}]`
+                  ? "Nhập thao tác: tạo/sửa/xóa dữ liệu, xuất báo cáo... [Gemini 3.1 Flash Lite]"
                   : "Nhập câu hỏi hoặc trò chuyện... [GPT-OSS 120B]"}
                 rows={2}
                 className="min-h-12 flex-1 resize-none rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-4 py-3 text-sm text-slate-800 dark:text-slate-200 outline-none transition focus:border-amber-400 dark:focus:border-amber-500 placeholder:text-slate-400 dark:placeholder:text-slate-500"
@@ -756,7 +645,7 @@ const ChatWidget = () => {
             </div>
             <p className="mt-1 text-[10px] text-slate-400 dark:text-slate-500 text-center">
               {selectedProvider === "gemini"
-                ? `Agent: Tạo/sửa/xóa dữ liệu, xuất báo cáo · ${AVAILABLE_MODELS.find(m => m.id === selectedModel)?.label}`
+                ? "Agent: Tạo/sửa/xóa dữ liệu, xuất báo cáo · Gemini 3.1 Flash Lite"
                 : "Chat: Hỏi đáp thông thường · GPT-OSS 120B"}
             </p>
             <p className="mt-1 text-[10px] text-slate-400 dark:text-slate-500 text-center">

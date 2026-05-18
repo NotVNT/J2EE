@@ -62,13 +62,12 @@ Trợ lý AI tích hợp trực tiếp trong ứng dụng, hỗ trợ 2 chế đ
 
 | Provider | Model | Cơ chế |
 |---|---|---|
-| Gemini (Google) | Gemini 2.5 Flash | API key rotation qua Redis |
 | Gemini (Google) | Gemini 3.1 Flash Lite | API key rotation qua Redis |
 | GPT-OSS (OpenRouter) | GPT-OSS 120B | API key rotation qua Redis |
 
 Cơ chế **key rotation**: Redis lưu trữ quota và trạng thái từng API key. Khi một key hết quota hoặc lỗi, hệ thống tự động chuyển sang key tiếp theo trong pool. Hỗ trợ cooldown và tự động khôi phục key khi hết thời gian chờ.
 
-#### Chế độ Agent (Gemini 2.5 Flash / Gemini 3.1 Flash Lite)
+#### Chế độ Agent (Gemini 3.1 Flash Lite)
 Tự động phân tích intent và thực hiện các tác vụ CRUD, xuất báo cáo:
 
 | Nhóm | Thao tác |
@@ -84,7 +83,7 @@ Tự động phân tích intent và thực hiện các tác vụ CRUD, xuất b�
 Cơ chế: Intent Parsing → Xác nhận từ người dùng → Thực thi → Hoàn tác (undo) trong vài phút.
 
 Giao diện Nova Agent được thiết kế lại với:
-- **Model selector**: Chọn giữa Gemini 2.5 Flash và Gemini 3.1 Flash Lite với icon và mô tả riêng
+- **Model cố định**: Gemini 3.1 Flash Lite — không có dropdown chọn model
 - **Loading skeleton**: Hoạt ảnh khi AI đang xử lý, tránh hiển thị đột ngột
 - **Status indicator**: Dot xanh (sẵn sàng) / dot vàng nhấp nháy (đang xử lý)
 - **AI Dashboard Banner**: Thiết kế 2 tầng rõ ràng — header gradient tím + body card trắng/sáng
