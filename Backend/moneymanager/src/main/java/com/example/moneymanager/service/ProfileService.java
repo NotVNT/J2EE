@@ -21,7 +21,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.security.SecureRandom;
 import java.util.Map;
 import java.util.Optional;
 
@@ -69,7 +68,6 @@ public class ProfileService {
         return toDTO(newProfile);
     }
 
-
     // ─── Account Activation via OTP ──────────────────────────────────
 
     public void activateProfileWithOtp(VerifyActivationOtpDTO dto) {
@@ -115,16 +113,16 @@ public class ProfileService {
     // ─── Forgot Password ─────────────────────────────────────────────
 
     public void forgotPassword(ForgotPasswordRequestDTO requestDTO) {
-        ProfileEntity profile = profileRepository.findByEmail(requestDTO.getEmail())
-                .orElseThrow(() -> new RuntimeException("Email này chưa được đăng ký tài khoản."));
+        Optional<ProfileEntity> profileOpt = profileRepository.findByEmail(requestDTO.getEmail());
 
-        if (!Boolean.TRUE.equals(profile.getIsActive())) {
-            throw new RuntimeException("Tài khoản chưa được kích hoạt. Vui lòng kích hoạt tài khoản trước.");
-        }
+        // Silent success if email not found (prevents enumeration)
+        if (profileOpt.isEmpty()) return;
 
-        if (profile.getPassword() == null && profile.getGoogleId() != null) {
-            throw new RuntimeException("Tài khoản Google không hỗ trợ đặt lại mật khẩu. Vui lòng đăng nhập bằng Google.");
-        }
+        ProfileEntity profile = profileOpt.get();
+
+        // Skip inactive accounts and Google-only accounts silently
+        if (!Boolean.TRUE.equals(profile.getIsActive())) return;
+        if (profile.getPassword() == null && profile.getGoogleId() != null) return;
 
         if (!otpService.canResend(profile)) {
             long waitSeconds = otpService.getResendWaitSeconds(profile);
@@ -163,12 +161,6 @@ public class ProfileService {
     public boolean isAccountActive(String email) {
         return profileRepository.findByEmail(email)
                 .map(ProfileEntity::getIsActive)
-                .orElse(false);
-    }
-
-    public boolean isRegisteredButInactive(String email) {
-        return profileRepository.findByEmail(email)
-                .map(profile -> !Boolean.TRUE.equals(profile.getIsActive()))
                 .orElse(false);
     }
 
@@ -284,36 +276,5 @@ public class ProfileService {
                 .canUseDetailedAi(planFeatures.isCanUseDetailedAi())
                 .role(profileEntity.getRole() != null ? profileEntity.getRole().getName() : "user")
                 .build();
-    }
-
-    public Map<String, Object> completeProfile(com.example.moneymanager.dto.SetupProfileDTO requestDTO) {
-        ProfileEntity profile = profileRepository.findByEmail(requestDTO.getEmail())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản với email này."));
-
-        if (!profile.getIsActive()) {
-            throw new RuntimeException("Tài khoản chưa được kích hoạt. Vui lòng xác thực OTP trước.");
-        }
-
-        String fullName = requestDTO.getFullName() != null ? requestDTO.getFullName().trim() : "";
-        if (fullName.isBlank()) {
-            throw new RuntimeException("Họ và tên không được để trống.");
-        }
-
-        String password = requestDTO.getPassword();
-        if (password == null || password.isBlank()) {
-            throw new RuntimeException("Mật khẩu không được để trống.");
-        }
-        if (password.length() < 6) {
-            throw new RuntimeException("Mật khẩu phải có ít nhất 6 ký tự.");
-        }
-
-        profile.setFullName(fullName);
-        profile.setPassword(passwordEncoder.encode(password));
-        profile = profileRepository.save(profile);
-
-        return Map.of(
-                "token", jwtUtil.generateToken(profile.getEmail()),
-                "user", toDTO(profile)
-        );
     }
 }

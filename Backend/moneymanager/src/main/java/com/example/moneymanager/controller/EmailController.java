@@ -72,7 +72,6 @@ public class EmailController {
         return ResponseEntity.ok(null);
     }
 
-
     @GetMapping("/expense-excel")
     public ResponseEntity<?> emailExpenseExcel() throws IOException, MessagingException {
         ProfileEntity profile = profileService.getCurrentProfile();

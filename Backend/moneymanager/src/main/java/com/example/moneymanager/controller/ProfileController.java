@@ -25,23 +25,11 @@ public class ProfileController {
 
     @PostMapping("/register")
     public ResponseEntity<?> registerProfile(@Valid @RequestBody RegisterRequestDTO registerDTO) {
-        try {
-            ProfileDTO registered = profileService.registerProfile(registerDTO);
-            return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
+        ProfileDTO registered = profileService.registerProfile(registerDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
                 "message", "Đăng ký thành công. Mã OTP đã được gửi tới email của bạn.",
                 "user", registered
-            ));
-        } catch (RuntimeException e) {
-            String email = registerDTO.getEmail();
-            if (profileService.isRegisteredButInactive(email)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
-                        "message", "Tài khoản chưa được kích hoạt. Vui lòng nhập mã OTP trong email.",
-                        "needsActivation", true,
-                        "email", email
-                ));
-            }
-            throw e;
-        }
+        ));
     }
 
     // ─── OTP: Account Activation ─────────────────────────────────────
@@ -122,18 +110,6 @@ public class ProfileController {
     @GetMapping("/profile")
     public ResponseEntity<ProfileDTO> getPublicProfile() {
         return ResponseEntity.ok(profileService.getPublicProfile(null));
-    }
-
-    @PutMapping("/complete-profile")
-    public ResponseEntity<Map<String, Object>> completeProfile(@RequestBody SetupProfileDTO requestDTO) {
-        try {
-            Map<String, Object> response = profileService.completeProfile(requestDTO);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
-                    "message", e.getMessage()
-            ));
-        }
     }
 
     @PutMapping("/profile")

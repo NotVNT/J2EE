@@ -9,7 +9,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -45,7 +44,7 @@ public class AIOrchestrationService {
         }
 
         String provider = request.getProvider() != null ? request.getProvider() : "gemini";
-        String model = request.getModel() != null ? request.getModel() : "gemini-2.5-flash";
+        String model = request.getModel() != null ? request.getModel() : "gemini-3.1-flash-lite";
 
         try {
             ProfileEntity profile = profileService.getCurrentProfile();
@@ -54,18 +53,30 @@ public class AIOrchestrationService {
             String systemPrompt = AIInstructionPromptBuilder.buildSystemPrompt(pageContext, pageData);
 
             String crudInstruction = userMessage + "\n\n" +
-                    "H\u00E3y ph\u00E2n t\u00EDch y\u00EAu c\u1EA7u tr\u00EAn v\u00E0 tr\u1EA3 v\u1EC1 JSON v\u1EDBi intent v\u00E0 extracted fields. " +
+                    "CH\u1EC8 TR\u1EA2 V\u1EC0 JSON THU\u1EA6N. KH\u00D4NG C\u00D3 TEXT N\u00C0O KH\u00C1C. " +
+                    "Ph\u00E2n t\u00EDch y\u00EAu c\u1EA7u v\u00E0 tr\u1EA3 v\u1EC1 m\u1ED9t JSON object theo \u0111\u00FAng format. " +
+                    "B\u1EAFt \u0111\u1EA7u b\u1EB1ng { v\u00E0 k\u1EBFt th\u00FAc b\u1EB1ng }. " +
                     "N\u1EBFu l\u00E0 CRUD, bao g\u1ED3m confirmationPrompt b\u1EB1ng ti\u1EBFng Vi\u1EC7t.";
 
             String rawResponse = callGeminiForIntent(systemPrompt, crudInstruction, request.getConversationHistory());
 
             String cleanedJson = extractJson(rawResponse);
             if (cleanedJson == null || cleanedJson.isBlank()) {
-                if (rawResponse != null && !rawResponse.isBlank()) {
-                    log.warn("AI intent response did not contain JSON, returning it as an answer: {}", rawResponse);
+                // Retry once with explicit JSON-format reminder
+                log.warn("AI returned non-JSON response, retrying with format reminder: {}", rawResponse);
+                String retryInstruction = "Y\u00EAu c\u1EA7u c\u1EE7a ng\u01B0\u1EDDi d\u00F9ng: " + userMessage + "\n\n" +
+                        "B\u1EA1n PH\u1EA2I tr\u1EA3 v\u1EC1 JSON THU\u1EA6N theo format \u0111\u00E3 ch\u1EC9 \u0111\u1ECBnh. " +
+                        "TUY\u1EC6T \u0110\u1ED0I KH\u00D4NG tr\u1EA3 l\u1EDDi b\u1EB1ng v\u0103n b\u1EA3n. Ch\u1EC9 { } JSON.";
+                String retryResponse = callGeminiForIntent(systemPrompt, retryInstruction, null);
+                cleanedJson = extractJson(retryResponse);
+                if (cleanedJson != null && !cleanedJson.isBlank()) {
+                    rawResponse = retryResponse;
+                } else if (rawResponse != null && !rawResponse.isBlank()) {
+                    log.warn("Retry also returned non-JSON, treating as answer: {}", retryResponse);
                     return buildAnswerResponse(rawResponse, provider, model);
+                } else {
+                    throw new RuntimeException("AI kh\u00F4ng tr\u1EA3 v\u1EC1 n\u1ED9i dung.");
                 }
-                throw new RuntimeException("AI kh\u00F4ng tr\u1EA3 v\u1EC1 n\u1ED9i dung.");
             }
 
             Map<String, Object> parsed;
@@ -129,7 +140,6 @@ public class AIOrchestrationService {
         }
     }
 
-    @Transactional
     public AIConfirmActionResponseDTO executeConfirmedIntent(AIConfirmActionRequestDTO request) {
         ProfileEntity profile = profileService.getCurrentProfile();
         String intent = request.getIntent();
@@ -152,13 +162,11 @@ public class AIOrchestrationService {
             }
 
             String resultMessage = executeIntent(intent, data, profile);
-            Long operationId = System.currentTimeMillis();
 
             return AIConfirmActionResponseDTO.builder()
                     .status("SUCCESS")
                     .message(resultMessage)
-                    .undoable(true)
-                    .operationId(operationId)
+                    .undoable(false)
                     .build();
         } catch (Exception e) {
             log.error("Error executing intent {}: {}", intent, e.getMessage(), e);
@@ -185,6 +193,8 @@ public class AIOrchestrationService {
                 if (amountObj == null) yield "Vui l\u00F2ng nh\u1EADp s\u1ED1 ti\u1EC1n.";
                 BigDecimal amount = toBigDecimal(amountObj);
                 if (amount.compareTo(BigDecimal.ZERO) <= 0) yield "S\u1ED1 ti\u1EC1n ph\u1EA3i l\u1EDBn h\u01A1n 0.";
+                String catNameIncome = (String) data.get("categoryName");
+                if (catNameIncome == null || catNameIncome.isBlank()) yield "Vui l\u00F2ng ch\u1ECDn danh m\u1EE5c.";
                 yield null;
             }
             case "CREATE_CATEGORY", "UPDATE_CATEGORY" -> {
@@ -217,13 +227,19 @@ public class AIOrchestrationService {
     private String executeIntent(String intent, Map<String, Object> data, ProfileEntity profile) {
         return switch (intent) {
             case "CREATE_EXPENSE" -> {
-                ExpenseDTO dto = mapToExpenseDTO(data, profile);
-                ExpenseResponseDTO result = expenseService.addExpense(dto);
+                String catNameExp = (String) data.get("categoryName");
+                Long catIdExp = findCategoryId(catNameExp, profile.getId(), "expense");
+                if (catIdExp == null) yield "\u26A0\uFE0F Kh\u00F4ng t\u00ECm th\u1EA5y danh m\u1EE5c \"" + catNameExp + "\". Vui l\u00F2ng ki\u1EC3m tra l\u1EA1i t\u00EAn danh m\u1EE5c.";
+                ExpenseDTO dto = mapToExpenseDTO(data, catIdExp);
+                expenseService.addExpense(dto);
                 yield "\u2705 \u0110\u00E3 t\u1EA1o chi ti\u00EAu " + formatCurrency(dto.getAmount()) + "\u0111 cho " + dto.getCategoryName();
             }
             case "UPDATE_EXPENSE" -> updateExpenseFromAI(data, profile);
             case "CREATE_INCOME" -> {
-                IncomeDTO dto = mapToIncomeDTO(data, profile);
+                String catNameInc = (String) data.get("categoryName");
+                Long catIdInc = findCategoryId(catNameInc, profile.getId(), "income");
+                if (catIdInc == null) yield "\u26A0\uFE0F Kh\u00F4ng t\u00ECm th\u1EA5y danh m\u1EE5c \"" + catNameInc + "\". Vui l\u00F2ng ki\u1EC3m tra l\u1EA1i t\u00EAn danh m\u1EE5c.";
+                IncomeDTO dto = mapToIncomeDTO(data, catIdInc);
                 incomeService.addIncome(dto);
                 yield "\u2705 \u0110\u00E3 t\u1EA1o thu nh\u1EADp " + formatCurrency(dto.getAmount()) + "\u0111";
             }
@@ -233,7 +249,7 @@ public class AIOrchestrationService {
                 CategoryDTO result = categoryService.saveCategory(dto);
                 yield "\u2705 \u0110\u00E3 t\u1EA1o danh m\u1EE5c \"" + result.getName() + "\"";
             }
-            case "UPDATE_CATEGORY" -> updateCategoryFromAI(data);
+            case "UPDATE_CATEGORY" -> updateCategoryFromAI(data, profile);
             case "CREATE_BUDGET" -> {
                 BudgetDTO dto = mapToBudgetDTO(data, profile);
                 budgetService.setBudget(dto);
@@ -286,7 +302,7 @@ public class AIOrchestrationService {
                 }
                 yield "\u26A0\uFE0F Kh\u00F4ng t\u00ECm th\u1EA5y m\u1EE5c ti\u00EAu \u0111\u1EC3 x\u00F3a.";
             }
-            default -> "\u2705 Thao t\u00E1c th\u00E0nh c\u00F4ng!";
+            default -> throw new IllegalArgumentException("Intent kh\u00F4ng \u0111\u01B0\u1EE3c h\u1ED7 tr\u1EE3: " + intent);
         };
     }
 
@@ -301,15 +317,15 @@ public class AIOrchestrationService {
         if (data.get("amount") != null) entity.setAmount(toBigDecimal(data.get("amount")));
         if (data.get("categoryName") != null) {
             String catName = (String) data.get("categoryName");
-            Long catId = findCategoryId(catName, profile.getId());
+            Long catId = findCategoryId(catName, profile.getId(), "expense");
             if (catId != null) {
                 entity.setCategory(categoryRepository.findById(catId).orElse(entity.getCategory()));
             }
         }
         if (data.get("date") != null) entity.setDate(parseDate((String) data.get("date")));
+        String catDisplayName = entity.getCategory() != null ? entity.getCategory().getName() : "danh m\u1EE5c";
         expenseRepository.save(entity);
-        return "\u2705 \u0110\u00E3 c\u1EADp nh\u1EADt chi ti\u00EAu " + formatCurrency(entity.getAmount()) + "\u0111 cho " +
-                (entity.getCategory() != null ? entity.getCategory().getName() : "danh m\u1EE5c");
+        return "\u2705 \u0110\u00E3 c\u1EADp nh\u1EADt chi ti\u00EAu " + formatCurrency(entity.getAmount()) + "\u0111 cho " + catDisplayName;
     }
 
     private String updateIncomeFromAI(Map<String, Object> data, ProfileEntity profile) {
@@ -323,7 +339,7 @@ public class AIOrchestrationService {
         if (data.get("amount") != null) entity.setAmount(toBigDecimal(data.get("amount")));
         if (data.get("categoryName") != null) {
             String catName = (String) data.get("categoryName");
-            Long catId = findCategoryId(catName, profile.getId());
+            Long catId = findCategoryId(catName, profile.getId(), "income");
             if (catId != null) {
                 entity.setCategory(categoryRepository.findById(catId).orElse(entity.getCategory()));
             }
@@ -333,15 +349,17 @@ public class AIOrchestrationService {
         return "\u2705 \u0110\u00E3 c\u1EADp nh\u1EADt thu nh\u1EADp " + formatCurrency(entity.getAmount()) + "\u0111";
     }
 
-    private String updateCategoryFromAI(Map<String, Object> data) {
+    private String updateCategoryFromAI(Map<String, Object> data, ProfileEntity profile) {
         Object idObj = data.get("categoryId");
         if (idObj == null) return "\u26A0\uFE0F C\u1EA7n ID danh m\u1EE5c \u0111\u1EC3 c\u1EADp nh\u1EADt.";
         Long categoryId = toLong(idObj);
+        CategoryEntity existing = categoryRepository.findByIdAndProfileId(categoryId, profile.getId())
+                .orElseThrow(() -> new RuntimeException("Kh\u00F4ng t\u00ECm th\u1EA5y danh m\u1EE5c ho\u1EB7c kh\u00F4ng c\u00F3 quy\u1EC1n s\u1EEDa"));
         CategoryDTO dto = CategoryDTO.builder()
                 .id(categoryId)
                 .name((String) data.get("name"))
-                .icon((String) data.getOrDefault("icon", "\uD83D\uDCC1"))
-                .type((String) data.getOrDefault("type", "expense"))
+                .icon((String) data.getOrDefault("icon", existing.getIcon()))
+                .type((String) data.getOrDefault("type", existing.getType()))
                 .build();
         categoryService.updateCategory(categoryId, dto);
         return "\u2705 \u0110\u00E3 c\u1EADp nh\u1EADt danh m\u1EE5c \"" + dto.getName() + "\"";
@@ -358,25 +376,30 @@ public class AIOrchestrationService {
         if (data.get("amount") != null) entity.setAmountLimit(toBigDecimal(data.get("amount")));
         if (data.get("categoryName") != null) {
             String catName = (String) data.get("categoryName");
-            Long catId = findCategoryId(catName, profile.getId());
+            Long catId = findCategoryId(catName, profile.getId(), "expense");
             if (catId != null) {
                 entity.setCategory(categoryRepository.findById(catId).orElse(entity.getCategory()));
             }
         }
+        String catDisplayName = entity.getCategory() != null ? entity.getCategory().getName() : "danh mục";
         budgetRepository.save(entity);
-        return "\u2705 \u0110\u00E3 c\u1EADp nh\u1EADt ng\u00E2n s\u00E1ch " + formatCurrency(entity.getAmountLimit()) + "\u0111 cho " +
-                (entity.getCategory() != null ? entity.getCategory().getName() : "danh m\u1EE5c");
+        return "\u2705 \u0110\u00E3 c\u1EADp nh\u1EADt ng\u00E2n s\u00E1ch " + formatCurrency(entity.getAmountLimit()) + "\u0111 cho " + catDisplayName;
     }
 
     private String updateSavingGoalFromAI(Map<String, Object> data) {
         Object idObj = data.get("savingGoalId");
         if (idObj == null) return "\u26A0\uFE0F C\u1EA7n ID m\u1EE5c ti\u00EAu \u0111\u1EC3 c\u1EADp nh\u1EADt.";
         Long goalId = toLong(idObj);
+        SavingGoalEntity existing = savingGoalRepository.findById(goalId)
+                .orElseThrow(() -> new RuntimeException("Kh\u00F4ng t\u00ECm th\u1EA5y m\u1EE5c ti\u00EAu ti\u1EBFt ki\u1EC7m"));
+        String name = data.get("name") != null ? (String) data.get("name") : existing.getName();
+        BigDecimal targetAmount = data.get("targetAmount") != null
+                ? toBigDecimal(data.get("targetAmount"))
+                : existing.getTargetAmount();
         SavingGoalDTO dto = SavingGoalDTO.builder()
                 .id(goalId)
-                .name((String) data.get("name"))
-                .targetAmount(toBigDecimal(data.get("targetAmount")))
-                .currentAmount(toBigDecimal(data.getOrDefault("currentAmount", 0)))
+                .name(name)
+                .targetAmount(targetAmount)
                 .build();
         savingGoalService.updateGoal(goalId, dto);
         return "\u2705 \u0110\u00E3 c\u1EADp nh\u1EADt m\u1EE5c ti\u00EAu \"" + dto.getName() + "\"";
@@ -447,7 +470,7 @@ public class AIOrchestrationService {
 
         AIChatRequestDTO chatRequest = AIChatRequestDTO.builder()
                 .provider("gemini")
-                .model("gemini-2.5-flash")
+                .model("gemini-3.1-flash-lite")
                 .messages(messages)
                 .build();
 
@@ -559,14 +582,10 @@ public class AIOrchestrationService {
         return String.format("%,.0f", amount);
     }
 
-    private ExpenseDTO mapToExpenseDTO(Map<String, Object> data, ProfileEntity profile) {
+    private ExpenseDTO mapToExpenseDTO(Map<String, Object> data, Long categoryId) {
         BigDecimal amount = toBigDecimal(data.get("amount"));
         String categoryName = (String) data.get("categoryName");
-        String dateStr = (String) data.get("date");
-
-        LocalDate date = parseDate(dateStr);
-        Long categoryId = findCategoryId(categoryName, profile.getId());
-
+        LocalDate date = parseDate((String) data.get("date"));
         return ExpenseDTO.builder()
                 .name(categoryName)
                 .amount(amount)
@@ -576,14 +595,10 @@ public class AIOrchestrationService {
                 .build();
     }
 
-    private IncomeDTO mapToIncomeDTO(Map<String, Object> data, ProfileEntity profile) {
+    private IncomeDTO mapToIncomeDTO(Map<String, Object> data, Long categoryId) {
         BigDecimal amount = toBigDecimal(data.get("amount"));
         String categoryName = (String) data.get("categoryName");
-        String dateStr = (String) data.get("date");
-
-        LocalDate date = parseDate(dateStr);
-        Long categoryId = findCategoryId(categoryName, profile.getId());
-
+        LocalDate date = parseDate((String) data.get("date"));
         return IncomeDTO.builder()
                 .name(categoryName)
                 .amount(amount)
@@ -604,7 +619,7 @@ public class AIOrchestrationService {
     private BudgetDTO mapToBudgetDTO(Map<String, Object> data, ProfileEntity profile) {
         BigDecimal amount = toBigDecimal(data.get("amount"));
         String categoryName = (String) data.get("categoryName");
-        Long categoryId = findCategoryId(categoryName, profile.getId());
+        Long categoryId = findCategoryId(categoryName, profile.getId(), "expense");
         LocalDate now = LocalDate.now();
 
         return BudgetDTO.builder()
@@ -629,10 +644,16 @@ public class AIOrchestrationService {
                 .build();
     }
 
+    private Long findCategoryId(String categoryName, Long profileId, String type) {
+        if (categoryName == null || categoryName.isBlank()) return null;
+        return categoryRepository.findByNameIgnoreCaseAndTypeAndProfileId(categoryName, type, profileId)
+                .map(CategoryEntity::getId).orElse(null);
+    }
+
     private Long findCategoryId(String categoryName, Long profileId) {
         if (categoryName == null || categoryName.isBlank()) return null;
-        Optional<CategoryEntity> category = categoryRepository.findByNameIgnoreCaseAndProfileId(categoryName, profileId);
-        return category.map(CategoryEntity::getId).orElse(null);
+        return categoryRepository.findByNameIgnoreCaseAndProfileId(categoryName, profileId)
+                .map(CategoryEntity::getId).orElse(null);
     }
 
     private LocalDate parseDate(String dateStr) {

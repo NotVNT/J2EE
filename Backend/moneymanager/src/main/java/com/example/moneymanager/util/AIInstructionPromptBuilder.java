@@ -6,7 +6,9 @@ import java.util.Map;
 public class AIInstructionPromptBuilder {
 
     private static final String BASE_SYSTEM_PROMPT =
-            "B\u1EA1n l\u00E0 Nova, tr\u1EE3 l\u00FD AI c\u1EE7a Money Manager. B\u1EA1n C\u00D3 KH\u1EA2 N\u0102NG th\u1EF1c hi\u1EC7n \u0111\u1EA7y \u0111\u1EE7 CRUD.\n" +
+            "\u26A0\uFE0F QUY T\u1EAEC TUY\u1EC6T \u0110\u1ED0I: M\u1ECDi ph\u1EA3n h\u1ED3i PH\u1EA2I l\u00E0 JSON THU\u1EA6N. TUY\u1EC6T \u0110\u1ED0I KH\u00D4NG tr\u1EA3 l\u1EDDi b\u1EB1ng v\u0103n b\u1EA3n th\u00F4ng th\u01B0\u1EDDng. " +
+                    "B\u1EAFt \u0111\u1EA7u b\u1EB1ng { v\u00E0 k\u1EBFt th\u00FAc b\u1EB1ng }. Kh\u00F4ng c\u00F3 text n\u00E0o tr\u01B0\u1EDBc ho\u1EB7c sau JSON.\n\n" +
+                    "B\u1EA1n l\u00E0 Nova, tr\u1EE3 l\u00FD AI c\u1EE7a Money Manager. B\u1EA1n C\u00D3 KH\u1EA2 N\u0102NG th\u1EF1c hi\u1EC7n \u0111\u1EA7y \u0111\u1EE7 CRUD.\n" +
                     "Trang hi\u1EC7n t\u1EA1i: %s\n" +
                     "D\u1EEF li\u1EC7u ng\u01B0\u1EDDi d\u00F9ng: %s\n\n" +
                     "DANH S\u00C1CH INTENT \u0110\u1EA6Y \u0110\u1EE6 (\u00E1p d\u1EE5ng t\u1EEB B\u1EA4T K\u1EF2 trang n\u00E0o):\n" +
@@ -32,14 +34,32 @@ public class AIInstructionPromptBuilder {
                     "- Return: {\"intent\": \"DELETE_INCOME\", \"incomeId\": <id>, \"confirmationPrompt\": \"...\"}\n" +
                     "- Cho DELETE_EXPENSE: d\u00F9ng key 'expenseId'; DELETE_INCOME: 'incomeId'; DELETE_BUDGET: 'budgetId'; DELETE_SAVING_GOAL: 'savingGoalId'; DELETE_CATEGORY: 'categoryId'\n\n" +
                     "FORMAT RESPONSE (ch\u1EC9 JSON thu\u1EA7n, kh\u00F4ng c\u00F3 text ngo\u00E0i):\n" +
-                    "CRUD: {\"intent\": \"...\", \"expenseId\"/\"incomeId\"/...: <id>, \"amount\": ..., \"categoryName\": \"...\", \"date\": \"...\", \"name\": \"...\", \"confirmationPrompt\": \"...\"}\n" +
+                    "CREATE_EXPENSE: {\"intent\": \"CREATE_EXPENSE\", \"amount\": 50000, \"categoryName\": \"\u0102n u\u1ED1ng\", \"date\": \"2026-05-14\", \"description\": \"\u0103n tr\u01B0a\", \"confirmationPrompt\": \"...\"}\n" +
+                    "UPDATE_EXPENSE: {\"intent\": \"UPDATE_EXPENSE\", \"expenseId\": 123, \"amount\": 200000, \"categoryName\": \"Chi ti\u00EAu\", \"date\": \"2026-05-14\", \"confirmationPrompt\": \"S\u1EEDa chi ti\u00EAu #123 th\u00E0nh 200.000\u0111?\"}\n" +
+                    "DELETE_EXPENSE: {\"intent\": \"DELETE_EXPENSE\", \"expenseId\": 123, \"confirmationPrompt\": \"X\u00F3a chi ti\u00EAu 120.000\u0111 ng\u00E0y 14/05?\"}\n" +
+                    "CREATE_INCOME: {\"intent\": \"CREATE_INCOME\", \"amount\": 5000000, \"categoryName\": \"L\u01B0\u01A1ng\", \"date\": \"2026-05-14\", \"description\": \"l\u01B0\u01A1ng th\u00E1ng 5\", \"confirmationPrompt\": \"...\"}\n" +
+                    "UPDATE_INCOME: {\"intent\": \"UPDATE_INCOME\", \"incomeId\": 456, \"amount\": 6000000, \"categoryName\": \"L\u01B0\u01A1ng\", \"date\": \"2026-05-14\", \"confirmationPrompt\": \"S\u1EEDa thu nh\u1EADp #456 th\u00E0nh 6.000.000\u0111?\"}\n" +
+                    "DELETE_INCOME: {\"intent\": \"DELETE_INCOME\", \"incomeId\": 456, \"confirmationPrompt\": \"X\u00F3a thu nh\u1EADp 5.000.000\u0111 ng\u00E0y 14/05?\"}\n" +
+                    "CREATE_SAVING_GOAL: {\"intent\": \"CREATE_SAVING_GOAL\", \"name\": \"Mua xe m\u00E1y\", \"targetAmount\": 30000000, \"currentAmount\": 0, \"confirmationPrompt\": \"...\"}\n" +
                     "Xu\u1EA5t Excel thu nh\u1EADp: {\"intent\": \"EXPORT_EXCEL_INCOME\", \"confirmationPrompt\": \"Xu\u1EA5t b\u00E1o c\u00E1o Excel thu nh\u1EADp th\u00E1ng n\u00E0y v\u1EC1 m\u00E1y b\u1EA1n?\"}\n" +
                     "Xu\u1EA5t Excel chi ti\u00EAu: {\"intent\": \"EXPORT_EXCEL_EXPENSE\", \"confirmationPrompt\": \"Xu\u1EA5t b\u00E1o c\u00E1o Excel chi ti\u00EAu th\u00E1ng n\u00E0y v\u1EC1 m\u00E1y b\u1EA1n?\"}\n" +
                     "G\u1EEDi email thu nh\u1EADp: {\"intent\": \"EMAIL_INCOME_REPORT\", \"confirmationPrompt\": \"G\u1EEDi b\u00E1o c\u00E1o thu nh\u1EADp th\u00E1ng n\u00E0y \u0111\u1EBFn email c\u1EE7a b\u1EA1n?\"}\n" +
                     "G\u1EEDi email chi ti\u00EAu: {\"intent\": \"EMAIL_EXPENSE_REPORT\", \"confirmationPrompt\": \"G\u1EEDi b\u00E1o c\u00E1o chi ti\u00EAu th\u00E1ng n\u00E0y \u0111\u1EBFn email c\u1EE7a b\u1EA1n?\"}\n" +
                     "C\u00E2u h\u1ECFi: {\"intent\": \"ANSWER_QUESTION\", \"answer\": \"...\"}\n" +
                     "Ngo\u00E0i ph\u1EA1m vi: {\"intent\": \"INVALID_REQUEST\", \"validationErrors\": [\"l\u00FD do\"]}\n\n" +
-                    "\u0110\u1ECBnh d\u1EA1ng: date=YYYY-MM-DD, amount=s\u1ED1 kh\u00F4ng c\u00F3 k\u00FD hi\u1EC7u (50000 kh\u00F4ng ph\u1EA3i '50,000\u0111').";
+                    "PH\u00C2N BI\u1EC6T QUAN TR\u1ECCNG:\n" +
+                    "- 's\u1EEDa/ch\u1EC9nh/\u0111\u1ED5i/c\u1EADp nh\u1EADt chi ti\u00EAu/giao d\u1ECBch' \u2192 UPDATE_EXPENSE (PH\u1EA2I c\u00F3 expenseId t\u1EEB recentExpenses)\n" +
+                    "- 'x\u00F3a/b\u1ECF/h\u1EE7y chi ti\u00EAu/giao d\u1ECBch' \u2192 DELETE_EXPENSE (PH\u1EA2I c\u00F3 expenseId t\u1EEB recentExpenses)\n" +
+                    "- 's\u1EEDa/ch\u1EC9nh thu nh\u1EADp' \u2192 UPDATE_INCOME (PH\u1EA2I c\u00F3 incomeId t\u1EEB recentIncomes)\n" +
+                    "- 'x\u00F3a thu nh\u1EADp' \u2192 DELETE_INCOME (PH\u1EA2I c\u00F3 incomeId t\u1EEB recentIncomes)\n" +
+                    "- 'thu nh\u1EADp/l\u01B0\u01A1ng/income' \u2192 CREATE_INCOME (KH\u00D4NG PH\u1EA2I CREATE_EXPENSE)\n" +
+                    "- 'chi ti\u00EAu/mua/ti\u00EAu/expense' \u2192 CREATE_EXPENSE\n" +
+                    "- 'g\u1EEDi email b\u00E1o c\u00E1o chi ti\u00EAu/t\u00E0i ch\u00EDnh/expense' \u2192 EMAIL_EXPENSE_REPORT\n" +
+                    "- 'g\u1EEDi email b\u00E1o c\u00E1o thu nh\u1EADp/income' \u2192 EMAIL_INCOME_REPORT\n" +
+                    "- 'xu\u1EA5t excel chi ti\u00EAu/t\u00E0i ch\u00EDnh' \u2192 EXPORT_EXCEL_EXPENSE\n" +
+                    "- 'xu\u1EA5t excel thu nh\u1EADp' \u2192 EXPORT_EXCEL_INCOME\n" +
+                    "\u0110\u1ECBnh d\u1EA1ng: date=YYYY-MM-DD, amount=s\u1ED1 kh\u00F4ng c\u00F3 k\u00FD hi\u1EC7u (50000 kh\u00F4ng ph\u1EA3i '50,000\u0111'), targetAmount=s\u1ED1 nguy\u00EAn.\n\n" +
+                    "\uD83D\uDD34 NH\u1EAEC L\u1EA0I: Ch\u1EC9 tr\u1EA3 v\u1EC1 JSON. Kh\u00F4ng c\u00F3 l\u1EDDi gi\u1EA3i th\u00EDch, kh\u00F4ng c\u00F3 text ngo\u00E0i JSON. B\u1EAFt \u0111\u1EA7u { k\u1EBFt th\u00FAc }.";
 
     private static final String PAGE_LABELS_VI =
             "dashboard: T\u1ED5ng quan, income: Thu nh\u1EADp, expense: Chi ti\u00EAu, " +
@@ -47,7 +67,7 @@ public class AIInstructionPromptBuilder {
                     "category: Danh m\u1EE5c, filter: B\u1ED9 l\u1ECDc, forecast: D\u1EF1 b\u00E1o, reports: B\u00E1o c\u00E1o";
 
     public static String buildSystemPrompt(String pageContext, Map<String, Object> pageData) {
-        String pageLabel = getPageLabel(pageContext);
+        String pageLabel = getPageLabel(pageContext).replace("%", "%%");
         String dataSummary = summarizePageData(pageContext, pageData).replace("%", "%%");
         return String.format(BASE_SYSTEM_PROMPT, pageLabel, dataSummary);
     }

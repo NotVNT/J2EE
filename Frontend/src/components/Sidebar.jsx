@@ -17,7 +17,7 @@ const Sidebar = ({ activeMenu, mobileOverlay = false }) => {
         onClick={() => navigate("/dashboard")}
         className="flex items-center gap-2.5 mb-7 px-1 cursor-pointer"
       >
-        <img src="/favicon.svg" alt="Money Manager Logo" className="w-8 h-8 drop-shadow-md" />
+        <img src="/favicon.png" alt="Money Manager Logo" className="w-8 h-8 drop-shadow-md" />
         <span className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">
           Money<span className="text-amber-500">Manager</span>
         </span>

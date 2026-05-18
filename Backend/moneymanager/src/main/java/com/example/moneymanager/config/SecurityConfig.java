@@ -54,15 +54,11 @@ public class SecurityConfig {
                                 "/register",
                                 "/activate",
                                 "/verify-activation",
-                                "/verify-otp",
                                 "/otp/resend",
-                                "/resend-otp",
                                 "/login",
-                                "/complete-profile",
                                 "/forgot-password",
                                 "/verify-reset-otp",
                                 "/reset-password",
-                                "/gemini/test",
                                 "/payments/payos/webhook",
                                 "/auth/google",
                                 "/subscription-plans"
@@ -93,7 +89,7 @@ public class SecurityConfig {
                 && !frontendUrl.startsWith("http://localhost")) {
             allowedOrigins.add(frontendUrl);
         }
-        configuration.setAllowedOriginPatterns(List.of("*"));
+        configuration.setAllowedOriginPatterns(allowedOrigins);
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
         configuration.setAllowCredentials(true);

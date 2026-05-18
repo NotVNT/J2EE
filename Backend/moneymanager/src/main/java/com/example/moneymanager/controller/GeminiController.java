@@ -2,15 +2,17 @@ package com.example.moneymanager.controller;
 
 import com.example.moneymanager.dto.AssistantChatRequestDTO;
 import com.example.moneymanager.dto.AssistantChatResponseDTO;
-import com.example.moneymanager.dto.VoiceParseResponseDTO;
 import com.example.moneymanager.service.GeminiService;
 import com.example.moneymanager.service.ProfileService;
 import com.example.moneymanager.service.SubscriptionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
@@ -36,11 +38,4 @@ public class GeminiController {
         return ResponseEntity.ok(geminiService.chat(requestDTO.getMessage()));
     }
 
-    @PostMapping("/voice-parse")
-    public ResponseEntity<VoiceParseResponseDTO> parseVoice(
-            @RequestBody Map<String, String> request
-    ) {
-        String text = request.get("text");
-        return ResponseEntity.ok(geminiService.parseVoiceCommand(text));
-    }
 }
