@@ -1,4 +1,5 @@
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
+import aiLogo from "../assets/logo/AI_favicon.png";
 import { useLocation } from "react-router-dom";
 import { ChevronDown, ChevronUp, MessageCircle, RotateCcw, SendHorizontal, X, Maximize2, Minimize2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
@@ -18,6 +19,39 @@ const WELCOME_MESSAGE = {
   role: "assistant",
   content: "Xin chào! Tôi là Nova Money - Trợ lý AI của Money Manager. Tôi có thể trò chuyện, hỗ trợ tài chính, và giúp bạn tạo/sửa/xóa dữ liệu nhanh chóng.",
 };
+
+const GREETINGS = [
+  { emoji: "👋", text: "Ê! Tôi có thể giúp gì cho bạn?" },
+  { emoji: "💸", text: "Tiêu hơi nhiều rồi... Tôi giúp nhé?" },
+  { emoji: "🤑", text: "Bạn đã ghi chi tiêu hôm nay chưa?" },
+  { emoji: "🧠", text: "Tôi biết bạn đang nghĩ gì... tiền!" },
+  { emoji: "🎯", text: "Mục tiêu tiết kiệm của bạn đang chờ~" },
+  { emoji: "☕", text: "Hôm nay tôi 'uống' dữ liệu của bạn nhé?" },
+  { emoji: "🐷", text: "Con heo đất của bạn muốn nói chuyện!" },
+  { emoji: "✨", text: "Gõ lệnh là tôi làm liền nha bạn ơi~" },
+  { emoji: "📊", text: "Báo cáo tháng này trông... thú vị đó!" },
+  { emoji: "🫡", text: "Nova Money đây, sẵn sàng phục vụ!" },
+  { emoji: "🤫", text: "Psst... tôi biết cách tiết kiệm tiền đó!" },
+  { emoji: "🥺", text: "Nói chuyện với tôi đi, tôi không cắn đâu~" },
+  { emoji: "🕵️", text: "Tôi thấy bạn chưa ghi thu nhập tháng này..." },
+  { emoji: "🦆", text: "Quạc quạc! Ví bạn đang kêu cứu đó~" },
+  { emoji: "🫶", text: "Tôi ở đây nếu bạn cần tư vấn tài chính!" },
+  { emoji: "🧾", text: "Hóa đơn nhiều quá? Để tôi lo cho~" },
+  { emoji: "🌙", text: "Cuối tháng rồi... tổng kết đi bạn ơi!" },
+  { emoji: "🎉", text: "Tiết kiệm được tiền rồi à? Giỏi quá!" },
+  { emoji: "😅", text: "Tháng này ăn ngoài nhiều ghê... kể tôi nghe?" },
+  { emoji: "🐱", text: "Meo meo~ Bạn có muốn xem báo cáo không?" },
+  { emoji: "💡", text: "Một mẹo nhỏ: để tôi nhắc bạn ghi chi tiêu!" },
+  { emoji: "🚀", text: "Sẵn sàng quản lý tài chính xịn xò chưa?" },
+  { emoji: "🎪", text: "Show tài chính của bạn sắp bắt đầu~" },
+  { emoji: "🍜", text: "Hôm nay ăn gì? Nhớ ghi chi tiêu nha!" },
+  { emoji: "🤖", text: "Bíp bíp! Robot tiết kiệm tiền đã online~" },
+  { emoji: "🌈", text: "Quản lý tiền tốt thôi, hôm nay trời đẹp mà!" },
+  { emoji: "🎵", text: "Tình tình tang~ Ví tiền bạn hát gì vậy?" },
+  { emoji: "🦋", text: "Thói quen tài chính tốt bắt đầu từ đây nè!" },
+  { emoji: "😴", text: "Ơ bạn ơi, tiền đang chạy đi kìa!" },
+  { emoji: "🍀", text: "Hôm nay may mắn! Ghi thêm một khoản đi~" },
+];
 
 const QUICK_ACTIONS = [
   { label: "💰 Gợi ý tiết kiệm", text: "Gợi ý cách tiết kiệm dựa trên thói quen chi tiêu của tôi" },
@@ -132,6 +166,23 @@ const ChatWidget = () => {
   const [isSending, setIsSending] = useState(false);
   const [isProcessingCrud, setIsProcessingCrud] = useState(false);
   const [pendingIntent, setPendingIntent] = useState(null);
+  const [greeting, setGreeting] = useState(() => GREETINGS[Math.floor(Math.random() * GREETINGS.length)]);
+  const [showGreeting, setShowGreeting] = useState(false);
+  const greetingTimerRef = useRef(null);
+
+  useEffect(() => {
+    if (isOpen) { setShowGreeting(false); return; }
+    const show = setTimeout(() => setShowGreeting(true), 5000);
+    const cycle = setInterval(() => {
+      setShowGreeting(false);
+      setTimeout(() => {
+        setGreeting(GREETINGS[Math.floor(Math.random() * GREETINGS.length)]);
+        setShowGreeting(true);
+      }, 500);
+    }, 20000);
+    greetingTimerRef.current = cycle;
+    return () => { clearTimeout(show); clearInterval(cycle); };
+  }, [isOpen]);
 
   useEffect(() => {
     if (isFreePlan && selectedProvider === "gemini") {
@@ -452,8 +503,8 @@ const ChatWidget = () => {
           <div className="flex items-start justify-between gap-3 bg-linear-to-br from-amber-500 via-amber-400 to-yellow-500 px-5 py-4 text-white">
             <div className="flex items-center gap-3">
               <div className="relative flex-shrink-0">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-lg font-bold text-white">
-                  N
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 overflow-hidden">
+                  <img src={aiLogo} alt="Nova Money AI" className="h-8 w-8 object-contain" />
                 </div>
                 <div className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-amber-400 bg-green-400" />
               </div>
@@ -560,8 +611,8 @@ const ChatWidget = () => {
               >
                 {chatMessage.role === "assistant" && (
                   <div className="mr-2 flex-shrink-0 pt-1">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-500/20 text-xs font-bold text-amber-600 dark:text-amber-400">
-                      N
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-500/20 overflow-hidden">
+                      <img src={aiLogo} alt="Nova" className="h-5 w-5 object-contain" />
                     </div>
                   </div>
                 )}
@@ -643,8 +694,8 @@ const ChatWidget = () => {
             {isSending && (
               <div className="flex justify-start">
                 <div className="mr-2 flex-shrink-0 pt-1">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-500/20 text-xs font-bold text-amber-600 dark:text-amber-400">
-                    N
+                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-500/20 overflow-hidden">
+                    <img src={aiLogo} alt="Nova" className="h-5 w-5 object-contain" />
                   </div>
                 </div>
                 <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-4 py-3 shadow-sm">
@@ -720,11 +771,6 @@ const ChatWidget = () => {
               </button>
             </div>
             <p className="mt-1 text-[10px] text-slate-400 dark:text-slate-500 text-center">
-              {selectedProvider === "gemini"
-                ? "Agent: Tạo/sửa/xóa dữ liệu, xuất báo cáo · Gemini 3.1 Flash Lite"
-                : "Chat: Hỏi đáp thông thường · GPT-OSS 120B"}
-            </p>
-            <p className="mt-1 text-[10px] text-slate-400 dark:text-slate-500 text-center">
               ⚠️ Nova Money là AI có thể trả lời sai sót, vui lòng kiểm tra lại thông tin.
             </p>
           </form>
@@ -732,16 +778,33 @@ const ChatWidget = () => {
       )}
 
       {/* Floating toggle */}
-      <button
-        type="button"
-        onClick={() => setIsOpen((v) => !v)}
-        className="group relative inline-flex h-16 w-16 items-center justify-center rounded-full bg-amber-500 hover:bg-amber-600 text-white shadow-xl shadow-amber-500/30 transition"
-        aria-label={isOpen ? "Đóng trợ lý" : "Mở trợ lý"}
-      >
-        <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/15">
-          {isOpen ? <X size={20} /> : <MessageCircle size={22} />}
-        </span>
-      </button>
+      <div className="relative flex items-center">
+        {/* Greeting bubble */}
+        {!isOpen && (
+          <div
+            className={`absolute right-20 bottom-1 flex items-center gap-1.5 whitespace-nowrap rounded-2xl rounded-br-sm bg-white dark:bg-slate-800 px-3.5 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 shadow-lg shadow-slate-900/15 ring-1 ring-slate-200 dark:ring-white/10 transition-all duration-500 ${
+              showGreeting ? "opacity-100 translate-x-0" : "opacity-0 translate-x-3 pointer-events-none"
+            }`}
+          >
+            <span>{greeting.emoji}</span>
+            <span>{greeting.text}</span>
+            {/* Tail */}
+            <span className="absolute -right-1.5 bottom-2 h-3 w-3 rotate-45 bg-white dark:bg-slate-800 ring-1 ring-slate-200 dark:ring-white/10 [clip-path:polygon(100%_0,100%_100%,0_100%)]" />
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={() => setIsOpen((v) => !v)}
+          className="group relative inline-flex h-16 w-16 items-center justify-center rounded-full bg-amber-500 hover:bg-amber-600 text-white shadow-xl shadow-amber-500/30 transition"
+          aria-label={isOpen ? "Đóng trợ lý" : "Mở trợ lý"}
+        >
+          {isOpen
+            ? <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/15"><X size={20} /></span>
+            : <img src={aiLogo} alt="Nova Money AI" className="h-12 w-12 object-contain rounded-2xl" />
+          }
+        </button>
+      </div>
     </div>
   );
 };

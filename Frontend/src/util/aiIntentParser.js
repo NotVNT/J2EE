@@ -113,28 +113,44 @@ export const getFieldsForIntent = (intent) => {
         { key: "type", label: "Loại (income/expense)", type: "text", required: true }
       ];
     case INTENT_TYPES.CREATE_EXPENSE:
+      return [
+        { key: "amount", label: "Số tiền", type: "number", required: true },
+        { key: "categoryName", label: "Danh mục", type: "category_select", categoryType: "expense", required: true },
+        { key: "date", label: "Ngày", type: "date", required: true },
+        { key: "description", label: "Mô tả", type: "text", required: false }
+      ];
     case INTENT_TYPES.UPDATE_EXPENSE:
       return [
         { key: "amount", label: "Số tiền", type: "number", required: true },
-        { key: "categoryName", label: "Danh mục", type: "text", required: true },
-        { key: "date", label: "Ngày", type: "date", required: true },
+        { key: "categoryName", label: "Danh mục", type: "category_select", categoryType: "expense", required: false },
+        { key: "date", label: "Ngày", type: "date", required: false },
         { key: "description", label: "Mô tả", type: "text", required: false }
       ];
     case INTENT_TYPES.CREATE_INCOME:
-    case INTENT_TYPES.UPDATE_INCOME:
       return [
         { key: "amount", label: "Số tiền", type: "number", required: true },
-        { key: "categoryName", label: "Danh mục", type: "text", required: true },
+        { key: "categoryName", label: "Danh mục", type: "category_select", categoryType: "income", required: true },
         { key: "date", label: "Ngày", type: "date", required: true },
         { key: "description", label: "Mô tả", type: "text", required: false }
       ];
+    case INTENT_TYPES.UPDATE_INCOME:
+      return [
+        { key: "amount", label: "Số tiền", type: "number", required: true },
+        { key: "categoryName", label: "Danh mục", type: "category_select", categoryType: "income", required: false },
+        { key: "date", label: "Ngày", type: "date", required: false },
+        { key: "description", label: "Mô tả", type: "text", required: false }
+      ];
     case INTENT_TYPES.CREATE_BUDGET:
+      return [
+        { key: "amount", label: "Số tiền", type: "number", required: true },
+        { key: "categoryName", label: "Danh mục", type: "category_select", categoryType: "expense", required: true },
+        { key: "month", label: "Tháng", type: "number", required: true },
+        { key: "year", label: "Năm", type: "number", required: true }
+      ];
     case INTENT_TYPES.UPDATE_BUDGET:
       return [
         { key: "amount", label: "Số tiền", type: "number", required: true },
-        { key: "categoryName", label: "Danh mục", type: "text", required: true },
-        { key: "month", label: "Tháng", type: "number", required: true },
-        { key: "year", label: "Năm", type: "number", required: true }
+        { key: "categoryName", label: "Danh mục", type: "category_select", categoryType: "expense", required: false }
       ];
     case INTENT_TYPES.CREATE_SAVING_GOAL:
     case INTENT_TYPES.UPDATE_SAVING_GOAL:
