@@ -91,6 +91,19 @@ const ChatWidget = () => {
     const trimmedMessage = promptText.trim();
     if (!trimmedMessage || isSending) return;
 
+    if (pendingIntent) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `system-warn-${Date.now()}`,
+          role: "assistant",
+          content: "⚠️ Vui lòng xác nhận hoặc hủy thao tác hiện tại trước khi gửi lệnh mới.",
+          isSystem: true
+        }
+      ]);
+      return;
+    }
+
     const activeProvider = selectedProvider === "gemini" ? "gemini" : "gptoss";
     const activeModel = selectedProvider === "gemini" ? "gemini-3.1-flash-lite" : "gpt-oss-120b";
     const activeModelLabel = selectedProvider === "gemini" ? "Gemini 3.1 Flash Lite" : "GPT-OSS 120B";
