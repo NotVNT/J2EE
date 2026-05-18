@@ -720,11 +720,6 @@ const ChatWidget = () => {
               </button>
             </div>
             <p className="mt-1 text-[10px] text-slate-400 dark:text-slate-500 text-center">
-              {selectedProvider === "gemini"
-                ? "Agent: Tạo/sửa/xóa dữ liệu, xuất báo cáo · Gemini 3.1 Flash Lite"
-                : "Chat: Hỏi đáp thông thường · GPT-OSS 120B"}
-            </p>
-            <p className="mt-1 text-[10px] text-slate-400 dark:text-slate-500 text-center">
               ⚠️ Nova Money là AI có thể trả lời sai sót, vui lòng kiểm tra lại thông tin.
             </p>
           </form>
