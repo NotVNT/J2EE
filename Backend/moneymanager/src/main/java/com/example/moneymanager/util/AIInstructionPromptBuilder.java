@@ -32,14 +32,23 @@ public class AIInstructionPromptBuilder {
                     "- Return: {\"intent\": \"DELETE_INCOME\", \"incomeId\": <id>, \"confirmationPrompt\": \"...\"}\n" +
                     "- Cho DELETE_EXPENSE: d\u00F9ng key 'expenseId'; DELETE_INCOME: 'incomeId'; DELETE_BUDGET: 'budgetId'; DELETE_SAVING_GOAL: 'savingGoalId'; DELETE_CATEGORY: 'categoryId'\n\n" +
                     "FORMAT RESPONSE (ch\u1EC9 JSON thu\u1EA7n, kh\u00F4ng c\u00F3 text ngo\u00E0i):\n" +
-                    "CRUD: {\"intent\": \"...\", \"expenseId\"/\"incomeId\"/...: <id>, \"amount\": ..., \"categoryName\": \"...\", \"date\": \"...\", \"name\": \"...\", \"confirmationPrompt\": \"...\"}\n" +
+                    "CREATE_EXPENSE: {\"intent\": \"CREATE_EXPENSE\", \"amount\": 50000, \"categoryName\": \"\u0102n u\u1ED1ng\", \"date\": \"2026-05-14\", \"description\": \"\u0103n tr\u01B0a\", \"confirmationPrompt\": \"...\"}\n" +
+                    "CREATE_INCOME: {\"intent\": \"CREATE_INCOME\", \"amount\": 5000000, \"categoryName\": \"L\u01B0\u01A1ng\", \"date\": \"2026-05-14\", \"description\": \"l\u01B0\u01A1ng th\u00E1ng 5\", \"confirmationPrompt\": \"...\"}\n" +
+                    "CREATE_SAVING_GOAL: {\"intent\": \"CREATE_SAVING_GOAL\", \"name\": \"Mua xe m\u00E1y\", \"targetAmount\": 30000000, \"currentAmount\": 0, \"confirmationPrompt\": \"...\"}\n" +
                     "Xu\u1EA5t Excel thu nh\u1EADp: {\"intent\": \"EXPORT_EXCEL_INCOME\", \"confirmationPrompt\": \"Xu\u1EA5t b\u00E1o c\u00E1o Excel thu nh\u1EADp th\u00E1ng n\u00E0y v\u1EC1 m\u00E1y b\u1EA1n?\"}\n" +
                     "Xu\u1EA5t Excel chi ti\u00EAu: {\"intent\": \"EXPORT_EXCEL_EXPENSE\", \"confirmationPrompt\": \"Xu\u1EA5t b\u00E1o c\u00E1o Excel chi ti\u00EAu th\u00E1ng n\u00E0y v\u1EC1 m\u00E1y b\u1EA1n?\"}\n" +
                     "G\u1EEDi email thu nh\u1EADp: {\"intent\": \"EMAIL_INCOME_REPORT\", \"confirmationPrompt\": \"G\u1EEDi b\u00E1o c\u00E1o thu nh\u1EADp th\u00E1ng n\u00E0y \u0111\u1EBFn email c\u1EE7a b\u1EA1n?\"}\n" +
                     "G\u1EEDi email chi ti\u00EAu: {\"intent\": \"EMAIL_EXPENSE_REPORT\", \"confirmationPrompt\": \"G\u1EEDi b\u00E1o c\u00E1o chi ti\u00EAu th\u00E1ng n\u00E0y \u0111\u1EBFn email c\u1EE7a b\u1EA1n?\"}\n" +
                     "C\u00E2u h\u1ECFi: {\"intent\": \"ANSWER_QUESTION\", \"answer\": \"...\"}\n" +
                     "Ngo\u00E0i ph\u1EA1m vi: {\"intent\": \"INVALID_REQUEST\", \"validationErrors\": [\"l\u00FD do\"]}\n\n" +
-                    "\u0110\u1ECBnh d\u1EA1ng: date=YYYY-MM-DD, amount=s\u1ED1 kh\u00F4ng c\u00F3 k\u00FD hi\u1EC7u (50000 kh\u00F4ng ph\u1EA3i '50,000\u0111').";
+                    "PH\u00C2N BI\u1EC6T QUAN TR\u1ECCNG:\n" +
+                    "- 'thu nh\u1EADp/l\u01B0\u01A1ng/income' \u2192 CREATE_INCOME (KH\u00D4NG PH\u1EA2I CREATE_EXPENSE)\n" +
+                    "- 'chi ti\u00EAu/mua/ti\u00EAu/expense' \u2192 CREATE_EXPENSE\n" +
+                    "- 'g\u1EEDi email b\u00E1o c\u00E1o chi ti\u00EAu/t\u00E0i ch\u00EDnh/expense' \u2192 EMAIL_EXPENSE_REPORT\n" +
+                    "- 'g\u1EEDi email b\u00E1o c\u00E1o thu nh\u1EADp/income' \u2192 EMAIL_INCOME_REPORT\n" +
+                    "- 'xu\u1EA5t excel chi ti\u00EAu/t\u00E0i ch\u00EDnh' \u2192 EXPORT_EXCEL_EXPENSE\n" +
+                    "- 'xu\u1EA5t excel thu nh\u1EADp' \u2192 EXPORT_EXCEL_INCOME\n" +
+                    "\u0110\u1ECBnh d\u1EA1ng: date=YYYY-MM-DD, amount=s\u1ED1 kh\u00F4ng c\u00F3 k\u00FD hi\u1EC7u (50000 kh\u00F4ng ph\u1EA3i '50,000\u0111'), targetAmount=s\u1ED1 nguy\u00EAn.";
 
     private static final String PAGE_LABELS_VI =
             "dashboard: T\u1ED5ng quan, income: Thu nh\u1EADp, expense: Chi ti\u00EAu, " +

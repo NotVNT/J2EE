@@ -9,7 +9,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -129,7 +128,6 @@ public class AIOrchestrationService {
         }
     }
 
-    @Transactional
     public AIConfirmActionResponseDTO executeConfirmedIntent(AIConfirmActionRequestDTO request) {
         ProfileEntity profile = profileService.getCurrentProfile();
         String intent = request.getIntent();
@@ -217,12 +215,20 @@ public class AIOrchestrationService {
     private String executeIntent(String intent, Map<String, Object> data, ProfileEntity profile) {
         return switch (intent) {
             case "CREATE_EXPENSE" -> {
+                String catNameExp = (String) data.get("categoryName");
+                Long catIdExp = findCategoryId(catNameExp, profile.getId());
+                if (catIdExp == null) yield "\u26A0\uFE0F Kh\u00F4ng t\u00ECm th\u1EA5y danh m\u1EE5c \"" + catNameExp + "\". Vui l\u00F2ng ki\u1EC3m tra l\u1EA1i t\u00EAn danh m\u1EE5c.";
                 ExpenseDTO dto = mapToExpenseDTO(data, profile);
-                ExpenseResponseDTO result = expenseService.addExpense(dto);
+                expenseService.addExpense(dto);
                 yield "\u2705 \u0110\u00E3 t\u1EA1o chi ti\u00EAu " + formatCurrency(dto.getAmount()) + "\u0111 cho " + dto.getCategoryName();
             }
             case "UPDATE_EXPENSE" -> updateExpenseFromAI(data, profile);
             case "CREATE_INCOME" -> {
+                String catNameInc = (String) data.get("categoryName");
+                if (catNameInc != null && !catNameInc.isBlank()) {
+                    Long catIdInc = findCategoryId(catNameInc, profile.getId());
+                    if (catIdInc == null) yield "\u26A0\uFE0F Kh\u00F4ng t\u00ECm th\u1EA5y danh m\u1EE5c \"" + catNameInc + "\". Vui l\u00F2ng ki\u1EC3m tra l\u1EA1i t\u00EAn danh m\u1EE5c.";
+                }
                 IncomeDTO dto = mapToIncomeDTO(data, profile);
                 incomeService.addIncome(dto);
                 yield "\u2705 \u0110\u00E3 t\u1EA1o thu nh\u1EADp " + formatCurrency(dto.getAmount()) + "\u0111";
