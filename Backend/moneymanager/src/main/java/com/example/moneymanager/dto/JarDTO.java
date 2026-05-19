@@ -6,24 +6,19 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class IncomeDTO {
-
+public class JarDTO {
     private Long id;
     private String name;
     private String icon;
-    private String categoryName;
-    private Long categoryId;
-    private BigDecimal amount;
-    private LocalDate date;
+    private String color;
+    private BigDecimal targetPercentage;
+    private BigDecimal currentBalance;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private List<IncomeAllocationDTO> allocations;
 }

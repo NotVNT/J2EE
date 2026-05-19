@@ -66,7 +66,11 @@ const Income = () => {
     if (date > today) { toast.error("Ngày không được chọn ở tương lai."); return; }
     if (!categoryId) { toast.error("Vui lòng chọn danh mục"); return; }
     try {
-      const response = await axiosConfig.post(API_ENDPOINTS.ADD_INCOME, { name, amount: Number(amount), date, icon, categoryId });
+      const payload = { name, amount: Number(amount), date, icon, categoryId };
+      if (income.allocations && income.allocations.length > 0) {
+        payload.allocations = income.allocations;
+      }
+      const response = await axiosConfig.post(API_ENDPOINTS.ADD_INCOME, payload);
       if (response.status === 201) {
         setOpenAddIncomeModal(false);
         toast.success("Thêm thu nhập thành công");

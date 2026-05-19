@@ -1,5 +1,5 @@
 import logo from "./logo/AI_favicon.png";
-import {BadgeDollarSign, ChartBar, Coins, FunnelPlus, LayoutDashboard, List, PiggyBank, Target, Wallet, Activity} from "lucide-react";
+import {BadgeDollarSign, ChartBar, Coins, FunnelPlus, LayoutDashboard, List, PiggyBank, Target, Wallet, Activity, Vault} from "lucide-react";
 
 export const assets = {
     logo,
@@ -47,6 +47,12 @@ export const SIDE_BAR_DATA = [
         label: "Mục tiêu tiết kiệm",
         icon: PiggyBank,
         path: "/saving-goals",
+    },
+    {
+        id: "07b",
+        label: "Hũ chi tiêu",
+        icon: Vault,
+        path: "/jars",
     },
     {
         id: "08",

@@ -226,6 +226,9 @@ Dự đoán chi tiêu của tháng tới dựa trên 6 tháng lịch sử. Phát
 ### Quản Lý Ngân Sách
 Giới hạn chi tiêu hàng tháng cho mỗi danh mục. Theo dõi % sử dụng. Cảnh báo khi vượt ngân sách.
 
+### Hệ Thống Các Hũ Chi Tiêu (Jars / Envelopes)
+Phân bổ thu nhập vào nhiều "ví phụ" theo tỷ lệ % tự động (ví dụ: Hũ Sinh hoạt, Hũ Giải trí). Thanh toán và theo dõi số dư trên từng Hũ riêng biệt. Giới hạn số lượng Hũ tùy theo gói (FREE: 1 Hũ, BASIC: Tối đa 6 Hũ, PREMIUM: Không giới hạn).
+
 ### Mục Tiêu Tiết Kiệm
 Tạo mục tiêu với số tiền mục tiêu và thời hạn. Ghi lại những khoản đóng góp. Theo dõi trạng thái ĐANG HOẠT ĐỘNG / HOÀN THÀNH / ĐÃ HỦY. Tự động tính toán khoản đóng góp hàng tháng cần thiết.
 

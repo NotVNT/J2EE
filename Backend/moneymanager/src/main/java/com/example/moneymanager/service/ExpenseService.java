@@ -10,6 +10,7 @@ import com.example.moneymanager.entity.ProfileEntity;
 import com.example.moneymanager.repository.BudgetRepository;
 import com.example.moneymanager.repository.CategoryRepository;
 import com.example.moneymanager.repository.ExpenseRepository;
+import com.example.moneymanager.repository.JarRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Sort;
@@ -33,6 +34,7 @@ public class ExpenseService {
     private final BudgetService budgetService;
     private final NotificationService notificationService;
     private final BudgetRepository budgetRepository;
+    private final JarRepository jarRepository;
 
     // Adds a new expense and checks budget status
     public ExpenseResponseDTO addExpense(ExpenseDTO dto) {
@@ -48,6 +50,36 @@ public class ExpenseService {
                 .orElseThrow(() -> new RuntimeException("Category not found"));
 
         ExpenseEntity newExpense = toEntity(dto, profile, category);
+        
+        if (dto.getJarId() != null) {
+            com.example.moneymanager.entity.JarEntity jar = jarRepository.findById(dto.getJarId())
+                .orElseThrow(() -> new RuntimeException("Jar not found"));
+            if (!jar.getProfile().getId().equals(profile.getId())) {
+                throw new RuntimeException("Unauthorized jar access");
+            }
+            jar.setCurrentBalance(jar.getCurrentBalance().subtract(dto.getAmount()));
+            newExpense.setJar(jar);
+            jarRepository.save(jar);
+        } else {
+            List<com.example.moneymanager.entity.JarEntity> jars = jarRepository.findByProfile(profile);
+            com.example.moneymanager.entity.JarEntity defaultJar;
+            if (jars.isEmpty()) {
+                defaultJar = com.example.moneymanager.entity.JarEntity.builder()
+                        .profile(profile)
+                        .name("Ví tổng")
+                        .icon("")
+                        .color("#4CAF50")
+                        .targetPercentage(new java.math.BigDecimal("100.00"))
+                        .currentBalance(java.math.BigDecimal.ZERO.subtract(dto.getAmount()))
+                        .build();
+            } else {
+                defaultJar = jars.get(0);
+                defaultJar.setCurrentBalance(defaultJar.getCurrentBalance().subtract(dto.getAmount()));
+            }
+            jarRepository.save(defaultJar);
+            newExpense.setJar(defaultJar);
+        }
+
         newExpense = expenseRepository.save(newExpense);
 
         // Lấy tháng/năm của giao dịch vừa thêm
@@ -105,6 +137,13 @@ public class ExpenseService {
         if (!entity.getProfile().getId().equals(profile.getId())) {
             throw new RuntimeException("Unauthorized to delete this expense");
         }
+        
+        if (entity.getJar() != null) {
+            com.example.moneymanager.entity.JarEntity jar = entity.getJar();
+            jar.setCurrentBalance(jar.getCurrentBalance().add(entity.getAmount()));
+            jarRepository.save(jar);
+        }
+        
         expenseRepository.delete(entity);
     }
 
@@ -203,6 +242,8 @@ public class ExpenseService {
                 .date(entity.getDate())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
+                .jarId(entity.getJar() != null ? entity.getJar().getId() : null)
+                .jarName(entity.getJar() != null ? entity.getJar().getName() : null)
                 .build();
     }
 
