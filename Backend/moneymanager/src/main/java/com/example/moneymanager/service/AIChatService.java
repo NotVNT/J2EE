@@ -1,5 +1,6 @@
 package com.example.moneymanager.service;
 
+import com.example.moneymanager.config.GeminiProperties;
 import com.example.moneymanager.config.GptOssKeyRotator;
 import com.example.moneymanager.config.GptOssProperties;
 import com.example.moneymanager.dto.AIChatMessageDTO;
@@ -32,6 +33,7 @@ public class AIChatService {
     private static final int MAX_HISTORY_TURNS = 20;
 
     private final GeminiService geminiService;
+    private final GeminiProperties geminiProperties;
     private final RestClient gptOssRestClient;
     private final GptOssProperties gptOssProperties;
     private final GptOssKeyRotator gptOssKeyRotator;
@@ -82,14 +84,14 @@ public class AIChatService {
             return AIChatResponseDTO.builder()
                     .reply(reply)
                     .provider("gemini")
-                    .modelUsed("gemini-3.1-flash-lite")
+                    .modelUsed(geminiProperties.model())
                     .build();
         } catch (Exception e) {
             log.error("Gemini chat error: {}", e.getMessage(), e);
             return AIChatResponseDTO.builder()
                     .reply("Xin l\u1ED7i, t\u00F4i \u0111ang g\u1EB7p s\u1EF1 c\u1ED1. B\u1EA1n th\u1EED l\u1EA1i sau nh\u00E9.")
                     .provider("gemini")
-                    .modelUsed("gemini-3.1-flash-lite")
+                    .modelUsed(geminiProperties.model())
                     .build();
         }
     }
