@@ -209,8 +209,8 @@ const Forecast = () => {
                                         <p className="text-indigo-50 leading-relaxed relative z-10 text-sm whitespace-pre-wrap">
                                             {insights.narrative}
                                         </p>
-                                        <p className="mt-3 text-xs text-indigo-200/70 relative z-10 flex items-center gap-1">
-                                            <span>⚠️</span> Nova Money là AI có thể trả lời sai sót, vui lòng kiểm tra lại thông tin.
+                                        <p className="mt-3 text-xs text-indigo-200/70 relative z-10 italic">
+                                            Nova Money là AI có thể trả lời sai sót, vui lòng kiểm tra lại thông tin.
                                         </p>
                                     </div>
                                 ) : null

@@ -12,6 +12,8 @@ import { AppContext } from "../context/AppContext.jsx";
 import { useRouteContext } from "../context/RouteContext.jsx";
 import { parseIntentResponse, isCrudIntent, isActionIntent, INTENT_ICONS, INTENT_LABELS } from "../util/aiIntentParser.js";
 import AIConfirmationForm from "./AIConfirmationForm.jsx";
+import ModelSelector from "./ModelSelector.jsx";
+import ExperimentalWarningModal from "./ExperimentalWarningModal.jsx";
 
 
 const WELCOME_MESSAGE = {
@@ -158,10 +160,13 @@ const ChatWidget = () => {
   const shouldHideWidget = !token || PUBLIC_PATHS.has(location.pathname);
 
   const isFreePlan = !user?.subscriptionPlan || user?.subscriptionPlan === "FREE";
-  const selectedModel = "gemini-3.1-flash-lite";
+  const isPremiumPlan = user?.subscriptionPlan === "PREMIUM";
 
   const [messages, setMessages] = useState([WELCOME_MESSAGE]);
   const [selectedProvider, setProvider] = useState(isFreePlan ? "gptoss" : "gemini");
+  const [chatModel, setChatModel] = useState("gptoss");
+  const [showExperimentalWarning, setShowExperimentalWarning] = useState(false);
+  const [pendingChatModel, setPendingChatModel] = useState(null);
   const [inputMessage, setInputMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [isProcessingCrud, setIsProcessingCrud] = useState(false);
@@ -214,9 +219,15 @@ const ChatWidget = () => {
       return;
     }
 
-    const activeProvider = selectedProvider === "gemini" ? "gemini" : "gptoss";
-    const activeModel = selectedProvider === "gemini" ? "gemini-3.1-flash-lite" : "gpt-oss-120b";
-    const activeModelLabel = selectedProvider === "gemini" ? "Gemini 3.1 Flash Lite" : "GPT-OSS 120B";
+    const activeProvider = selectedProvider === "gemini"
+      ? "gemini"
+      : chatModel === "ninerouter" ? "ninerouter" : "gptoss";
+    const activeModel = selectedProvider === "gemini"
+      ? "gemini-3.1-flash-lite"
+      : chatModel === "ninerouter" ? "project-demo" : "gpt-oss-120b";
+    const activeModelLabel = selectedProvider === "gemini"
+      ? "Gemini 3.1 Flash Lite"
+      : chatModel === "ninerouter" ? "EXPERIMENTAL" : "GPT-OSS 120B";
 
     const userMessage = {
       id: `user-${Date.now()}`,
@@ -484,6 +495,30 @@ const ChatWidget = () => {
     setProvider(provider);
   };
 
+  const handleModelChange = (newModel) => {
+    if (newModel === chatModel) return;
+    if (!isPremiumPlan && newModel === "ninerouter") return;
+    if (newModel === "ninerouter") {
+      setPendingChatModel("ninerouter");
+      setShowExperimentalWarning(true);
+      return;
+    }
+    setChatModel(newModel);
+  };
+
+  const confirmExperimentalModel = () => {
+    if (pendingChatModel === "ninerouter") {
+      setChatModel("ninerouter");
+    }
+    setShowExperimentalWarning(false);
+    setPendingChatModel(null);
+  };
+
+  const cancelExperimentalModel = () => {
+    setShowExperimentalWarning(false);
+    setPendingChatModel(null);
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     await sendMessage(inputMessage);
@@ -516,7 +551,6 @@ const ChatWidget = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
-
               <button
                 type="button"
                 onClick={() => setIsExpanded(!isExpanded)}
@@ -721,9 +755,13 @@ const ChatWidget = () => {
                 id="chat-message"
                 value={inputMessage}
                 onChange={(event) => setInputMessage(event.target.value)}
-                placeholder={selectedProvider === "gemini"
-                  ? "Nhập thao tác: tạo/sửa/xóa dữ liệu, xuất báo cáo... [Gemini 3.1 Flash Lite]"
-                  : "Nhập câu hỏi hoặc trò chuyện... [GPT-OSS 120B]"}
+                placeholder={
+                  selectedProvider === "gemini"
+                    ? "Nhập thao tác: tạo/sửa/xóa dữ liệu, xuất báo cáo... [Gemini 3.1 Flash Lite]"
+                    : chatModel === "ninerouter"
+                      ? "Nhập câu hỏi hoặc trò chuyện... [EXPERIMENTAL]"
+                      : "Nhập câu hỏi hoặc trò chuyện... [GPT-OSS 120B]"
+                }
                 rows={2}
                 className="min-h-12 flex-1 resize-none rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-4 py-3 text-sm text-slate-800 dark:text-slate-200 outline-none transition focus:border-amber-400 dark:focus:border-amber-500 placeholder:text-slate-400 dark:placeholder:text-slate-500"
                 onKeyDown={(event) => {
@@ -742,6 +780,17 @@ const ChatWidget = () => {
                 <SendHorizontal size={18} />
               </button>
             </div>
+
+            {/* Model selector — only in Chat mode */}
+            {selectedProvider !== "gemini" && (
+              <div className="mt-2">
+                <ModelSelector
+                  value={chatModel}
+                  onChange={handleModelChange}
+                  disabled={!isPremiumPlan}
+                />
+              </div>
+            )}
 
             {/* Mode toggle */}
             <div className="mt-2 flex rounded-xl bg-slate-100 dark:bg-white/5 p-0.5 text-xs font-medium">
@@ -770,12 +819,18 @@ const ChatWidget = () => {
                 <span>Chat</span>
               </button>
             </div>
-            <p className="mt-1 text-[10px] text-slate-400 dark:text-slate-500 text-center">
-              ⚠️ Nova Money là AI có thể trả lời sai sót, vui lòng kiểm tra lại thông tin.
+            <p className="mt-1 text-[10px] text-slate-400 dark:text-slate-500 text-center italic">
+              Nova Money là AI có thể trả lời sai sót, vui lòng kiểm tra lại thông tin.
             </p>
           </form>
         </div>
       )}
+
+      <ExperimentalWarningModal
+        isOpen={showExperimentalWarning}
+        onConfirm={confirmExperimentalModel}
+        onCancel={cancelExperimentalModel}
+      />
 
       {/* Floating toggle */}
       <div className="relative flex items-center">

@@ -183,6 +183,23 @@ const Home = () => {
     return addThousandsSeparator(Math.floor(num)) + " VND";
   };
 
+  const formatCompact = (amount) => {
+    if (!amount && amount !== 0) return "0 VND";
+    const num = typeof amount === "object" ? 0 : Number(amount);
+    if (isNaN(num)) return "0 VND";
+    const abs = Math.abs(num);
+    const sign = num < 0 ? "-" : "";
+    if (abs >= 1_000_000_000) {
+      const val = (abs / 1_000_000_000).toLocaleString("vi-VN", { maximumFractionDigits: 1 });
+      return `${sign}${val} tỷ VND`;
+    }
+    if (abs >= 1_000_000) {
+      const val = (abs / 1_000_000).toLocaleString("vi-VN", { maximumFractionDigits: 1 });
+      return `${sign}${val} tr VND`;
+    }
+    return `${sign}${addThousandsSeparator(Math.floor(abs))} VND`;
+  };
+
   const getRiskColor = (riskLevel) => {
     switch (riskLevel) {
       case "CAO": return "text-red-400 bg-red-500/10 border border-red-500/30";
@@ -198,11 +215,11 @@ const Home = () => {
     () => ({
       kpi_cards: () => (
         <section className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          <InfoCard onClick={() => navigate("/income")} icon={<WalletCards size={22} />} label="Số dư" value={formatCurrency(safeNumber(dashboardData?.totalBalance))} color="bg-blue-500/10 text-blue-400" />
-          <InfoCard onClick={() => navigate("/income")} icon={<TrendingUp size={22} />} label="Thu nhập" value={formatCurrency(safeNumber(dashboardData?.totalIncome))} color="bg-emerald-500/10 text-emerald-400" />
-          <InfoCard onClick={() => navigate("/expense")} icon={<AlertTriangle size={22} />} label="Chi tiêu" value={formatCurrency(safeNumber(dashboardData?.totalExpense))} color="bg-red-500/10 text-red-400" />
+          <InfoCard onClick={() => navigate("/income")} icon={<WalletCards size={22} />} label="Số dư" value={formatCompact(safeNumber(dashboardData?.totalBalance))} color="bg-blue-500/10 text-blue-400" />
+          <InfoCard onClick={() => navigate("/income")} icon={<TrendingUp size={22} />} label="Thu nhập" value={formatCompact(safeNumber(dashboardData?.totalIncome))} color="bg-emerald-500/10 text-emerald-400" />
+          <InfoCard onClick={() => navigate("/expense")} icon={<AlertTriangle size={22} />} label="Chi tiêu" value={formatCompact(safeNumber(dashboardData?.totalExpense))} color="bg-red-500/10 text-red-400" />
           <InfoCard onClick={() => navigate("/saving-goals")} icon={<Target size={22} />} label="Đang thực hiện" value={safeNumber(dashboardData?.savingGoalActiveCount)} color="bg-violet-500/10 text-violet-400" />
-          <InfoCard onClick={() => navigate("/saving-goals")} icon={<PiggyBank size={22} />} label="Tích lũy" value={formatCurrency(safeNumber(dashboardData?.savingGoalTotalSaved))} color="bg-amber-500/10 text-amber-400" />
+          <InfoCard onClick={() => navigate("/saving-goals")} icon={<PiggyBank size={22} />} label="Tích lũy" value={formatCompact(safeNumber(dashboardData?.savingGoalTotalSaved))} color="bg-amber-500/10 text-amber-400" />
           <InfoCard onClick={() => navigate("/saving-goals")} icon={<PieChart size={22} />} label="Hoàn thành" value={safeNumber(dashboardData?.savingGoalCompletedCount)} color="bg-emerald-500/10 text-emerald-400" />
         </section>
       ),
@@ -347,7 +364,7 @@ const Home = () => {
           </div>
         ),
     }),
-    [dashboardData, navigate, formatCurrency, safeNumber]
+    [dashboardData, navigate, formatCurrency, formatCompact, safeNumber]
   );
 
   return (
@@ -437,8 +454,8 @@ const Home = () => {
                   <p className="text-slate-800 dark:text-slate-200 leading-relaxed">
                     {aiInsight || "Hãy thêm vài giao dịch để AI có thể đưa ra nhận xét cho bạn!"}
                   </p>
-                  <p className="mt-2 text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1">
-                    <span>⚠️</span> Nova Money là AI có thể trả lời sai sót, vui lòng kiểm tra lại thông tin.
+                  <p className="mt-2 text-xs text-slate-400 dark:text-slate-500 italic">
+                    Nova Money là AI có thể trả lời sai sót, vui lòng kiểm tra lại thông tin.
                   </p>
                 </div>
               </div>
@@ -524,8 +541,8 @@ const Home = () => {
                         </div>
                       </div>
                     )}
-                    <p className="col-span-full mt-1 text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1">
-                      <span>⚠️</span> Nova Money là AI có thể trả lời sai sót, vui lòng kiểm tra lại thông tin.
+                    <p className="col-span-full mt-1 text-xs text-slate-400 dark:text-slate-500 italic">
+                      Nova Money là AI có thể trả lời sai sót, vui lòng kiểm tra lại thông tin.
                     </p>
                   </div>
                 ) : (

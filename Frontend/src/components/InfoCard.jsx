@@ -15,7 +15,7 @@ const InfoCard = ({ icon, label, value, color, onClick }) => {
           text-slate-400 dark:text-slate-500">
           {label}
         </p>
-        <p className="text-2xl font-bold tracking-tight leading-none
+        <p className="text-xl font-bold tracking-tight leading-tight break-words
           text-slate-900 dark:text-white">
           {value}
         </p>
