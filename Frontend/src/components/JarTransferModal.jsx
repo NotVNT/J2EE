@@ -1,4 +1,5 @@
 import { useState } from "react";
+import toast from "react-hot-toast";
 import Modal from "./Modal.jsx";
 import Input from "./Input.jsx";
 import { ArrowRight } from "lucide-react";
@@ -23,7 +24,10 @@ const JarTransferModal = ({ jars, onTransfer, onClose }) => {
   };
 
   const handleSubmit = () => {
-    if (!fromJarId || !toJarId || !amount) return;
+    if (!fromJarId || !toJarId || !amount) {
+      toast.error("Vui lòng chọn hũ nguồn, hũ đích và nhập số tiền.");
+      return;
+    }
     if (fromJarId === toJarId) return;
     onTransfer(Number(fromJarId), Number(toJarId), Number(amount));
   };

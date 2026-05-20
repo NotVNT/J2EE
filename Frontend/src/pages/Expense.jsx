@@ -61,7 +61,7 @@ const Expense = () => {
   };
 
   const handleAddExpense = async (expense) => {
-    const { name, categoryId, amount, date, icon } = expense;
+    const { name, categoryId, amount, date, icon, jarId } = expense;
     if (!name.trim()) { toast.error("Vui lòng nhập tên chi tiêu."); return; }
     if (!categoryId) { toast.error("Vui lòng chọn danh mục."); return; }
     if (!amount || isNaN(amount) || Number(amount) <= 0) { toast.error("Số tiền phải lớn hơn 0."); return; }
@@ -70,7 +70,7 @@ const Expense = () => {
     if (date > today) { toast.error("Ngày không được chọn ở tương lai."); return; }
 
     try {
-      const response = await axiosConfig.post(API_ENDPOINTS.ADD_EXPENSE, { name, categoryId, amount: Number(amount), date, icon });
+      const response = await axiosConfig.post(API_ENDPOINTS.ADD_EXPENSE, { name, categoryId, amount: Number(amount), date, icon, jarId });
       setOpenAddExpenseModal(false);
       toast.success("Thêm chi tiêu thành công");
       const budgetStatus = response.data?.budgetStatus;

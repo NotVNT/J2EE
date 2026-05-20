@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import toast from "react-hot-toast";
 import EmojiPickerPopup from "./EmojiPickerPopup.jsx";
 import Input from "./Input.jsx";
 
@@ -37,7 +38,10 @@ const JarForm = ({ initialData, isEditing = false, onSave, onCancel }) => {
   const handleChange = (key, value) => setForm({ ...form, [key]: value });
 
   const handleSubmit = () => {
-    if (!form.name.trim()) return;
+    if (!form.name.trim()) {
+      toast.error("Vui lòng nhập tên hũ.");
+      return;
+    }
     onSave({
       name: form.name.trim(),
       icon: form.icon,

@@ -1,16 +1,18 @@
 import { useState, useEffect, useCallback } from "react";
 import { Zap, Plus, Pencil, Trash2, X, Check, LoaderCircle } from "lucide-react";
 import toast from "react-hot-toast";
+import axiosConfig from "../util/axiosConfig.jsx";
+import { API_ENDPOINTS } from "../util/apiEndpoints.js";
 
 const STORAGE_KEY = "quick_expense_templates";
 
 const DEFAULT_TEMPLATES = [
-  { id: "t1", emoji: "🍚", name: "Ăn cơm",   amount: 50000,  categoryId: null },
-  { id: "t2", emoji: "☕", name: "Cà phê",    amount: 35000,  categoryId: null },
-  { id: "t3", emoji: "⛽", name: "Xăng xe",   amount: 100000, categoryId: null },
-  { id: "t4", emoji: "🛒", name: "Siêu thị",  amount: 200000, categoryId: null },
-  { id: "t5", emoji: "🧋", name: "Trà sữa",   amount: 45000,  categoryId: null },
-  { id: "t6", emoji: "🍜", name: "Bún phở",   amount: 60000,  categoryId: null },
+  { id: "t1", emoji: "🍚", name: "Ăn cơm",   amount: 50000,  categoryId: null, jarId: null },
+  { id: "t2", emoji: "☕", name: "Cà phê",    amount: 35000,  categoryId: null, jarId: null },
+  { id: "t3", emoji: "⛽", name: "Xăng xe",   amount: 100000, categoryId: null, jarId: null },
+  { id: "t4", emoji: "🛒", name: "Siêu thị",  amount: 200000, categoryId: null, jarId: null },
+  { id: "t5", emoji: "🧋", name: "Trà sữa",   amount: 45000,  categoryId: null, jarId: null },
+  { id: "t6", emoji: "🍜", name: "Bún phở",   amount: 60000,  categoryId: null, jarId: null },
 ];
 
 const fmt = (n) =>
@@ -110,13 +112,67 @@ function TemplateCard({ template, onUse, onEdit, onDelete, isLoading }) {
   );
 }
 
-function TemplateFormModal({ template, categories, onSave, onClose }) {
+function JarPickerModal({ template, jars, onConfirm, onClose }) {
+  const [jarId, setJarId] = useState(
+    template.jarId ?? (jars[0]?.id ?? null)
+  );
+
+  const inputCls = "w-full rounded-xl px-3 py-2.5 text-sm outline-none transition-colors " +
+    "bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 " +
+    "text-slate-900 dark:text-white placeholder-slate-400 focus:border-violet-500 dark:focus:border-amber-500";
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-xs bg-white dark:bg-[#0F172A] rounded-2xl border border-slate-200 dark:border-white/10 shadow-2xl p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-base font-bold text-slate-900 dark:text-white">Trừ từ hũ nào?</h3>
+          <button onClick={onClose} className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/10 flex items-center justify-center text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white transition-colors">
+            <X size={16} />
+          </button>
+        </div>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          {template.emoji} {template.name} — {fmt(template.amount)}
+        </p>
+        <select
+          value={jarId ?? ""}
+          onChange={(e) => setJarId(Number(e.target.value))}
+          className={inputCls + " appearance-none cursor-pointer"}
+        >
+          {jars.map((j) => (
+            <option key={j.id} value={j.id}>🏦 {j.name}</option>
+          ))}
+        </select>
+        <div className="flex gap-2 pt-1">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 rounded-xl border border-slate-200 dark:border-white/10 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+          >
+            Hủy
+          </button>
+          <button
+            type="button"
+            onClick={() => onConfirm(jarId)}
+            className="flex-1 rounded-xl bg-violet-600 hover:bg-violet-500 dark:bg-amber-500 dark:hover:bg-amber-400 py-2.5 text-sm font-semibold text-white transition-colors flex items-center justify-center gap-2"
+          >
+            <Check size={15} />
+            Xác nhận
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TemplateFormModal({ template, categories, jars, onSave, onClose }) {
   const isNew = !template?.id || template.id.startsWith("t");
   const [form, setForm] = useState({
     emoji: template?.emoji || "😊",
     name: template?.name || "",
     amount: template?.amount ? String(template.amount) : "",
     categoryId: template?.categoryId || (categories[0]?.id ?? null),
+    jarId: template?.jarId ?? null,
   });
 
   const handleAmountChange = (e) => {
@@ -133,6 +189,7 @@ function TemplateFormModal({ template, categories, onSave, onClose }) {
       name: form.name.trim(),
       amount: Number(form.amount),
       categoryId: form.categoryId ? Number(form.categoryId) : null,
+      jarId: form.jarId ? Number(form.jarId) : null,
     });
   };
 
@@ -196,6 +253,23 @@ function TemplateFormModal({ template, categories, onSave, onClose }) {
           </div>
         )}
 
+        {/* Jar */}
+        {jars.length > 0 && (
+          <div>
+            <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">Hũ mặc định (tuỳ chọn)</label>
+            <select
+              className={inputCls + " appearance-none cursor-pointer"}
+              value={form.jarId ?? ""}
+              onChange={(e) => setForm((p) => ({ ...p, jarId: e.target.value || null }))}
+            >
+              <option value="">Không chọn hũ</option>
+              {jars.map((j) => (
+                <option key={j.id} value={j.id}>🏦 {j.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
         {/* Actions */}
         <div className="flex gap-2 pt-1">
           <button type="button" onClick={onClose}
@@ -225,7 +299,9 @@ const QuickExpenseTemplates = ({ categories = [], onAddExpense }) => {
     }
   });
 
+  const [jars, setJars] = useState([]);
   const [editingTemplate, setEditingTemplate] = useState(null); // null = closed, {} = new, {...} = edit
+  const [pendingTemplate, setPendingTemplate] = useState(null); // template waiting for jar selection
   const [loadingId, setLoadingId] = useState(null);
   const [isExpanded, setIsExpanded] = useState(true);
 
@@ -234,8 +310,22 @@ const QuickExpenseTemplates = ({ categories = [], onAddExpense }) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(templates));
   }, [templates]);
 
-  const handleUse = useCallback(async (template) => {
+  useEffect(() => {
+    axiosConfig.get(API_ENDPOINTS.GET_JARS)
+      .then((res) => setJars(res.data || []))
+      .catch(() => {});
+  }, []);
+
+  const handleUse = useCallback((template) => {
     if (loadingId) return;
+    if (jars.length > 0) {
+      setPendingTemplate(template);
+    } else {
+      submitExpense(template, null);
+    }
+  }, [loadingId, jars]);
+
+  const submitExpense = useCallback(async (template, selectedJarId) => {
     setLoadingId(template.id);
     const today = new Date().toISOString().split("T")[0];
     const categoryId = template.categoryId || (categories[0]?.id ?? null);
@@ -246,11 +336,18 @@ const QuickExpenseTemplates = ({ categories = [], onAddExpense }) => {
         date: today,
         categoryId: categoryId,
         icon: template.emoji,
+        jarId: selectedJarId,
       });
     } finally {
       setLoadingId(null);
     }
-  }, [loadingId, categories, onAddExpense]);
+  }, [categories, onAddExpense]);
+
+  const handleJarPickerConfirm = useCallback((jarId) => {
+    const template = pendingTemplate;
+    setPendingTemplate(null);
+    submitExpense(template, jarId);
+  }, [pendingTemplate, submitExpense]);
 
   const handleSaveTemplate = (saved) => {
     setTemplates((prev) => {
@@ -359,11 +456,22 @@ const QuickExpenseTemplates = ({ categories = [], onAddExpense }) => {
         )}
       </div>
 
+      {/* Jar Picker Modal */}
+      {pendingTemplate !== null && jars.length > 0 && (
+        <JarPickerModal
+          template={pendingTemplate}
+          jars={jars}
+          onConfirm={handleJarPickerConfirm}
+          onClose={() => setPendingTemplate(null)}
+        />
+      )}
+
       {/* Edit / Create Modal */}
       {editingTemplate !== null && (
         <TemplateFormModal
           template={editingTemplate}
           categories={categories}
+          jars={jars}
           onSave={handleSaveTemplate}
           onClose={() => setEditingTemplate(null)}
         />
