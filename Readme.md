@@ -1,3 +1,12 @@
+# Money Manager - Quản Lý Tài Chính Cá Nhân
+
+Ứng dụng quản lý tài chính cá nhân toàn diện cho Web và Mobile. Hỗ trợ theo dõi thu nhập/chi tiêu, lập ngân sách, quản lý mục tiêu tiết kiệm, dự báo tài chính, xuất báo cáo Excel/Email, và trợ lý AI tích hợp (Nova Money).
+
+---
+
+## Kiến Trúc Hệ Thống
+
+```
 ```
 ┌─────────────────┐     REST API / JWT      ┌──────────────────────┐
 │   Frontend      │ ◄──────────────────────► │   Backend            │
