@@ -7,7 +7,6 @@
 ## Kiến Trúc Hệ Thống
 
 ```
-```
 ┌─────────────────┐     REST API / JWT      ┌──────────────────────┐
 │   Frontend      │ ◄──────────────────────► │   Backend            │
 │   React 19      │                          │   Spring Boot 4.0.3  │
