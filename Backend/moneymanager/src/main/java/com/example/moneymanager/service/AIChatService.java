@@ -27,11 +27,15 @@ import java.util.List;
 public class AIChatService {
 
     private static final String SYSTEM_PROMPT =
-            "B\u1EA1n l\u00E0 Nova \u2014 tr\u1EE3 l\u00FD AI \u0111\u1ED3ng h\u00E0nh c\u1EE7a Money Manager.\n" +
+            "B\u1EA1n l\u00E0 Nova \u2014 tr\u1EE3 l\u00FD AI \u0111\u1ED3ng h\u00E0nh th\u00E2n thi\u1EBFt c\u1EE7a Money Manager.\n" +
             "H\u1ED7 tr\u1EE3: t\u00E0i ch\u00EDnh c\u00E1 nh\u00E2n, t\u00E2m l\u00FD chi ti\u00EAu, h\u1ED7 tr\u1EE3 c\u1EA3m x\u00FAc/stress, l\u1EDDi khuy\u00EAn cu\u1ED9c s\u1ED1ng, h\u01B0\u1EDBng d\u1EABn app.\n" +
-            "T\u1EEB ch\u1ED1i l\u1ECBch s\u1EF1: ch\u00EDnh tr\u1ECB, ch\u1EA9n \u0111o\u00E1n y t\u1EBF, t\u01B0 v\u1EA5n ph\u00E1p l\u00FD c\u1EE5 th\u1EC3.\n" +
-            "Phong c\u00E1ch: ti\u1EBFng Vi\u1EC7t, th\u00E2n thi\u1EC7n, kh\u00F4ng ph\u00E1n x\u00E9t, kh\u00F4ng d\u00F9ng markdown (**, #, `).\n" +
-            "T\u1ED1i \u0111a 200 ch\u1EEF tr\u1EEB khi \u0111\u01B0\u1EE3c y\u00EAu c\u1EA7u gi\u1EA3i th\u00EDch d\u00E0i h\u01A1n.";
+            "T\u1EEB ch\u1ED1i l\u1ECBch s\u1EF1: ch\u00EDnh tr\u1ECB, ch\u1EA9n \u0111o\u00E1n y t\u1EBF, t\u01B0 v\u1EA5n ph\u00E1p l\u00FD c\u1EE5 th\u1EC3 \u2014 khi t\u1EEB ch\u1ED1i, lu\u00F4n c\u1EA3m \u01A1n ng\u01B0\u1EDDi d\u00F9ng v\u00E0 g\u1EE3i \u00FD h\u01B0\u1EDBng gi\u1EA3i quy\u1EBFt kh\u00E1c.\n" +
+            "Phong c\u00E1ch: ti\u1EBFng Vi\u1EC7t, \u1EA5m \u00E1p v\u00E0 quan t\u00E2m, kh\u00F4ng ph\u00E1n x\u00E9t, kh\u00F4ng d\u00F9ng markdown (**, #, `).\n" +
+            "Quy t\u1EAFc b\u1EAFt bu\u1ED9c:\n" +
+            "- Lu\u00F4n l\u1EAFng nghe v\u00E0 th\u1EEBa nh\u1EADn c\u1EA3m x\u00FAc c\u1EE7a ng\u01B0\u1EDDi d\u00F9ng tr\u01B0\u1EDBc khi \u0111\u01B0a l\u1EDDi khuy\u00EAn.\n" +
+            "- KH\u00D4NG bao gi\u1EDD tr\u1EA3 l\u1EDDi c\u1ED9c l\u1ED1c, l\u1EA1nh l\u00F9ng hay thi\u1EBFu ki\u00EAn nh\u1EABn.\n" +
+            "- D\u00F9ng ng\u00F4n ng\u1EEF g\u1EA7n g\u0169i (b\u1EA1n/m\u00ECnh), khuy\u1EBFn kh\u00EDch v\u00E0 \u0111\u1ED9ng vi\u00EAn thay v\u00EC ch\u1EC9 tr\u00EDch.\n" +
+            "T\u1ED1i \u0111a 200 ch\u1EEF tr\u1EEB khi ng\u01B0\u1EDDi d\u00F9ng y\u00EAu c\u1EA7u gi\u1EA3i th\u00EDch d\u00E0i h\u01A1n.";
 
     private static final int MAX_HISTORY_TURNS = 20;
 
@@ -72,6 +76,19 @@ public class AIChatService {
         validateRequest(request);
         List<AIChatMessageDTO> trimmedMessages = trimHistory(request.getMessages());
 
+        String provider = request.getProvider() != null ? request.getProvider() : "gemini";
+        if ("ninerouter".equalsIgnoreCase(provider)) {
+            if (!nineRouterKeyRotator.hasKeys()) {
+                log.warn("NineRouter not configured, falling back to Gemini for agent intent");
+                return geminiService.generateMultiTurn(systemPrompt, trimmedMessages, 1024);
+            }
+            AIChatResponseDTO response = chatWithOpenAICompatibleCustomPrompt(
+                    nineRouterRestClient, nineRouterProperties.model(),
+                    nineRouterKeyRotator.nextKey(), "ninerouter",
+                    trimmedMessages, systemPrompt
+            );
+            return response.getReply();
+        }
         return geminiService.generateMultiTurn(systemPrompt, trimmedMessages, 1024);
     }
 
@@ -186,6 +203,20 @@ public class AIChatService {
             }
             log.info("[{}] response (first 500 chars): {}", provider, rawResponse.length() > 500 ? rawResponse.substring(0, 500) : rawResponse);
 
+            // Some providers (e.g. NineRouter) return SSE streaming format even when stream=false is set
+            if (OpenRouterResponseParser.isSseFormat(rawResponse)) {
+                String sseReply = OpenRouterResponseParser.parseSseStream(rawResponse, objectMapper);
+                if (sseReply == null || sseReply.isBlank()) {
+                    log.warn("[{}] SSE stream returned no content", provider);
+                    sseReply = "Tôi đã nhận câu hỏi nhưng chưa tạo được câu trả lời phù hợp.";
+                }
+                return AIChatResponseDTO.builder()
+                        .reply(sseReply)
+                        .provider(provider)
+                        .modelUsed(model)
+                        .build();
+            }
+
             JsonNode root;
             try {
                 root = objectMapper.readTree(rawResponse);
@@ -228,6 +259,112 @@ public class AIChatService {
                     .build();
         } catch (Exception e) {
             log.error("[{}] chat error: {}", provider, e.getMessage(), e);
+            return AIChatResponseDTO.builder()
+                    .reply("Xin lỗi, tôi đang gặp sự cố. Bạn thử lại sau nhé.")
+                    .provider(provider)
+                    .modelUsed(model)
+                    .build();
+        }
+    }
+
+    private AIChatResponseDTO chatWithOpenAICompatibleCustomPrompt(
+            RestClient restClient, String model, String apiKey,
+            String provider, List<AIChatMessageDTO> messages, String customSystemPrompt) {
+        try {
+            ObjectNode requestBody = objectMapper.createObjectNode();
+            requestBody.put("model", model);
+            requestBody.put("stream", false);
+
+            ArrayNode msgArray = objectMapper.createArrayNode();
+            ObjectNode systemMsg = objectMapper.createObjectNode();
+            systemMsg.put("role", "system");
+            systemMsg.put("content", customSystemPrompt);
+            msgArray.add(systemMsg);
+
+            for (AIChatMessageDTO msg : messages) {
+                ObjectNode msgNode = objectMapper.createObjectNode();
+                msgNode.put("role", msg.getRole());
+                msgNode.put("content", msg.getContent());
+                msgArray.add(msgNode);
+            }
+            requestBody.set("messages", msgArray);
+
+            String requestJson = objectMapper.writeValueAsString(requestBody);
+            log.debug("[{}] agent intent request (first 200 chars): {}", provider, requestJson.length() > 200 ? requestJson.substring(0, 200) : requestJson);
+
+            String rawResponse = restClient.post()
+                    .uri("/chat/completions")
+                    .header("Authorization", "Bearer " + apiKey)
+                    .body(requestJson)
+                    .retrieve()
+                    .onStatus(status -> !status.is2xxSuccessful(), (req, res) -> {
+                        String errorBody = "";
+                        try { errorBody = new String(res.getBody().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8); } catch (Exception ignored) {}
+                        log.error("[{}] agent HTTP error {}: {}", provider, res.getStatusCode().value(), errorBody);
+                        throw new RuntimeException(provider + " API HTTP " + res.getStatusCode().value() + ": " + errorBody);
+                    })
+                    .body(String.class);
+
+            if (rawResponse == null || rawResponse.isBlank()) {
+                return AIChatResponseDTO.builder()
+                        .reply("Xin lỗi, dịch vụ AI đang bận. Bạn thử lại sau nhé.")
+                        .provider(provider)
+                        .modelUsed(model)
+                        .build();
+            }
+            log.info("[{}] agent response (first 500 chars): {}", provider, rawResponse.length() > 500 ? rawResponse.substring(0, 500) : rawResponse);
+
+            // Some providers (e.g. NineRouter) return SSE streaming format even when stream=false is set
+            if (OpenRouterResponseParser.isSseFormat(rawResponse)) {
+                String sseReply = OpenRouterResponseParser.parseSseStream(rawResponse, objectMapper);
+                if (sseReply == null || sseReply.isBlank()) {
+                    log.warn("[{}] agent SSE stream returned no content", provider);
+                    sseReply = "{}";
+                }
+                return AIChatResponseDTO.builder()
+                        .reply(sseReply)
+                        .provider(provider)
+                        .modelUsed(model)
+                        .build();
+            }
+
+            JsonNode root;
+            try {
+                root = objectMapper.readTree(rawResponse);
+            } catch (Exception parseEx) {
+                String cleaned = rawResponse.trim();
+                if (!cleaned.startsWith("{") && !cleaned.startsWith("[")) {
+                    return AIChatResponseDTO.builder()
+                            .reply(cleaned)
+                            .provider(provider)
+                            .modelUsed(model)
+                            .build();
+                }
+                throw parseEx;
+            }
+
+            JsonNode errorNode = root.get("error");
+            if (errorNode != null && !errorNode.isNull()) {
+                log.error("[{}] agent API error: {}", provider, errorNode.asText());
+                return AIChatResponseDTO.builder()
+                        .reply("Xin lỗi, dịch vụ AI đang bận. Bạn thử lại sau nhé.")
+                        .provider(provider)
+                        .modelUsed(model)
+                        .build();
+            }
+
+            String reply = OpenRouterResponseParser.extractAssistantText(root);
+            if (reply == null || reply.isBlank()) {
+                reply = "{}";
+            }
+
+            return AIChatResponseDTO.builder()
+                    .reply(reply)
+                    .provider(provider)
+                    .modelUsed(model)
+                    .build();
+        } catch (Exception e) {
+            log.error("[{}] agent intent error: {}", provider, e.getMessage(), e);
             return AIChatResponseDTO.builder()
                     .reply("Xin lỗi, tôi đang gặp sự cố. Bạn thử lại sau nhé.")
                     .provider(provider)

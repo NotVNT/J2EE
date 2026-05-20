@@ -62,6 +62,11 @@ const QUICK_ACTIONS = [
   { label: "🎯 Lập kế hoạch mục tiêu", text: "Giúp tôi lên kế hoạch tiết kiệm cho một mục tiêu lớn" },
 ];
 
+const AGENT_MODEL_OPTIONS = [
+  { value: "gemini",     label: "🤖 Gemini 3.1 Flash Lite" },
+  { value: "ninerouter", label: "🔬 EXPERIMENTAL" },
+];
+
 const PUBLIC_PATHS = new Set([
   "/",
   "/home",
@@ -165,8 +170,10 @@ const ChatWidget = () => {
   const [messages, setMessages] = useState([WELCOME_MESSAGE]);
   const [selectedProvider, setProvider] = useState(isFreePlan ? "gptoss" : "gemini");
   const [chatModel, setChatModel] = useState("gptoss");
+  const [agentModel, setAgentModel] = useState("gemini");
   const [showExperimentalWarning, setShowExperimentalWarning] = useState(false);
   const [pendingChatModel, setPendingChatModel] = useState(null);
+  const [pendingAgentModel, setPendingAgentModel] = useState(null);
   const [inputMessage, setInputMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [isProcessingCrud, setIsProcessingCrud] = useState(false);
@@ -220,14 +227,14 @@ const ChatWidget = () => {
     }
 
     const activeProvider = selectedProvider === "gemini"
-      ? "gemini"
-      : chatModel === "ninerouter" ? "ninerouter" : "gptoss";
+      ? (agentModel === "ninerouter" ? "ninerouter" : "gemini")
+      : (chatModel === "ninerouter" ? "ninerouter" : "gptoss");
     const activeModel = selectedProvider === "gemini"
-      ? "gemini-3.1-flash-lite"
-      : chatModel === "ninerouter" ? "project-demo" : "gpt-oss-120b";
+      ? (agentModel === "ninerouter" ? "project-demo" : "gemini-3.1-flash-lite")
+      : (chatModel === "ninerouter" ? "project-demo" : "gpt-oss-120b");
     const activeModelLabel = selectedProvider === "gemini"
-      ? "Gemini 3.1 Flash Lite"
-      : chatModel === "ninerouter" ? "EXPERIMENTAL" : "GPT-OSS 120B";
+      ? (agentModel === "ninerouter" ? "EXPERIMENTAL" : "Gemini 3.1 Flash Lite")
+      : (chatModel === "ninerouter" ? "EXPERIMENTAL" : "GPT-OSS 120B");
 
     const userMessage = {
       id: `user-${Date.now()}`,
@@ -506,17 +513,33 @@ const ChatWidget = () => {
     setChatModel(newModel);
   };
 
+  const handleAgentModelChange = (newModel) => {
+    if (newModel === agentModel) return;
+    if (!isPremiumPlan && newModel === "ninerouter") return;
+    if (newModel === "ninerouter") {
+      setPendingAgentModel("ninerouter");
+      setShowExperimentalWarning(true);
+      return;
+    }
+    setAgentModel(newModel);
+  };
+
   const confirmExperimentalModel = () => {
-    if (pendingChatModel === "ninerouter") {
-      setChatModel("ninerouter");
+    if (pendingChatModel) {
+      setChatModel(pendingChatModel);
+      setPendingChatModel(null);
+    }
+    if (pendingAgentModel) {
+      setAgentModel(pendingAgentModel);
+      setPendingAgentModel(null);
     }
     setShowExperimentalWarning(false);
-    setPendingChatModel(null);
   };
 
   const cancelExperimentalModel = () => {
     setShowExperimentalWarning(false);
     setPendingChatModel(null);
+    setPendingAgentModel(null);
   };
 
   const handleSubmit = async (event) => {
@@ -757,7 +780,9 @@ const ChatWidget = () => {
                 onChange={(event) => setInputMessage(event.target.value)}
                 placeholder={
                   selectedProvider === "gemini"
-                    ? "Nhập thao tác: tạo/sửa/xóa dữ liệu, xuất báo cáo... [Gemini 3.1 Flash Lite]"
+                    ? agentModel === "ninerouter"
+                      ? "Nhập thao tác: tạo/sửa/xóa dữ liệu, xuất báo cáo... [EXPERIMENTAL]"
+                      : "Nhập thao tác: tạo/sửa/xóa dữ liệu, xuất báo cáo... [Gemini 3.1 Flash Lite]"
                     : chatModel === "ninerouter"
                       ? "Nhập câu hỏi hoặc trò chuyện... [EXPERIMENTAL]"
                       : "Nhập câu hỏi hoặc trò chuyện... [GPT-OSS 120B]"
@@ -781,13 +806,26 @@ const ChatWidget = () => {
               </button>
             </div>
 
-            {/* Model selector — only in Chat mode */}
+            {/* Model selector — Chat mode */}
             {selectedProvider !== "gemini" && (
               <div className="mt-2">
                 <ModelSelector
                   value={chatModel}
                   onChange={handleModelChange}
                   disabled={!isPremiumPlan}
+                />
+              </div>
+            )}
+
+            {/* Agent model selector — Agent mode */}
+            {selectedProvider === "gemini" && (
+              <div className="mt-2">
+                <ModelSelector
+                  value={agentModel}
+                  onChange={handleAgentModelChange}
+                  disabled={!isPremiumPlan}
+                  label="Agent model"
+                  options={AGENT_MODEL_OPTIONS}
                 />
               </div>
             )}
