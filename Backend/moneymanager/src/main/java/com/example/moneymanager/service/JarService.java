@@ -36,6 +36,13 @@ public class JarService {
             throw new RuntimeException("Gói BASIC tối đa 6 hũ. Vui lòng nâng cấp lên PREMIUM.");
         }
 
+        if (!"Ví tổng".equals(jarDTO.getName()) && jarDTO.getTargetPercentage() != null) {
+            BigDecimal pct = jarDTO.getTargetPercentage();
+            if (pct.compareTo(BigDecimal.ZERO) < 0 || pct.compareTo(new BigDecimal("100")) > 0) {
+                throw new RuntimeException("Tỷ lệ phân bổ phải trong khoảng 0-100%");
+            }
+        }
+
         JarEntity jar = JarEntity.builder()
                 .profile(profile)
                 .name(jarDTO.getName())
@@ -88,6 +95,12 @@ public class JarService {
         jar.setColor(jarDTO.getColor());
 
         if (jarDTO.getTargetPercentage() != null) {
+            if (!"Ví tổng".equals(jarDTO.getName())) {
+                BigDecimal pct = jarDTO.getTargetPercentage();
+                if (pct.compareTo(BigDecimal.ZERO) < 0 || pct.compareTo(new BigDecimal("100")) > 0) {
+                    throw new RuntimeException("Tỷ lệ phân bổ phải trong khoảng 0-100%");
+                }
+            }
             jar.setTargetPercentage(jarDTO.getTargetPercentage());
         }
 
@@ -128,6 +141,9 @@ public class JarService {
 
     @Transactional
     public void transferBalance(Long fromJarId, Long toJarId, BigDecimal amount) {
+        if (fromJarId.equals(toJarId)) {
+            throw new RuntimeException("Không thể chuyển tiền vào cùng một hũ");
+        }
         ProfileEntity profile = profileService.getCurrentProfile();
         JarEntity fromJar = jarRepository.findById(fromJarId)
                 .orElseThrow(() -> new RuntimeException("Source Jar not found"));
@@ -140,6 +156,9 @@ public class JarService {
 
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new RuntimeException("Amount must be positive");
+        }
+        if (fromJar.getCurrentBalance().compareTo(amount) < 0) {
+            throw new RuntimeException("Số dư hũ nguồn không đủ");
         }
 
         fromJar.setCurrentBalance(fromJar.getCurrentBalance().subtract(amount));
