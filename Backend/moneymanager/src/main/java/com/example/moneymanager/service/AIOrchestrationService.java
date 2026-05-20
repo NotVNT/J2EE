@@ -239,7 +239,11 @@ public class AIOrchestrationService {
             case "CREATE_EXPENSE" -> {
                 String catNameExp = (String) data.get("categoryName");
                 Long catIdExp = findCategoryId(catNameExp, profile.getId(), "expense");
-                if (catIdExp == null) yield "\u26A0\uFE0F Kh\u00F4ng t\u00ECm th\u1EA5y danh m\u1EE5c \"" + catNameExp + "\". Vui l\u00F2ng ki\u1EC3m tra l\u1EA1i t\u00EAn danh m\u1EE5c.";
+                if (catIdExp == null) {
+                    String available = String.join(", ", categoryRepository.findByTypeAndProfileId("expense", profile.getId())
+                            .stream().map(CategoryEntity::getName).toList());
+                    yield "\u26A0\uFE0F Kh\u00F4ng t\u00ECm th\u1EA5y danh m\u1EE5c \"" + catNameExp + "\". Danh m\u1EE5c chi ti\u00EAu hi\u1EC7n c\u00F3: " + (available.isBlank() ? "(ch\u01B0a c\u00F3)" : available);
+                }
                 ExpenseDTO dto = mapToExpenseDTO(data, catIdExp);
                 expenseService.addExpense(dto);
                 yield "\u2705 \u0110\u00E3 t\u1EA1o chi ti\u00EAu " + formatCurrency(dto.getAmount()) + "\u0111 cho " + dto.getCategoryName();
@@ -248,7 +252,11 @@ public class AIOrchestrationService {
             case "CREATE_INCOME" -> {
                 String catNameInc = (String) data.get("categoryName");
                 Long catIdInc = findCategoryId(catNameInc, profile.getId(), "income");
-                if (catIdInc == null) yield "\u26A0\uFE0F Kh\u00F4ng t\u00ECm th\u1EA5y danh m\u1EE5c \"" + catNameInc + "\". Vui l\u00F2ng ki\u1EC3m tra l\u1EA1i t\u00EAn danh m\u1EE5c.";
+                if (catIdInc == null) {
+                    String available = String.join(", ", categoryRepository.findByTypeAndProfileId("income", profile.getId())
+                            .stream().map(CategoryEntity::getName).toList());
+                    yield "\u26A0\uFE0F Kh\u00F4ng t\u00ECm th\u1EA5y danh m\u1EE5c \"" + catNameInc + "\". Danh m\u1EE5c thu nh\u1EADp hi\u1EC7n c\u00F3: " + (available.isBlank() ? "(ch\u01B0a c\u00F3)" : available);
+                }
                 IncomeDTO dto = mapToIncomeDTO(data, catIdInc);
                 incomeService.addIncome(dto);
                 yield "\u2705 \u0110\u00E3 t\u1EA1o thu nh\u1EADp " + formatCurrency(dto.getAmount()) + "\u0111";
@@ -609,9 +617,10 @@ public class AIOrchestrationService {
     private ExpenseDTO mapToExpenseDTO(Map<String, Object> data, Long categoryId) {
         BigDecimal amount = toBigDecimal(data.get("amount"));
         String categoryName = (String) data.get("categoryName");
+        String description = (String) data.get("description");
         LocalDate date = parseDate((String) data.get("date"));
         return ExpenseDTO.builder()
-                .name(categoryName)
+                .name(description != null && !description.isBlank() ? description : categoryName)
                 .amount(amount)
                 .categoryId(categoryId)
                 .categoryName(categoryName)
@@ -622,9 +631,10 @@ public class AIOrchestrationService {
     private IncomeDTO mapToIncomeDTO(Map<String, Object> data, Long categoryId) {
         BigDecimal amount = toBigDecimal(data.get("amount"));
         String categoryName = (String) data.get("categoryName");
+        String description = (String) data.get("description");
         LocalDate date = parseDate((String) data.get("date"));
         return IncomeDTO.builder()
-                .name(categoryName)
+                .name(description != null && !description.isBlank() ? description : categoryName)
                 .amount(amount)
                 .categoryId(categoryId)
                 .categoryName(categoryName)

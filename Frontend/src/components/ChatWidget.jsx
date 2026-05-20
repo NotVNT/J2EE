@@ -63,7 +63,7 @@ const QUICK_ACTIONS = [
 ];
 
 const AGENT_MODEL_OPTIONS = [
-  { value: "gemini",     label: "🤖 Gemini 3.1 Flash Lite" },
+  { value: "gemini",     label: "🤖 Gemini 3.5 Flash" },
   { value: "ninerouter", label: "🔬 EXPERIMENTAL" },
 ];
 
@@ -230,10 +230,10 @@ const ChatWidget = () => {
       ? (agentModel === "ninerouter" ? "ninerouter" : "gemini")
       : (chatModel === "ninerouter" ? "ninerouter" : "gptoss");
     const activeModel = selectedProvider === "gemini"
-      ? (agentModel === "ninerouter" ? "project-demo" : "gemini-3.1-flash-lite")
+      ? (agentModel === "ninerouter" ? "project-demo" : "gemini-3.5-flash")
       : (chatModel === "ninerouter" ? "project-demo" : "gpt-oss-120b");
     const activeModelLabel = selectedProvider === "gemini"
-      ? (agentModel === "ninerouter" ? "EXPERIMENTAL" : "Gemini 3.1 Flash Lite")
+      ? (agentModel === "ninerouter" ? "EXPERIMENTAL" : "Gemini 3.5 Flash")
       : (chatModel === "ninerouter" ? "EXPERIMENTAL" : "GPT-OSS 120B");
 
     const userMessage = {
@@ -720,7 +720,7 @@ const ChatWidget = () => {
                       </ReactMarkdown>
                       {!chatMessage.isError && !chatMessage.isSystem && chatMessage.modelUsed && (
                         <span className="block text-[10px] text-slate-400 dark:text-slate-500 mt-1">
-                          Nova Money · {chatMessage.modelLabel || (chatMessage.provider === "gemini" ? "Gemini 3.1 Flash Lite" : "GPT-OSS 120B")}
+                          Nova Money · {chatMessage.modelLabel || (chatMessage.provider === "gemini" ? "Gemini 3.5 Flash" : "GPT-OSS 120B")}
                         </span>
                       )}
                     </div>
@@ -782,7 +782,7 @@ const ChatWidget = () => {
                   selectedProvider === "gemini"
                     ? agentModel === "ninerouter"
                       ? "Nhập thao tác: tạo/sửa/xóa dữ liệu, xuất báo cáo... [EXPERIMENTAL]"
-                      : "Nhập thao tác: tạo/sửa/xóa dữ liệu, xuất báo cáo... [Gemini 3.1 Flash Lite]"
+                      : "Nhập thao tác: tạo/sửa/xóa dữ liệu, xuất báo cáo... [Gemini 3.5 Flash]"
                     : chatModel === "ninerouter"
                       ? "Nhập câu hỏi hoặc trò chuyện... [EXPERIMENTAL]"
                       : "Nhập câu hỏi hoặc trò chuyện... [GPT-OSS 120B]"
