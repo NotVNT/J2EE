@@ -4,7 +4,7 @@ import { useContext, useEffect, useState } from "react";
 import axiosConfig from "../util/axiosConfig.jsx";
 import { API_ENDPOINTS } from "../util/apiEndpoints.js";
 import toast from "react-hot-toast";
-import { ChevronDown } from "lucide-react";
+import CustomSelect from "../components/CustomSelect.jsx";
 import IncomeList from "../components/IncomeList.jsx";
 import Modal from "../components/Modal.jsx";
 import AddIncomeForm from "../components/AddIncomeForm.jsx";
@@ -149,18 +149,16 @@ const Income = () => {
           bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10">
           <h3 className="text-base font-bold text-slate-900 dark:text-white">Khung thời gian</h3>
           <div className="flex gap-3 items-center">
-            <div className="relative">
-              <select
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value)}
-                className="form-input mt-0 py-2 px-3 pr-8 appearance-none cursor-pointer"
-              >
-                <option value="current" className="text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-800">Tháng này</option>
-                <option value="all" className="text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-800">Tất cả thời gian</option>
-                <option value="specific" className="text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-800">Chọn tháng</option>
-              </select>
-              <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-slate-500" />
-            </div>
+            <CustomSelect
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value)}
+              options={[
+                { value: "current", label: "Tháng này" },
+                { value: "all", label: "Tất cả thời gian" },
+                { value: "specific", label: "Chọn tháng" },
+              ]}
+              className="form-input mt-0 py-2 px-3"
+            />
             {filterType === "specific" && (
               <input
                 type="month"

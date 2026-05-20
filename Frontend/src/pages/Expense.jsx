@@ -1,6 +1,7 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { LoaderCircle, Trash2, ChevronDown } from "lucide-react";
+import { LoaderCircle, Trash2 } from "lucide-react";
+import CustomSelect from "../components/CustomSelect.jsx";
 import { AppContext } from "../context/AppContext.jsx";
 import { useUser } from "../hooks/useUser.jsx";
 import axiosConfig from "../util/axiosConfig.jsx";
@@ -289,15 +290,15 @@ const Expense = () => {
                     </div>
                     <div className="md:col-span-3">
                       <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Danh mục</label>
-                      <div className="relative">
-                        <select className={`${inputCls} appearance-none pr-8 cursor-pointer`} value={item.categoryId ?? ""} onChange={(e) => handlePreviewItemChange(index, "categoryId", e.target.value)}>
-                          <option value="" className="text-slate-400 dark:text-slate-500 bg-white dark:bg-slate-800">Chọn danh mục</option>
-                          {categories.map((category) => (
-                            <option key={category.id} value={category.id} className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">{category.name}</option>
-                          ))}
-                        </select>
-                        <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-slate-500" />
-                      </div>
+                      <CustomSelect
+                        value={item.categoryId ?? ""}
+                        onChange={(e) => handlePreviewItemChange(index, "categoryId", e.target.value)}
+                        options={[
+                          { value: "", label: "Chọn danh mục" },
+                          ...categories.map((c) => ({ value: c.id, label: c.name })),
+                        ]}
+                        className={inputCls}
+                      />
                     </div>
                     <div className="md:col-span-2">
                       <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Ngày</label>
