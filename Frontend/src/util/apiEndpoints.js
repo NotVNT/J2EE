@@ -125,4 +125,11 @@ export const API_ENDPOINTS = {
     FORECAST_ANOMALIES: "/forecast/anomalies",
     FORECAST_CATEGORY_TREND: (categoryId, months) => `/forecast/category-trend/${categoryId}?months=${months}`,
     FORECAST_INSIGHTS: "/forecast/insights",
+
+    // Jar endpoints
+    GET_JARS: "/jars",
+    ADD_JAR: "/jars",
+    UPDATE_JAR: (jarId) => `/jars/${jarId}`,
+    DELETE_JAR: (jarId) => `/jars/${jarId}`,
+    TRANSFER_JAR: "/jars/transfer",
 }

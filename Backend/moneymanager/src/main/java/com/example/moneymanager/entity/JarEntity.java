@@ -9,50 +9,53 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 @Entity
-@Table(name = "tbl_incomes", indexes = {
-    @Index(name = "idx_income_profile_date", columnList = "profile_id, date"),
-    @Index(name = "idx_income_profile_id", columnList = "profile_id")
+@Table(name = "tbl_jars", indexes = {
+    @Index(name = "idx_jar_profile_id", columnList = "profile_id")
 })
-public class IncomeEntity {
+public class JarEntity {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(nullable = false)
     private String name;
+
     private String icon;
-    private LocalDate date;
-    private BigDecimal amount;
+    
+    private String color;
+
+    @Column(precision = 5, scale = 2)
+    private BigDecimal targetPercentage;
+
+    @Column(precision = 19, scale = 2)
+    private BigDecimal currentBalance;
 
     @Column(updatable = false)
     @CreationTimestamp
     private LocalDateTime createdAt;
+    
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id", nullable = false)
-    private CategoryEntity category;
-
-    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "profile_id", nullable = false)
     private ProfileEntity profile;
-
-    @OneToMany(mappedBy = "income", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<IncomeAllocationEntity> allocations = new ArrayList<>();
-
+    
     @PrePersist
     public void prePersist() {
-        if (this.date == null) {
-            this.date = LocalDate.now();
+        if (this.currentBalance == null) {
+            this.currentBalance = BigDecimal.ZERO;
+        }
+        if (this.targetPercentage == null) {
+            this.targetPercentage = BigDecimal.ZERO;
         }
     }
 }

@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import EmojiPickerPopup from "./EmojiPickerPopup.jsx";
 import Input from "./Input.jsx";
 import { formatCurrency, parseCurrency } from "../util/helper.js";
+import axiosConfig from "../util/axiosConfig.jsx";
+import { API_ENDPOINTS } from "../util/apiEndpoints.js";
+import { AlertTriangle } from "lucide-react";
 
 // Add 'categories' prop
 const AddExpenseForm = ({ onAddExpense, categories }) => {
@@ -11,7 +14,15 @@ const AddExpenseForm = ({ onAddExpense, categories }) => {
         amount: "",
         date: "",
         icon: "", // Icon might be associated with the selected category, or kept separate for custom entries
+        jarId: "",
     });
+    const [jars, setJars] = useState([]);
+
+    useEffect(() => {
+        axiosConfig.get(API_ENDPOINTS.GET_JARS)
+            .then((res) => { if (res.data) setJars(res.data); })
+            .catch(() => {});
+    }, []);
 
     // Effect to set a default category if categories are loaded and none is selected
     useEffect(() => {
@@ -20,6 +31,12 @@ const AddExpenseForm = ({ onAddExpense, categories }) => {
             setExpense((prev) => ({ ...prev, categoryId: categories[0].id })); // Use categories[0].id for MySQL
         }
     }, [categories, expense.categoryId]);
+
+    useEffect(() => {
+        if (jars.length > 0 && !expense.jarId) {
+            setExpense((prev) => ({ ...prev, jarId: jars[0].id }));
+        }
+    }, [jars, expense.jarId]);
 
     const handleChange = (key, value) => setExpense({ ...expense, [key]: value }); // Changed setIncome to setExpense
 
@@ -33,6 +50,15 @@ const AddExpenseForm = ({ onAddExpense, categories }) => {
         value: cat.id, // Correct for MySQL 'id'
         label: `${cat.name}`, // Display icon and name in dropdown
     }));
+
+    const jarOptions = jars.map((j) => ({
+        value: j.id,
+        label: `🏦 ${j.name?.trim() || 'Hũ không tên'}`,
+    }));
+
+    const selectedJar = jars.find((j) => String(j.id) === String(expense.jarId));
+    const parsedAmount = Number(expense.amount) || 0;
+    const insufficientBalance = selectedJar && parsedAmount > (selectedJar.currentBalance ?? 0);
 
     return (
         <div>
@@ -58,6 +84,28 @@ const AddExpenseForm = ({ onAddExpense, categories }) => {
                 isSelect={true}
                 options={categoryOptions}
             />
+
+            {/* Jar selection */}
+            {jars.length > 0 && (
+                <div className="mt-0">
+                    <Input
+                        label="Trừ từ hũ"
+                        placeholder="Chọn hũ thanh toán"
+                        value={expense.jarId}
+                        onChange={({ target }) => handleChange("jarId", target.value)}
+                        isSelect={true}
+                        options={jarOptions}
+                    />
+                    {insufficientBalance && (
+                        <div className="flex items-center gap-1.5 mt-1 px-1">
+                            <AlertTriangle size={13} className="text-amber-500 shrink-0" />
+                            <p className="text-xs text-amber-600 dark:text-amber-400">
+                                Số dư hũ không đủ ({new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(selectedJar.currentBalance)})
+                            </p>
+                        </div>
+                    )}
+                </div>
+            )}
 
             <Input
                 value={formatCurrency(expense.amount)}

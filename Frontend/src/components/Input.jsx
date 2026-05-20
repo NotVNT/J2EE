@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Eye, EyeOff, ChevronDown } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
+import CustomSelect from "./CustomSelect.jsx";
 
 const Input = ({ label, value, onChange, placeholder, type = "text", isSelect = false, options = [] }) => {
   const [showPassword, setShowPassword] = useState(false);
@@ -17,30 +18,13 @@ const Input = ({ label, value, onChange, placeholder, type = "text", isSelect = 
       )}
       <div className="relative">
         {isSelect ? (
-          <>
-            <select
-              className={`${baseClass} appearance-none pr-10 cursor-pointer`}
-              value={value}
-              onChange={onChange}
-            >
-              <option value="" disabled className="text-slate-400 dark:text-slate-500 bg-white dark:bg-slate-800">
-                {placeholder || "Chọn một tuỳ chọn"}
-              </option>
-              {options.map((opt) => (
-                <option
-                  key={opt.value}
-                  value={opt.value}
-                  className="text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-800"
-                >
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-            <ChevronDown
-              size={16}
-              className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-slate-500"
-            />
-          </>
+          <CustomSelect
+            value={value}
+            onChange={onChange}
+            options={options}
+            placeholder={placeholder}
+            className={`${baseClass} pr-4`}
+          />
         ) : (
           <>
             <input

@@ -24,4 +24,6 @@ public class ExpenseDTO {
     private LocalDate date;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private Long jarId;
+    private String jarName;
 }

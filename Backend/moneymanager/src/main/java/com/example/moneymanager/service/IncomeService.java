@@ -23,6 +23,8 @@ public class IncomeService {
     private final ProfileService profileService;
     private final SubscriptionService subscriptionService;
     private final NotificationService notificationService;
+    private final com.example.moneymanager.repository.JarRepository jarRepository;
+    private final com.example.moneymanager.repository.IncomeAllocationRepository incomeAllocationRepository;
 
     // Adds a new income to the database
     public IncomeDTO addIncome(IncomeDTO dto) {
@@ -37,6 +39,49 @@ public class IncomeService {
                 .orElseThrow(() -> new RuntimeException("Category not found"));
         IncomeEntity newIncome = toEntity(dto, profile, category);
         newIncome = incomeRepository.save(newIncome);
+
+        if (dto.getAllocations() != null && !dto.getAllocations().isEmpty()) {
+            for (com.example.moneymanager.dto.IncomeAllocationDTO allocDTO : dto.getAllocations()) {
+                com.example.moneymanager.entity.JarEntity jar = jarRepository.findById(allocDTO.getJarId())
+                    .orElseThrow(() -> new RuntimeException("Jar not found"));
+                if (!jar.getProfile().getId().equals(profile.getId())) {
+                    throw new RuntimeException("Unauthorized jar access");
+                }
+                jar.setCurrentBalance(jar.getCurrentBalance().add(allocDTO.getAmount()));
+                jarRepository.save(jar);
+                
+                com.example.moneymanager.entity.IncomeAllocationEntity allocation = com.example.moneymanager.entity.IncomeAllocationEntity.builder()
+                        .income(newIncome)
+                        .jar(jar)
+                        .amount(allocDTO.getAmount())
+                        .build();
+                incomeAllocationRepository.save(allocation);
+            }
+        } else {
+            List<com.example.moneymanager.entity.JarEntity> jars = jarRepository.findByProfile(profile);
+            com.example.moneymanager.entity.JarEntity defaultJar;
+            if (jars.isEmpty()) {
+                defaultJar = com.example.moneymanager.entity.JarEntity.builder()
+                        .profile(profile)
+                        .name("Ví tổng")
+                        .icon("")
+                        .color("#4CAF50")
+                        .targetPercentage(new java.math.BigDecimal("100.00"))
+                        .currentBalance(dto.getAmount())
+                        .build();
+            } else {
+                defaultJar = jars.get(0);
+                defaultJar.setCurrentBalance(defaultJar.getCurrentBalance().add(dto.getAmount()));
+            }
+            jarRepository.save(defaultJar);
+            
+            com.example.moneymanager.entity.IncomeAllocationEntity allocation = com.example.moneymanager.entity.IncomeAllocationEntity.builder()
+                    .income(newIncome)
+                    .jar(defaultJar)
+                    .amount(dto.getAmount())
+                    .build();
+            incomeAllocationRepository.save(allocation);
+        }
 
         // Notify income added
         notificationService.notifyIncomeAdded(profile, newIncome.getName(), newIncome.getAmount());
@@ -74,6 +119,14 @@ public class IncomeService {
         if (!entity.getProfile().getId().equals(profile.getId())) {
             throw new RuntimeException("Unauthorized to delete this income");
         }
+        
+        List<com.example.moneymanager.entity.IncomeAllocationEntity> allocations = incomeAllocationRepository.findByIncomeId(incomeId);
+        for (com.example.moneymanager.entity.IncomeAllocationEntity alloc : allocations) {
+            com.example.moneymanager.entity.JarEntity jar = alloc.getJar();
+            jar.setCurrentBalance(jar.getCurrentBalance().subtract(alloc.getAmount()));
+            jarRepository.save(jar);
+        }
+        
         incomeRepository.delete(entity);
     }
 
@@ -126,6 +179,13 @@ public class IncomeService {
                 .date(entity.getDate())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
+                .allocations(entity.getAllocations() != null ? entity.getAllocations().stream().map(alloc -> com.example.moneymanager.dto.IncomeAllocationDTO.builder()
+                        .id(alloc.getId())
+                        .incomeId(alloc.getIncome().getId())
+                        .jarId(alloc.getJar().getId())
+                        .jarName(alloc.getJar().getName())
+                        .amount(alloc.getAmount())
+                        .build()).collect(java.util.stream.Collectors.toList()) : new java.util.ArrayList<>())
                 .build();
     }
 
