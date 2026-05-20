@@ -15,7 +15,7 @@ const JarTransferModal = ({ jars, onTransfer, onClose }) => {
 
   const jarOptions = jars.map((j) => ({
     value: j.id,
-    label: `🏦 ${j.name} (${fmt(j.currentBalance)})`,
+    label: `🏦 ${j.name?.trim() || 'Hũ không tên'} (${fmt(j.currentBalance)})`,
   }));
 
   const handleAmountChange = (e) => {

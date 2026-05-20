@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Zap, Plus, Pencil, Trash2, X, Check, LoaderCircle } from "lucide-react";
+import CustomSelect from "./CustomSelect.jsx";
 import toast from "react-hot-toast";
 import axiosConfig from "../util/axiosConfig.jsx";
 import { API_ENDPOINTS } from "../util/apiEndpoints.js";
@@ -134,15 +135,12 @@ function JarPickerModal({ template, jars, onConfirm, onClose }) {
         <p className="text-sm text-slate-500 dark:text-slate-400">
           {template.emoji} {template.name} — {fmt(template.amount)}
         </p>
-        <select
+        <CustomSelect
           value={jarId ?? ""}
           onChange={(e) => setJarId(Number(e.target.value))}
-          className={inputCls + " appearance-none cursor-pointer"}
-        >
-          {jars.map((j) => (
-            <option key={j.id} value={j.id}>🏦 {j.name}</option>
-          ))}
-        </select>
+          options={jars.map((j) => ({ value: j.id, label: `🏦 ${j.name?.trim() || 'Hũ không tên'}` }))}
+          className={inputCls}
+        />
         <div className="flex gap-2 pt-1">
           <button
             type="button"
@@ -240,16 +238,15 @@ function TemplateFormModal({ template, categories, jars, onSave, onClose }) {
         {categories.length > 0 && (
           <div>
             <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">Danh mục (tuỳ chọn)</label>
-            <select
-              className={inputCls + " appearance-none cursor-pointer"}
+            <CustomSelect
               value={form.categoryId ?? ""}
               onChange={(e) => setForm((p) => ({ ...p, categoryId: e.target.value || null }))}
-            >
-              <option value="">Không chọn danh mục</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
+              options={[
+                { value: "", label: "Không chọn danh mục" },
+                ...categories.map((c) => ({ value: c.id, label: c.name })),
+              ]}
+              className={inputCls}
+            />
           </div>
         )}
 
@@ -257,16 +254,15 @@ function TemplateFormModal({ template, categories, jars, onSave, onClose }) {
         {jars.length > 0 && (
           <div>
             <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">Hũ mặc định (tuỳ chọn)</label>
-            <select
-              className={inputCls + " appearance-none cursor-pointer"}
+            <CustomSelect
               value={form.jarId ?? ""}
               onChange={(e) => setForm((p) => ({ ...p, jarId: e.target.value || null }))}
-            >
-              <option value="">Không chọn hũ</option>
-              {jars.map((j) => (
-                <option key={j.id} value={j.id}>🏦 {j.name}</option>
-              ))}
-            </select>
+              options={[
+                { value: "", label: "Không chọn hũ" },
+                ...jars.map((j) => ({ value: j.id, label: `🏦 ${j.name?.trim() || 'Hũ không tên'}` })),
+              ]}
+              className={inputCls}
+            />
           </div>
         )}
 

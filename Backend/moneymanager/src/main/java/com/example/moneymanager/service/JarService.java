@@ -25,6 +25,10 @@ public class JarService {
 
     @Transactional
     public JarDTO createJar(JarDTO jarDTO) {
+        if (jarDTO.getName() == null || jarDTO.getName().trim().isEmpty()) {
+            throw new RuntimeException("Tên hũ không được để trống");
+        }
+
         ProfileEntity profile = profileService.getCurrentProfile();
 
         long currentJarCount = jarRepository.countByProfileId(profile.getId());
@@ -82,6 +86,10 @@ public class JarService {
 
     @Transactional
     public JarDTO updateJar(Long jarId, JarDTO jarDTO) {
+        if (jarDTO.getName() == null || jarDTO.getName().trim().isEmpty()) {
+            throw new RuntimeException("Tên hũ không được để trống");
+        }
+
         ProfileEntity profile = profileService.getCurrentProfile();
         JarEntity jar = jarRepository.findById(jarId)
                 .orElseThrow(() -> new RuntimeException("Jar not found"));

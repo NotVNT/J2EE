@@ -53,7 +53,7 @@ const AddExpenseForm = ({ onAddExpense, categories }) => {
 
     const jarOptions = jars.map((j) => ({
         value: j.id,
-        label: `🏦 ${j.name}`,
+        label: `🏦 ${j.name?.trim() || 'Hũ không tên'}`,
     }));
 
     const selectedJar = jars.find((j) => String(j.id) === String(expense.jarId));
