@@ -156,13 +156,13 @@ const Payment = () => {
                   ))}
                 </div>
                 <div className="flex flex-wrap gap-3">
-                  <button onClick={handleUpgradePlan} type="button" className="flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 hover:bg-slate-100 transition-all">
+                  <button onClick={handleUpgradePlan} type="button" className="flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 hover:bg-slate-100 transition">
                     <Zap size={15} />Nâng cấp gói
                   </button>
-                  <button onClick={() => setShowManagePanel((v) => !v)} type="button" className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white hover:bg-white/15 transition-all">
+                  <button onClick={() => setShowManagePanel((v) => !v)} type="button" className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white hover:bg-white/15 transition">
                     <Settings2 size={15} />Quản lý gói
                   </button>
-                  <Link to="/dashboard" className="flex items-center gap-2 rounded-xl border border-white/20 px-4 py-2.5 text-sm font-semibold text-white hover:bg-white/10 transition-all">
+                  <Link to="/dashboard" className="flex items-center gap-2 rounded-xl border border-white/20 px-4 py-2.5 text-sm font-semibold text-white hover:bg-white/10 transition">
                     <House size={15} />Về tổng quan
                   </Link>
                 </div>
@@ -189,8 +189,8 @@ const Payment = () => {
                         <p className="font-semibold text-slate-900 dark:text-white text-sm">Tự gia hạn</p>
                         <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Điều chỉnh cách gói được duy trì sau khi hết hạn.</p>
                       </div>
-                      <button className={`relative h-7 w-12 rounded-full transition-all ${autoRenew ? "bg-emerald-500" : "bg-slate-300 dark:bg-white/20"}`} onClick={handleToggleAutoRenew} type="button">
-                        <span className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-all ${autoRenew ? "left-5" : "left-0.5"}`} />
+                      <button className={`relative h-7 w-12 rounded-full transition-colors ${autoRenew ? "bg-emerald-500" : "bg-slate-300 dark:bg-white/20"}`} onClick={handleToggleAutoRenew} type="button">
+                        <span className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-[left] ${autoRenew ? "left-5" : "left-0.5"}`} />
                       </button>
                     </div>
                     <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -217,7 +217,7 @@ const Payment = () => {
                     return (
                       <button
                         key={plan.planId}
-                        className={`rounded-2xl border p-5 text-left transition-all ${
+                        className={`rounded-2xl border p-5 text-left transition ${
                           isSelected
                             ? "border-violet-500 bg-violet-600 text-white shadow-lg shadow-violet-600/20"
                             : "border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-slate-900 dark:text-white hover:border-violet-500/50"
@@ -270,7 +270,7 @@ const Payment = () => {
                   </div>
                 </div>
                 <button
-                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-500 px-5 py-3 text-sm font-semibold text-white transition-all active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-500 px-5 py-3 text-sm font-semibold text-white transition transform-gpu active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
                   disabled={isCreating}
                   type="submit"
                 >

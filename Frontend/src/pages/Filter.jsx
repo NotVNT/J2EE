@@ -1,6 +1,7 @@
 import Dashboard from "../components/Dashboard.jsx";
 import {useUser} from "../hooks/useUser.jsx";
-import {Search, ChevronDown} from "lucide-react";
+import {Search} from "lucide-react";
+import CustomSelect from "../components/CustomSelect.jsx";
 import {useState} from "react";
 import axiosConfig from "../util/axiosConfig.jsx";
 import {API_ENDPOINTS} from "../util/apiEndpoints.js";
@@ -66,24 +67,16 @@ const Filter = () => {
                     </h5>
                     <form className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 items-end">
                         <div>
-                            <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5" htmlFor="type">
-                                Loại
-                            </label>
-                            <div className="relative">
-                                <select
-                                    value={type}
-                                    id="type"
-                                    className="w-full rounded-xl px-3.5 py-2.5 text-sm outline-none transition-colors appearance-none pr-8
-                                        bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10
-                                        text-slate-900 dark:text-white
-                                        focus:border-violet-500 dark:focus:border-amber-500 focus:ring-1 focus:ring-violet-500/30 dark:focus:ring-amber-500/30"
-                                    onChange={e => setType(e.target.value)}
-                                >
-                                    <option value="income" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">Thu nhập</option>
-                                    <option value="expense" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">Chi tiêu</option>
-                                </select>
-                                <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-slate-500" />
-                            </div>
+                            <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Loại</label>
+                            <CustomSelect
+                                value={type}
+                                onChange={(e) => setType(e.target.value)}
+                                options={[
+                                    { value: "income", label: "Thu nhập" },
+                                    { value: "expense", label: "Chi tiêu" },
+                                ]}
+                                className="w-full rounded-xl px-3.5 py-2.5 text-sm outline-none transition-colors bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white focus:border-violet-500 dark:focus:border-amber-500 focus:ring-1 focus:ring-violet-500/30 dark:focus:ring-amber-500/30"
+                            />
                         </div>
                         <div>
                             <label htmlFor="startdate" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">
@@ -118,45 +111,29 @@ const Filter = () => {
                             />
                         </div>
                         <div>
-                            <label htmlFor="sortfield" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">
-                                Sắp xếp theo
-                            </label>
-                            <div className="relative">
-                                <select
-                                    value={sortField}
-                                    id="sortfield"
-                                    className="w-full rounded-xl px-3.5 py-2.5 text-sm outline-none transition-colors appearance-none pr-8
-                                        bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10
-                                        text-slate-900 dark:text-white
-                                        focus:border-violet-500 dark:focus:border-amber-500 focus:ring-1 focus:ring-violet-500/30 dark:focus:ring-amber-500/30"
-                                    onChange={e => setSortField(e.target.value)}
-                                >
-                                    <option value="date" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">Ngày</option>
-                                    <option value="amount" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">Số tiền</option>
-                                    <option value="category" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">Danh mục</option>
-                                </select>
-                                <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-slate-500" />
-                            </div>
+                            <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Sắp xếp theo</label>
+                            <CustomSelect
+                                value={sortField}
+                                onChange={(e) => setSortField(e.target.value)}
+                                options={[
+                                    { value: "date", label: "Ngày" },
+                                    { value: "amount", label: "Số tiền" },
+                                    { value: "category", label: "Danh mục" },
+                                ]}
+                                className="w-full rounded-xl px-3.5 py-2.5 text-sm outline-none transition-colors bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white focus:border-violet-500 dark:focus:border-amber-500 focus:ring-1 focus:ring-violet-500/30 dark:focus:ring-amber-500/30"
+                            />
                         </div>
                         <div>
-                            <label htmlFor="sortorder" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">
-                                Thứ tự
-                            </label>
-                            <div className="relative">
-                                <select
-                                    value={sortOrder}
-                                    id="sortorder"
-                                    className="w-full rounded-xl px-3.5 py-2.5 text-sm outline-none transition-colors appearance-none pr-8
-                                        bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10
-                                        text-slate-900 dark:text-white
-                                        focus:border-violet-500 dark:focus:border-amber-500 focus:ring-1 focus:ring-violet-500/30 dark:focus:ring-amber-500/30"
-                                    onChange={e => setSortOrder(e.target.value)}
-                                >
-                                    <option value="asc" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">Tăng dần</option>
-                                    <option value="desc" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">Giảm dần</option>
-                                </select>
-                                <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-slate-500" />
-                            </div>
+                            <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Thứ tự</label>
+                            <CustomSelect
+                                value={sortOrder}
+                                onChange={(e) => setSortOrder(e.target.value)}
+                                options={[
+                                    { value: "asc", label: "Tăng dần" },
+                                    { value: "desc", label: "Giảm dần" },
+                                ]}
+                                className="w-full rounded-xl px-3.5 py-2.5 text-sm outline-none transition-colors bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white focus:border-violet-500 dark:focus:border-amber-500 focus:ring-1 focus:ring-violet-500/30 dark:focus:ring-amber-500/30"
+                            />
                         </div>
                         <div className="flex items-end gap-2">
                             <div className="flex-1">
@@ -177,7 +154,7 @@ const Filter = () => {
                             </div>
                             <button
                                 onClick={handleSearch}
-                                className="shrink-0 p-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white transition-all duration-150 active:scale-95 cursor-pointer"
+                                className="shrink-0 p-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white transition duration-150 transform-gpu active:scale-95 cursor-pointer"
                             >
                                 <Search size={20} />
                             </button>

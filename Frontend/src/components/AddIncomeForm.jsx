@@ -1,8 +1,13 @@
 import {useEffect, useState} from "react";
 import EmojiPickerPopup from "./EmojiPickerPopup.jsx";
 import Input from "./Input.jsx";
-import {LoaderCircle} from "lucide-react";
+import {LoaderCircle, ChevronDown, ChevronUp} from "lucide-react";
 import { formatCurrency, parseCurrency } from "../util/helper.js";
+import axiosConfig from "../util/axiosConfig.jsx";
+import { API_ENDPOINTS } from "../util/apiEndpoints.js";
+
+const fmt = (n) =>
+  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(n ?? 0);
 
 const AddIncomeForm = ({onAddIncome, categories}) => {
     const [income, setIncome] = useState({
@@ -13,6 +18,19 @@ const AddIncomeForm = ({onAddIncome, categories}) => {
         categoryId: ''
     })
     const [loading, setLoading] = useState(false);
+    const [jars, setJars] = useState([]);
+    const [allocations, setAllocations] = useState([]);
+    const [showAllocations, setShowAllocations] = useState(true);
+
+    useEffect(() => {
+        axiosConfig.get(API_ENDPOINTS.GET_JARS)
+            .then((res) => {
+                if (res.data) {
+                    setJars(res.data);
+                }
+            })
+            .catch(() => {});
+    }, []);
 
     const categoryOptions = categories.map(category => ({
         value: category.id,
@@ -28,11 +46,70 @@ const AddIncomeForm = ({onAddIncome, categories}) => {
         handleChange("amount", rawValue);
     };
 
+    // Auto-calculate allocations when amount or jars change
+    useEffect(() => {
+        if (jars.length > 0 && income.amount) {
+            const total = Number(income.amount);
+            if (total > 0) {
+                let remaining = total;
+                const allocs = jars.map((jar, index) => {
+                    const pct = jar.targetPercentage ?? 0;
+                    let amt;
+                    if (index === jars.length - 1) {
+                        amt = remaining; // last jar gets the remainder
+                    } else {
+                        amt = Math.round(total * pct / 100);
+                        remaining -= amt;
+                    }
+                    return { jarId: jar.id, jarName: jar.name, jarIcon: jar.icon, jarColor: jar.color, amount: amt, percentage: pct };
+                });
+                setAllocations(allocs);
+            } else {
+                setAllocations([]);
+            }
+        }
+    }, [income.amount, jars]);
+
+    const handleAllocationAmountChange = (index, rawValue) => {
+        const newAmount = Number(rawValue) || 0;
+        let diff = newAmount - allocations[index].amount;
+        
+        const newAllocs = [...allocations];
+        newAllocs[index] = { ...newAllocs[index], amount: newAmount };
+
+        // Tự động điều chỉnh các hũ khác để tổng luôn bằng số tiền thu nhập
+        if (diff !== 0 && newAllocs.length > 1) {
+            for (let i = 0; i < newAllocs.length; i++) {
+                if (i !== index && diff !== 0) {
+                    let currentOtherAmount = newAllocs[i].amount;
+                    if (diff > 0) {
+                        // Nếu tăng số tiền hũ này -> phải trừ hũ khác (không cho âm)
+                        const subtractAmount = Math.min(currentOtherAmount, diff);
+                        newAllocs[i].amount -= subtractAmount;
+                        diff -= subtractAmount;
+                    } else {
+                        // Nếu giảm số tiền hũ này -> cộng số dư thừa vào hũ khác đầu tiên tìm thấy
+                        newAllocs[i].amount -= diff; // diff đang âm nên -= là cộng thêm
+                        diff = 0;
+                    }
+                }
+            }
+        }
+        
+        setAllocations(newAllocs);
+    };
+
     const handleAddIncome = async () => {
         setLoading(true);
         try {
-            await onAddIncome(income);
-        }finally {
+            const payload = { ...income };
+            if (jars.length > 0 && allocations.length > 0) {
+                payload.allocations = allocations
+                    .filter((a) => a.amount > 0)
+                    .map((a) => ({ jarId: a.jarId, amount: a.amount }));
+            }
+            await onAddIncome(payload);
+        } finally {
             setLoading(false);
         }
     }
@@ -42,6 +119,10 @@ const AddIncomeForm = ({onAddIncome, categories}) => {
             setIncome((prev) => ({...prev, categoryId: categories[0].id}))
         }
     }, [categories, income.categoryId]);
+
+    const totalAllocated = allocations.reduce((s, a) => s + a.amount, 0);
+    const incomeAmount = Number(income.amount) || 0;
+    const allocationDiff = incomeAmount - totalAllocated;
 
     return (
         <div>
@@ -82,6 +163,68 @@ const AddIncomeForm = ({onAddIncome, categories}) => {
                 placeholder=""
                 type="date"
             />
+
+            {/* Jar Allocation Section */}
+            {jars.length > 0 && incomeAmount > 0 && (
+                <div className="mt-4">
+                    <button
+                        type="button"
+                        onClick={() => setShowAllocations(!showAllocations)}
+                        className="w-full flex items-center justify-between px-4 py-3 rounded-xl
+                            bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20
+                            text-sm font-medium text-amber-700 dark:text-amber-400 transition-colors
+                            hover:bg-amber-100 dark:hover:bg-amber-500/15"
+                    >
+                        <span>💰 Phân bổ vào {jars.length} hũ ({fmt(totalAllocated)} / {fmt(incomeAmount)})</span>
+                        {showAllocations ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                    </button>
+
+                    {showAllocations && (
+                        <div className="mt-3 space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                            {allocations.map((alloc, index) => (
+                                <div
+                                    key={alloc.jarId}
+                                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl
+                                        bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10"
+                                >
+                                    <div
+                                        className="w-8 h-8 rounded-lg flex items-center justify-center text-sm shrink-0"
+                                        style={{ backgroundColor: `${alloc.jarColor}20` }}
+                                    >
+                                        {alloc.jarIcon ? (
+                                            <img src={alloc.jarIcon} alt={alloc.jarName} className="w-5 h-5" />
+                                        ) : "🏦"}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate">
+                                            {alloc.jarName}
+                                            <span className="text-xs text-slate-400 ml-1">({alloc.percentage}%)</span>
+                                        </p>
+                                    </div>
+                                    <input
+                                        type="text"
+                                        value={formatCurrency(String(alloc.amount))}
+                                        onChange={(e) => {
+                                            const raw = e.target.value.replace(/\D/g, "");
+                                            handleAllocationAmountChange(index, raw);
+                                        }}
+                                        className="w-32 text-right text-sm px-3 py-1.5 rounded-lg
+                                            bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10
+                                            text-slate-800 dark:text-white outline-none
+                                            focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30"
+                                    />
+                                </div>
+                            ))}
+
+                            {allocationDiff !== 0 && (
+                                <p className={`text-xs px-1 ${allocationDiff > 0 ? "text-amber-600 dark:text-amber-400" : "text-red-500"}`}>
+                                    {allocationDiff > 0 ? `⚠ Còn ${fmt(allocationDiff)} chưa được phân bổ` : `⚠ Vượt ${fmt(Math.abs(allocationDiff))} so với số tiền nhập`}
+                                </p>
+                            )}
+                        </div>
+                    )}
+                </div>
+            )}
 
             <div className="flex justify-end mt-6">
                 <button

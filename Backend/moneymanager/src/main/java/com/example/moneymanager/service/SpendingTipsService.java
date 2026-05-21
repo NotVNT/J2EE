@@ -192,7 +192,8 @@ public class SpendingTipsService {
                 "=== QUY TẮC TRÌNH BÀY ===\n" +
                 "Mỗi gợi ý trên một dòng riêng biệt, tối đa 2 câu mỗi gợi ý.\n" +
                 "Không dùng markdown (*, #, **, __), không đánh số thứ tự.\n" +
-                "Không dùng ký tự đặc biệt ngoài → và ký hiệu tiền tệ.\n\n" +
+                "Không dùng ký tự đặc biệt ngoài → và ký hiệu tiền tệ.\n" +
+                "Giọng điệu: ấm áp, khuyến khích như người bạn đồng hành — không phán xét, không gây cảm giác tội lỗi về chi tiêu.\n\n" +
                 "=== KẾT THÚC ===\n" +
                 "Bắt buộc kết thúc bằng dòng trống rồi: ⚠️ Trợ lý AI có thể mắc sai sót, hãy kiểm tra lại câu trả lời.";
     }

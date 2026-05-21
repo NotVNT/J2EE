@@ -3,7 +3,7 @@ import { GripVertical } from "lucide-react";
 const WidgetWrapper = ({ editMode, isDragging, dragHandleProps, children }) => {
   return (
     <div
-      className={`relative rounded-2xl transition-all duration-200 ${
+      className={`relative rounded-2xl transition-[opacity,box-shadow] duration-200 ${
         isDragging ? "opacity-60 shadow-2xl z-50 ring-2 ring-amber-500/40" : ""
       }`}
     >

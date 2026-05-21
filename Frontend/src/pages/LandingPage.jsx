@@ -40,8 +40,8 @@ const LandingPage = () => {
             {/* ═══════════════════════════════════════════════════════════════ */}
             {/*  Floating Navbar                                                    */}
             {/* ═══════════════════════════════════════════════════════════════ */}
-            <nav className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${scrolled ? 'py-4' : 'py-6'}`}>
-                <div className={`max-w-7xl mx-auto px-4 lg:px-6 transition-all duration-300 ${
+            <nav className={`fixed top-0 inset-x-0 z-50 transition duration-300 ${scrolled ? 'py-4' : 'py-6'}`}>
+                <div className={`max-w-7xl mx-auto px-4 lg:px-6 transition duration-300 ${
                     scrolled 
                     ? 'backdrop-blur-xl bg-white/80 dark:bg-[#0F172A]/80 border border-slate-200/60 dark:border-white/10 rounded-2xl shadow-lg dark:shadow-black/20'
                     : 'bg-transparent border-transparent'
@@ -65,7 +65,7 @@ const LandingPage = () => {
                                         text-slate-500 dark:text-slate-400
                                         hover:text-slate-900 dark:hover:text-white
                                         hover:bg-slate-100 dark:hover:bg-white/5
-                                        transition-all duration-200"
+                                        transition duration-200"
                                 >
                                     {link.label}
                                 </button>
@@ -82,7 +82,7 @@ const LandingPage = () => {
                                     text-slate-700 dark:text-slate-200
                                     hover:text-slate-900 dark:hover:text-white
                                     hover:bg-slate-100 dark:hover:bg-white/10
-                                    transition-all duration-200"
+                                    transition duration-200"
                             >
                                 Đăng Nhập
                             </button>
@@ -91,7 +91,7 @@ const LandingPage = () => {
                                 className="px-5 py-2.5 rounded-xl text-sm font-bold
                                     bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 
                                     text-white shadow-lg shadow-violet-500/25
-                                    transition-all duration-200 active:scale-95 flex items-center gap-2"
+                                    transition duration-200 active:scale-95 flex items-center gap-2"
                             >
                                 Bắt Đầu <ArrowRight size={16} />
                             </button>
@@ -168,7 +168,7 @@ const LandingPage = () => {
                                 className="w-full sm:w-auto px-10 py-4 rounded-2xl font-bold text-base
                                     bg-slate-900 dark:bg-white text-white dark:text-slate-900
                                     shadow-xl shadow-slate-900/20 dark:shadow-white/10
-                                    transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl"
+                                    transition duration-200 hover:-translate-y-1 hover:shadow-2xl"
                             >
                                 Bắt đầu miễn phí
                             </button>
@@ -178,7 +178,7 @@ const LandingPage = () => {
                                     bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10
                                     text-slate-700 dark:text-slate-300
                                     hover:bg-slate-50 dark:hover:bg-white/10 hover:border-violet-500/30
-                                    transition-all duration-200 hover:-translate-y-1"
+                                    transition duration-200 hover:-translate-y-1"
                             >
                                 Xem Demo Trực Tiếp
                             </button>
@@ -273,7 +273,7 @@ const LandingPage = () => {
                             { icon: Shield, title: 'Bảo Mật Cấp Ngân Hàng', desc: 'Dữ liệu được mã hóa chuẩn quốc tế 256-bit, đảm bảo quyền riêng tư tuyệt đối cho bạn.', color: 'slate' },
                         ].map((feature, i) => (
                             <div key={i} className="group relative p-8 rounded-[2rem] bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10
-                                hover:shadow-2xl hover:shadow-violet-500/10 hover:-translate-y-2 transition-all duration-300">
+                                hover:shadow-2xl hover:shadow-violet-500/10 hover:-translate-y-2 transition duration-300">
                                 <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3
                                     ${feature.color === 'violet' ? 'bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400' : ''}
                                     ${feature.color === 'emerald' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400' : ''}
@@ -317,7 +317,7 @@ const LandingPage = () => {
                             { icon: '✈️', title: 'Châu Âu', desc: 'Tour 3 nước 14 ngày', pct: 42, current: '63M', target: '150M', color: 'amber' },
                             { icon: '🚗', title: 'Xe hơi', desc: 'Sedan hạng C', pct: 23, current: '184M', target: '800M', color: 'emerald' },
                         ].map((goal, i) => (
-                            <div key={i} className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/10 rounded-[2rem] p-8 hover:shadow-2xl hover:border-slate-300 dark:hover:border-white/20 transition-all duration-300">
+                            <div key={i} className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/10 rounded-[2rem] p-8 hover:shadow-2xl hover:border-slate-300 dark:hover:border-white/20 transition duration-300">
                                 <div className="flex justify-between items-start mb-6">
                                     <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-sm
                                         ${goal.color === 'violet' ? 'bg-violet-50 dark:bg-violet-500/10' : ''}
@@ -343,7 +343,7 @@ const LandingPage = () => {
                                         <span className="text-slate-400 dark:text-slate-500">{goal.target}</span>
                                     </div>
                                     <div className="h-3 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
-                                        <div className={`h-full rounded-full transition-all duration-1000 ease-out
+                                        <div className={`h-full rounded-full transition-[width] duration-1000 ease-out
                                             ${goal.color === 'violet' ? 'bg-violet-500' : ''}
                                             ${goal.color === 'amber' ? 'bg-amber-500' : ''}
                                             ${goal.color === 'emerald' ? 'bg-emerald-500' : ''}
@@ -372,7 +372,7 @@ const LandingPage = () => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto items-center">
                         
                         {/* Free */}
-                        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[2.5rem] p-8 lg:p-10 hover:border-slate-300 dark:hover:border-white/20 transition-all">
+                        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[2.5rem] p-8 lg:p-10 hover:border-slate-300 dark:hover:border-white/20 transition">
                             <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Cơ Bản</h3>
                             <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-6">Trải nghiệm ban đầu</p>
                             <div className="flex items-baseline gap-1 mb-8 pb-8 border-b border-slate-100 dark:border-white/10">
@@ -409,13 +409,13 @@ const LandingPage = () => {
                                     </li>
                                 ))}
                             </ul>
-                            <button onClick={() => navigate('/signup')} className="w-full py-4 rounded-2xl font-bold bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white shadow-lg shadow-amber-500/25 transition-all hover:scale-[1.02]">
+                            <button onClick={() => navigate('/signup')} className="w-full py-4 rounded-2xl font-bold bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white shadow-lg shadow-amber-500/25 transition transform-gpu hover:scale-[1.02]">
                                 Nâng Cấp Basic
                             </button>
                         </div>
 
                         {/* Premium */}
-                        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[2.5rem] p-8 lg:p-10 hover:border-slate-300 dark:hover:border-white/20 transition-all">
+                        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[2.5rem] p-8 lg:p-10 hover:border-slate-300 dark:hover:border-white/20 transition">
                             <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Premium</h3>
                             <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-6">Tự do tài chính tuyệt đối</p>
                             <div className="flex items-baseline gap-1 mb-8 pb-8 border-b border-slate-100 dark:border-white/10">
@@ -457,7 +457,7 @@ const LandingPage = () => {
                             className="w-full sm:w-auto px-12 py-5 rounded-2xl font-black text-lg
                                 bg-white text-slate-900 hover:bg-slate-100
                                 shadow-2xl shadow-white/20
-                                transition-all duration-200 hover:-translate-y-1"
+                                transition duration-200 hover:-translate-y-1"
                         >
                             Đăng Ký Tài Khoản Mới
                         </button>

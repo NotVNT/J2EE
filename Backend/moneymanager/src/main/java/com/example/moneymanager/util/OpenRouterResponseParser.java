@@ -1,10 +1,43 @@
 package com.example.moneymanager.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public final class OpenRouterResponseParser {
 
     private OpenRouterResponseParser() {
+    }
+
+    public static boolean isSseFormat(String raw) {
+        return raw != null && raw.stripLeading().startsWith("data:");
+    }
+
+    /**
+     * Parses an SSE streaming response and concatenates only actual content tokens.
+     * Skips reasoning_content (thinking tokens) — those are internal model reasoning, not the reply.
+     */
+    public static String parseSseStream(String raw, ObjectMapper mapper) {
+        StringBuilder content = new StringBuilder();
+        for (String line : raw.split("\n")) {
+            String trimmed = line.trim();
+            if (!trimmed.startsWith("data:")) continue;
+            String json = trimmed.substring(5).trim();
+            if ("[DONE]".equals(json)) break;
+            try {
+                JsonNode chunk = mapper.readTree(json);
+                JsonNode choices = chunk.get("choices");
+                if (choices == null || !choices.isArray() || choices.isEmpty()) continue;
+                JsonNode delta = choices.get(0).get("delta");
+                if (delta == null) continue;
+                // Only collect delta.content — skip reasoning_content (thinking tokens)
+                JsonNode contentNode = delta.get("content");
+                if (contentNode != null && !contentNode.isNull() && contentNode.isTextual()) {
+                    String text = contentNode.asText();
+                    if (!text.isEmpty()) content.append(text);
+                }
+            } catch (Exception ignored) {}
+        }
+        return content.toString().trim();
     }
 
     public static String extractAssistantText(JsonNode root) {

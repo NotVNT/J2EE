@@ -1,6 +1,12 @@
-import { useMemo } from "react";
+import { useMemo, useState, useContext } from "react";
 import InfoCard from "./InfoCard";
 import CustomPieChart from "./CustomPieChart";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeSanitize from "rehype-sanitize";
+import axiosConfig from "../util/axiosConfig";
+import { API_ENDPOINTS } from "../util/apiEndpoints";
+import { AppContext } from "../context/AppContext.jsx";
 import {
   TrendingUp,
   TrendingDown,
@@ -14,7 +20,12 @@ import {
   Target,
   Flame,
   ShieldCheck,
-  ChartBar
+  ChartBar,
+  Brain,
+  Sparkles,
+  Loader2,
+  Lock,
+  RefreshCw
 } from "lucide-react";
 
 const GRADE_COLORS = {
@@ -31,7 +42,56 @@ const formatCurrency = (value) => {
 };
 
 const MonthlyReportCard = ({ report }) => {
+  const { user } = useContext(AppContext);
+  const isPremium = user?.subscriptionPlan === "PREMIUM";
   const gradeColor = GRADE_COLORS[report.grade] || GRADE_COLORS.F;
+
+  const [aiAnalysis, setAiAnalysis] = useState(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisError, setAnalysisError] = useState(null);
+
+  const analyzeWithAI = async () => {
+    setIsAnalyzing(true);
+    setAnalysisError(null);
+    setAiAnalysis(null);
+
+    const categoryTop = report.categoryBreakdown?.slice(0, 3)
+      .map((c) => `${c.name}: ${c.percent?.toFixed(1)}%`)
+      .join(", ") || "Không có dữ liệu";
+
+    const spendingTrend =
+      report.spendingChangePercent > 0
+        ? `tăng ${report.spendingChangePercent.toFixed(1)}%`
+        : report.spendingChangePercent < 0
+        ? `giảm ${Math.abs(report.spendingChangePercent).toFixed(1)}%`
+        : "không đổi";
+
+    const prompt =
+      `Phân tích hành vi tài chính tháng ${report.monthName} của tôi (trả lời chi tiết, khoảng 300-400 từ, dùng bullet points ngắn gọn):\n` +
+      `- Xếp loại: ${report.grade} (${report.gradeLabel})\n` +
+      `- Thu nhập: ${formatCurrency(report.totalIncome)}\n` +
+      `- Chi tiêu: ${formatCurrency(report.totalExpense)}\n` +
+      `- Tiết kiệm: ${formatCurrency(report.savings)} (tỷ lệ ${report.savingsRate.toFixed(1)}%)\n` +
+      `- Chi tiêu so tháng trước: ${spendingTrend}\n` +
+      `- Danh mục chi nhiều nhất: ${categoryTop}\n` +
+      `- Điểm mạnh: ${report.strengths?.join("; ") || "Không có"}\n` +
+      `- Cần cải thiện: ${report.improvements?.join("; ") || "Không có"}\n\n` +
+      `Hãy: (1) nhận diện pattern hành vi chi tiêu, (2) chỉ ra thói quen tốt/xấu, (3) đưa ra 3-4 lời khuyên cụ thể và thực tế.`;
+
+    try {
+      const response = await axiosConfig.post(API_ENDPOINTS.AI_CHAT, {
+        provider: "ninerouter",
+        messages: [{ role: "user", content: prompt }],
+      });
+      setAiAnalysis(response.data?.reply || "Không thể tạo phân tích.");
+    } catch (err) {
+      setAnalysisError(
+        err.response?.data?.message || "Không thể kết nối AI. Vui lòng thử lại."
+      );
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
 
   const spendingChangeInfo = useMemo(() => {
     if (report.spendingChangePercent === 0) return { icon: Minus, color: "text-slate-500", text: "Không đổi" };
@@ -111,7 +171,7 @@ const MonthlyReportCard = ({ report }) => {
         </div>
         <div className="w-full bg-slate-100 dark:bg-white/10 rounded-full h-3 overflow-hidden">
           <div
-            className={`h-full rounded-full transition-all duration-700 ${
+            className={`h-full rounded-full transition-[width] duration-700 ${
               report.savingsRate >= 30 ? "bg-emerald-500" :
               report.savingsRate >= 20 ? "bg-blue-500" :
               report.savingsRate >= 10 ? "bg-amber-500" :
@@ -279,6 +339,80 @@ const MonthlyReportCard = ({ report }) => {
                 </li>
               ))}
             </ul>
+          </div>
+        )}
+      </div>
+
+      {/* AI Behavior Analysis */}
+      <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+            <Sparkles size={18} className="text-violet-500" />
+            Phân tích hành vi tài chính bằng AI
+          </h3>
+          {!isPremium && (
+            <span className="text-[10px] font-semibold text-amber-500 dark:text-amber-400 border border-amber-300 dark:border-amber-500/40 rounded-md px-1.5 py-0.5">
+              PREMIUM
+            </span>
+          )}
+        </div>
+
+        {!isPremium ? (
+          <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20">
+            <Lock size={16} className="text-amber-500 shrink-0 mt-0.5" />
+            <p className="text-sm text-amber-700 dark:text-amber-300">
+              Tính năng phân tích hành vi AI sử dụng model EXPERIMENTAL, chỉ khả dụng cho gói PREMIUM.
+            </p>
+          </div>
+        ) : isAnalyzing ? (
+          <div className="flex items-center gap-3 py-4 text-sm text-slate-500 dark:text-slate-400">
+            <Loader2 size={18} className="animate-spin text-violet-500" />
+            Nova đang phân tích hành vi tài chính của bạn...
+          </div>
+        ) : aiAnalysis ? (
+          <div>
+            <div className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed prose-sm max-w-none
+              [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1 [&_ul]:my-2
+              [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:space-y-1 [&_ol]:my-2
+              [&_li]:leading-relaxed
+              [&_strong]:font-semibold [&_strong]:text-slate-900 [&_strong]:dark:text-white
+              [&_p]:mb-2 [&_p:last-child]:mb-0
+              [&_h3]:font-semibold [&_h3]:text-slate-800 [&_h3]:dark:text-slate-100 [&_h3]:mt-3 [&_h3]:mb-1">
+              <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>
+                {aiAnalysis}
+              </ReactMarkdown>
+            </div>
+            <button
+              onClick={analyzeWithAI}
+              className="mt-4 flex items-center gap-1.5 text-xs text-violet-500 hover:text-violet-600 dark:text-violet-400 dark:hover:text-violet-300 transition-colors"
+            >
+              <RefreshCw size={12} />
+              Phân tích lại
+            </button>
+          </div>
+        ) : analysisError ? (
+          <div className="space-y-3">
+            <p className="text-sm text-red-500 dark:text-red-400">{analysisError}</p>
+            <button
+              onClick={analyzeWithAI}
+              className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/15 text-slate-700 dark:text-slate-300 rounded-xl text-sm font-medium transition-colors"
+            >
+              <RefreshCw size={14} />
+              Thử lại
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Nova Money sẽ phân tích sâu hành vi tài chính của bạn, nhận diện các pattern chi tiêu và đưa ra lời khuyên cá nhân hóa dựa trên dữ liệu thực tế.
+            </p>
+            <button
+              onClick={analyzeWithAI}
+              className="flex items-center gap-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-sm font-medium transition-colors shadow-sm"
+            >
+              <Brain size={16} />
+              Phân tích hành vi tài chính
+            </button>
           </div>
         )}
       </div>

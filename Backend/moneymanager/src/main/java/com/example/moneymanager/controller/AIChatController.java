@@ -39,6 +39,7 @@ public class AIChatController {
 
     @PostMapping("/confirm-action")
     public ResponseEntity<AIConfirmActionResponseDTO> confirmAction(@RequestBody AIConfirmActionRequestDTO dto) {
+        aiRateLimitService.checkLimit("AGENT");
         return ResponseEntity.ok(aiOrchestrationService.executeConfirmedIntent(dto));
     }
 

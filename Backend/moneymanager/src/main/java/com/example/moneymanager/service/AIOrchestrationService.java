@@ -1,5 +1,6 @@
 package com.example.moneymanager.service;
 
+import com.example.moneymanager.config.GeminiProperties;
 import com.example.moneymanager.dto.*;
 import com.example.moneymanager.entity.*;
 import com.example.moneymanager.repository.*;
@@ -20,6 +21,7 @@ import java.util.*;
 public class AIOrchestrationService {
 
     private final AIChatService aiChatService;
+    private final GeminiProperties geminiProperties;
     private final ProfileService profileService;
     private final ExpenseService expenseService;
     private final IncomeService incomeService;
@@ -44,10 +46,18 @@ public class AIOrchestrationService {
         }
 
         String provider = request.getProvider() != null ? request.getProvider() : "gemini";
-        String model = request.getModel() != null ? request.getModel() : "gemini-3.1-flash-lite";
+        String model = request.getModel() != null ? request.getModel() : geminiProperties.model();
 
         try {
             ProfileEntity profile = profileService.getCurrentProfile();
+
+            if ("ninerouter".equalsIgnoreCase(provider) && profile.getSubscriptionPlan() != SubscriptionPlan.PREMIUM) {
+                return AIIntentResponseDTO.builder()
+                        .intent("ANSWER_QUESTION")
+                        .answer("Model EXPERIMENTAL trong Agent mode ch\u1EC9 kh\u1EA3 d\u1EE5ng cho g\u00F3i PREMIUM. Vui l\u00F2ng n\u00E2ng c\u1EA5p \u0111\u1EC3 s\u1EED d\u1EE5ng.")
+                        .build();
+            }
+
             String pageContext = request.getPageContext() != null ? request.getPageContext() : "dashboard";
             Map<String, Object> pageData = loadPageData(pageContext, profile);
             String systemPrompt = AIInstructionPromptBuilder.buildSystemPrompt(pageContext, pageData);
@@ -58,7 +68,7 @@ public class AIOrchestrationService {
                     "B\u1EAFt \u0111\u1EA7u b\u1EB1ng { v\u00E0 k\u1EBFt th\u00FAc b\u1EB1ng }. " +
                     "N\u1EBFu l\u00E0 CRUD, bao g\u1ED3m confirmationPrompt b\u1EB1ng ti\u1EBFng Vi\u1EC7t.";
 
-            String rawResponse = callGeminiForIntent(systemPrompt, crudInstruction, request.getConversationHistory());
+            String rawResponse = callProviderForIntent(provider, systemPrompt, crudInstruction, request.getConversationHistory());
 
             String cleanedJson = extractJson(rawResponse);
             if (cleanedJson == null || cleanedJson.isBlank()) {
@@ -67,7 +77,7 @@ public class AIOrchestrationService {
                 String retryInstruction = "Y\u00EAu c\u1EA7u c\u1EE7a ng\u01B0\u1EDDi d\u00F9ng: " + userMessage + "\n\n" +
                         "B\u1EA1n PH\u1EA2I tr\u1EA3 v\u1EC1 JSON THU\u1EA6N theo format \u0111\u00E3 ch\u1EC9 \u0111\u1ECBnh. " +
                         "TUY\u1EC6T \u0110\u1ED0I KH\u00D4NG tr\u1EA3 l\u1EDDi b\u1EB1ng v\u0103n b\u1EA3n. Ch\u1EC9 { } JSON.";
-                String retryResponse = callGeminiForIntent(systemPrompt, retryInstruction, null);
+                String retryResponse = callProviderForIntent(provider, systemPrompt, retryInstruction, null);
                 cleanedJson = extractJson(retryResponse);
                 if (cleanedJson != null && !cleanedJson.isBlank()) {
                     rawResponse = retryResponse;
@@ -229,7 +239,11 @@ public class AIOrchestrationService {
             case "CREATE_EXPENSE" -> {
                 String catNameExp = (String) data.get("categoryName");
                 Long catIdExp = findCategoryId(catNameExp, profile.getId(), "expense");
-                if (catIdExp == null) yield "\u26A0\uFE0F Kh\u00F4ng t\u00ECm th\u1EA5y danh m\u1EE5c \"" + catNameExp + "\". Vui l\u00F2ng ki\u1EC3m tra l\u1EA1i t\u00EAn danh m\u1EE5c.";
+                if (catIdExp == null) {
+                    String available = String.join(", ", categoryRepository.findByTypeAndProfileId("expense", profile.getId())
+                            .stream().map(CategoryEntity::getName).toList());
+                    yield "\u26A0\uFE0F Kh\u00F4ng t\u00ECm th\u1EA5y danh m\u1EE5c \"" + catNameExp + "\". Danh m\u1EE5c chi ti\u00EAu hi\u1EC7n c\u00F3: " + (available.isBlank() ? "(ch\u01B0a c\u00F3)" : available);
+                }
                 ExpenseDTO dto = mapToExpenseDTO(data, catIdExp);
                 expenseService.addExpense(dto);
                 yield "\u2705 \u0110\u00E3 t\u1EA1o chi ti\u00EAu " + formatCurrency(dto.getAmount()) + "\u0111 cho " + dto.getCategoryName();
@@ -238,7 +252,11 @@ public class AIOrchestrationService {
             case "CREATE_INCOME" -> {
                 String catNameInc = (String) data.get("categoryName");
                 Long catIdInc = findCategoryId(catNameInc, profile.getId(), "income");
-                if (catIdInc == null) yield "\u26A0\uFE0F Kh\u00F4ng t\u00ECm th\u1EA5y danh m\u1EE5c \"" + catNameInc + "\". Vui l\u00F2ng ki\u1EC3m tra l\u1EA1i t\u00EAn danh m\u1EE5c.";
+                if (catIdInc == null) {
+                    String available = String.join(", ", categoryRepository.findByTypeAndProfileId("income", profile.getId())
+                            .stream().map(CategoryEntity::getName).toList());
+                    yield "\u26A0\uFE0F Kh\u00F4ng t\u00ECm th\u1EA5y danh m\u1EE5c \"" + catNameInc + "\". Danh m\u1EE5c thu nh\u1EADp hi\u1EC7n c\u00F3: " + (available.isBlank() ? "(ch\u01B0a c\u00F3)" : available);
+                }
                 IncomeDTO dto = mapToIncomeDTO(data, catIdInc);
                 incomeService.addIncome(dto);
                 yield "\u2705 \u0110\u00E3 t\u1EA1o thu nh\u1EADp " + formatCurrency(dto.getAmount()) + "\u0111";
@@ -463,14 +481,14 @@ public class AIOrchestrationService {
                 .build();
     }
 
-    private String callGeminiForIntent(String systemPrompt, String userMessage, List<AIChatMessageDTO> history) {
+    private String callProviderForIntent(String provider, String systemPrompt, String userMessage, List<AIChatMessageDTO> history) {
         List<AIChatMessageDTO> messages = new ArrayList<>();
         if (history != null) messages.addAll(history);
         messages.add(AIChatMessageDTO.builder().role("user").content(userMessage).build());
 
         AIChatRequestDTO chatRequest = AIChatRequestDTO.builder()
-                .provider("gemini")
-                .model("gemini-3.1-flash-lite")
+                .provider(provider != null ? provider : "gemini")
+                .model(geminiProperties.model())
                 .messages(messages)
                 .build();
 
@@ -516,7 +534,21 @@ public class AIOrchestrationService {
                 }
                 case "savinggoals" -> {
                     List<SavingGoalDTO> goals = savingGoalService.getAllGoals();
-                    result.put("savingGoals", goals.stream().map(g -> Map.of("id", g.getId(), "name", g.getName(), "targetAmount", g.getTargetAmount())).toList());
+                    result.put("savingGoals", goals.stream().map(g -> {
+                        Map<String, Object> m = new java.util.HashMap<>();
+                        m.put("id", g.getId());
+                        m.put("name", g.getName());
+                        m.put("targetAmount", g.getTargetAmount());
+                        m.put("currentAmount", g.getCurrentAmount());
+                        m.put("remainingAmount", g.getRemainingAmount());
+                        m.put("progressPercent", g.getProgressPercent());
+                        m.put("monthlyTarget", g.getMonthlyTarget());
+                        m.put("monthlyContributed", g.getMonthlyContributed());
+                        m.put("isBehindSchedule", g.getIsBehindSchedule());
+                        m.put("startDate", g.getStartDate());
+                        m.put("targetDate", g.getTargetDate());
+                        return m;
+                    }).toList());
                 }
                 default -> {
                     result.put("totalExpenseCount", expenseService.getTotalExpenseCountForCurrentUser());
@@ -585,9 +617,10 @@ public class AIOrchestrationService {
     private ExpenseDTO mapToExpenseDTO(Map<String, Object> data, Long categoryId) {
         BigDecimal amount = toBigDecimal(data.get("amount"));
         String categoryName = (String) data.get("categoryName");
+        String description = (String) data.get("description");
         LocalDate date = parseDate((String) data.get("date"));
         return ExpenseDTO.builder()
-                .name(categoryName)
+                .name(description != null && !description.isBlank() ? description : categoryName)
                 .amount(amount)
                 .categoryId(categoryId)
                 .categoryName(categoryName)
@@ -598,9 +631,10 @@ public class AIOrchestrationService {
     private IncomeDTO mapToIncomeDTO(Map<String, Object> data, Long categoryId) {
         BigDecimal amount = toBigDecimal(data.get("amount"));
         String categoryName = (String) data.get("categoryName");
+        String description = (String) data.get("description");
         LocalDate date = parseDate((String) data.get("date"));
         return IncomeDTO.builder()
-                .name(categoryName)
+                .name(description != null && !description.isBlank() ? description : categoryName)
                 .amount(amount)
                 .categoryId(categoryId)
                 .categoryName(categoryName)

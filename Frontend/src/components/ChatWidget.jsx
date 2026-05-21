@@ -12,6 +12,8 @@ import { AppContext } from "../context/AppContext.jsx";
 import { useRouteContext } from "../context/RouteContext.jsx";
 import { parseIntentResponse, isCrudIntent, isActionIntent, INTENT_ICONS, INTENT_LABELS } from "../util/aiIntentParser.js";
 import AIConfirmationForm from "./AIConfirmationForm.jsx";
+import ModelSelector from "./ModelSelector.jsx";
+import ExperimentalWarningModal from "./ExperimentalWarningModal.jsx";
 
 
 const WELCOME_MESSAGE = {
@@ -60,6 +62,11 @@ const QUICK_ACTIONS = [
   { label: "🎯 Lập kế hoạch mục tiêu", text: "Giúp tôi lên kế hoạch tiết kiệm cho một mục tiêu lớn" },
 ];
 
+const AGENT_MODEL_OPTIONS = [
+  { value: "gemini",     label: "🤖 Gemini 3.1 Flash Lite" },
+  { value: "ninerouter", label: "🧪 Gemma 4 31B (Experimental)" },
+];
+
 const PUBLIC_PATHS = new Set([
   "/",
   "/home",
@@ -76,10 +83,13 @@ const sanitizeSchema = {
   tagNames: [...(defaultSchema.tagNames ?? []), "br", "table", "thead", "tbody", "tr", "th", "td"],
 };
 
-// Fix malformed markdown: blank lines between table rows break GFM parsing
+// Fix malformed markdown: blank lines between table rows break GFM parsing.
+// Also strips <think>...</think> blocks emitted by some models (e.g. Gemma).
 const fixMarkdown = (content) => {
   if (!content) return "";
-  const lines = content.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
+  // Strip thinking-token blocks before rendering
+  let text = content.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
+  const lines = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
   const result = [];
   let inTable = false;
   for (let i = 0; i < lines.length; i++) {
@@ -98,7 +108,8 @@ const fixMarkdown = (content) => {
       result.push(line);
     }
   }
-  return result.join("\n");
+  // Collapse 3+ consecutive blank lines to prevent excessive whitespace
+  return result.join("\n").replace(/\n{3,}/g, "\n\n");
 };
 
 // Custom components for markdown elements styled to amber/dark theme
@@ -123,14 +134,20 @@ const markdownComponents = {
   li: ({ children }) => <li className="leading-relaxed">{children}</li>,
   strong: ({ children }) => <strong className="font-semibold text-slate-900 dark:text-white">{children}</strong>,
   em: ({ children }) => <em className="italic">{children}</em>,
-  code: ({ inline, children }) =>
-    inline ? (
-      <code className="rounded bg-slate-100 dark:bg-white/10 px-1 py-0.5 font-mono text-[11px] text-amber-700 dark:text-amber-300">{children}</code>
+  // Block code has className="language-xxx"; inline code has no className
+  code: ({ children, className }) =>
+    className ? (
+      <code className={`font-mono text-[11px] text-slate-800 dark:text-slate-200 ${className}`}>{children}</code>
     ) : (
-      <pre className="rounded bg-slate-100 dark:bg-white/10 p-2 my-1 overflow-x-auto">
-        <code className="font-mono text-[11px] text-slate-800 dark:text-slate-200">{children}</code>
-      </pre>
+      <code className="rounded bg-slate-100 dark:bg-white/10 px-1 py-0.5 font-mono text-[11px] text-amber-700 dark:text-amber-300">{children}</code>
     ),
+  // react-markdown v10: block code is wrapped in <pre>, inline code has no className.
+  // Using pre+code split avoids the deprecated `inline` prop.
+  pre: ({ children }) => (
+    <pre className="rounded bg-slate-100 dark:bg-white/10 p-2 my-1 overflow-x-auto">
+      {children}
+    </pre>
+  ),
   h1: ({ children }) => <h1 className="text-base font-bold mt-2 mb-1 text-slate-900 dark:text-white">{children}</h1>,
   h2: ({ children }) => <h2 className="text-sm font-bold mt-2 mb-1 text-slate-900 dark:text-white">{children}</h2>,
   h3: ({ children }) => <h3 className="text-sm font-semibold mt-1.5 mb-0.5 text-slate-800 dark:text-slate-100">{children}</h3>,
@@ -158,10 +175,15 @@ const ChatWidget = () => {
   const shouldHideWidget = !token || PUBLIC_PATHS.has(location.pathname);
 
   const isFreePlan = !user?.subscriptionPlan || user?.subscriptionPlan === "FREE";
-  const selectedModel = "gemini-3.1-flash-lite";
+  const isPremiumPlan = user?.subscriptionPlan === "PREMIUM";
 
   const [messages, setMessages] = useState([WELCOME_MESSAGE]);
   const [selectedProvider, setProvider] = useState(isFreePlan ? "gptoss" : "gemini");
+  const [chatModel, setChatModel] = useState("gptoss");
+  const [agentModel, setAgentModel] = useState("gemini");
+  const [showExperimentalWarning, setShowExperimentalWarning] = useState(false);
+  const [pendingChatModel, setPendingChatModel] = useState(null);
+  const [pendingAgentModel, setPendingAgentModel] = useState(null);
   const [inputMessage, setInputMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [isProcessingCrud, setIsProcessingCrud] = useState(false);
@@ -214,9 +236,15 @@ const ChatWidget = () => {
       return;
     }
 
-    const activeProvider = selectedProvider === "gemini" ? "gemini" : "gptoss";
-    const activeModel = selectedProvider === "gemini" ? "gemini-3.1-flash-lite" : "gpt-oss-120b";
-    const activeModelLabel = selectedProvider === "gemini" ? "Gemini 3.1 Flash Lite" : "GPT-OSS 120B";
+    const activeProvider = selectedProvider === "gemini"
+      ? (agentModel === "ninerouter" ? "ninerouter" : "gemini")
+      : (chatModel === "ninerouter" ? "ninerouter" : "gptoss");
+    const activeModel = selectedProvider === "gemini"
+      ? (agentModel === "ninerouter" ? "gemma4-31B" : "gemini-3.1-flash-lite")
+      : (chatModel === "ninerouter" ? "project-demo" : "gpt-oss-120b");
+    const activeModelLabel = selectedProvider === "gemini"
+      ? (agentModel === "ninerouter" ? "Gemma 4 31B (Experimental)" : "Gemini 3.1 Flash Lite")
+      : (chatModel === "ninerouter" ? "Gemma 4 31B (Experimental)" : "GPT-OSS 120B");
 
     const userMessage = {
       id: `user-${Date.now()}`,
@@ -484,6 +512,46 @@ const ChatWidget = () => {
     setProvider(provider);
   };
 
+  const handleModelChange = (newModel) => {
+    if (newModel === chatModel) return;
+    if (!isPremiumPlan && newModel === "ninerouter") return;
+    if (newModel === "ninerouter") {
+      setPendingChatModel("ninerouter");
+      setShowExperimentalWarning(true);
+      return;
+    }
+    setChatModel(newModel);
+  };
+
+  const handleAgentModelChange = (newModel) => {
+    if (newModel === agentModel) return;
+    if (!isPremiumPlan && newModel === "ninerouter") return;
+    if (newModel === "ninerouter") {
+      setPendingAgentModel("ninerouter");
+      setShowExperimentalWarning(true);
+      return;
+    }
+    setAgentModel(newModel);
+  };
+
+  const confirmExperimentalModel = () => {
+    if (pendingChatModel) {
+      setChatModel(pendingChatModel);
+      setPendingChatModel(null);
+    }
+    if (pendingAgentModel) {
+      setAgentModel(pendingAgentModel);
+      setPendingAgentModel(null);
+    }
+    setShowExperimentalWarning(false);
+  };
+
+  const cancelExperimentalModel = () => {
+    setShowExperimentalWarning(false);
+    setPendingChatModel(null);
+    setPendingAgentModel(null);
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     await sendMessage(inputMessage);
@@ -493,7 +561,7 @@ const ChatWidget = () => {
     <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-3">
       {isOpen && (
         <div 
-          className={`flex flex-col overflow-hidden rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0F172A] shadow-2xl shadow-slate-900/20 transition-all duration-300 ease-in-out ${
+          className={`flex flex-col overflow-hidden rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0F172A] shadow-2xl shadow-slate-900/20 transition-[height,width] duration-300 ease-in-out ${
             isExpanded 
               ? "h-[85vh] w-[800px] max-w-[calc(100vw-2.5rem)]" 
               : "h-[min(38rem,80dvh)] w-[420px] max-w-[calc(100vw-1.5rem)]"
@@ -516,7 +584,6 @@ const ChatWidget = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
-
               <button
                 type="button"
                 onClick={() => setIsExpanded(!isExpanded)}
@@ -663,7 +730,7 @@ const ChatWidget = () => {
                       </ReactMarkdown>
                       {!chatMessage.isError && !chatMessage.isSystem && chatMessage.modelUsed && (
                         <span className="block text-[10px] text-slate-400 dark:text-slate-500 mt-1">
-                          Nova Money · {chatMessage.modelLabel || (chatMessage.provider === "gemini" ? "Gemini 3.1 Flash Lite" : "GPT-OSS 120B")}
+                          Nova Money · {chatMessage.modelLabel || (chatMessage.provider === "gemini" ? "Gemini 3.1 Flash-Lite" : "GPT-OSS 120B")}
                         </span>
                       )}
                     </div>
@@ -721,9 +788,15 @@ const ChatWidget = () => {
                 id="chat-message"
                 value={inputMessage}
                 onChange={(event) => setInputMessage(event.target.value)}
-                placeholder={selectedProvider === "gemini"
-                  ? "Nhập thao tác: tạo/sửa/xóa dữ liệu, xuất báo cáo... [Gemini 3.1 Flash Lite]"
-                  : "Nhập câu hỏi hoặc trò chuyện... [GPT-OSS 120B]"}
+                placeholder={
+                  selectedProvider === "gemini"
+                    ? agentModel === "ninerouter"
+                      ? "Nhập thao tác: tạo/sửa/xóa dữ liệu, xuất báo cáo... [EXPERIMENTAL]"
+                      : "Nhập thao tác: tạo/sửa/xóa dữ liệu, xuất báo cáo... [Gemini 3.1 Flash-Lite]"
+                    : chatModel === "ninerouter"
+                      ? "Nhập câu hỏi hoặc trò chuyện... [EXPERIMENTAL]"
+                      : "Nhập câu hỏi hoặc trò chuyện... [GPT-OSS 120B]"
+                }
                 rows={2}
                 className="min-h-12 flex-1 resize-none rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-4 py-3 text-sm text-slate-800 dark:text-slate-200 outline-none transition focus:border-amber-400 dark:focus:border-amber-500 placeholder:text-slate-400 dark:placeholder:text-slate-500"
                 onKeyDown={(event) => {
@@ -742,6 +815,30 @@ const ChatWidget = () => {
                 <SendHorizontal size={18} />
               </button>
             </div>
+
+            {/* Model selector — Chat mode */}
+            {selectedProvider !== "gemini" && (
+              <div className="mt-2">
+                <ModelSelector
+                  value={chatModel}
+                  onChange={handleModelChange}
+                  disabled={!isPremiumPlan}
+                />
+              </div>
+            )}
+
+            {/* Agent model selector — Agent mode */}
+            {selectedProvider === "gemini" && (
+              <div className="mt-2">
+                <ModelSelector
+                  value={agentModel}
+                  onChange={handleAgentModelChange}
+                  disabled={!isPremiumPlan}
+                  label="Agent model"
+                  options={AGENT_MODEL_OPTIONS}
+                />
+              </div>
+            )}
 
             {/* Mode toggle */}
             <div className="mt-2 flex rounded-xl bg-slate-100 dark:bg-white/5 p-0.5 text-xs font-medium">
@@ -770,19 +867,25 @@ const ChatWidget = () => {
                 <span>Chat</span>
               </button>
             </div>
-            <p className="mt-1 text-[10px] text-slate-400 dark:text-slate-500 text-center">
-              ⚠️ Nova Money là AI có thể trả lời sai sót, vui lòng kiểm tra lại thông tin.
+            <p className="mt-1 text-[10px] text-slate-400 dark:text-slate-500 text-center italic">
+              Nova Money là AI có thể trả lời sai sót, vui lòng kiểm tra lại thông tin.
             </p>
           </form>
         </div>
       )}
+
+      <ExperimentalWarningModal
+        isOpen={showExperimentalWarning}
+        onConfirm={confirmExperimentalModel}
+        onCancel={cancelExperimentalModel}
+      />
 
       {/* Floating toggle */}
       <div className="relative flex items-center">
         {/* Greeting bubble */}
         {!isOpen && (
           <div
-            className={`absolute right-20 bottom-1 flex items-center gap-1.5 whitespace-nowrap rounded-2xl rounded-br-sm bg-white dark:bg-slate-800 px-3.5 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 shadow-lg shadow-slate-900/15 ring-1 ring-slate-200 dark:ring-white/10 transition-all duration-500 ${
+            className={`absolute right-20 bottom-1 flex items-center gap-1.5 whitespace-nowrap rounded-2xl rounded-br-sm bg-white dark:bg-slate-800 px-3.5 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 shadow-lg shadow-slate-900/15 ring-1 ring-slate-200 dark:ring-white/10 transition-[opacity,transform] duration-500 ${
               showGreeting ? "opacity-100 translate-x-0" : "opacity-0 translate-x-3 pointer-events-none"
             }`}
           >

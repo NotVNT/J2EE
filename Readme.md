@@ -39,7 +39,7 @@
 | Cache / Lưu Trữ Khóa | Redis | - |
 | Xác Thực | Spring Security + JWT | - |
 | Thanh Toán | PayOS | - |
-| AI — Gemini | Google Gemini API | gemini-2.0-flash-lite |
+| AI — Gemini | Google Gemini API | gemini-3.1-flash-lite |
 | AI — Chat | OpenRouter (GPT-OSS 120B) | - |
 | Excel | Apache POI | - |
 | Email | Spring Mail (Brevo SMTP) | - |
@@ -122,10 +122,11 @@ Nova Money là trợ lý AI tích hợp sẵn, có thể truy cập từ nút ch
 
 ### Cơ Sở Hạ Tầng AI
 
-| Nhà Cung Cấp | Mô Hình | Được Sử Dụng Cho | Giới Hạn Tốc Độ |
+| Nhà Cung Cấp | Mô Hình | Được Sử Dụng Cho | Yêu Cầu Gói |
 |---|---|---|---|
-| Google Gemini | gemini-3.1-flash-lite | Chế độ Agent (phân tích ý định + thực thi) |
-| OpenRouter | GPT-OSS 120B | Chế độ Chat (trò chuyện) |
+| Google Gemini | gemini-3.1-flash-lite | Chế độ Agent (phân tích ý định + thực thi) | CƠ BẢN+ |
+| OpenRouter | GPT-OSS 120B | Chế độ Chat (trò chuyện) | Tất cả gói |
+| NineRouter | EXPERIMENTAL | Chế độ Chat và Agent thử nghiệm (hiệu suất cao hơn) | PREMIUM |
 
 **Xoay Vòng Khóa API (Redis)**  
 Mỗi nhà cung cấp có một nhóm khóa API được lưu trữ trong Redis. Hệ thống theo dõi sử dụng hạn ngạch cho mỗi khóa và trạng thái cooldown. Khi một khóa vượt quá hạn ngạch hoặc trả về lỗi, khóa đó sẽ bị bỏ qua tự động và khóa có sẵn tiếp theo sẽ được sử dụng. Các khóa tự phục hồi sau khi thời gian cooldown hết hạn.
@@ -215,6 +216,7 @@ Nút chat nổi nằm ở góc dưới bên phải trên tất cả các trang �
 - **Kết Xuất Markdown**: Phản hồi AI hỗ trợ bảng, khối mã, danh sách, blockquote thông qua `react-markdown` + `remark-gfm` + `rehype-sanitize`.
 - **Chỉ Số Nhập**: Hoạt ảnh ba chấm nảy lên trong khi chờ phản hồi.
 - **Bảo Vệ Ý Định Đang Chờ**: Khi biểu mẫu xác nhận CRUD đang mở, tin nhắn mới bị chặn cho đến khi người dùng xác nhận hoặc hủy.
+- **Chọn Model**: Người dùng PREMIUM có thể chuyển giữa `GPT-OSS 120B` (Chat mặc định), `Gemini 3.1 Flash Lite` (Agent mặc định) và `EXPERIMENTAL` (NineRouter). Khi chọn EXPERIMENTAL lần đầu, modal cảnh báo sẽ hiện để xác nhận. Selector được render bởi `ModelSelector.jsx` tái sử dụng được.
 
 ---
 
@@ -226,11 +228,87 @@ Dự đoán chi tiêu của tháng tới dựa trên 6 tháng lịch sử. Phát
 ### Quản Lý Ngân Sách
 Giới hạn chi tiêu hàng tháng cho mỗi danh mục. Theo dõi % sử dụng. Cảnh báo khi vượt ngân sách.
 
+### Hệ Thống Các Hũ Chi Tiêu (Jars / Envelopes)
+
+Cho phép người dùng phân bổ thu nhập vào nhiều "ví phụ" riêng biệt theo tỷ lệ phần trăm, giúp kiểm soát chi tiêu theo từng mục đích cụ thể (ví dụ: Sinh hoạt, Giải trí, Đầu tư, Tiết kiệm).
+
+#### Giới Hạn Theo Gói
+
+| Gói | Số Hũ Tối Đa |
+|---|:---:|
+| FREE | 1 Hũ |
+| BASIC | 6 Hũ |
+| PREMIUM | Không giới hạn |
+
+Hũ mặc định **"Ví tổng"** được tạo tự động khi người dùng lần đầu truy cập tính năng. Tỷ lệ của Ví tổng được tính tự động bằng phần còn lại (100% − tổng tỷ lệ các Hũ khác).
+
+#### Phân Bổ Thu Nhập
+
+Mỗi Hũ có một **tỷ lệ phân bổ (%)** — khi thu nhập được ghi nhận, hệ thống tự động cộng phần tương ứng vào số dư từng Hũ. Tỷ lệ phân bổ phải nằm trong khoảng 0–100% và được xác thực ở cả frontend lẫn backend.
+
+#### Chi Tiêu Theo Hũ
+
+Khi thêm một khoản chi tiêu (thủ công hoặc qua **Chi Tiêu Nhanh**), người dùng chọn Hũ cần trừ tiền. Số dư Hũ tương ứng giảm ngay lập tức.
+
+- **Chi Tiêu Nhanh (Quick Expense Templates)**: Khi nhấn vào mẫu chi tiêu nhanh, hộp thoại **"Trừ từ hũ nào?"** tự động hiện lên để người dùng chọn Hũ trước khi xác nhận.
+- `jarId` được gửi kèm trong payload `POST /api/v1.0/expenses` để backend liên kết khoản chi tiêu với Hũ tương ứng.
+
+#### Chuyển Tiền Giữa Các Hũ
+
+Cho phép di chuyển số dư từ Hũ này sang Hũ khác thông qua nút **"Chuyển tiền"** trên trang Hũ chi tiêu.
+
+**Quy tắc nghiệp vụ (thực thi ở backend)**:
+- Không thể chuyển tiền vào cùng một Hũ (`fromJarId == toJarId`).
+- Số tiền chuyển phải lớn hơn 0.
+- Số dư Hũ nguồn phải đủ để thực hiện giao dịch.
+
+#### Quản Lý Hũ
+
+Mỗi Hũ có các thuộc tính tùy chỉnh:
+
+| Thuộc Tính | Mô Tả |
+|---|---|
+| Tên | Tên hiển thị của Hũ |
+| Biểu Tượng (Emoji) | Icon đại diện |
+| Màu Sắc | Mã màu hex (10 màu có sẵn) |
+| Tỷ Lệ Phân Bổ | Phần trăm thu nhập được phân bổ (0–100%) |
+| Số Dư Hiện Tại | Tổng tiền đang có trong Hũ |
+
+#### API Endpoints
+
+| Method | Endpoint | Mô Tả |
+|---|---|---|
+| `GET` | `/api/v1.0/jars` | Lấy danh sách tất cả Hũ |
+| `POST` | `/api/v1.0/jars` | Tạo Hũ mới |
+| `PUT` | `/api/v1.0/jars/{id}` | Cập nhật Hũ |
+| `DELETE` | `/api/v1.0/jars/{id}` | Xóa Hũ |
+| `POST` | `/api/v1.0/jars/transfer` | Chuyển tiền giữa hai Hũ |
+
+#### Các File Liên Quan
+
+**Backend**
+- `JarEntity.java` — Entity JPA cho Hũ chi tiêu
+- `JarService.java` — Logic nghiệp vụ (tạo, cập nhật, xóa, chuyển tiền, tái tính tỷ lệ Ví tổng)
+- `JarController.java` — REST controller
+
+**Frontend**
+- `src/pages/Jars.jsx` — Trang Hũ chi tiêu: tổng quan, PieChart / BarChart phân bổ, danh sách Hũ, xem và quản lý chi tiêu trong từng Hũ (thêm/sửa/xóa trực tiếp từ detail view)
+- `src/components/JarForm.jsx` — Form tạo / chỉnh sửa Hũ
+- `src/components/JarTransferModal.jsx` — Modal chuyển tiền giữa các Hũ
+- `src/components/AddExpenseForm.jsx` — Form thêm chi tiêu (hỗ trợ chọn Hũ)
+- `src/components/EditExpenseForm.jsx` — Form sửa chi tiêu (hỗ trợ chọn Hũ)
+- `src/components/QuickExpenseTemplates.jsx` — Chi tiêu nhanh tích hợp chọn Hũ (JarPickerModal)
+
 ### Mục Tiêu Tiết Kiệm
 Tạo mục tiêu với số tiền mục tiêu và thời hạn. Ghi lại những khoản đóng góp. Theo dõi trạng thái ĐANG HOẠT ĐỘNG / HOÀN THÀNH / ĐÃ HỦY. Tự động tính toán khoản đóng góp hàng tháng cần thiết.
 
+**Tích hợp AI Agent**: Khi người dùng đang ở trang Mục Tiêu Tiết Kiệm, Nova Money nhận đầy đủ ngữ cảnh của từng mục tiêu (số tiền mục tiêu, đã tích lũy, còn thiếu, tiến độ %, cần/tháng, đã đóng tháng này, ngày hết hạn, trạng thái chậm/đúng tiến độ). AI có thể trả lời câu hỏi như *"còn thiếu bao nhiêu?"*, *"khi nào hoàn thành?"* và thực hiện CREATE / UPDATE / DELETE mục tiêu đúng theo ID.
+
 ### Tiện Ích Bảng Điều Khiển
-Bố cục tiện ích có thể tùy chỉnh kéo và thả (qua `@dnd-kit`). Thẻ báo cáo hàng tháng với điểm chi tiêu A–F, phân tích danh mục, tiến trình tiết kiệm.
+Bố cục tiện ích có thể tùy chỉnh kéo và thả (qua `@dnd-kit`). Thẻ báo cáo hàng tháng (`MonthlyReportCard`) với điểm chi tiêu A–F, phân tích danh mục, tiến trình tiết kiệm. Người dùng **PREMIUM** có thêm nút phân tích AI trong thẻ báo cáo — gọi Gemini để nhận nhận xét sâu về tình hình tài chính tháng đó.
+
+### Chế Độ Hiệu Suất Thấp
+Toggle hiệu suất thấp (lưu trong `localStorage`) giúp tắt các animation nặng trên thiết bị yếu. Trạng thái được cung cấp toàn cục qua `PerformanceContext` (`usePerformance()` hook) và áp dụng attribute `data-performance="low"` trên `<html>` để CSS có thể override.
 
 ### Xuất Excel
 Báo cáo XLSX qua Apache POI. Bản địa hóa Việt Nam, hàng có mã màu (xanh = thu nhập, đỏ = chi tiêu), màu hàng xen kẽ, tổng được định dạng VND. **Chỉ CƠ BẢN+.**

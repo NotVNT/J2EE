@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useContext } from "react";
-import { ShieldCheck, User, LogOut, X, Menu, Bell, Plus } from "lucide-react";
+import { ShieldCheck, User, LogOut, X, Menu, Bell } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "../context/AppContext.jsx";
 import Sidebar from "./Sidebar.jsx";
@@ -71,15 +71,6 @@ const Menubar = ({ activeMenu }) => {
         <ThemeToggle />
 
         <NotificationDropdown />
-
-        <button
-          onClick={() => navigate("/expense")}
-          className="hidden md:flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold
-            bg-violet-600 hover:bg-violet-500 text-white transition-all duration-150 active:scale-95"
-        >
-          <Plus size={15} />
-          Thêm giao dịch
-        </button>
 
         {/* User Dropdown */}
         <div className="relative" ref={dropdownRef}>
@@ -163,7 +154,7 @@ const Menubar = ({ activeMenu }) => {
 
       {/* Mobile sidebar overlay */}
       <div
-        className={`fixed inset-0 top-16 z-30 lg:hidden transition-all duration-300 ease-in-out ${
+        className={`fixed inset-0 top-16 z-30 lg:hidden transition-[visibility,opacity] duration-300 ease-in-out ${
           openSideMenu ? 'visible' : 'invisible'
         }`}
       >

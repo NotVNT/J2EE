@@ -49,4 +49,6 @@ public interface ExpenseRepository extends JpaRepository<ExpenseEntity, Long> {
     void deleteByCategoryId(Long categoryId);
 
     void deleteByProfileId(Long profileId);
+
+    List<ExpenseEntity> findByJarId(Long jarId);
 }

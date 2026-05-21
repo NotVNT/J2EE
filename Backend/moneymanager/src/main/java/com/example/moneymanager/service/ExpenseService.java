@@ -7,9 +7,11 @@ import com.example.moneymanager.entity.BudgetEntity;
 import com.example.moneymanager.entity.CategoryEntity;
 import com.example.moneymanager.entity.ExpenseEntity;
 import com.example.moneymanager.entity.ProfileEntity;
+import com.example.moneymanager.entity.JarEntity;
 import com.example.moneymanager.repository.BudgetRepository;
 import com.example.moneymanager.repository.CategoryRepository;
 import com.example.moneymanager.repository.ExpenseRepository;
+import com.example.moneymanager.repository.JarRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Sort;
@@ -33,6 +35,7 @@ public class ExpenseService {
     private final BudgetService budgetService;
     private final NotificationService notificationService;
     private final BudgetRepository budgetRepository;
+    private final JarRepository jarRepository;
 
     // Adds a new expense and checks budget status
     public ExpenseResponseDTO addExpense(ExpenseDTO dto) {
@@ -48,6 +51,18 @@ public class ExpenseService {
                 .orElseThrow(() -> new RuntimeException("Category not found"));
 
         ExpenseEntity newExpense = toEntity(dto, profile, category);
+        
+        if (dto.getJarId() != null) {
+            com.example.moneymanager.entity.JarEntity jar = jarRepository.findById(dto.getJarId())
+                .orElseThrow(() -> new RuntimeException("Jar not found"));
+            if (!jar.getProfile().getId().equals(profile.getId())) {
+                throw new RuntimeException("Unauthorized jar access");
+            }
+            jar.setCurrentBalance(jar.getCurrentBalance().subtract(dto.getAmount()));
+            newExpense.setJar(jar);
+            jarRepository.save(jar);
+        }
+
         newExpense = expenseRepository.save(newExpense);
 
         // Lấy tháng/năm của giao dịch vừa thêm
@@ -105,7 +120,92 @@ public class ExpenseService {
         if (!entity.getProfile().getId().equals(profile.getId())) {
             throw new RuntimeException("Unauthorized to delete this expense");
         }
+        
+        if (entity.getJar() != null) {
+            com.example.moneymanager.entity.JarEntity jar = entity.getJar();
+            jar.setCurrentBalance(jar.getCurrentBalance().add(entity.getAmount()));
+            jarRepository.save(jar);
+        }
+        
         expenseRepository.delete(entity);
+    }
+
+    // Update expense by id for current user
+    @Transactional
+    public ExpenseResponseDTO updateExpense(Long expenseId, ExpenseDTO dto) {
+        ProfileEntity profile = profileService.getCurrentProfile();
+        ExpenseEntity expense = expenseRepository.findById(expenseId)
+                .orElseThrow(() -> new RuntimeException("Expense not found"));
+
+        if (!expense.getProfile().getId().equals(profile.getId())) {
+            throw new RuntimeException("Unauthorized to update this expense");
+        }
+
+        // Keep track of old state to adjust Jar balances
+        BigDecimal oldAmount = expense.getAmount();
+        JarEntity oldJar = expense.getJar();
+
+        CategoryEntity category = categoryRepository.findById(dto.getCategoryId())
+                .orElseThrow(() -> new RuntimeException("Category not found"));
+
+        expense.setName(dto.getName());
+        expense.setIcon(dto.getIcon());
+        expense.setDate(dto.getDate());
+        expense.setAmount(dto.getAmount());
+        expense.setCategory(category);
+
+        JarEntity newJar = null;
+        if (dto.getJarId() != null) {
+            newJar = jarRepository.findById(dto.getJarId())
+                    .orElseThrow(() -> new RuntimeException("Jar not found"));
+            if (!newJar.getProfile().getId().equals(profile.getId())) {
+                throw new RuntimeException("Unauthorized jar access");
+            }
+        }
+
+        // Adjust Jar balance
+        if (oldJar != null && (newJar == null || !oldJar.getId().equals(newJar.getId()))) {
+            // Refund the old jar
+            oldJar.setCurrentBalance(oldJar.getCurrentBalance().add(oldAmount));
+            jarRepository.save(oldJar);
+
+            // Deduct from the new jar
+            if (newJar != null) {
+                newJar.setCurrentBalance(newJar.getCurrentBalance().subtract(dto.getAmount()));
+                jarRepository.save(newJar);
+            }
+        } else if (oldJar == null && newJar != null) {
+            // Deduct from the new jar
+            newJar.setCurrentBalance(newJar.getCurrentBalance().subtract(dto.getAmount()));
+            jarRepository.save(newJar);
+        } else if (oldJar != null && oldJar.getId().equals(newJar.getId())) {
+            // Same jar, adjust by difference
+            BigDecimal difference = dto.getAmount().subtract(oldAmount);
+            oldJar.setCurrentBalance(oldJar.getCurrentBalance().subtract(difference));
+            jarRepository.save(oldJar);
+        }
+
+        expense.setJar(newJar);
+        expense = expenseRepository.save(expense);
+
+        LocalDate expenseDate = expense.getDate() != null ? expense.getDate() : LocalDate.now();
+        int month = expenseDate.getMonthValue();
+        int year  = expenseDate.getYear();
+
+        BudgetStatusDTO budgetStatus = budgetService.checkBudgetStatus(
+                profile.getId(), category.getId(), month, year);
+
+        notificationService.notifyExpenseAdded(profile, "Cập nhật: " + expense.getName(), expense.getAmount());
+        notificationService.notifyBudgetWarning(profile, budgetStatus);
+
+        if (budgetStatus.isHasBudget() && (budgetStatus.isExceeded() || budgetStatus.isWarning())) {
+            budgetService.sendBudgetAlertEmailAsync(profile, budgetStatus);
+        }
+
+        checkBudgetThresholds(profile, category.getId(), month, year);
+        notificationService.checkAbnormalSpendingAsync(profile, expenseDate);
+
+        return toResponseDTO(expense, budgetStatus);
     }
 
     // Get latest 5 expenses for current user
@@ -203,6 +303,8 @@ public class ExpenseService {
                 .date(entity.getDate())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
+                .jarId(entity.getJar() != null ? entity.getJar().getId() : null)
+                .jarName(entity.getJar() != null ? entity.getJar().getName() : null)
                 .build();
     }
 

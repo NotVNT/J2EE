@@ -41,6 +41,12 @@ public class ExpenseController {
         return ResponseEntity.noContent().build();
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<ExpenseResponseDTO> updateExpense(@PathVariable Long id, @RequestBody ExpenseDTO dto) {
+        ExpenseResponseDTO updated = expenseService.updateExpense(id, dto);
+        return ResponseEntity.ok(updated);
+    }
+
     @PostMapping(value = "/import-receipt", consumes = "multipart/form-data")
     public ResponseEntity<ReceiptImportResponseDTO> importReceipt(
             @RequestPart("file") MultipartFile file

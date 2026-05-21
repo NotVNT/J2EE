@@ -1,5 +1,5 @@
 import {useContext, useEffect, useState} from "react";
-import {BadgeCheck, LoaderCircle, Mail, ShieldCheck, Sparkles, User} from "lucide-react";
+import {BadgeCheck, LoaderCircle, Mail, ShieldCheck, Sparkles, User, Zap} from "lucide-react";
 import toast from "react-hot-toast";
 import Dashboard from "../components/Dashboard.jsx";
 import Input from "../components/Input.jsx";
@@ -12,12 +12,14 @@ import {API_ENDPOINTS} from "../util/apiEndpoints.js";
 import {validateEmail} from "../util/validation.js";
 import uploadProfileImage from "../util/uploadProfileImage.js";
 import { usePageTitle } from "../hooks/usePageTitle.js";
+import { usePerformance } from "../context/PerformanceContext.jsx";
 
 const Profile = () => {
     useUser();
     usePageTitle("Hồ sơ người dùng");
 
     const {user, setUser} = useContext(AppContext);
+    const { isLowPerf, togglePerformanceMode } = usePerformance();
     const [fullName, setFullName] = useState("");
     const [email, setEmail] = useState("");
     const [currentImageUrl, setCurrentImageUrl] = useState("");
@@ -196,7 +198,7 @@ const Profile = () => {
                                                     </div>
                                                     <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
                                                         <div 
-                                                            className={`h-full rounded-full transition-all duration-500 ${aiUsage.chatUsed >= aiUsage.chatLimit ? 'bg-red-400' : 'bg-violet-400'}`} 
+                                                            className={`h-full rounded-full transition-[width] duration-500 ${aiUsage.chatUsed >= aiUsage.chatLimit ? 'bg-red-400' : 'bg-violet-400'}`} 
                                                             style={{ width: `${Math.min(100, (aiUsage.chatUsed / aiUsage.chatLimit) * 100)}%` }}
                                                         />
                                                     </div>
@@ -211,7 +213,7 @@ const Profile = () => {
                                                     </div>
                                                     <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
                                                         <div 
-                                                            className={`h-full rounded-full transition-all duration-500 ${aiUsage.agentUsed >= aiUsage.agentLimit ? 'bg-red-400' : 'bg-emerald-400'}`} 
+                                                            className={`h-full rounded-full transition-[width] duration-500 ${aiUsage.agentUsed >= aiUsage.agentLimit ? 'bg-red-400' : 'bg-emerald-400'}`} 
                                                             style={{ width: `${Math.min(100, (aiUsage.agentUsed / aiUsage.agentLimit) * 100)}%` }}
                                                         />
                                                     </div>
@@ -227,7 +229,7 @@ const Profile = () => {
                                                     </div>
                                                     <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
                                                         <div 
-                                                            className={`h-full rounded-full transition-all duration-500 ${aiUsage.otherAiUsed >= aiUsage.otherAiLimit ? 'bg-red-400' : 'bg-amber-400'}`} 
+                                                            className={`h-full rounded-full transition-[width] duration-500 ${aiUsage.otherAiUsed >= aiUsage.otherAiLimit ? 'bg-red-400' : 'bg-amber-400'}`} 
                                                             style={{ width: `${Math.min(100, (aiUsage.otherAiUsed / aiUsage.otherAiLimit) * 100)}%` }}
                                                         />
                                                     </div>
@@ -265,6 +267,17 @@ const Profile = () => {
                         >
                             Cài Đặt Email
                         </button>
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab("display")}
+                            className={`px-5 py-2.5 text-sm font-semibold border-b-2 transition-colors ${
+                                activeTab === "display"
+                                    ? "border-violet-600 text-violet-600 dark:text-violet-400"
+                                    : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+                            }`}
+                        >
+                            Hiển Thị
+                        </button>
                     </div>
 
                     {/* Email settings tab */}
@@ -277,6 +290,46 @@ const Profile = () => {
                                 </p>
                             </div>
                             <EmailNotificationSettings />
+                        </section>
+                    )}
+
+                    {/* Display / Performance settings tab */}
+                    {activeTab === "display" && (
+                        <section className="rounded-[28px] border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-6 shadow-sm sm:p-8">
+                            <div className="flex flex-col gap-2 border-b border-slate-100 dark:border-white/10 pb-5 mb-6">
+                                <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">Hiển Thị</h2>
+                                <p className="text-sm text-slate-500 dark:text-slate-400">
+                                    Tùy chỉnh giao diện và hiệu năng hiển thị.
+                                </p>
+                            </div>
+                            <div className="flex items-center justify-between gap-4 rounded-2xl border border-slate-100 dark:border-white/10 bg-slate-50/70 dark:bg-white/5 px-5 py-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-500/15">
+                                        <Zap size={18} className="text-amber-500" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">Chế độ máy yếu</p>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                            Tắt hiệu ứng kính mờ và animation để tăng tốc độ
+                                        </p>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    role="switch"
+                                    aria-checked={isLowPerf}
+                                    onClick={togglePerformanceMode}
+                                    className={`relative h-7 w-12 shrink-0 rounded-full transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 ${
+                                        isLowPerf ? "bg-violet-600" : "bg-slate-200 dark:bg-white/20"
+                                    }`}
+                                >
+                                    <span
+                                        className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-[left] duration-200 ${
+                                            isLowPerf ? "left-5" : "left-0.5"
+                                        }`}
+                                    />
+                                </button>
+                            </div>
                         </section>
                     )}
 

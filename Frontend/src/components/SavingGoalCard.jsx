@@ -88,7 +88,7 @@ const SavingGoalCard = ({ goal, onEdit, onDelete, onContribute }) => {
                 </div>
                 <div className="w-full h-3 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden">
                     <div
-                        className="h-full rounded-full transition-all duration-500"
+                        className="h-full rounded-full transition-[width] duration-500"
                         style={{
                             width: `${Math.min(progressPercent, 100)}%`,
                             background: `linear-gradient(90deg, ${progressColor}cc, ${progressColor})`,
@@ -128,7 +128,7 @@ const SavingGoalCard = ({ goal, onEdit, onDelete, onContribute }) => {
                     </div>
                     <div className="w-full h-2 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
                         <div
-                            className="h-full rounded-full transition-all duration-500"
+                            className="h-full rounded-full transition-[width] duration-500"
                             style={{
                                 width: `${Math.min(monthlyProgressPercent, 100)}%`,
                                 background: monthlyColor,
