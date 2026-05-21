@@ -104,7 +104,7 @@ const Category = () => {
           <button
             onClick={() => setOpenAddCategoryModal(true)}
             className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold
-              bg-violet-600 hover:bg-violet-500 text-white transition-all duration-150 active:scale-95"
+              bg-violet-600 hover:bg-violet-500 text-white transition duration-150 transform-gpu active:scale-95"
           >
             <Plus size={15} />Thêm danh mục
           </button>

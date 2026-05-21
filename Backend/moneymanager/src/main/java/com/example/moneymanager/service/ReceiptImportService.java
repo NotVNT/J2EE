@@ -28,6 +28,7 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -67,7 +68,7 @@ public class ReceiptImportService {
         );
         CategoryEntity otherCategory = ensureOtherExpenseCategory(profile, expenseCategories);
 
-        JsonNode aiResult = analyzeReceiptWithGemini(file);
+        JsonNode aiResult = analyzeReceiptWithGemini(file, expenseCategories);
         return buildPreviewFromAiResult(aiResult, expenseCategories, otherCategory);
     }
 
@@ -114,6 +115,7 @@ public class ReceiptImportService {
                             .categoryId(matchedCategory.getId())
                             .amount(amount)
                             .date(transactionDate)
+                            .jarId(requestDTO.getJarId())
                             .build()
             );
 
@@ -162,19 +164,19 @@ public class ReceiptImportService {
         for (JsonNode item : itemsNode) {
             String itemName = safeText(item.path("name").asText(""));
             BigDecimal amount = parseAmount(item.path("amount"));
-            String categoryHint = safeText(item.path("categoryHint").asText(""));
+            String categoryName = safeText(item.path("categoryName").asText(""));
 
             if (itemName.isBlank() || amount.compareTo(BigDecimal.ZERO) <= 0) {
                 continue;
             }
 
             LocalDate transactionDate = receiptDate != null ? receiptDate : LocalDate.now();
-                CategoryEntity matchedCategory = resolveCategory(expenseCategories, categoryHint, itemName, otherCategory);
+            CategoryEntity matchedCategory = resolveCategory(expenseCategories, categoryName, itemName, otherCategory);
             items.add(ReceiptImportItemDTO.builder()
                     .name(itemName)
                     .amount(amount)
                     .categoryId(matchedCategory.getId())
-                    .categoryHint(categoryHint)
+                    .categoryHint(categoryName)
                     .icon(matchedCategory.getIcon())
                     .date(transactionDate)
                     .build());
@@ -239,10 +241,10 @@ public class ReceiptImportService {
         return true;
     }
 
-    private JsonNode analyzeReceiptWithGemini(MultipartFile file) {
+    private JsonNode analyzeReceiptWithGemini(MultipartFile file, List<CategoryEntity> expenseCategories) {
         try {
             String base64Image = Base64.getEncoder().encodeToString(file.getBytes());
-            ObjectNode requestBody = buildGeminiImageRequest(base64Image, file.getContentType());
+            ObjectNode requestBody = buildGeminiImageRequest(base64Image, file.getContentType(), expenseCategories);
 
             String requestJson = objectMapper.writeValueAsString(requestBody);
             String responseJson = geminiRestClient.post()
@@ -271,7 +273,15 @@ public class ReceiptImportService {
         }
     }
 
-    private ObjectNode buildGeminiImageRequest(String base64Image, String mimeType) {
+    private ObjectNode buildGeminiImageRequest(String base64Image, String mimeType, List<CategoryEntity> expenseCategories) {
+        List<String> categoryNames = expenseCategories.stream()
+                .map(CategoryEntity::getName)
+                .collect(Collectors.toCollection(ArrayList::new));
+        if (categoryNames.stream().noneMatch(n -> normalize(n).equals("khac"))) {
+            categoryNames.add(OTHER_CATEGORY_NAME);
+        }
+        String categoryListText = String.join(", ", categoryNames);
+
         ObjectNode requestBody = objectMapper.createObjectNode();
 
         ArrayNode contents = objectMapper.createArrayNode();
@@ -280,30 +290,20 @@ public class ReceiptImportService {
 
         ArrayNode parts = objectMapper.createArrayNode();
         ObjectNode promptPart = objectMapper.createObjectNode();
-        promptPart.put("text", """
-                Bạn là hệ thống OCR tài chính cho ứng dụng Money Manager.
-                Hãy đọc ảnh hóa đơn và chỉ trả về JSON hợp lệ theo đúng schema:
-                {
-                  \"merchant\": \"string\",
-                                    \"location\": \"string\" hoặc null,
-                  \"receiptDate\": \"YYYY-MM-DD\" hoặc null,
-                  \"items\": [
-                    {
-                      \"name\": \"string\",
-                      \"amount\": number,
-                      \"categoryHint\": \"food|transport|shopping|utilities|health|education|entertainment|other\"
-                    }
-                  ]
-                }
-                Quy tắc:
-                - Không thêm markdown, không thêm ký tự thừa ngoài JSON.
-                - BẮT BUỘC trích xuất tối đa số dòng sản phẩm có thể đọc được trong hóa đơn, không chỉ 1 dòng.
-                - Với hóa đơn nhiều sản phẩm, trả về đầy đủ tất cả sản phẩm trong mảng items theo thứ tự xuất hiện.
-                - Nếu có số lượng x đơn giá, hãy tính amount = số lượng * đơn giá cho từng sản phẩm.
-                - Bỏ qua dòng tổng kết như tổng tiền, VAT, giảm giá nếu không phải mặt hàng mua cụ thể.
-                - location là địa điểm/cửa hàng trên hóa đơn (địa chỉ hoặc tên chi nhánh). Nếu không rõ thì null.
-                - Nếu thiếu ngày hóa đơn thì dùng null cho receiptDate.
-                - Chỉ lấy item có amount > 0.
+        promptPart.put("text",
+                "Bạn là hệ thống OCR tài chính. Phân tích hóa đơn trong ảnh và trả về JSON hợp lệ.\n\n" +
+                "Danh mục chi tiêu của người dùng (dùng đúng tên, phân biệt hoa thường):\n" +
+                categoryListText + "\n\n" +
+                """
+                Quy tắc bắt buộc:
+                1. Trích xuất TẤT CẢ dòng sản phẩm/dịch vụ trong hóa đơn, không bỏ sót.
+                2. amount là số nguyên VND. Nếu có "SL x đơn giá" hoặc "số lượng x đơn giá", tính amount = số lượng × đơn giá.
+                3. Hóa đơn VN dùng dấu chấm (.) phân cách hàng nghìn (45.000 = 45000, 1.200.000 = 1200000). Đọc đúng số.
+                4. BỎ QUA các dòng không phải sản phẩm cụ thể: Tổng cộng, Tổng tiền, Thành tiền, VAT, Thuế GTGT, Phí dịch vụ, Giảm giá, Khuyến mãi, Chiết khấu, Tiền thừa, Tiền trả lại.
+                5. Chỉ lấy item có amount > 0.
+                6. categoryName PHẢI là một trong các tên danh mục được liệt kê ở trên. Nếu không phù hợp thì dùng "Khác".
+                7. receiptDate định dạng YYYY-MM-DD, hoặc null nếu không có trên hóa đơn.
+                8. location là địa chỉ/tên chi nhánh ghi trên hóa đơn (không phải tên thương hiệu), null nếu không có.
                 """);
         parts.add(promptPart);
 
@@ -320,9 +320,63 @@ public class ReceiptImportService {
 
         ObjectNode generationConfig = objectMapper.createObjectNode();
         generationConfig.put("temperature", 0.1);
-        generationConfig.put("maxOutputTokens", 2200);
+        generationConfig.put("maxOutputTokens", 4096);
+        generationConfig.put("responseMimeType", "application/json");
+        generationConfig.set("responseSchema", buildReceiptResponseSchema(categoryNames));
         requestBody.set("generationConfig", generationConfig);
+
         return requestBody;
+    }
+
+    private ObjectNode buildReceiptResponseSchema(List<String> categoryNames) {
+        ObjectNode nameField = objectMapper.createObjectNode();
+        nameField.put("type", "STRING");
+
+        ObjectNode amountField = objectMapper.createObjectNode();
+        amountField.put("type", "NUMBER");
+
+        ObjectNode categoryField = objectMapper.createObjectNode();
+        categoryField.put("type", "STRING");
+        ArrayNode enumValues = categoryField.putArray("enum");
+        categoryNames.forEach(enumValues::add);
+
+        ObjectNode itemProps = objectMapper.createObjectNode();
+        itemProps.set("name", nameField);
+        itemProps.set("amount", amountField);
+        itemProps.set("categoryName", categoryField);
+
+        ObjectNode itemSchema = objectMapper.createObjectNode();
+        itemSchema.put("type", "OBJECT");
+        itemSchema.set("properties", itemProps);
+        itemSchema.putArray("required").add("name").add("amount").add("categoryName");
+
+        ObjectNode itemsArray = objectMapper.createObjectNode();
+        itemsArray.put("type", "ARRAY");
+        itemsArray.set("items", itemSchema);
+
+        ObjectNode merchantField = objectMapper.createObjectNode();
+        merchantField.put("type", "STRING");
+
+        ObjectNode locationField = objectMapper.createObjectNode();
+        locationField.put("type", "STRING");
+        locationField.put("nullable", true);
+
+        ObjectNode dateField = objectMapper.createObjectNode();
+        dateField.put("type", "STRING");
+        dateField.put("nullable", true);
+
+        ObjectNode rootProps = objectMapper.createObjectNode();
+        rootProps.set("merchant", merchantField);
+        rootProps.set("location", locationField);
+        rootProps.set("receiptDate", dateField);
+        rootProps.set("items", itemsArray);
+
+        ObjectNode schema = objectMapper.createObjectNode();
+        schema.put("type", "OBJECT");
+        schema.set("properties", rootProps);
+        schema.putArray("required").add("merchant").add("items");
+
+        return schema;
     }
 
     private String extractOutputText(JsonNode responseBody) {
@@ -396,34 +450,32 @@ public class ReceiptImportService {
         }
     }
 
-    private CategoryEntity resolveCategory(List<CategoryEntity> categories, String hint, String name, CategoryEntity otherCategory) {
-        String normalizedHint = normalize(hint);
-        String normalizedName = normalize(name);
+    private CategoryEntity resolveCategory(List<CategoryEntity> categories, String categoryName, String itemName, CategoryEntity otherCategory) {
+        if (!categoryName.isBlank()) {
+            String normalized = normalize(categoryName);
 
-        if ("other".equals(normalizedHint) || "khac".equals(normalizedHint)) {
-            return otherCategory;
-        }
-
-        if (!normalizedHint.isBlank()) {
             CategoryEntity exact = categories.stream()
-                    .filter(category -> normalizedHint.contains(normalize(category.getName()))
-                            || normalize(category.getName()).contains(normalizedHint))
+                    .filter(c -> normalize(c.getName()).equals(normalized))
                     .findFirst()
                     .orElse(null);
-            if (exact != null) {
-                return exact;
-            }
+            if (exact != null) return exact;
+
+            CategoryEntity partial = categories.stream()
+                    .filter(c -> normalized.contains(normalize(c.getName()))
+                            || normalize(c.getName()).contains(normalized))
+                    .findFirst()
+                    .orElse(null);
+            if (partial != null) return partial;
         }
 
-        if (!normalizedName.isBlank()) {
-            CategoryEntity byName = categories.stream()
-                    .filter(category -> normalizedName.contains(normalize(category.getName()))
-                            || normalize(category.getName()).contains(normalizedName))
+        if (!itemName.isBlank()) {
+            String normalizedItem = normalize(itemName);
+            CategoryEntity byItem = categories.stream()
+                    .filter(c -> normalizedItem.contains(normalize(c.getName()))
+                            || normalize(c.getName()).contains(normalizedItem))
                     .findFirst()
                     .orElse(null);
-            if (byName != null) {
-                return byName;
-            }
+            if (byItem != null) return byItem;
         }
 
         return otherCategory;

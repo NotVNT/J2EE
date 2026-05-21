@@ -35,7 +35,7 @@ const AdminRoute = () => {
           </p>
           <Link
             to="/dashboard"
-            className="w-full rounded-xl bg-blue-600 px-6 py-3 font-medium text-white shadow-sm transition-all hover:bg-blue-700 hover:shadow"
+            className="w-full rounded-xl bg-blue-600 px-6 py-3 font-medium text-white shadow-sm transition hover:bg-blue-700 hover:shadow"
           >
             Back to Dashboard
           </Link>

@@ -4,7 +4,13 @@ import { Toaster } from "react-hot-toast";
 import App from "./App.jsx";
 import { AppContextProvider } from "./context/AppContext.jsx";
 import { ThemeProvider } from "./context/ThemeContext.jsx";
+import { PerformanceProvider } from "./context/PerformanceContext.jsx";
 import "./index.css";
+
+// Apply low-perf mode immediately to avoid first-paint flash
+if (localStorage.getItem("performanceMode") === "low") {
+  document.documentElement.setAttribute("data-performance", "low");
+}
 
 // Polyfill for mgt.clearMarks is not a function
 // Ensure global mgt object exists with all required methods
@@ -33,20 +39,22 @@ window.addEventListener("error", (e) => {
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <BrowserRouter>
-    <ThemeProvider>
-      <AppContextProvider>
-        <Toaster
-          toastOptions={{
-            style: {
-              background: "#1E293B",
-              color: "#F8FAFC",
-              border: "1px solid rgba(255,255,255,0.1)",
-              borderRadius: "12px",
-            },
-          }}
-        />
-        <App />
-      </AppContextProvider>
-    </ThemeProvider>
+    <PerformanceProvider>
+      <ThemeProvider>
+        <AppContextProvider>
+          <Toaster
+            toastOptions={{
+              style: {
+                background: "#1E293B",
+                color: "#F8FAFC",
+                border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: "12px",
+              },
+            }}
+          />
+          <App />
+        </AppContextProvider>
+      </ThemeProvider>
+    </PerformanceProvider>
   </BrowserRouter>
 );

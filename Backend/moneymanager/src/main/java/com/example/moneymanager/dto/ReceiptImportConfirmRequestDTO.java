@@ -16,5 +16,6 @@ public class ReceiptImportConfirmRequestDTO {
     private String merchant;
     private String location;
     private LocalDate receiptDate;
+    private Long jarId;
     private List<ReceiptImportItemDTO> items;
 }

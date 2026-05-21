@@ -27,8 +27,6 @@ public class GptOssConfig {
         return RestClient.builder()
                 .baseUrl(properties.baseUrl())
                 .defaultHeader("Content-Type", "application/json;charset=UTF-8")
-                .defaultHeader("HTTP-Referer", properties.appReferer())
-                .defaultHeader("X-Title", properties.appTitle())
                 .requestFactory(requestFactory)
                 .build();
     }

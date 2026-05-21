@@ -53,7 +53,7 @@ const WidgetSettingsPanel = ({
             onClick={handleReset}
             className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold
               bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300
-              hover:bg-slate-200 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 transition-all"
+              hover:bg-slate-200 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 transition"
           >
             <RotateCcw size={16} />
             Đặt lại mặc định
@@ -107,7 +107,7 @@ const WidgetSettingsPanel = ({
                   <div
                     key={widgetId}
                     className="flex items-center justify-between rounded-xl border border-slate-200 dark:border-white/10 
-                      bg-white dark:bg-white/3 p-3.5 transition-all"
+                      bg-white dark:bg-white/3 p-3.5 transition"
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       {/* Drag icon indicator */}

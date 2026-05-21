@@ -1,8 +1,8 @@
-import {Trash2, TrendingDown, TrendingUp} from "lucide-react";
+import {Trash2, TrendingDown, TrendingUp, Pencil} from "lucide-react";
 import {addThousandsSeparator} from "../util/util.js";
 import {hasDisplayImage, hideBrokenImageWrapper} from "../util/imageDisplay.js";
 
-const TransactionInfoCard = ({icon, title, date, amount, type, hideDeleteBtn, onDelete, category, receiptLocation}) => {
+const TransactionInfoCard = ({icon, title, date, amount, type, hideDeleteBtn, onDelete, onEdit, category, receiptLocation}) => {
     const shouldShowImage = hasDisplayImage(icon) && !receiptLocation;
 
     const amountClass = type === 'income'
@@ -39,12 +39,22 @@ const TransactionInfoCard = ({icon, title, date, amount, type, hideDeleteBtn, on
 
                 <div className="flex items-center gap-2">
                     {!hideDeleteBtn && (
-                        <button
-                            onClick={onDelete}
-                            className="text-slate-400 hover:text-red-500 dark:hover:text-red-400 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity cursor-pointer"
-                        >
-                            <Trash2 size={18} />
-                        </button>
+                        <div className="flex items-center gap-1.5">
+                            {onEdit && (
+                                <button
+                                    onClick={onEdit}
+                                    className="text-slate-400 hover:text-violet-600 dark:hover:text-amber-500 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity cursor-pointer mr-0.5"
+                                >
+                                    <Pencil size={18} />
+                                </button>
+                            )}
+                            <button
+                                onClick={onDelete}
+                                className="text-slate-400 hover:text-red-500 dark:hover:text-red-400 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity cursor-pointer"
+                            >
+                                <Trash2 size={18} />
+                            </button>
+                        </div>
                     )}
 
                     <div className={`flex items-center gap-2 px-3 py-1.5 rounded-md ${amountClass}`}>

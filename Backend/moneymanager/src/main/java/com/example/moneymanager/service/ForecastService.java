@@ -221,7 +221,7 @@ public class ForecastService {
                   .append(item.getHistoricalAverage()).append("đ, Xu hướng: ").append(item.getTrend()).append(")\n");
         }
         
-        prompt.append("Dựa vào thông tin trên, hãy viết một đoạn phân tích ngắn gọn, bằng tiếng Việt, thân thiện và đưa ra lời khuyên thực tế để tiết kiệm chi phí trong tháng này. Trả lời tối đa 100 chữ.");
+        prompt.append("Dựa vào thông tin trên, hãy viết một đoạn phân tích ngắn gọn bằng tiếng Việt — giọng ấm áp, thân thiện như người bạn quan tâm, không phán xét — và đưa ra lời khuyên thực tế để tiết kiệm chi phí trong tháng này. Trả lời tối đa 100 chữ.");
 
         String insight = gptOssService.chat(prompt.toString()).getReply();
 

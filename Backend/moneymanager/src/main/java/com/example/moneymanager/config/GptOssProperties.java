@@ -7,8 +7,6 @@ public record GptOssProperties(
         java.util.List<String> apiKeys,
         String model,
         String baseUrl,
-        Integer timeoutSeconds,
-        String appReferer,
-        String appTitle
+        Integer timeoutSeconds
 ) {
 }

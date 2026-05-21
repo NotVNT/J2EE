@@ -1,6 +1,6 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { LoaderCircle, Trash2 } from "lucide-react";
+import { AlertTriangle, LoaderCircle, Trash2 } from "lucide-react";
 import CustomSelect from "../components/CustomSelect.jsx";
 import { AppContext } from "../context/AppContext.jsx";
 import { useUser } from "../hooks/useUser.jsx";
@@ -11,6 +11,7 @@ import ExpenseOverview from "../components/ExpenseOverview.jsx";
 import ExpenseList from "../components/ExpenseList.jsx";
 import Modal from "../components/Modal.jsx";
 import AddExpenseForm from "../components/AddExpenseForm.jsx";
+import EditExpenseForm from "../components/EditExpenseForm.jsx";
 import DeleteAlert from "../components/DeleteAlert.jsx";
 import QuickExpenseTemplates from "../components/QuickExpenseTemplates.jsx";
 import { usePageTitle } from "../hooks/usePageTitle.js";
@@ -23,11 +24,14 @@ const Expense = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [openAddExpenseModal, setOpenAddExpenseModal] = useState(false);
+  const [openEditExpenseModal, setOpenEditExpenseModal] = useState(false);
+  const [expenseToEdit, setExpenseToEdit] = useState(null);
   const [openDeleteAlert, setOpenDeleteAlert] = useState({ show: false, data: null });
   const [isImportingReceipt, setIsImportingReceipt] = useState(false);
   const [isConfirmingImport, setIsConfirmingImport] = useState(false);
   const [openReceiptPreviewModal, setOpenReceiptPreviewModal] = useState(false);
   const [receiptPreview, setReceiptPreview] = useState(null);
+  const [jars, setJars] = useState([]);
   const receiptFileInputRef = useRef(null);
 
   const exportUpgradeMessage = "Nâng cấp gói để sử dụng tính năng này";
@@ -46,6 +50,15 @@ const Expense = () => {
       toast.error("Không thể tải chi tiết chi tiêu.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchJars = async () => {
+    try {
+      const response = await axiosConfig.get(API_ENDPOINTS.GET_JARS);
+      if (response.data) setJars(response.data);
+    } catch {
+      // jars are optional — silently ignore
     }
   };
 
@@ -101,6 +114,39 @@ const Expense = () => {
       fetchExpenseDetails();
     } catch (error) {
       toast.error(error.response?.data?.message || "Không thể xóa chi tiêu.");
+    }
+  };
+
+  const handleUpdateExpense = async (expense) => {
+    const { id, name, categoryId, amount, date, icon, jarId } = expense;
+    if (!name.trim()) { toast.error("Vui lòng nhập tên chi tiêu."); return; }
+    if (!categoryId) { toast.error("Vui lòng chọn danh mục."); return; }
+    if (!amount || isNaN(amount) || Number(amount) <= 0) { toast.error("Số tiền phải lớn hơn 0."); return; }
+    if (!date) { toast.error("Vui lòng chọn ngày."); return; }
+    const today = new Date().toISOString().split("T")[0];
+    if (date > today) { toast.error("Ngày không được chọn ở tương lai."); return; }
+
+    try {
+      const response = await axiosConfig.put(API_ENDPOINTS.UPDATE_EXPENSE(id), { name, categoryId, amount: Number(amount), date, icon, jarId });
+      setOpenEditExpenseModal(false);
+      setExpenseToEdit(null);
+      toast.success("Cập nhật chi tiêu thành công");
+      const budgetStatus = response.data?.budgetStatus;
+      if (budgetStatus?.hasBudget) {
+        const fmt = (n) => new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(n);
+        const pct = (budgetStatus.usageRatio * 100).toFixed(1);
+        if (budgetStatus.isExceeded) {
+          toast.error(`🚨 Vượt hạn mức "${budgetStatus.categoryName}"!\nĐã chi ${fmt(budgetStatus.totalSpent)} / ${fmt(budgetStatus.amountLimit)} (${pct}%)`, { duration: 6000 });
+        } else if (budgetStatus.isWarning) {
+          toast(`⚠️ Sắp hết hạn mức "${budgetStatus.categoryName}"\nĐã chi ${fmt(budgetStatus.totalSpent)} / ${fmt(budgetStatus.amountLimit)} (${pct}%)`,
+            { icon: "⚠️", duration: 5000, style: { background: "#f39c12", color: "#fff" } });
+        }
+      }
+      fetchExpenseDetails();
+      fetchExpenseCategories();
+    } catch (error) {
+      console.error("Error updating expense:", error.response?.data?.message || error.message);
+      toast.error(error.response?.data?.message || "Không thể cập nhật chi tiêu.");
     }
   };
 
@@ -165,11 +211,12 @@ const Expense = () => {
       const response = await axiosConfig.post(API_ENDPOINTS.ANALYZE_EXPENSE_RECEIPT, formData, { headers: { "Content-Type": "multipart/form-data" } });
       const detectedCount = Number(response.data?.items?.length || 0);
       if (detectedCount <= 0) { toast.error("Không phát hiện được dòng chi tiêu hợp lệ trên hóa đơn."); return; }
-      await fetchExpenseCategories();
+      await Promise.all([fetchExpenseCategories(), fetchJars()]);
       setReceiptPreview({
         merchant: response.data?.merchant || "",
         location: response.data?.location || "",
         receiptDate: response.data?.receiptDate || new Date().toISOString().split("T")[0],
+        jarId: "",
         items: (response.data?.items || []).map((item) => ({
           name: item?.name || "", amount: item?.amount ?? "", categoryId: item?.categoryId ?? "",
           icon: item?.icon || "", date: item?.date || response.data?.receiptDate || new Date().toISOString().split("T")[0],
@@ -205,7 +252,9 @@ const Expense = () => {
     try {
       const response = await axiosConfig.post(API_ENDPOINTS.CONFIRM_EXPENSE_RECEIPT_IMPORT, {
         merchant: receiptPreview.merchant || "", location: receiptPreview.location || "",
-        receiptDate: receiptPreview.receiptDate || null, items: cleanedItems,
+        receiptDate: receiptPreview.receiptDate || null,
+        jarId: receiptPreview.jarId ? Number(receiptPreview.jarId) : null,
+        items: cleanedItems,
       });
       const importedCount = Number(response.data?.importedCount || 0);
       toast.success(`Đã lưu ${importedCount} khoản chi từ hóa đơn.`);
@@ -219,7 +268,7 @@ const Expense = () => {
     }
   };
 
-  useEffect(() => { fetchExpenseDetails(); fetchExpenseCategories(); }, []);
+  useEffect(() => { fetchExpenseDetails(); fetchExpenseCategories(); fetchJars(); }, []);
 
   const inputCls = "w-full rounded-xl px-3 py-2 text-sm outline-none transition-colors bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-violet-500 dark:focus:border-amber-500";
 
@@ -243,6 +292,7 @@ const Expense = () => {
         <ExpenseList
           transactions={expenseData}
           onDelete={(id) => setOpenDeleteAlert({ show: true, data: id })}
+          onEdit={(exp) => { setExpenseToEdit(exp); setOpenEditExpenseModal(true); }}
           onDownload={handleDownloadExpenseDetails}
           onEmail={handleEmailExpenseDetails}
           disableExportActions={exportLocked}
@@ -250,7 +300,13 @@ const Expense = () => {
         />
 
         <Modal isOpen={openAddExpenseModal} onClose={() => setOpenAddExpenseModal(false)} title="Thêm chi tiêu">
-          <AddExpenseForm onAddExpense={handleAddExpense} categories={categories} />
+          <AddExpenseForm onAddExpense={handleAddExpense} categories={categories} jars={jars} />
+        </Modal>
+
+        <Modal isOpen={openEditExpenseModal} onClose={() => { setOpenEditExpenseModal(false); setExpenseToEdit(null); }} title="Chỉnh sửa chi tiêu">
+          {expenseToEdit && (
+            <EditExpenseForm onUpdateExpense={handleUpdateExpense} categories={categories} expenseToEdit={expenseToEdit} jars={jars} />
+          )}
         </Modal>
 
         <Modal isOpen={openDeleteAlert.show} onClose={() => setOpenDeleteAlert({ show: false, data: null })} title="Xóa chi tiêu">
@@ -271,9 +327,43 @@ const Expense = () => {
               </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Ngày hóa đơn</label>
-              <input type="date" className={`${inputCls} md:w-60`} value={receiptPreview?.receiptDate || ""} onChange={(e) => handlePreviewFieldChange("receiptDate", e.target.value)} />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Ngày hóa đơn</label>
+                <input type="date" className={inputCls} value={receiptPreview?.receiptDate || ""} onChange={(e) => handlePreviewFieldChange("receiptDate", e.target.value)} />
+              </div>
+              {jars.length > 0 && (
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Trừ từ hũ</label>
+                  <CustomSelect
+                    value={receiptPreview?.jarId ?? ""}
+                    onChange={(e) => handlePreviewFieldChange("jarId", e.target.value)}
+                    options={[
+                      { value: "", label: "Chọn hũ thanh toán" },
+                      ...jars.map((j) => ({
+                        value: j.id,
+                        label: `🏦 ${j.name?.trim() || "Hũ không tên"} — ${new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(j.currentBalance ?? 0)}`,
+                      })),
+                    ]}
+                    className={inputCls}
+                  />
+                  {(() => {
+                    const selectedJar = jars.find((j) => String(j.id) === String(receiptPreview?.jarId));
+                    const totalAmount = (receiptPreview?.items || []).reduce((sum, item) => sum + Number(item.amount || 0), 0);
+                    if (selectedJar && totalAmount > (selectedJar.currentBalance ?? 0)) {
+                      return (
+                        <div className="flex items-center gap-1.5 mt-1 px-1">
+                          <AlertTriangle size={13} className="text-amber-500 shrink-0" />
+                          <p className="text-xs text-amber-600 dark:text-amber-400">
+                            Số dư hũ không đủ ({new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(selectedJar.currentBalance)})
+                          </p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
+                </div>
+              )}
             </div>
 
             <div className="space-y-2.5">
@@ -318,7 +408,7 @@ const Expense = () => {
               <button type="button" className="rounded-xl border border-slate-200 dark:border-white/10 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors disabled:opacity-60" onClick={handleCloseReceiptPreview} disabled={isConfirmingImport}>
                 Hủy
               </button>
-              <button type="button" className="rounded-xl bg-violet-600 hover:bg-violet-500 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60 transition-all active:scale-95" onClick={handleConfirmReceiptImport} disabled={isConfirmingImport}>
+              <button type="button" className="rounded-xl bg-violet-600 hover:bg-violet-500 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60 transition transform-gpu active:scale-95" onClick={handleConfirmReceiptImport} disabled={isConfirmingImport}>
                 {isConfirmingImport ? (
                   <span className="inline-flex items-center gap-2"><LoaderCircle size={15} className="animate-spin" />Đang lưu...</span>
                 ) : "Xác nhận lưu vào chi tiêu"}

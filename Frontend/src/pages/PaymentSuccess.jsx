@@ -213,7 +213,7 @@ const PaymentSuccess = () => {
               className="flex-1 flex items-center justify-center gap-2 rounded-xl
                 bg-violet-600 hover:bg-violet-500 active:bg-violet-700
                 px-5 py-3 text-sm font-semibold text-white
-                transition-all active:scale-[0.98] shadow-md shadow-violet-500/20"
+                transition transform-gpu active:scale-[0.98] shadow-md shadow-violet-500/20"
             >
               <House size={15} />
               Về trang chủ
@@ -226,7 +226,7 @@ const PaymentSuccess = () => {
                 className="flex-1 flex items-center justify-center gap-2 rounded-xl
                   bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700
                   px-5 py-3 text-sm font-semibold text-white
-                  transition-all active:scale-[0.98] shadow-md shadow-emerald-500/20
+                  transition transform-gpu active:scale-[0.98] shadow-md shadow-emerald-500/20
                   disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {isGeneratingInvoice ? (
@@ -246,7 +246,7 @@ const PaymentSuccess = () => {
                 active:scale-[0.98]
                 px-5 py-3 text-sm font-semibold
                 text-slate-700 dark:text-slate-300
-                transition-all"
+                transition"
             >
               Trang thanh toán<ArrowRight size={15} />
             </Link>

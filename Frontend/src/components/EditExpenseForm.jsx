@@ -4,14 +4,15 @@ import Input from "./Input.jsx";
 import { formatCurrency } from "../util/helper.js";
 import { AlertTriangle } from "lucide-react";
 
-const AddExpenseForm = ({ onAddExpense, categories, defaultJarId, jars = [] }) => {
+const EditExpenseForm = ({ onUpdateExpense, expenseToEdit, categories, jars = [] }) => {
     const [expense, setExpense] = useState({
-        name: "",
-        categoryId: categories.length > 0 ? categories[0].id : "",
-        amount: "",
-        date: "",
-        icon: "",
-        jarId: defaultJarId || (jars.length > 0 ? jars[0].id : ""),
+        id: expenseToEdit?.id || null,
+        name: expenseToEdit?.name || "",
+        categoryId: expenseToEdit?.categoryId || "",
+        amount: expenseToEdit?.amount ? String(expenseToEdit.amount) : "",
+        date: expenseToEdit?.date ? expenseToEdit.date.split("T")[0] : "",
+        icon: expenseToEdit?.icon || "",
+        jarId: expenseToEdit?.jarId || "",
     });
 
     useEffect(() => {
@@ -39,7 +40,10 @@ const AddExpenseForm = ({ onAddExpense, categories, defaultJarId, jars = [] }) =
 
     const selectedJar = jars.find((j) => String(j.id) === String(expense.jarId));
     const parsedAmount = Number(expense.amount) || 0;
-    const insufficientBalance = selectedJar && parsedAmount > (selectedJar.currentBalance ?? 0);
+
+    const originalAmount = expenseToEdit?.jarId === expense.jarId ? (expenseToEdit?.amount || 0) : 0;
+    const effectiveBalance = selectedJar ? ((selectedJar.currentBalance ?? 0) + originalAmount) : 0;
+    const insufficientBalance = selectedJar && parsedAmount > effectiveBalance;
 
     return (
         <div>
@@ -106,11 +110,11 @@ const AddExpenseForm = ({ onAddExpense, categories, defaultJarId, jars = [] }) =
                 <button
                     type="button"
                     className="add-btn add-btn-fill"
-                    onClick={() => onAddExpense(expense)}
-                >Thêm chi tiêu</button>
+                    onClick={() => onUpdateExpense(expense)}
+                >Cập nhật chi tiêu</button>
             </div>
         </div>
     );
 };
 
-export default AddExpenseForm;
+export default EditExpenseForm;

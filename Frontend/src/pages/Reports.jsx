@@ -167,7 +167,7 @@ const Reports = () => {
             </button>
           </div>
         ) : report ? (
-          <MonthlyReportCard report={report} />
+          <MonthlyReportCard key={`${year}-${month}`} report={report} />
         ) : null}
       </div>
     </Dashboard>

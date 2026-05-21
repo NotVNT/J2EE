@@ -86,7 +86,7 @@ const Forecast = () => {
                         </p>
                         <button
                             onClick={() => navigate("/payment")}
-                            className="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white py-3 rounded-xl font-medium shadow-md shadow-amber-500/20 hover:shadow-lg hover:shadow-amber-500/30 transition-all"
+                            className="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white py-3 rounded-xl font-medium shadow-md shadow-amber-500/20 hover:shadow-lg hover:shadow-amber-500/30 transition"
                         >
                             Nâng cấp ngay
                         </button>
@@ -206,11 +206,18 @@ const Forecast = () => {
                                             <Lightbulb size={20} className="text-amber-300" />
                                             Phân tích từ chuyên gia AI
                                         </h3>
-                                        <p className="text-indigo-50 leading-relaxed relative z-10 text-sm whitespace-pre-wrap">
-                                            {insights.narrative}
-                                        </p>
-                                        <p className="mt-3 text-xs text-indigo-200/70 relative z-10 flex items-center gap-1">
-                                            <span>⚠️</span> Nova Money là AI có thể trả lời sai sót, vui lòng kiểm tra lại thông tin.
+                                        <div className="text-indigo-50 leading-relaxed relative z-10 text-sm space-y-2">
+                                            {insights.narrative
+                                                .replace(/([;:])\s*(\d+[)]\s)/g, "$1\n$2")
+                                                .split("\n")
+                                                .filter(line => line.trim())
+                                                .map((line, i) => (
+                                                    <p key={i}>{line.trim()}</p>
+                                                ))
+                                            }
+                                        </div>
+                                        <p className="mt-3 text-xs text-indigo-200/70 relative z-10 italic">
+                                            Nova Money là AI có thể trả lời sai sót, vui lòng kiểm tra lại thông tin.
                                         </p>
                                     </div>
                                 ) : null

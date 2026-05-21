@@ -59,6 +59,7 @@ public class AIInstructionPromptBuilder {
                     "- 'xu\u1EA5t excel chi ti\u00EAu/t\u00E0i ch\u00EDnh' \u2192 EXPORT_EXCEL_EXPENSE\n" +
                     "- 'xu\u1EA5t excel thu nh\u1EADp' \u2192 EXPORT_EXCEL_INCOME\n" +
                     "\u0110\u1ECBnh d\u1EA1ng: date=YYYY-MM-DD, amount=s\u1ED1 kh\u00F4ng c\u00F3 k\u00FD hi\u1EC7u (50000 kh\u00F4ng ph\u1EA3i '50,000\u0111'), targetAmount=s\u1ED1 nguy\u00EAn.\n\n" +
+                    "TONE CHO NG\u01AF\u1EDCI D\u00D9NG: C\u00E1c field confirmationPrompt, answer (trong ANSWER_QUESTION) v\u00E0 validationErrors ph\u1EA3i th\u00E2n thi\u1EC7n, l\u1ECBch s\u1EF1, g\u1EA7n g\u0169i. D\u00F9ng 'b\u1EA1n'. Kh\u00F4ng \u0111\u01B0\u1EE3c c\u1ED9c l\u1ED1c hay l\u1EA1nh l\u00F9ng. V\u00ED d\u1EE5 t\u1ED1t: 'B\u1EA1n c\u00F3 mu\u1ED1n th\u00EAm chi ti\u00EAu \u0102n u\u1ED1ng 50.000\u0111 h\u00F4m nay kh\u00F4ng?' \u2014 V\u00ED d\u1EE5 x\u1EA5u: 'Th\u00EAm chi ti\u00EAu.'.\n\n" +
                     "\uD83D\uDD34 NH\u1EAEC L\u1EA0I: Ch\u1EC9 tr\u1EA3 v\u1EC1 JSON. Kh\u00F4ng c\u00F3 l\u1EDDi gi\u1EA3i th\u00EDch, kh\u00F4ng c\u00F3 text ngo\u00E0i JSON. B\u1EAFt \u0111\u1EA7u { k\u1EBFt th\u00FAc }.";
 
     private static final String PAGE_LABELS_VI =
@@ -73,9 +74,10 @@ public class AIInstructionPromptBuilder {
     }
 
     public static String buildFallbackSystemPrompt() {
-        return "B\u1EA1n l\u00E0 Nova, tr\u1EE3 l\u00FD AI c\u1EE7a Money Manager. " +
+        return "B\u1EA1n l\u00E0 Nova, tr\u1EE3 l\u00FD AI \u0111\u1ED3ng h\u00E0nh th\u00E2n thi\u1EBFt c\u1EE7a Money Manager. " +
                 "H\u1ED7 tr\u1EE3 t\u00E0i ch\u00EDnh c\u00E1 nh\u00E2n, t\u00E2m l\u00FD chi ti\u00EAu, h\u1ED7 tr\u1EE3 c\u1EA3m x\u00FAc. " +
-                "Tr\u1EA3 l\u1EDDi b\u1EB1ng ti\u1EBFng Vi\u1EC7t, th\u00E2n thi\u1EC7n, t\u1ED1i \u0111a 200 ch\u1EEF.";
+                "Tr\u1EA3 l\u1EDDi b\u1EB1ng ti\u1EBFng Vi\u1EC7t, \u1EA5m \u00E1p v\u00E0 quan t\u00E2m, kh\u00F4ng ph\u00E1n x\u00E9t, kh\u00F4ng c\u1ED9c l\u1ED1c. " +
+                "T\u1ED1i \u0111a 200 ch\u1EEF.";
     }
 
     private static String getPageLabel(String pageContext) {
@@ -190,10 +192,19 @@ public class AIInstructionPromptBuilder {
             case "savinggoals" -> {
                 if (pageData.containsKey("savingGoals")) {
                     List<Map<String, Object>> goals = (List<Map<String, Object>>) pageData.get("savingGoals");
-                    sb.append(goals.size()).append(" m\u1EE5c ti\u00EAu: ");
+                    sb.append(goals.size()).append(" m\u1EE5c ti\u00EAu ti\u1EBFt ki\u1EC7m:");
                     for (int i = 0; i < Math.min(goals.size(), 10); i++) {
-                        sb.append(goals.get(i).get("name"));
-                        if (i < Math.min(goals.size(), 10) - 1) sb.append(", ");
+                        Map<String, Object> g = goals.get(i);
+                        sb.append(" | ").append(g.get("name"))
+                          .append(" [savingGoalId=").append(g.get("id")).append("]")
+                          .append(": m\u1EE5c ti\u00EAu=").append(g.get("targetAmount")).append("\u0111")
+                          .append(", \u0111\u00E3 c\u00F3=").append(g.get("currentAmount")).append("\u0111")
+                          .append(", c\u00F2n thi\u1EBFu=").append(g.get("remainingAmount")).append("\u0111")
+                          .append(", ti\u1EBFn \u0111\u1ED9=").append(g.get("progressPercent")).append("%")
+                          .append(", c\u1EA7n/th\u00E1ng=").append(g.get("monthlyTarget")).append("\u0111")
+                          .append(", \u0111\u00E3 \u0111\u00F3ng th\u00E1ng n\u00E0y=").append(g.get("monthlyContributed")).append("\u0111")
+                          .append(", h\u1EA1n=").append(g.get("startDate")).append("\u2192").append(g.get("targetDate"))
+                          .append(", ch\u1EADm ti\u1EBFn \u0111\u1ED9=").append(g.get("isBehindSchedule"));
                     }
                 }
             }

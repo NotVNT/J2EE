@@ -39,7 +39,7 @@
 | Cache / Lưu Trữ Khóa | Redis | - |
 | Xác Thực | Spring Security + JWT | - |
 | Thanh Toán | PayOS | - |
-| AI — Gemini | Google Gemini API | gemini-2.0-flash-lite |
+| AI — Gemini | Google Gemini API | gemini-3.1-flash-lite |
 | AI — Chat | OpenRouter (GPT-OSS 120B) | - |
 | Excel | Apache POI | - |
 | Email | Spring Mail (Brevo SMTP) | - |
@@ -122,10 +122,11 @@ Nova Money là trợ lý AI tích hợp sẵn, có thể truy cập từ nút ch
 
 ### Cơ Sở Hạ Tầng AI
 
-| Nhà Cung Cấp | Mô Hình | Được Sử Dụng Cho | Giới Hạn Tốc Độ |
+| Nhà Cung Cấp | Mô Hình | Được Sử Dụng Cho | Yêu Cầu Gói |
 |---|---|---|---|
-| Google Gemini | gemini-3.1-flash-lite | Chế độ Agent (phân tích ý định + thực thi) |
-| OpenRouter | GPT-OSS 120B | Chế độ Chat (trò chuyện) |
+| Google Gemini | gemini-3.1-flash-lite | Chế độ Agent (phân tích ý định + thực thi) | CƠ BẢN+ |
+| OpenRouter | GPT-OSS 120B | Chế độ Chat (trò chuyện) | Tất cả gói |
+| NineRouter | EXPERIMENTAL | Chế độ Agent thử nghiệm (hiệu suất cao hơn) | PREMIUM |
 
 **Xoay Vòng Khóa API (Redis)**  
 Mỗi nhà cung cấp có một nhóm khóa API được lưu trữ trong Redis. Hệ thống theo dõi sử dụng hạn ngạch cho mỗi khóa và trạng thái cooldown. Khi một khóa vượt quá hạn ngạch hoặc trả về lỗi, khóa đó sẽ bị bỏ qua tự động và khóa có sẵn tiếp theo sẽ được sử dụng. Các khóa tự phục hồi sau khi thời gian cooldown hết hạn.
@@ -215,6 +216,7 @@ Nút chat nổi nằm ở góc dưới bên phải trên tất cả các trang �
 - **Kết Xuất Markdown**: Phản hồi AI hỗ trợ bảng, khối mã, danh sách, blockquote thông qua `react-markdown` + `remark-gfm` + `rehype-sanitize`.
 - **Chỉ Số Nhập**: Hoạt ảnh ba chấm nảy lên trong khi chờ phản hồi.
 - **Bảo Vệ Ý Định Đang Chờ**: Khi biểu mẫu xác nhận CRUD đang mở, tin nhắn mới bị chặn cho đến khi người dùng xác nhận hoặc hủy.
+- **Chọn Model Agent**: Người dùng PREMIUM có thể chuyển giữa `Gemini 3.1 Flash Lite` (mặc định) và `EXPERIMENTAL` (NineRouter / gemma4-31B). Khi chọn EXPERIMENTAL lần đầu, modal cảnh báo sẽ hiện để xác nhận.
 
 ---
 
@@ -297,6 +299,8 @@ Mỗi Hũ có các thuộc tính tùy chỉnh:
 
 ### Mục Tiêu Tiết Kiệm
 Tạo mục tiêu với số tiền mục tiêu và thời hạn. Ghi lại những khoản đóng góp. Theo dõi trạng thái ĐANG HOẠT ĐỘNG / HOÀN THÀNH / ĐÃ HỦY. Tự động tính toán khoản đóng góp hàng tháng cần thiết.
+
+**Tích hợp AI Agent**: Khi người dùng đang ở trang Mục Tiêu Tiết Kiệm, Nova Money nhận đầy đủ ngữ cảnh của từng mục tiêu (số tiền mục tiêu, đã tích lũy, còn thiếu, tiến độ %, cần/tháng, đã đóng tháng này, ngày hết hạn, trạng thái chậm/đúng tiến độ). AI có thể trả lời câu hỏi như *"còn thiếu bao nhiêu?"*, *"khi nào hoàn thành?"* và thực hiện CREATE / UPDATE / DELETE mục tiêu đúng theo ID.
 
 ### Tiện Ích Bảng Điều Khiển
 Bố cục tiện ích có thể tùy chỉnh kéo và thả (qua `@dnd-kit`). Thẻ báo cáo hàng tháng với điểm chi tiêu A–F, phân tích danh mục, tiến trình tiết kiệm.

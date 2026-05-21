@@ -13,7 +13,7 @@ const formatDateTime = (value) => {
 };
 
 const StatCard = ({ title, value, subtitle, icon: Icon, colorClass, gradientClass }) => (
-  <div className="relative group overflow-hidden bg-white dark:bg-[#0F172A] rounded-3xl border border-slate-200/60 dark:border-white/10 shadow-sm transition-all duration-500 hover:shadow-xl hover:-translate-y-1">
+  <div className="relative group overflow-hidden bg-white dark:bg-[#0F172A] rounded-3xl border border-slate-200/60 dark:border-white/10 shadow-sm transition-[transform,box-shadow] duration-500 transform-gpu hover:shadow-xl hover:-translate-y-1">
     {/* Background Decorative Elements */}
     <div className={`absolute -right-8 -top-8 w-32 h-32 rounded-full opacity-10 bg-gradient-to-br ${gradientClass} transition-transform duration-700 group-hover:scale-[2.5] ease-out`} />
     <div className={`absolute -left-8 -bottom-8 w-24 h-24 rounded-full opacity-5 bg-gradient-to-tr ${gradientClass} transition-transform duration-700 group-hover:scale-[2] ease-out`} />
@@ -172,7 +172,7 @@ const AdminDashboard = () => {
                   return (
                     <div 
                       key={payment.orderCode} 
-                      className="group flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl border border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5 hover:bg-white dark:hover:bg-white/10 transition-all duration-300 hover:shadow-md hover:border-indigo-100 dark:hover:border-indigo-500/30"
+                      className="group flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl border border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5 hover:bg-white dark:hover:bg-white/10 transition duration-300 hover:shadow-md hover:border-indigo-100 dark:hover:border-indigo-500/30"
                     >
                       <div className="flex items-center gap-4">
                         <div className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold
