@@ -1,6 +1,5 @@
 package com.example.moneymanager.service;
 
-import com.example.moneymanager.config.NineRouterKeyRotator;
 import com.example.moneymanager.config.NineRouterProperties;
 import com.example.moneymanager.dto.AssistantChatResponseDTO;
 import com.example.moneymanager.util.OpenRouterResponseParser;
@@ -18,19 +17,19 @@ import org.springframework.web.client.RestClient;
 @RequiredArgsConstructor
 public class NineRouterService {
 
-    private final RestClient nineRouterRestClient;
+    private final RestClient nineRouterChatRestClient;
     private final NineRouterProperties nineRouterProperties;
-    private final NineRouterKeyRotator nineRouterKeyRotator;
     private final ObjectMapper objectMapper;
 
     public String callWithPrompt(String systemPrompt, String userMessage, int maxTokens) {
-        if (!nineRouterKeyRotator.hasKeys()) {
+        NineRouterProperties.Section chat = nineRouterProperties.chat();
+        if (chat == null || chat.apiKey() == null || chat.apiKey().isBlank()) {
             throw new RuntimeException("9Router chưa được cấu hình API key.");
         }
 
         try {
             ObjectNode requestBody = objectMapper.createObjectNode();
-            requestBody.put("model", nineRouterProperties.model());
+            requestBody.put("model", chat.model());
 
             ArrayNode msgArray = objectMapper.createArrayNode();
             ObjectNode sysMsg = objectMapper.createObjectNode();
@@ -52,9 +51,9 @@ public class NineRouterService {
             String requestJson = objectMapper.writeValueAsString(requestBody);
             log.debug("9Router callWithPrompt request (first 200 chars): {}", requestJson.length() > 200 ? requestJson.substring(0, 200) : requestJson);
 
-            String rawResponse = nineRouterRestClient.post()
+            String rawResponse = nineRouterChatRestClient.post()
                     .uri("/chat/completions")
-                    .header("Authorization", "Bearer " + nineRouterKeyRotator.nextKey())
+                    .header("Authorization", "Bearer " + chat.apiKey())
                     .body(requestJson)
                     .retrieve()
                     .onStatus(status -> !status.is2xxSuccessful(), (req, res) -> {
@@ -116,26 +115,28 @@ public class NineRouterService {
     }
 
     public AssistantChatResponseDTO chat(String message) {
+        String model = nineRouterProperties.chat() != null ? nineRouterProperties.chat().model() : "project-demo";
         try {
             String reply = callWithPrompt(
-                    "Bạn là chuyên gia tài chính AI của Money Manager. Trả lời bằng tiếng Việt, ngắn gọn, rõ ràng, không dùng markdown.",
+                    "Bạn là chuyên gia tài chính AI của Money Manager. Trả lời bằng tiếng Việt, ngắn gọn, rõ ràng, sử dụng markdown (danh sách, in đậm, bảng) khi giúp câu trả lời rõ ràng hơn.",
                     message,
                     800
             );
             return AssistantChatResponseDTO.builder()
                     .reply(reply)
-                    .model(nineRouterProperties.model())
+                    .model(model)
                     .build();
         } catch (Exception e) {
             log.error("9Router chat error: {}", e.getMessage(), e);
             return AssistantChatResponseDTO.builder()
                     .reply("Xin lỗi, AI đang bận. Bạn thử lại sau nhé.")
-                    .model(nineRouterProperties.model())
+                    .model(model)
                     .build();
         }
     }
 
     public AssistantChatResponseDTO getDashboardInsight(java.util.Map<String, Object> dashboardData, String fullName) {
+        String model = nineRouterProperties.chat() != null ? nineRouterProperties.chat().model() : "project-demo";
         String statsInfo = String.format(
                 "Thu nhập: %s VND. Chi tiêu: %s VND. Số dư: %s VND. Số mục tiêu tiết kiệm đang chạy: %s. Tổng tiền tiết kiệm: %s VND.",
                 dashboardData.get("totalIncome"),
@@ -154,13 +155,13 @@ public class NineRouterService {
             String reply = callWithPrompt(systemPrompt, "Hãy phân tích nhanh số liệu và cho tôi dự đoán.", 256);
             return AssistantChatResponseDTO.builder()
                     .reply(reply)
-                    .model(nineRouterProperties.model())
+                    .model(model)
                     .build();
         } catch (Exception e) {
             log.error("9Router dashboard insight error: {}", e.getMessage(), e);
             return AssistantChatResponseDTO.builder()
                     .reply("AI đang cập nhật, vui lòng thử lại sau.")
-                    .model(nineRouterProperties.model())
+                    .model(model)
                     .build();
         }
     }

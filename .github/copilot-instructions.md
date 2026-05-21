@@ -21,7 +21,7 @@
 | Database | MySQL + JPA/Hibernate |
 | Cache | Redis (API key rotation, rate limiting, spam protection) |
 | Auth | Spring Security + JWT |
-| AI — Agent | Google Gemini (gemini-2.0-flash-lite) |
+| AI — Agent | Google Gemini (gemini-3.1-flash-lite) |
 | AI — Chat | OpenRouter (GPT-OSS 120B) |
 | Payment | PayOS |
 | Excel | Apache POI |

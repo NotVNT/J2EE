@@ -3,7 +3,6 @@ package com.example.moneymanager.service;
 import com.example.moneymanager.config.GeminiProperties;
 import com.example.moneymanager.config.GptOssKeyRotator;
 import com.example.moneymanager.config.GptOssProperties;
-import com.example.moneymanager.config.NineRouterKeyRotator;
 import com.example.moneymanager.config.NineRouterProperties;
 import com.example.moneymanager.dto.AIChatMessageDTO;
 import com.example.moneymanager.dto.AIChatRequestDTO;
@@ -30,7 +29,7 @@ public class AIChatService {
             "B\u1EA1n l\u00E0 Nova \u2014 tr\u1EE3 l\u00FD AI \u0111\u1ED3ng h\u00E0nh th\u00E2n thi\u1EBFt c\u1EE7a Money Manager.\n" +
             "H\u1ED7 tr\u1EE3: t\u00E0i ch\u00EDnh c\u00E1 nh\u00E2n, t\u00E2m l\u00FD chi ti\u00EAu, h\u1ED7 tr\u1EE3 c\u1EA3m x\u00FAc/stress, l\u1EDDi khuy\u00EAn cu\u1ED9c s\u1ED1ng, h\u01B0\u1EDBng d\u1EABn app.\n" +
             "T\u1EEB ch\u1ED1i l\u1ECBch s\u1EF1: ch\u00EDnh tr\u1ECB, ch\u1EA9n \u0111o\u00E1n y t\u1EBF, t\u01B0 v\u1EA5n ph\u00E1p l\u00FD c\u1EE5 th\u1EC3 \u2014 khi t\u1EEB ch\u1ED1i, lu\u00F4n c\u1EA3m \u01A1n ng\u01B0\u1EDDi d\u00F9ng v\u00E0 g\u1EE3i \u00FD h\u01B0\u1EDBng gi\u1EA3i quy\u1EBFt kh\u00E1c.\n" +
-            "Phong c\u00E1ch: ti\u1EBFng Vi\u1EC7t, \u1EA5m \u00E1p v\u00E0 quan t\u00E2m, kh\u00F4ng ph\u00E1n x\u00E9t, kh\u00F4ng d\u00F9ng markdown (**, #, `).\n" +
+            "Phong c\u00E1ch: ti\u1EBFng Vi\u1EC7t, \u1EA5m \u00E1p v\u00E0 quan t\u00E2m, kh\u00F4ng ph\u00E1n x\u00E9t, s\u1EED d\u1EE5ng markdown \u0111\u1EA7y \u0111\u1EE7 (danh s\u00E1ch g\u1EA1ch \u0111\u1EA7u d\u00F2ng, in \u0111\u1EADm, ti\u00EAu \u0111\u1EC1 nh\u1ECF, b\u1EA3ng, code block khi c\u1EA7n thi\u1EBFt).\n" +
             "Quy t\u1EAFc b\u1EAFt bu\u1ED9c:\n" +
             "- Lu\u00F4n l\u1EAFng nghe v\u00E0 th\u1EEBa nh\u1EADn c\u1EA3m x\u00FAc c\u1EE7a ng\u01B0\u1EDDi d\u00F9ng tr\u01B0\u1EDBc khi \u0111\u01B0a l\u1EDDi khuy\u00EAn.\n" +
             "- KH\u00D4NG bao gi\u1EDD tr\u1EA3 l\u1EDDi c\u1ED9c l\u1ED1c, l\u1EA1nh l\u00F9ng hay thi\u1EBFu ki\u00EAn nh\u1EABn.\n" +
@@ -44,9 +43,9 @@ public class AIChatService {
     private final RestClient gptOssRestClient;
     private final GptOssProperties gptOssProperties;
     private final GptOssKeyRotator gptOssKeyRotator;
-    private final RestClient nineRouterRestClient;
+    private final RestClient nineRouterChatRestClient;
+    private final RestClient nineRouterAgentRestClient;
     private final NineRouterProperties nineRouterProperties;
-    private final NineRouterKeyRotator nineRouterKeyRotator;
     private final ProfileService profileService;
     private final ObjectMapper objectMapper;
 
@@ -64,7 +63,7 @@ public class AIChatService {
                 return AIChatResponseDTO.builder()
                         .reply("Model EXPERIMENTAL chỉ khả dụng cho gói PREMIUM. Vui lòng nâng cấp để sử dụng.")
                         .provider("ninerouter")
-                        .modelUsed(nineRouterProperties.model())
+                        .modelUsed(nineRouterProperties.chat() != null ? nineRouterProperties.chat().model() : "project-demo")
                         .build();
             }
             return chatWithNineRouter(trimmedMessages);
@@ -78,13 +77,14 @@ public class AIChatService {
 
         String provider = request.getProvider() != null ? request.getProvider() : "gemini";
         if ("ninerouter".equalsIgnoreCase(provider)) {
-            if (!nineRouterKeyRotator.hasKeys()) {
-                log.warn("NineRouter not configured, falling back to Gemini for agent intent");
+            NineRouterProperties.Section agent = nineRouterProperties.agent();
+            if (agent == null || agent.apiKey() == null || agent.apiKey().isBlank()) {
+                log.warn("NineRouter agent not configured, falling back to Gemini for agent intent");
                 return geminiService.generateMultiTurn(systemPrompt, trimmedMessages, 1024);
             }
             AIChatResponseDTO response = chatWithOpenAICompatibleCustomPrompt(
-                    nineRouterRestClient, nineRouterProperties.model(),
-                    nineRouterKeyRotator.nextKey(), "ninerouter",
+                    nineRouterAgentRestClient, agent.model(),
+                    agent.apiKey(), "ninerouter",
                     trimmedMessages, systemPrompt
             );
             return response.getReply();
@@ -144,15 +144,16 @@ public class AIChatService {
     }
 
     private AIChatResponseDTO chatWithNineRouter(List<AIChatMessageDTO> messages) {
-        if (!nineRouterKeyRotator.hasKeys()) {
+        NineRouterProperties.Section chat = nineRouterProperties.chat();
+        if (chat == null || chat.apiKey() == null || chat.apiKey().isBlank()) {
             return AIChatResponseDTO.builder()
                     .reply("9Router ch\u01B0a \u0111\u01B0\u1EE3c c\u1EA5u h\u00ECnh. Vui l\u00F2ng d\u00F9ng GPT-OSS ho\u1EB7c li\u00EAn h\u1EC7 qu\u1EA3n tr\u1ECB vi\u00EAn.")
                     .provider("ninerouter")
-                    .modelUsed(nineRouterProperties.model())
+                    .modelUsed("project-demo")
                     .build();
         }
-        return chatWithOpenAICompatible(nineRouterRestClient, nineRouterProperties.model(),
-                nineRouterKeyRotator.nextKey(), "ninerouter", messages);
+        return chatWithOpenAICompatible(nineRouterChatRestClient, chat.model(),
+                chat.apiKey(), "ninerouter", messages);
     }
 
     private AIChatResponseDTO chatWithOpenAICompatible(

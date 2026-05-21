@@ -1,8 +1,10 @@
 import logo from "./logo/AI_favicon.png";
+import aiIcon from "./logo/ai_icon.png";
 import {BadgeDollarSign, ChartBar, Coins, FunnelPlus, LayoutDashboard, List, PiggyBank, Target, Wallet, Activity, Vault} from "lucide-react";
 
 export const assets = {
     logo,
+    aiIcon,
 }
 
 export const SIDE_BAR_DATA = [

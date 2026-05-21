@@ -39,7 +39,7 @@
 | Cache / Lưu Trữ Khóa | Redis | - |
 | Xác Thực | Spring Security + JWT | - |
 | Thanh Toán | PayOS | - |
-| AI — Gemini | Google Gemini API | gemini-3.5-flash |
+| AI — Gemini | Google Gemini API | gemini-3.1-flash-lite |
 | AI — Chat | OpenRouter (GPT-OSS 120B) | - |
 | Excel | Apache POI | - |
 | Email | Spring Mail (Brevo SMTP) | - |
@@ -124,7 +124,7 @@ Nova Money là trợ lý AI tích hợp sẵn, có thể truy cập từ nút ch
 
 | Nhà Cung Cấp | Mô Hình | Được Sử Dụng Cho | Yêu Cầu Gói |
 |---|---|---|---|
-| Google Gemini | gemini-3.5-flash | Chế độ Agent (phân tích ý định + thực thi) | CƠ BẢN+ |
+| Google Gemini | gemini-3.1-flash-lite | Chế độ Agent (phân tích ý định + thực thi) | CƠ BẢN+ |
 | OpenRouter | GPT-OSS 120B | Chế độ Chat (trò chuyện) | Tất cả gói |
 | NineRouter | EXPERIMENTAL | Chế độ Agent thử nghiệm (hiệu suất cao hơn) | PREMIUM |
 
@@ -216,7 +216,7 @@ Nút chat nổi nằm ở góc dưới bên phải trên tất cả các trang �
 - **Kết Xuất Markdown**: Phản hồi AI hỗ trợ bảng, khối mã, danh sách, blockquote thông qua `react-markdown` + `remark-gfm` + `rehype-sanitize`.
 - **Chỉ Số Nhập**: Hoạt ảnh ba chấm nảy lên trong khi chờ phản hồi.
 - **Bảo Vệ Ý Định Đang Chờ**: Khi biểu mẫu xác nhận CRUD đang mở, tin nhắn mới bị chặn cho đến khi người dùng xác nhận hoặc hủy.
-- **Chọn Model Agent**: Người dùng PREMIUM có thể chuyển giữa `Gemini 3.5 Flash` (mặc định) và `EXPERIMENTAL` (NineRouter). Khi chọn EXPERIMENTAL lần đầu, modal cảnh báo sẽ hiện để xác nhận.
+- **Chọn Model Agent**: Người dùng PREMIUM có thể chuyển giữa `Gemini 3.1 Flash Lite` (mặc định) và `EXPERIMENTAL` (NineRouter / gemma4-31B). Khi chọn EXPERIMENTAL lần đầu, modal cảnh báo sẽ hiện để xác nhận.
 
 ---
 

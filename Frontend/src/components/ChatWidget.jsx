@@ -63,8 +63,8 @@ const QUICK_ACTIONS = [
 ];
 
 const AGENT_MODEL_OPTIONS = [
-  { value: "gemini",     label: "🤖 Gemini 3.5 Flash" },
-  { value: "ninerouter", label: "🔬 EXPERIMENTAL" },
+  { value: "gemini",     label: "🤖 Gemini 3.1 Flash Lite" },
+  { value: "ninerouter", label: "🧪 Gemma 4 31B (Experimental)" },
 ];
 
 const PUBLIC_PATHS = new Set([
@@ -83,10 +83,13 @@ const sanitizeSchema = {
   tagNames: [...(defaultSchema.tagNames ?? []), "br", "table", "thead", "tbody", "tr", "th", "td"],
 };
 
-// Fix malformed markdown: blank lines between table rows break GFM parsing
+// Fix malformed markdown: blank lines between table rows break GFM parsing.
+// Also strips <think>...</think> blocks emitted by some models (e.g. Gemma).
 const fixMarkdown = (content) => {
   if (!content) return "";
-  const lines = content.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
+  // Strip thinking-token blocks before rendering
+  let text = content.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
+  const lines = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
   const result = [];
   let inTable = false;
   for (let i = 0; i < lines.length; i++) {
@@ -105,7 +108,8 @@ const fixMarkdown = (content) => {
       result.push(line);
     }
   }
-  return result.join("\n");
+  // Collapse 3+ consecutive blank lines to prevent excessive whitespace
+  return result.join("\n").replace(/\n{3,}/g, "\n\n");
 };
 
 // Custom components for markdown elements styled to amber/dark theme
@@ -130,14 +134,20 @@ const markdownComponents = {
   li: ({ children }) => <li className="leading-relaxed">{children}</li>,
   strong: ({ children }) => <strong className="font-semibold text-slate-900 dark:text-white">{children}</strong>,
   em: ({ children }) => <em className="italic">{children}</em>,
-  code: ({ inline, children }) =>
-    inline ? (
-      <code className="rounded bg-slate-100 dark:bg-white/10 px-1 py-0.5 font-mono text-[11px] text-amber-700 dark:text-amber-300">{children}</code>
+  // Block code has className="language-xxx"; inline code has no className
+  code: ({ children, className }) =>
+    className ? (
+      <code className={`font-mono text-[11px] text-slate-800 dark:text-slate-200 ${className}`}>{children}</code>
     ) : (
-      <pre className="rounded bg-slate-100 dark:bg-white/10 p-2 my-1 overflow-x-auto">
-        <code className="font-mono text-[11px] text-slate-800 dark:text-slate-200">{children}</code>
-      </pre>
+      <code className="rounded bg-slate-100 dark:bg-white/10 px-1 py-0.5 font-mono text-[11px] text-amber-700 dark:text-amber-300">{children}</code>
     ),
+  // react-markdown v10: block code is wrapped in <pre>, inline code has no className.
+  // Using pre+code split avoids the deprecated `inline` prop.
+  pre: ({ children }) => (
+    <pre className="rounded bg-slate-100 dark:bg-white/10 p-2 my-1 overflow-x-auto">
+      {children}
+    </pre>
+  ),
   h1: ({ children }) => <h1 className="text-base font-bold mt-2 mb-1 text-slate-900 dark:text-white">{children}</h1>,
   h2: ({ children }) => <h2 className="text-sm font-bold mt-2 mb-1 text-slate-900 dark:text-white">{children}</h2>,
   h3: ({ children }) => <h3 className="text-sm font-semibold mt-1.5 mb-0.5 text-slate-800 dark:text-slate-100">{children}</h3>,
@@ -230,11 +240,11 @@ const ChatWidget = () => {
       ? (agentModel === "ninerouter" ? "ninerouter" : "gemini")
       : (chatModel === "ninerouter" ? "ninerouter" : "gptoss");
     const activeModel = selectedProvider === "gemini"
-      ? (agentModel === "ninerouter" ? "project-demo" : "gemini-3.5-flash")
+      ? (agentModel === "ninerouter" ? "gemma4-31B" : "gemini-3.1-flash-lite")
       : (chatModel === "ninerouter" ? "project-demo" : "gpt-oss-120b");
     const activeModelLabel = selectedProvider === "gemini"
-      ? (agentModel === "ninerouter" ? "EXPERIMENTAL" : "Gemini 3.5 Flash")
-      : (chatModel === "ninerouter" ? "EXPERIMENTAL" : "GPT-OSS 120B");
+      ? (agentModel === "ninerouter" ? "Gemma 4 31B (Experimental)" : "Gemini 3.1 Flash Lite")
+      : (chatModel === "ninerouter" ? "Gemma 4 31B (Experimental)" : "GPT-OSS 120B");
 
     const userMessage = {
       id: `user-${Date.now()}`,
@@ -720,7 +730,7 @@ const ChatWidget = () => {
                       </ReactMarkdown>
                       {!chatMessage.isError && !chatMessage.isSystem && chatMessage.modelUsed && (
                         <span className="block text-[10px] text-slate-400 dark:text-slate-500 mt-1">
-                          Nova Money · {chatMessage.modelLabel || (chatMessage.provider === "gemini" ? "Gemini 3.5 Flash" : "GPT-OSS 120B")}
+                          Nova Money · {chatMessage.modelLabel || (chatMessage.provider === "gemini" ? "Gemini 3.1 Flash-Lite" : "GPT-OSS 120B")}
                         </span>
                       )}
                     </div>
@@ -782,7 +792,7 @@ const ChatWidget = () => {
                   selectedProvider === "gemini"
                     ? agentModel === "ninerouter"
                       ? "Nhập thao tác: tạo/sửa/xóa dữ liệu, xuất báo cáo... [EXPERIMENTAL]"
-                      : "Nhập thao tác: tạo/sửa/xóa dữ liệu, xuất báo cáo... [Gemini 3.5 Flash]"
+                      : "Nhập thao tác: tạo/sửa/xóa dữ liệu, xuất báo cáo... [Gemini 3.1 Flash-Lite]"
                     : chatModel === "ninerouter"
                       ? "Nhập câu hỏi hoặc trò chuyện... [EXPERIMENTAL]"
                       : "Nhập câu hỏi hoặc trò chuyện... [GPT-OSS 120B]"

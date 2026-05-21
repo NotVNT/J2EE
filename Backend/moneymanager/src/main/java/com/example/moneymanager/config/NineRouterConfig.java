@@ -13,17 +13,29 @@ import java.time.Duration;
 public class NineRouterConfig {
 
     @Bean
-    public RestClient nineRouterRestClient(NineRouterProperties properties) {
-        int timeoutSeconds = properties.timeoutSeconds() != null ? properties.timeoutSeconds() : 120;
+    public RestClient nineRouterChatRestClient(NineRouterProperties properties) {
+        NineRouterProperties.Section chat = properties.chat();
+        int timeout = (chat != null && chat.timeoutSeconds() != null) ? chat.timeoutSeconds() : 120;
+        String baseUrl = (chat != null && chat.baseUrl() != null) ? chat.baseUrl() : "https://proxy-ai.botdevgroup.me/v1";
+        return buildRestClient(baseUrl, timeout);
+    }
 
-        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
-        requestFactory.setConnectTimeout(Duration.ofSeconds(timeoutSeconds));
-        requestFactory.setReadTimeout(Duration.ofSeconds(timeoutSeconds));
+    @Bean
+    public RestClient nineRouterAgentRestClient(NineRouterProperties properties) {
+        NineRouterProperties.Section agent = properties.agent();
+        int timeout = (agent != null && agent.timeoutSeconds() != null) ? agent.timeoutSeconds() : 120;
+        String baseUrl = (agent != null && agent.baseUrl() != null) ? agent.baseUrl() : "https://proxy-ai.botdevgroup.me/v1";
+        return buildRestClient(baseUrl, timeout);
+    }
 
+    private RestClient buildRestClient(String baseUrl, int timeoutSeconds) {
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(Duration.ofSeconds(timeoutSeconds));
+        factory.setReadTimeout(Duration.ofSeconds(timeoutSeconds));
         return RestClient.builder()
-                .baseUrl(properties.baseUrl())
+                .baseUrl(baseUrl)
                 .defaultHeader("Content-Type", "application/json;charset=UTF-8")
-                .requestFactory(requestFactory)
+                .requestFactory(factory)
                 .build();
     }
 }
