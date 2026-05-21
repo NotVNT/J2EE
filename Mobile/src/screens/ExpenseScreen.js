@@ -13,6 +13,12 @@ import VoiceInputButton from "../components/VoiceInputButton";
 import { downloadAndShareFile } from "../utils/fileDownload";
 import { AuthContext } from "../components/AuthContext";
 import { analyzeReceipt } from "../services/receiptImportService";
+import ShowMoreButton, { useVisibleItems } from "../components/ShowMoreButton";
+
+const FILTER_TYPES = {
+  current: "current",
+  all: "all"
+};
 
 /** Highlight keyword trong text */
 function HighlightText({ text, keyword }) {
@@ -90,6 +96,7 @@ export default function ExpenseScreen() {
   const [expenses, setExpenses] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [filterType, setFilterType] = useState(FILTER_TYPES.current);
   const [isExporting, setIsExporting] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
 
@@ -113,10 +120,26 @@ export default function ExpenseScreen() {
     return expenses.reduce((sum, item) => sum + Number(item?.amount || 0), 0);
   }, [expenses]);
 
+  const {
+    visibleItems: visibleExpenses,
+    canToggle: canToggleExpenses,
+    expanded: expandedExpenses,
+    toggle: toggleExpenses
+  } = useVisibleItems(filteredExpenses, {
+    initialCount: 3,
+    mode: "toggle",
+    resetKey: `${filterType}|${searchQuery.trim()}`
+  });
+
   const fetchExpenses = useCallback(async () => {
-    const response = await http.get(API_ENDPOINTS.GET_ALL_EXPENSE);
+    const params = {};
+    if (filterType === FILTER_TYPES.all) {
+      params.all = true;
+    }
+
+    const response = await http.get(API_ENDPOINTS.GET_ALL_EXPENSE, { params });
     setExpenses(Array.isArray(response.data) ? response.data : []);
-  }, []);
+  }, [filterType]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -263,10 +286,16 @@ export default function ExpenseScreen() {
     setIsExporting(true);
     try {
       const now = new Date();
-      const payload = { month: now.getMonth() + 1, year: now.getFullYear() };
+      const isAllReport = filterType === FILTER_TYPES.all;
+      const payload = isAllReport
+        ? { all: true, month: now.getMonth() + 1, year: now.getFullYear() }
+        : { month: now.getMonth() + 1, year: now.getFullYear() };
       const res = await http.post(API_ENDPOINTS.EXPORT_EXPENSE, payload);
       if (res.data && res.data.presignedUrl) {
-        await downloadAndShareFile(res.data.presignedUrl, `expense_report_${payload.month}_${payload.year}.xlsx`);
+        const fileName = isAllReport
+          ? "expense_report_all_months.xlsx"
+          : `expense_report_${payload.month}_${payload.year}.xlsx`;
+        await downloadAndShareFile(res.data.presignedUrl, fileName);
       } else {
         throw new Error("Không lấy được link tải file");
       }
@@ -279,6 +308,29 @@ export default function ExpenseScreen() {
 
   return (
     <View style={styles.container}>
+      <View style={styles.filterCard}>
+        <Text style={styles.filterTitle}>Khung thời gian</Text>
+        <View style={styles.filterRow}>
+          <Pressable
+            style={[styles.filterChip, filterType === FILTER_TYPES.current && styles.filterChipActive]}
+            onPress={() => setFilterType(FILTER_TYPES.current)}
+          >
+            <Text style={[styles.filterChipText, filterType === FILTER_TYPES.current && styles.filterChipTextActive]}>
+              Tháng này
+            </Text>
+          </Pressable>
+
+          <Pressable
+            style={[styles.filterChip, styles.filterChipLast, filterType === FILTER_TYPES.all && styles.filterChipActive]}
+            onPress={() => setFilterType(FILTER_TYPES.all)}
+          >
+            <Text style={[styles.filterChipText, filterType === FILTER_TYPES.all && styles.filterChipTextActive]}>
+              Tất cả
+            </Text>
+          </Pressable>
+        </View>
+      </View>
+
       <View style={styles.summaryCard}>
         <View style={styles.summaryContent}>
           <Text style={styles.summaryLabel}>Tổng chi tiêu</Text>
@@ -313,7 +365,13 @@ export default function ExpenseScreen() {
           onPress={handleExport}
           disabled={isExporting}
         >
-          <Text style={styles.exportText}>{isExporting ? "⏳ Đang tạo báo cáo..." : "📥 Tải báo cáo tháng này"}</Text>
+          <Text style={styles.exportText}>
+            {isExporting
+              ? "Đang tạo báo cáo..."
+              : filterType === FILTER_TYPES.all
+                ? "Tải báo cáo tất cả tháng"
+                : "Tải báo cáo tháng này"}
+          </Text>
         </Pressable>
       </View>
 
@@ -335,7 +393,7 @@ export default function ExpenseScreen() {
       </View>
 
       <FlatList
-        data={filteredExpenses}
+        data={visibleExpenses}
         keyExtractor={(item) => String(item?.id)}
         renderItem={({ item }) => (
           <ExpenseItem item={item} onDelete={onDelete} searchKeyword={searchQuery.trim()} />
@@ -352,6 +410,11 @@ export default function ExpenseScreen() {
                     ? `Kết quả tìm kiếm (${filteredExpenses.length})`
                     : "Danh sách chi tiêu"}
                 </Text>
+                <ShowMoreButton 
+                  visible={canToggleExpenses} 
+                  expanded={expandedExpenses} 
+                  onPress={toggleExpenses} 
+                />
               </View>
             </View>
           ) : null
@@ -385,6 +448,48 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.BG,
     padding: 16,
     paddingTop: 50
+  },
+  filterCard: {
+    backgroundColor: COLORS.CARD,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: COLORS.CARD_BORDER,
+    padding: 12,
+    marginBottom: 12
+  },
+  filterTitle: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: COLORS.TEXT,
+    marginBottom: 10
+  },
+  filterRow: {
+    flexDirection: "row"
+  },
+  filterChip: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: COLORS.CARD_BORDER,
+    backgroundColor: COLORS.CARD,
+    borderRadius: 10,
+    paddingVertical: 10,
+    alignItems: "center",
+    marginRight: 8
+  },
+  filterChipLast: {
+    marginRight: 0
+  },
+  filterChipActive: {
+    borderColor: COLORS.PRIMARY,
+    backgroundColor: COLORS.ROSE_MIST
+  },
+  filterChipText: {
+    color: COLORS.TEXT,
+    fontWeight: "700",
+    fontSize: 12
+  },
+  filterChipTextActive: {
+    color: COLORS.PRIMARY
   },
   summaryCard: {
     backgroundColor: COLORS.CARD,
@@ -482,6 +587,9 @@ const styles = StyleSheet.create({
     justifyContent: "center"
   },
   listHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: 8
   },
   listTitle: {

@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from "react";
-import { Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import http from "../services/http";
 import { API_ENDPOINTS } from "../constants/api";
@@ -12,8 +12,7 @@ import { downloadAndShareFile } from "../utils/fileDownload";
 
 const FILTER_TYPES = {
   current: "current",
-  all: "all",
-  specific: "specific"
+  all: "all"
 };
 
 function IncomeItem({ item, onDelete }) {
@@ -32,8 +31,13 @@ function IncomeItem({ item, onDelete }) {
 
       <View style={styles.itemRight}>
         <Text style={styles.itemAmount}>+ {formatMoney(item?.amount)}</Text>
-        <Pressable onPress={() => onDelete(item?.id)} style={styles.deleteButton}>
-          <Text style={styles.deleteText}>Xóa</Text>
+        <Pressable
+          onPress={() => onDelete(item?.id)}
+          style={styles.deleteButton}
+          accessibilityRole="button"
+          accessibilityLabel="Xóa thu nhập"
+        >
+          <Text style={styles.deleteIcon}>🗑️</Text>
         </Pressable>
       </View>
     </View>
@@ -45,7 +49,6 @@ export default function IncomeScreen() {
   const [incomes, setIncomes] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [filterType, setFilterType] = useState(FILTER_TYPES.current);
-  const [selectedMonth, setSelectedMonth] = useState("");
   const [isExporting, setIsExporting] = useState(false);
 
   const totalIncome = useMemo(() => {
@@ -53,25 +56,9 @@ export default function IncomeScreen() {
   }, [incomes]);
 
   const fetchIncomes = useCallback(async () => {
-    if (filterType === FILTER_TYPES.specific && !selectedMonth.trim()) {
-      setIncomes([]);
-      return;
-    }
-
     const params = {};
     if (filterType === FILTER_TYPES.all) {
       params.all = true;
-    }
-
-    if (filterType === FILTER_TYPES.specific) {
-      const [year, month] = selectedMonth.split("-");
-      if (!year || !month) {
-        setIncomes([]);
-        return;
-      }
-
-      params.year = Number(year);
-      params.month = Number(month);
     }
 
     try {
@@ -80,7 +67,7 @@ export default function IncomeScreen() {
     } catch (error) {
       console.error("Fetch incomes error:", error);
     }
-  }, [filterType, selectedMonth]);
+  }, [filterType]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -136,16 +123,17 @@ export default function IncomeScreen() {
     setIsExporting(true);
     try {
       const now = new Date();
-      let payload = { month: now.getMonth() + 1, year: now.getFullYear() };
-      
-      if (filterType === FILTER_TYPES.specific && selectedMonth) {
-        const [year, month] = selectedMonth.split("-");
-        payload = { month: Number(month), year: Number(year) };
-      }
+      const isAllReport = filterType === FILTER_TYPES.all;
+      const payload = isAllReport
+        ? { all: true, month: now.getMonth() + 1, year: now.getFullYear() }
+        : { month: now.getMonth() + 1, year: now.getFullYear() };
 
       const res = await http.post(API_ENDPOINTS.EXPORT_INCOME, payload);
       if (res.data && res.data.presignedUrl) {
-        await downloadAndShareFile(res.data.presignedUrl, `income_report_${payload.month}_${payload.year}.xlsx`);
+        const fileName = isAllReport
+          ? "income_report_all_months.xlsx"
+          : `income_report_${payload.month}_${payload.year}.xlsx`;
+        await downloadAndShareFile(res.data.presignedUrl, fileName);
       } else {
         throw new Error("Không lấy được link tải file");
       }
@@ -165,39 +153,22 @@ export default function IncomeScreen() {
             style={[styles.filterChip, filterType === FILTER_TYPES.current && styles.filterChipActive]}
             onPress={() => {
               setFilterType(FILTER_TYPES.current);
-              setSelectedMonth("");
             }}
           >
             <Text style={[styles.filterChipText, filterType === FILTER_TYPES.current && styles.filterChipTextActive]}>Tháng này</Text>
           </Pressable>
 
           <Pressable
-            style={[styles.filterChip, filterType === FILTER_TYPES.all && styles.filterChipActive]}
+            style={[styles.filterChip, styles.filterChipLast, filterType === FILTER_TYPES.all && styles.filterChipActive]}
             onPress={() => {
               setFilterType(FILTER_TYPES.all);
-              setSelectedMonth("");
             }}
           >
             <Text style={[styles.filterChipText, filterType === FILTER_TYPES.all && styles.filterChipTextActive]}>Tất cả</Text>
           </Pressable>
 
-          <Pressable
-            style={[styles.filterChip, styles.filterChipLast, filterType === FILTER_TYPES.specific && styles.filterChipActive]}
-            onPress={() => setFilterType(FILTER_TYPES.specific)}
-          >
-            <Text style={[styles.filterChipText, filterType === FILTER_TYPES.specific && styles.filterChipTextActive]}>Chọn tháng</Text>
-          </Pressable>
         </View>
 
-        {filterType === FILTER_TYPES.specific ? (
-          <TextInput
-            style={styles.monthInput}
-            value={selectedMonth}
-            onChangeText={setSelectedMonth}
-            placeholder="YYYY-MM (ví dụ: 2026-03)"
-            placeholderTextColor="#98a2b3"
-          />
-        ) : null}
       </View>
 
       <View style={styles.summaryCard}>
@@ -216,7 +187,13 @@ export default function IncomeScreen() {
           onPress={handleExport}
           disabled={isExporting}
         >
-          <Text style={styles.exportText}>{isExporting ? "⏳ Đang tạo báo cáo..." : "📥 Tải báo cáo tháng này"}</Text>
+          <Text style={styles.exportText}>
+            {isExporting
+              ? "Đang tạo báo cáo..."
+              : filterType === FILTER_TYPES.all
+                ? "Tải báo cáo tất cả tháng"
+                : "Tải báo cáo tháng này"}
+          </Text>
         </Pressable>
       </View>
 
@@ -241,9 +218,7 @@ export default function IncomeScreen() {
             <Text style={styles.emptyIcon}>💹</Text>
             <Text style={styles.emptyTitle}>Chưa có dữ liệu thu nhập</Text>
             <Text style={styles.emptyText}>
-              {filterType === FILTER_TYPES.specific && !selectedMonth.trim()
-                ? "Nhập tháng theo định dạng YYYY-MM để xem dữ liệu."
-                : "Hãy thêm khoản thu đầu tiên để theo dõi tài chính rõ ràng hơn."}
+              Hãy thêm khoản thu đầu tiên để theo dõi tài chính rõ ràng hơn.
             </Text>
             <View style={styles.actionRowMain}>
               <Pressable style={[styles.emptyAction, { flex: 1 }]} onPress={() => navigation.navigate("AddIncome")}>
@@ -305,16 +280,6 @@ const styles = StyleSheet.create({
   },
   filterChipTextActive: {
     color: COLORS.PRIMARY
-  },
-  monthInput: {
-    marginTop: 10,
-    backgroundColor: COLORS.BG,
-    borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 11,
-    color: COLORS.TEXT
   },
   summaryCard: {
     backgroundColor: COLORS.CARD,
@@ -443,17 +408,14 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     marginTop: 8,
-    backgroundColor: "#fef3f2",
-    borderColor: "#fecdca",
-    borderWidth: 1,
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 4
   },
-  deleteText: {
+  deleteIcon: {
     color: "#b42318",
-    fontWeight: "700",
-    fontSize: 12
+    fontSize: 14,
+    lineHeight: 16
   },
   emptyState: {
     alignItems: "center",
