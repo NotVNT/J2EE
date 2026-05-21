@@ -100,5 +100,12 @@ export const API_ENDPOINTS = {
   SYNC_PAYMENT_STATUS: (orderCode) => `/payments/${orderCode}/status`,
 
   // Image upload
-  UPLOAD_IMAGE: `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`
+  UPLOAD_IMAGE: `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+
+  // Jar endpoints
+  GET_JARS: "/jars",
+  ADD_JAR: "/jars",
+  UPDATE_JAR: (jarId) => `/jars/${jarId}`,
+  DELETE_JAR: (jarId) => `/jars/${jarId}`,
+  TRANSFER_JAR: "/jars/transfer"
 };
