@@ -115,6 +115,7 @@ public class ReceiptImportService {
                             .categoryId(matchedCategory.getId())
                             .amount(amount)
                             .date(transactionDate)
+                            .jarId(requestDTO.getJarId())
                             .build()
             );
 

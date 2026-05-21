@@ -154,7 +154,7 @@ const Menubar = ({ activeMenu }) => {
 
       {/* Mobile sidebar overlay */}
       <div
-        className={`fixed inset-0 top-16 z-30 lg:hidden transition-all duration-300 ease-in-out ${
+        className={`fixed inset-0 top-16 z-30 lg:hidden transition-[visibility,opacity] duration-300 ease-in-out ${
           openSideMenu ? 'visible' : 'invisible'
         }`}
       >

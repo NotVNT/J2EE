@@ -159,7 +159,7 @@ const PaymentCancel = () => {
               className="flex-1 flex items-center justify-center gap-2 rounded-xl
                 bg-violet-600 hover:bg-violet-500 active:bg-violet-700
                 px-5 py-3 text-sm font-semibold text-white
-                transition-all active:scale-[0.98] shadow-md shadow-violet-500/20"
+                transition transform-gpu active:scale-[0.98] shadow-md shadow-violet-500/20"
             >
               <ArrowLeft size={15} />
               Quay lại trang thanh toán
@@ -172,7 +172,7 @@ const PaymentCancel = () => {
                 active:scale-[0.98]
                 px-5 py-3 text-sm font-semibold
                 text-slate-700 dark:text-slate-300
-                transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                transition disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={!orderCode || isSyncing}
               onClick={handleSyncStatus}
               type="button"

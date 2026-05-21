@@ -90,7 +90,7 @@ const JarForm = ({ initialData, isEditing = false, onSave, onCancel }) => {
               key={c.value}
               type="button"
               onClick={() => handleChange("color", c.value)}
-              className={`w-8 h-8 rounded-xl transition-all duration-150 ${
+              className={`w-8 h-8 rounded-xl transition-[box-shadow,transform] duration-150 ${
                 form.color === c.value
                   ? "ring-2 ring-offset-2 ring-offset-white dark:ring-offset-slate-800 scale-110"
                   : "hover:scale-105"

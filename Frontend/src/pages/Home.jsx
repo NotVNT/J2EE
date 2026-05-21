@@ -247,8 +247,8 @@ const Home = () => {
                     <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-900 dark:bg-white/90 dark:text-slate-900 text-white text-[10px] px-2 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity z-20 whitespace-nowrap text-center shadow-lg">
                       Thu: {formatCurrency(h.income)}<br />Chi: {formatCurrency(h.expense)}
                     </div>
-                    <div className="w-5 bg-emerald-400/30 dark:bg-emerald-400/20 rounded-t-md hover:bg-emerald-400 transition-all" style={{ height: `${Math.max(incomeH, 2)}%` }} />
-                    <div className="w-5 bg-red-400/30 dark:bg-red-400/20 rounded-t-md hover:bg-red-400 transition-all" style={{ height: `${Math.max(expenseH, 2)}%` }} />
+                    <div className="w-5 bg-emerald-400/30 dark:bg-emerald-400/20 rounded-t-md hover:bg-emerald-400 transition" style={{ height: `${Math.max(incomeH, 2)}%` }} />
+                    <div className="w-5 bg-red-400/30 dark:bg-red-400/20 rounded-t-md hover:bg-red-400 transition" style={{ height: `${Math.max(expenseH, 2)}%` }} />
                     <span className="absolute -bottom-6 text-[10px] text-slate-400 font-semibold">{h.month}</span>
                   </div>
                 );
@@ -301,7 +301,7 @@ const Home = () => {
                       <p className={`text-xs font-semibold ${statusColor}`}>{statusText}</p>
                     </div>
                     <div className="h-1.5 w-full bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden">
-                      <div className={`h-full ${barColor} rounded-full transition-all duration-700`} style={{ width: `${Math.min(ratio, 100)}%` }} />
+                      <div className={`h-full ${barColor} rounded-full transition-[width] duration-700`} style={{ width: `${Math.min(ratio, 100)}%` }} />
                     </div>
                   </div>
                 );
@@ -337,11 +337,11 @@ const Home = () => {
                 </span>
               </div>
               <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden mb-5">
-                <div className="h-full bg-amber-400 rounded-full transition-all duration-700" style={{ width: `${dashboardData.priorityGoal.progressPercent}%` }} />
+                <div className="h-full bg-amber-400 rounded-full transition-[width] duration-700" style={{ width: `${dashboardData.priorityGoal.progressPercent}%` }} />
               </div>
               <button
                 onClick={() => navigate(`/saving-goals`)}
-                className="w-full py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-sm font-semibold transition-all"
+                className="w-full py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-sm font-semibold transition"
               >
                 Xem lộ trình tiết kiệm
               </button>
@@ -357,7 +357,7 @@ const Home = () => {
             <p className="text-xs text-white/50 mb-4">Hãy thiết lập mục tiêu đầu tiên để theo dõi lộ trình tài chính.</p>
             <button
               onClick={() => navigate("/saving-goals")}
-              className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-white text-sm font-semibold transition-all"
+              className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-white text-sm font-semibold transition"
             >
               Tạo mục tiêu ngay
             </button>
@@ -377,7 +377,7 @@ const Home = () => {
           className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold
             bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300
             hover:bg-slate-200 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10
-            transition-all"
+            transition"
         >
           <Settings2 size={15} />
           Tùy chỉnh
@@ -417,7 +417,7 @@ const Home = () => {
                 onClick={toggleDetailedInsight}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold
                   bg-white/15 border border-white/20 text-white hover:bg-white/25
-                  transition-all whitespace-nowrap active:scale-95"
+                  transition whitespace-nowrap active:scale-95"
               >
                 {showDetailedInsight ? (
                   <>
@@ -462,7 +462,7 @@ const Home = () => {
             )}
 
             {/* Detailed insight expandable */}
-            <div className={`transition-all duration-500 ease-in-out overflow-hidden ${
+            <div className={`transition-[max-height,opacity] duration-500 ease-in-out overflow-hidden ${
               showDetailedInsight ? "max-h-[800px] opacity-100 mt-6" : "max-h-0 opacity-0 mt-0"
             }`}>
               <div className="border-t border-slate-200 dark:border-white/10 pt-6">

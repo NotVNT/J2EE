@@ -185,7 +185,7 @@ const AdminNotifications = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full flex items-center justify-center gap-2 py-3.5 px-4 bg-violet-600 hover:bg-violet-500 text-white rounded-xl font-semibold transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
+                  className="w-full flex items-center justify-center gap-2 py-3.5 px-4 bg-violet-600 hover:bg-violet-500 text-white rounded-xl font-semibold transition transform-gpu active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? (
                     <div className="w-5 h-5 rounded-full border-2 border-white/30 border-t-white animate-spin"></div>
@@ -259,7 +259,7 @@ const AdminNotifications = () => {
                           <button
                             onClick={handleSaveEdit}
                             disabled={isSavingEdit}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition-all disabled:opacity-60"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition disabled:opacity-60"
                           >
                             {isSavingEdit ? (
                               <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"></div>
@@ -269,7 +269,7 @@ const AdminNotifications = () => {
                           </button>
                           <button
                             onClick={handleCancelEdit}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-200 dark:bg-white/10 hover:bg-slate-300 dark:hover:bg-white/20 text-slate-700 dark:text-slate-300 text-xs font-semibold transition-all"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-200 dark:bg-white/10 hover:bg-slate-300 dark:hover:bg-white/20 text-slate-700 dark:text-slate-300 text-xs font-semibold transition"
                           >
                             <X size={14} /> Huỷ
                           </button>

@@ -171,7 +171,7 @@ const MonthlyReportCard = ({ report }) => {
         </div>
         <div className="w-full bg-slate-100 dark:bg-white/10 rounded-full h-3 overflow-hidden">
           <div
-            className={`h-full rounded-full transition-all duration-700 ${
+            className={`h-full rounded-full transition-[width] duration-700 ${
               report.savingsRate >= 30 ? "bg-emerald-500" :
               report.savingsRate >= 20 ? "bg-blue-500" :
               report.savingsRate >= 10 ? "bg-amber-500" :

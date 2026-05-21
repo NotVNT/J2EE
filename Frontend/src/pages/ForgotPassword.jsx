@@ -264,7 +264,7 @@ const ForgotPassword = () => {
                     type="button"
                     onClick={handleResend}
                     disabled={countdown > 0 || isResending}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-white/10 px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400 hover:border-amber-500/50 hover:text-amber-600 dark:hover:text-amber-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-white/10 px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400 hover:border-amber-500/50 hover:text-amber-600 dark:hover:text-amber-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isResending
                       ? <><LoaderCircle className="animate-spin" size={15} />Đang gửi...</>

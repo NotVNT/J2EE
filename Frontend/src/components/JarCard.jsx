@@ -3,7 +3,7 @@ import { Pencil, Trash2, TrendingUp, TrendingDown, Vault } from "lucide-react";
 const fmt = (n) =>
   new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(n ?? 0);
 
-const JarCard = ({ jar, totalBalance, onEdit, onDelete }) => {
+const JarCard = ({ jar, totalBalance, onEdit, onDelete, onClick }) => {
   const { name, icon, color, targetPercentage, currentBalance } = jar;
 
   const actualPercent = totalBalance > 0
@@ -19,7 +19,7 @@ const JarCard = ({ jar, totalBalance, onEdit, onDelete }) => {
   );
 
   return (
-    <div className="card relative overflow-hidden group hover:shadow-lg transition-all duration-300">
+    <div className="card relative overflow-hidden group hover:shadow-lg transition-[transform,box-shadow] duration-300 cursor-pointer transform-gpu hover:scale-[1.01] active:scale-[0.99]" onClick={onClick}>
       {/* Color accent bar */}
       <div
         className="absolute top-0 left-0 right-0 h-1 rounded-t-xl"
@@ -31,7 +31,7 @@ const JarCard = ({ jar, totalBalance, onEdit, onDelete }) => {
         <div className="flex items-center gap-3 min-w-0">
           <div
             className="w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0"
-            style={{ backgroundColor: `${color}20` || "#8B5CF620" }}
+            style={{ backgroundColor: `${color || "#8B5CF6"}20` }}
           >
             {icon ? (
               <img src={icon} alt={name} className="w-6 h-6" />
@@ -49,14 +49,14 @@ const JarCard = ({ jar, totalBalance, onEdit, onDelete }) => {
 
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-2">
           <button
-            onClick={onEdit}
+            onClick={(e) => { e.stopPropagation(); onEdit(); }}
             className="p-1.5 text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-500/10 rounded-lg transition-colors"
             title="Chỉnh sửa"
           >
             <Pencil size={14} />
           </button>
           <button
-            onClick={onDelete}
+            onClick={(e) => { e.stopPropagation(); onDelete(); }}
             className="p-1.5 text-slate-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
             title="Xoá hũ"
           >
@@ -82,7 +82,7 @@ const JarCard = ({ jar, totalBalance, onEdit, onDelete }) => {
         </div>
         <div className="w-full h-2 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden">
           <div
-            className="h-full rounded-full transition-all duration-700 ease-out"
+            className="h-full rounded-full transition-[width] duration-700 ease-out"
             style={{
               width: `${progressWidth}%`,
               backgroundColor: isNegative ? "#EF4444" : (color || "#8B5CF6"),

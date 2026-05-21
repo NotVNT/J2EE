@@ -86,7 +86,7 @@ const Forecast = () => {
                         </p>
                         <button
                             onClick={() => navigate("/payment")}
-                            className="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white py-3 rounded-xl font-medium shadow-md shadow-amber-500/20 hover:shadow-lg hover:shadow-amber-500/30 transition-all"
+                            className="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white py-3 rounded-xl font-medium shadow-md shadow-amber-500/20 hover:shadow-lg hover:shadow-amber-500/30 transition"
                         >
                             Nâng cấp ngay
                         </button>

@@ -49,6 +49,7 @@ export const API_ENDPOINTS = {
     ANALYZE_EXPENSE_RECEIPT: "/expenses/import-receipt/analyze",
     CONFIRM_EXPENSE_RECEIPT_IMPORT: "/expenses/import-receipt/confirm",
     DELETE_EXPENSE: (expenseId) => `/expenses/${expenseId}`,
+    UPDATE_EXPENSE: (expenseId) => `/expenses/${expenseId}`,
     EXPENSE_EXCEL_DOWNLOAD: "excel/download/expense",
     EMAIL_EXPENSE: "/email/expense-excel",
 

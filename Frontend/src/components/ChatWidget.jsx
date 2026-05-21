@@ -561,7 +561,7 @@ const ChatWidget = () => {
     <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-3">
       {isOpen && (
         <div 
-          className={`flex flex-col overflow-hidden rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0F172A] shadow-2xl shadow-slate-900/20 transition-all duration-300 ease-in-out ${
+          className={`flex flex-col overflow-hidden rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0F172A] shadow-2xl shadow-slate-900/20 transition-[height,width] duration-300 ease-in-out ${
             isExpanded 
               ? "h-[85vh] w-[800px] max-w-[calc(100vw-2.5rem)]" 
               : "h-[min(38rem,80dvh)] w-[420px] max-w-[calc(100vw-1.5rem)]"
@@ -885,7 +885,7 @@ const ChatWidget = () => {
         {/* Greeting bubble */}
         {!isOpen && (
           <div
-            className={`absolute right-20 bottom-1 flex items-center gap-1.5 whitespace-nowrap rounded-2xl rounded-br-sm bg-white dark:bg-slate-800 px-3.5 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 shadow-lg shadow-slate-900/15 ring-1 ring-slate-200 dark:ring-white/10 transition-all duration-500 ${
+            className={`absolute right-20 bottom-1 flex items-center gap-1.5 whitespace-nowrap rounded-2xl rounded-br-sm bg-white dark:bg-slate-800 px-3.5 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 shadow-lg shadow-slate-900/15 ring-1 ring-slate-200 dark:ring-white/10 transition-[opacity,transform] duration-500 ${
               showGreeting ? "opacity-100 translate-x-0" : "opacity-0 translate-x-3 pointer-events-none"
             }`}
           >

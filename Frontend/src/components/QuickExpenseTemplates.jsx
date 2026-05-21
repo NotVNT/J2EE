@@ -62,7 +62,7 @@ function TemplateCard({ template, onUse, onEdit, onDelete, isLoading }) {
     <div className="group relative flex flex-col items-center gap-2 p-3 rounded-2xl border border-slate-200 dark:border-white/10
       bg-white dark:bg-white/3 hover:border-violet-400 dark:hover:border-amber-500/50
       hover:shadow-lg hover:shadow-violet-500/10 dark:hover:shadow-amber-500/10
-      transition-all duration-200 cursor-pointer select-none"
+      transition duration-200 cursor-pointer select-none"
       onClick={() => !isLoading && onUse(template)}
     >
       {/* Action buttons – luôn hiện trên mobile, hover trên desktop */}
@@ -416,7 +416,7 @@ const QuickExpenseTemplates = ({ categories = [], onAddExpense }) => {
                 className="flex flex-col items-center justify-center gap-2 p-8 rounded-2xl border-2 border-dashed
                   border-slate-200 dark:border-white/10 cursor-pointer
                   hover:border-violet-400 dark:hover:border-amber-500/50 hover:bg-violet-50/50 dark:hover:bg-amber-500/5
-                  transition-all duration-200"
+                  transition duration-200"
               >
                 <span className="text-3xl">⚡</span>
                 <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Chưa có mẫu nào</p>
@@ -441,7 +441,7 @@ const QuickExpenseTemplates = ({ categories = [], onAddExpense }) => {
                   className="flex flex-col items-center justify-center gap-2 p-3 rounded-2xl border border-dashed
                     border-slate-200 dark:border-white/10 text-slate-400 dark:text-slate-500
                     hover:border-violet-400 dark:hover:border-amber-500/50 hover:text-violet-500 dark:hover:text-amber-400
-                    hover:bg-violet-50/50 dark:hover:bg-amber-500/5 transition-all duration-200 min-h-[90px]"
+                    hover:bg-violet-50/50 dark:hover:bg-amber-500/5 transition duration-200 min-h-[90px]"
                 >
                   <Plus size={18} />
                   <span className="text-[10px] font-medium">Thêm</span>

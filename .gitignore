@@ -4,10 +4,13 @@ COPILOT.md
 
 # === AI Assistant Rules & Guidelines (LOCAL ONLY) ===
 .claude/
-.copilot/
 .commandcode/
+.antigravity/
+.antigravitycli/
+.gemini/
+.gemini
+.copilot/
 .claude/.instructions.md
-.copilot/.instructions.md
 .instructions.md
 .prompt.md
 .agent.md

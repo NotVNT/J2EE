@@ -20,14 +20,14 @@ const Header = () => {
             to="/signup"
             className="inline-flex items-center rounded-xl border border-slate-200 dark:border-white/10
               bg-slate-100 dark:bg-white/5 px-4 py-2 font-medium text-slate-700 dark:text-slate-300
-              hover:border-amber-500/50 hover:text-amber-600 dark:hover:text-amber-400 transition-all duration-200"
+              hover:border-amber-500/50 hover:text-amber-600 dark:hover:text-amber-400 transition duration-200"
           >
             Đăng ký
           </Link>
           <Link
             to="/login"
             className="inline-flex items-center rounded-xl px-4 py-2 font-semibold text-white
-              bg-violet-600 hover:bg-violet-500 transition-all duration-150 active:scale-95"
+              bg-violet-600 hover:bg-violet-500 transition duration-150 transform-gpu active:scale-95"
           >
             Đăng nhập
           </Link>

@@ -2,7 +2,7 @@ const InfoCard = ({ icon, label, value, color, onClick }) => {
   return (
     <div
       onClick={onClick}
-      className="group flex flex-col gap-4 p-5 rounded-2xl cursor-pointer transition-all duration-200
+      className="group flex flex-col gap-4 p-5 rounded-2xl cursor-pointer transition-[transform,box-shadow,border-color] duration-200
         bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10
         hover:border-amber-500/30 dark:hover:border-amber-500/30
         hover:-translate-y-0.5 hover:shadow-lg dark:hover:shadow-black/20"

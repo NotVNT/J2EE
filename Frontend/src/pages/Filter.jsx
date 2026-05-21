@@ -154,7 +154,7 @@ const Filter = () => {
                             </div>
                             <button
                                 onClick={handleSearch}
-                                className="shrink-0 p-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white transition-all duration-150 active:scale-95 cursor-pointer"
+                                className="shrink-0 p-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white transition duration-150 transform-gpu active:scale-95 cursor-pointer"
                             >
                                 <Search size={20} />
                             </button>

@@ -36,7 +36,7 @@ body {
 
 .add-btn {
   @apply flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold cursor-pointer
-         bg-violet-600 hover:bg-violet-500 text-white transition-all duration-150 active:scale-95;
+         bg-violet-600 hover:bg-violet-500 text-white transition duration-150 active:scale-95;
 }
 
 /* ───────────────────────────────────────────────────────────── */
@@ -44,7 +44,7 @@ body {
 /* ───────────────────────────────────────────────────────────── */
 
 .btn-primary {
-  @apply w-full rounded-xl bg-violet-600 hover:bg-violet-500 px-4 py-3 text-sm font-semibold text-white transition-all duration-150 active:scale-95 cursor-pointer;
+  @apply w-full rounded-xl bg-violet-600 hover:bg-violet-500 px-4 py-3 text-sm font-semibold text-white transition duration-150 active:scale-95 cursor-pointer;
 }
 
 /* ───────────────────────────────────────────────────────────── */
@@ -101,7 +101,7 @@ body {
 
 .budget-card {
   @apply flex flex-col p-5 rounded-2xl border border-slate-200 dark:border-white/10
-         bg-white dark:bg-white/5 transition-all hover:border-amber-500/30 dark:hover:bg-white/8 relative overflow-hidden;
+         bg-white dark:bg-white/5 transition hover:border-amber-500/30 dark:hover:bg-white/8 relative overflow-hidden;
 }
 .budget-card--warning {
   @apply border-orange-200 dark:border-orange-500/30 bg-orange-50/30 dark:bg-orange-500/5;
@@ -134,7 +134,7 @@ body {
   @apply h-2.5 w-full bg-slate-100 dark:bg-white/10 rounded-full my-3 overflow-hidden relative;
 }
 .budget-card__bar {
-  @apply h-full transition-all duration-500 ease-out;
+  @apply h-full transition-[width] duration-500 ease-out;
 }
 
 .budget-card__stats {
@@ -215,4 +215,31 @@ body {
 
 .animate-fade-in-up {
   animation: fade-in-up 0.8s ease-out forwards;
+}
+
+/* ───────────────────────────────────────────────────────────── */
+/* PERFORMANCE MODE                                              */
+/* ───────────────────────────────────────────────────────────── */
+
+html[data-performance="low"] .glass-card,
+html[data-performance="low"] .glass-card-light {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background: rgba(255, 255, 255, 0.15) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+html[data-performance="low"] *,
+html[data-performance="low"] *::before,
+html[data-performance="low"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
 }
