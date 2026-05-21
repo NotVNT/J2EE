@@ -126,7 +126,7 @@ Nova Money là trợ lý AI tích hợp sẵn, có thể truy cập từ nút ch
 |---|---|---|---|
 | Google Gemini | gemini-3.1-flash-lite | Chế độ Agent (phân tích ý định + thực thi) | CƠ BẢN+ |
 | OpenRouter | GPT-OSS 120B | Chế độ Chat (trò chuyện) | Tất cả gói |
-| NineRouter | EXPERIMENTAL | Chế độ Agent thử nghiệm (hiệu suất cao hơn) | PREMIUM |
+| NineRouter | EXPERIMENTAL | Chế độ Chat và Agent thử nghiệm (hiệu suất cao hơn) | PREMIUM |
 
 **Xoay Vòng Khóa API (Redis)**  
 Mỗi nhà cung cấp có một nhóm khóa API được lưu trữ trong Redis. Hệ thống theo dõi sử dụng hạn ngạch cho mỗi khóa và trạng thái cooldown. Khi một khóa vượt quá hạn ngạch hoặc trả về lỗi, khóa đó sẽ bị bỏ qua tự động và khóa có sẵn tiếp theo sẽ được sử dụng. Các khóa tự phục hồi sau khi thời gian cooldown hết hạn.
@@ -216,7 +216,7 @@ Nút chat nổi nằm ở góc dưới bên phải trên tất cả các trang �
 - **Kết Xuất Markdown**: Phản hồi AI hỗ trợ bảng, khối mã, danh sách, blockquote thông qua `react-markdown` + `remark-gfm` + `rehype-sanitize`.
 - **Chỉ Số Nhập**: Hoạt ảnh ba chấm nảy lên trong khi chờ phản hồi.
 - **Bảo Vệ Ý Định Đang Chờ**: Khi biểu mẫu xác nhận CRUD đang mở, tin nhắn mới bị chặn cho đến khi người dùng xác nhận hoặc hủy.
-- **Chọn Model Agent**: Người dùng PREMIUM có thể chuyển giữa `Gemini 3.1 Flash Lite` (mặc định) và `EXPERIMENTAL` (NineRouter / gemma4-31B). Khi chọn EXPERIMENTAL lần đầu, modal cảnh báo sẽ hiện để xác nhận.
+- **Chọn Model**: Người dùng PREMIUM có thể chuyển giữa `GPT-OSS 120B` (Chat mặc định), `Gemini 3.1 Flash Lite` (Agent mặc định) và `EXPERIMENTAL` (NineRouter). Khi chọn EXPERIMENTAL lần đầu, modal cảnh báo sẽ hiện để xác nhận. Selector được render bởi `ModelSelector.jsx` tái sử dụng được.
 
 ---
 
@@ -292,9 +292,11 @@ Mỗi Hũ có các thuộc tính tùy chỉnh:
 - `JarController.java` — REST controller
 
 **Frontend**
-- `src/pages/Jars.jsx` — Trang Hũ chi tiêu (tổng quan, biểu đồ phân bổ, danh sách Hũ)
+- `src/pages/Jars.jsx` — Trang Hũ chi tiêu: tổng quan, PieChart / BarChart phân bổ, danh sách Hũ, xem và quản lý chi tiêu trong từng Hũ (thêm/sửa/xóa trực tiếp từ detail view)
 - `src/components/JarForm.jsx` — Form tạo / chỉnh sửa Hũ
 - `src/components/JarTransferModal.jsx` — Modal chuyển tiền giữa các Hũ
+- `src/components/AddExpenseForm.jsx` — Form thêm chi tiêu (hỗ trợ chọn Hũ)
+- `src/components/EditExpenseForm.jsx` — Form sửa chi tiêu (hỗ trợ chọn Hũ)
 - `src/components/QuickExpenseTemplates.jsx` — Chi tiêu nhanh tích hợp chọn Hũ (JarPickerModal)
 
 ### Mục Tiêu Tiết Kiệm
@@ -303,7 +305,10 @@ Tạo mục tiêu với số tiền mục tiêu và thời hạn. Ghi lại nh�
 **Tích hợp AI Agent**: Khi người dùng đang ở trang Mục Tiêu Tiết Kiệm, Nova Money nhận đầy đủ ngữ cảnh của từng mục tiêu (số tiền mục tiêu, đã tích lũy, còn thiếu, tiến độ %, cần/tháng, đã đóng tháng này, ngày hết hạn, trạng thái chậm/đúng tiến độ). AI có thể trả lời câu hỏi như *"còn thiếu bao nhiêu?"*, *"khi nào hoàn thành?"* và thực hiện CREATE / UPDATE / DELETE mục tiêu đúng theo ID.
 
 ### Tiện Ích Bảng Điều Khiển
-Bố cục tiện ích có thể tùy chỉnh kéo và thả (qua `@dnd-kit`). Thẻ báo cáo hàng tháng với điểm chi tiêu A–F, phân tích danh mục, tiến trình tiết kiệm.
+Bố cục tiện ích có thể tùy chỉnh kéo và thả (qua `@dnd-kit`). Thẻ báo cáo hàng tháng (`MonthlyReportCard`) với điểm chi tiêu A–F, phân tích danh mục, tiến trình tiết kiệm. Người dùng **PREMIUM** có thêm nút phân tích AI trong thẻ báo cáo — gọi Gemini để nhận nhận xét sâu về tình hình tài chính tháng đó.
+
+### Chế Độ Hiệu Suất Thấp
+Toggle hiệu suất thấp (lưu trong `localStorage`) giúp tắt các animation nặng trên thiết bị yếu. Trạng thái được cung cấp toàn cục qua `PerformanceContext` (`usePerformance()` hook) và áp dụng attribute `data-performance="low"` trên `<html>` để CSS có thể override.
 
 ### Xuất Excel
 Báo cáo XLSX qua Apache POI. Bản địa hóa Việt Nam, hàng có mã màu (xanh = thu nhập, đỏ = chi tiêu), màu hàng xen kẽ, tổng được định dạng VND. **Chỉ CƠ BẢN+.**
