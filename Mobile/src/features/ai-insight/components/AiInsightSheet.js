@@ -49,18 +49,15 @@ export default function AiInsightSheet({
       visible={visible}
       transparent
       statusBarTranslucent
-      animationType="slide"
+      animationType="fade"
       onRequestClose={onClose}
     >
       <View style={styles.overlay}>
         {/* Backdrop */}
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
 
-        {/* Sheet */}
-        <View style={[styles.sheet, { paddingBottom: Math.max(insets?.bottom || 0, 16) }]}>
-          {/* Handle bar */}
-          <View style={styles.handleBar} />
-
+        {/* Sheet / Dialog */}
+        <View style={styles.sheet}>
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.headerLeft}>
@@ -267,24 +264,21 @@ function formatMoneyLocal(value) {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    justifyContent: "flex-end",
+    justifyContent: "center",
+    alignItems: "center",
     backgroundColor: COLORS.OVERLAY,
   },
   sheet: {
     backgroundColor: COLORS.CARD,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderRadius: 24,
     maxHeight: "85%",
-    width: "100%",
-  },
-  handleBar: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: COLORS.CARD_BORDER,
-    alignSelf: "center",
-    marginTop: 10,
-    marginBottom: 6,
+    width: "90%",
+    paddingBottom: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 14,
+    elevation: 14,
   },
 
   // Header
