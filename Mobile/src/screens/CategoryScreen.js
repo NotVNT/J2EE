@@ -550,9 +550,6 @@ const styles = StyleSheet.create({
   typeChipText: { fontWeight: "800", fontSize: 12 },
   itemActionRow: { flexDirection: "row", marginTop: 8 },
   itemEditBtn: {
-    backgroundColor: COLORS.ROSE_MIST,
-    borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 4

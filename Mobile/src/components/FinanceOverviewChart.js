@@ -68,6 +68,11 @@ function formatShortMoney(val) {
   return String(abs);
 }
 
+function formatShortSignedMoney(val) {
+  const sign = Number(val || 0) < 0 ? "-" : "";
+  return `${sign}${formatShortMoney(val)}`;
+}
+
 function normalizeMonthlySeries(series = []) {
   return series
     .filter((item) => item?.monthKey)
@@ -320,11 +325,6 @@ const FinanceOverviewChart = ({ totalBalance, totalIncome, totalExpense, monthly
     });
   }, [income, expense, balance]);
 
-  const total = useMemo(
-    () => slices.reduce((sum, s) => sum + s.rawAmount, 0),
-    [slices]
-  );
-
   const handleSliceTap = useCallback(
     (idx) => {
       setSelectedIdx((prev) => (prev === idx ? null : idx));
@@ -433,7 +433,7 @@ const FinanceOverviewChart = ({ totalBalance, totalIncome, totalExpense, monthly
                   fontWeight="600"
                   fill="#94a3b8"
                 >
-                  Tổng
+                  Số dư
                 </SvgText>
 
                 <SvgText
@@ -444,7 +444,7 @@ const FinanceOverviewChart = ({ totalBalance, totalIncome, totalExpense, monthly
                   fontWeight="900"
                   fill="url(#center-total-gradient)"
                 >
-                  {formatShortMoney(total)}
+                  {formatShortSignedMoney(balance)}
                 </SvgText>
               </G>
             </Svg>

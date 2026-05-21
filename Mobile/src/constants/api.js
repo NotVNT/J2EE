@@ -65,6 +65,10 @@ export const API_ENDPOINTS = {
   ADD_EXPENSE: "/expenses",
   DELETE_EXPENSE: (expenseId) => `/expenses/${expenseId}`,
 
+  // Receipt Import (PREMIUM)
+  ANALYZE_EXPENSE_RECEIPT: "/expenses/import-receipt/analyze",
+  CONFIRM_EXPENSE_RECEIPT_IMPORT: "/expenses/import-receipt/confirm",
+
   // Incomes
   GET_ALL_INCOMES: "/incomes",
   ADD_INCOME: "/incomes",
