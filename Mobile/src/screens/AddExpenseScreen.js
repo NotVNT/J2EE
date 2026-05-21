@@ -9,6 +9,7 @@ import { formatCurrencyInput, getApiErrorMessage, parseCurrencyInput, todayIso }
 import { PickDateField } from "../utils/pickDate";
 import { COLORS } from "../constants/colors";
 import ExpenseNoteField from "../components/ExpenseNoteField";
+import CategoryGridSelector from "../components/CategoryGridSelector";
 import { parseNote, suggestCategory } from "../utils/smartNoteParser";
 
 export default function AddExpenseScreen() {
@@ -199,26 +200,13 @@ export default function AddExpenseScreen() {
       <PickDateField label="Ngày" value={date} onChange={setDate} />
 
       <Text style={styles.label}>Danh mục</Text>
-      <View style={styles.categoryContainer}>
-        {categoryLoading ? (
-          <Text style={styles.categoryStateText}>Đang tải danh mục...</Text>
-        ) : categories.length === 0 ? (
-          <Text style={styles.categoryStateText}>
-            Chưa có danh mục chi tiêu. Hãy tạo danh mục ở tab Danh mục.
-          </Text>
-        ) : categories.map((category) => {
-          const active = String(category.id) === String(categoryId);
-          return (
-            <Pressable
-              key={String(category.id)}
-              style={[styles.categoryChip, active && styles.categoryChipActive]}
-              onPress={() => setCategoryId(String(category.id))}
-            >
-              <Text style={[styles.categoryText, active && styles.categoryTextActive]}>{category.name}</Text>
-            </Pressable>
-          );
-        })}
-      </View>
+      <CategoryGridSelector
+        categories={categories}
+        selectedId={categoryId}
+        onSelect={setCategoryId}
+        loading={categoryLoading}
+        emptyText="Chưa có danh mục chi tiêu. Hãy tạo danh mục ở tab Danh mục."
+      />
 
       <Pressable style={[styles.saveButton, submitting && styles.saveButtonDisabled]} onPress={onSave} disabled={submitting}>
         <Text style={styles.saveButtonText}>{submitting ? "Đang lưu..." : "Lưu chi tiêu"}</Text>
@@ -275,42 +263,7 @@ const styles = StyleSheet.create({
     color: COLORS.PRIMARY,
     marginTop: 4
   },
-  categoryContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    marginBottom: 16
-  },
-  categoryChip: {
-    width: "48%",
-    borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    backgroundColor: COLORS.CARD,
-    marginBottom: 8,
-    alignItems: "center"
-  },
-  categoryChipActive: {
-    borderColor: COLORS.PRIMARY,
-    backgroundColor: COLORS.ROSE_MIST
-  },
-  categoryText: {
-    color: COLORS.TEXT,
-    textAlign: "center"
-  },
-  categoryTextActive: {
-    color: COLORS.PRIMARY,
-    fontWeight: "700"
-  },
-  categoryStateText: {
-    width: "100%",
-    color: COLORS.TEXT_SECONDARY,
-    fontSize: 13,
-    lineHeight: 20,
-    marginBottom: 8
-  },
+
   saveButton: {
     backgroundColor: COLORS.PRIMARY,
     borderRadius: 12,

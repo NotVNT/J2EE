@@ -7,6 +7,7 @@ import { API_ENDPOINTS } from "../constants/api";
 import { SUCCESS_ALERT_MESSAGES, SUCCESS_ALERT_TITLE } from "../constants/alertMessages";
 import { formatCurrencyInput, formatMoney, getApiErrorMessage, parseCurrencyInput } from "../utils/format";
 import { COLORS } from "../constants/colors";
+import { CategoryVectorIcon, getIconColor } from "../utils/VectorIcons";
 
 function getBudgetVisual(progressRatio) {
   if (progressRatio >= 1) {
@@ -36,11 +37,9 @@ function getBudgetVisual(progressRatio) {
 }
 
 function CategoryChip({ category, active, onPress }) {
-  const icon = typeof category?.icon === "string" && category.icon.trim().length <= 3 ? category.icon : "📂";
-
   return (
     <Pressable style={[styles.chip, active && styles.chipActive]} onPress={onPress}>
-      <Text style={styles.chipIcon}>{icon}</Text>
+      <CategoryVectorIcon iconValue={category?.icon} size={16} color={getIconColor(category?.icon)} />
       <Text style={[styles.chipText, active && styles.chipTextActive]} numberOfLines={1}>
         {category?.name || "Danh mục"}
       </Text>
@@ -59,14 +58,14 @@ function BudgetCard({ item, onDelete }) {
   const month = Number(item?.month || now.getMonth() + 1);
   const year = Number(item?.year || now.getFullYear());
 
-  const icon = typeof item?.categoryIcon === "string" && item.categoryIcon.trim().length <= 3 ? item.categoryIcon : "📂";
+  const iconColor = getIconColor(item?.categoryIcon);
 
   return (
     <View style={styles.itemCard}>
       <View style={styles.itemHeader}>
         <View style={styles.itemHeaderLeft}>
-          <View style={styles.itemIconBubble}>
-            <Text style={styles.itemIconText}>{icon}</Text>
+          <View style={[styles.itemIconBubble, { backgroundColor: iconColor + "18" }]}>
+            <CategoryVectorIcon iconValue={item?.categoryIcon} size={18} color={iconColor} />
           </View>
           <View style={styles.itemHeaderTextWrap}>
             <Text style={styles.itemName}>{item?.categoryName || "Ngân sách"}</Text>

@@ -8,6 +8,7 @@ import { SUCCESS_ALERT_MESSAGES, SUCCESS_ALERT_TITLE } from "../constants/alertM
 import { formatCurrencyInput, getApiErrorMessage, parseCurrencyInput, todayIso } from "../utils/format";
 import { PickDateField } from "../utils/pickDate";
 import { COLORS } from "../constants/colors";
+import CategoryGridSelector from "../components/CategoryGridSelector";
 
 export default function AddIncomeScreen() {
   const navigation = useNavigation();
@@ -122,26 +123,13 @@ export default function AddIncomeScreen() {
       <PickDateField label="Ngày" value={date} onChange={setDate} />
 
       <Text style={styles.label}>Danh mục</Text>
-      <View style={styles.categoryContainer}>
-        {categoryLoading ? (
-          <Text style={styles.categoryStateText}>Đang tải danh mục...</Text>
-        ) : categories.length === 0 ? (
-          <Text style={styles.categoryStateText}>
-            Chưa có danh mục thu nhập. Hãy tạo danh mục ở tab Danh mục.
-          </Text>
-        ) : categories.map((category) => {
-          const active = String(category.id) === String(categoryId);
-          return (
-            <Pressable
-              key={String(category.id)}
-              style={[styles.categoryChip, active && styles.categoryChipActive]}
-              onPress={() => setCategoryId(String(category.id))}
-            >
-              <Text style={[styles.categoryText, active && styles.categoryTextActive]}>{category.name}</Text>
-            </Pressable>
-          );
-        })}
-      </View>
+      <CategoryGridSelector
+        categories={categories}
+        selectedId={categoryId}
+        onSelect={setCategoryId}
+        loading={categoryLoading}
+        emptyText="Chưa có danh mục thu nhập. Hãy tạo danh mục ở tab Danh mục."
+      />
 
       <Pressable style={[styles.saveButton, submitting && styles.saveButtonDisabled]} onPress={onSave} disabled={submitting}>
         <Text style={styles.saveButtonText}>{submitting ? "Đang lưu..." : "Lưu thu nhập"}</Text>
@@ -172,38 +160,7 @@ const styles = StyleSheet.create({
     paddingVertical: 11,
     marginBottom: 12
   },
-  categoryContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-    marginBottom: 16
-  },
-  categoryChip: {
-    borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    backgroundColor: COLORS.CARD
-  },
-  categoryChipActive: {
-    borderColor: COLORS.PRIMARY,
-    backgroundColor: COLORS.ROSE_MIST
-  },
-  categoryText: {
-    color: COLORS.TEXT
-  },
-  categoryTextActive: {
-    color: COLORS.PRIMARY,
-    fontWeight: "700"
-  },
-  categoryStateText: {
-    width: "100%",
-    color: COLORS.TEXT_SECONDARY,
-    fontSize: 13,
-    lineHeight: 20,
-    marginBottom: 8
-  },
+
   saveButton: {
     backgroundColor: COLORS.PRIMARY,
     borderRadius: 12,

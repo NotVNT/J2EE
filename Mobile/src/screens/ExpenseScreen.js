@@ -7,6 +7,7 @@ import { SUCCESS_ALERT_MESSAGES, SUCCESS_ALERT_TITLE } from "../constants/alertM
 import { formatDate, formatMoney, getApiErrorMessage } from "../utils/format";
 import IncomeExpenseChart from "../components/IncomeExpenseChart";
 import { COLORS } from "../constants/colors";
+import { CategoryVectorIcon, getIconColor } from "../utils/VectorIcons";
 import VoiceInputButton from "../components/VoiceInputButton";
 import { downloadAndShareFile } from "../utils/fileDownload";
 
@@ -38,12 +39,13 @@ function escapeRegex(str) {
 function ExpenseItem({ item, onDelete, searchKeyword }) {
   const amount = Number(item?.amount || 0);
   const note = item?.note || "";
+  const iconColor = getIconColor(item?.icon);
 
   return (
     <View style={styles.itemCard}>
       <View style={styles.itemMain}>
-        <View style={styles.iconBubble}>
-          <Text style={styles.iconText}>{item?.icon || "💸"}</Text>
+        <View style={[styles.iconBubble, { backgroundColor: iconColor + "18" }]}>
+          <CategoryVectorIcon iconValue={item?.icon} size={18} color={iconColor} />
         </View>
 
         <View style={styles.itemContent}>

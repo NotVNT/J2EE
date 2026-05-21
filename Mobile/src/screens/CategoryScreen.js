@@ -1,12 +1,13 @@
-﻿import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Alert, FlatList, Modal, Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from "react-native";
+﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Alert, Animated, FlatList, Modal, Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import http from "../services/http";
 import { API_ENDPOINTS } from "../constants/api";
 import { SUCCESS_ALERT_MESSAGES, SUCCESS_ALERT_TITLE } from "../constants/alertMessages";
 import { getApiErrorMessage } from "../utils/format";
 import { COLORS } from "../constants/colors";
-import { CategoryVectorIcon, getCategoryIconPresets, getFirstCategoryIcon, getIconLabel } from "../utils/VectorIcons";
+import { CategoryVectorIcon, getFirstCategoryIcon, getIconColor, getIconLabel } from "../utils/VectorIcons";
+import IconPickerBottomSheet from "../components/IconPickerBottomSheet";
 
 const TYPE_META = {
   expense: {
@@ -21,8 +22,72 @@ const TYPE_META = {
   }
 };
 
+function CategoryTypeSegmentedControl({ value, onChange }) {
+  const slideAnim = useRef(new Animated.Value(value === "expense" ? 1 : 0)).current;
+  const thumbScaleAnim = useRef(new Animated.Value(1)).current;
+  const [width, setWidth] = useState(0);
+  const segmentWidth = width > 0 ? (width - 8) / 2 : 0;
+
+  useEffect(() => {
+    slideAnim.stopAnimation();
+    thumbScaleAnim.stopAnimation();
+
+    Animated.parallel([
+      Animated.spring(slideAnim, {
+        toValue: value === "expense" ? 1 : 0,
+        friction: 8,
+        tension: 120,
+        useNativeDriver: true
+      }),
+      Animated.sequence([
+        Animated.timing(thumbScaleAnim, {
+          toValue: 0.96,
+          duration: 80,
+          useNativeDriver: true
+        }),
+        Animated.spring(thumbScaleAnim, {
+          toValue: 1,
+          friction: 5,
+          tension: 160,
+          useNativeDriver: true
+        })
+      ])
+    ]).start();
+  }, [slideAnim, thumbScaleAnim, value]);
+
+  const indicatorTranslateX = slideAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, segmentWidth]
+  });
+
+  return (
+    <View style={styles.typeRow} onLayout={(event) => setWidth(event.nativeEvent.layout.width)}>
+      {segmentWidth > 0 ? (
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.typeActiveIndicator,
+            {
+              width: segmentWidth,
+              transform: [{ translateX: indicatorTranslateX }, { scale: thumbScaleAnim }]
+            }
+          ]}
+        />
+      ) : null}
+
+      <Pressable style={styles.typeButton} onPress={() => onChange("income")}>
+        <Text style={[styles.typeText, value === "income" && styles.typeTextActive]}>Thu nhập</Text>
+      </Pressable>
+      <Pressable style={styles.typeButton} onPress={() => onChange("expense")}>
+        <Text style={[styles.typeText, value === "expense" && styles.typeTextActive]}>Chi tiêu</Text>
+      </Pressable>
+    </View>
+  );
+}
+
 function CategoryItem({ item, onEditCategory }) {
   const normalizedType = String(item?.type || "").toLowerCase();
+  const iconColor = getIconColor(item?.icon);
   const meta = TYPE_META[normalizedType] || {
     label: (item?.type || "-").toString().toUpperCase(),
     chipBg: COLORS.BG,
@@ -32,8 +97,8 @@ function CategoryItem({ item, onEditCategory }) {
   return (
     <View style={styles.itemCard}>
       <View style={styles.itemLeft}>
-        <View style={styles.itemIconBubble}>
-          <CategoryVectorIcon iconValue={item?.icon} size={18} style={styles.itemIconText} />
+        <View style={[styles.itemIconBubble, { backgroundColor: iconColor + "18" }]}>
+          <CategoryVectorIcon iconValue={item?.icon} size={18} color={iconColor} style={styles.itemIconText} />
         </View>
         <Text style={styles.itemName}>{item?.name || "Chưa đặt tên"}</Text>
       </View>
@@ -45,7 +110,7 @@ function CategoryItem({ item, onEditCategory }) {
 
         <View style={styles.itemActionRow}>
           <Pressable style={styles.itemEditBtn} onPress={() => onEditCategory(item)}>
-            <Text style={styles.itemEditText}>🔄 Chỉnh sửa</Text>
+            <Text style={styles.itemEditText}>📝</Text>
           </Pressable>
         </View>
       </View>
@@ -61,23 +126,18 @@ export default function CategoryScreen() {
   const [name, setName] = useState("");
   const [type, setType] = useState("income");
   const [selectedIcon, setSelectedIcon] = useState(getFirstCategoryIcon("income"));
-  const [isIconDropdownOpen, setIsIconDropdownOpen] = useState(false);
+  const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
 
   const [editingCategory, setEditingCategory] = useState(null);
   const [editName, setEditName] = useState("");
   const [editType, setEditType] = useState("income");
   const [editIcon, setEditIcon] = useState(getFirstCategoryIcon("income"));
   const [editingCategorySaving, setEditingCategorySaving] = useState(false);
-
-  const iconOptions = useMemo(() => getCategoryIconPresets(type), [type]);
-  const editIconOptions = useMemo(() => getCategoryIconPresets(editType), [editType]);
+  const [isEditIconPickerOpen, setIsEditIconPickerOpen] = useState(false);
 
   useEffect(() => {
-    const hasSelectedIcon = iconOptions.some((option) => option.value === selectedIcon);
-    if (!hasSelectedIcon) {
-      setSelectedIcon(getFirstCategoryIcon(type));
-    }
-  }, [iconOptions, selectedIcon, type]);
+    setSelectedIcon(getFirstCategoryIcon(type));
+  }, [type]);
 
   const formHint = useMemo(() => {
     if (type === "income") {
@@ -134,7 +194,6 @@ export default function CategoryScreen() {
       setName("");
       setType("income");
       setSelectedIcon(getFirstCategoryIcon("income"));
-      setIsIconDropdownOpen(false);
       await fetchCategories();
       Alert.alert(SUCCESS_ALERT_TITLE, SUCCESS_ALERT_MESSAGES.create.category);
     } catch (error) {
@@ -163,11 +222,8 @@ export default function CategoryScreen() {
 
   useEffect(() => {
     if (!editingCategory?.id) return;
-    const iconExists = editIconOptions.some((option) => option.value === editIcon);
-    if (!iconExists) {
-      setEditIcon(getFirstCategoryIcon(editType));
-    }
-  }, [editIcon, editIconOptions, editType, editingCategory]);
+    setEditIcon(getFirstCategoryIcon(editType));
+  }, [editType, editingCategory]);
 
   const onUpdateCategory = async () => {
     if (!editingCategory?.id) return;
@@ -219,76 +275,21 @@ export default function CategoryScreen() {
         />
 
         <Text style={styles.inputLabel}>Loại danh mục</Text>
-        <View style={styles.typeRow}>
-          <Pressable
-            style={[styles.typeButton, styles.typeButtonLeft, type === "income" && styles.typeButtonActiveIncome]}
-            onPress={() => {
-              setType("income");
-            }}
-          >
-            <Text style={[styles.typeText, type === "income" && styles.typeTextActive]}>Thu nhập</Text>
-          </Pressable>
-          <Pressable
-            style={[styles.typeButton, type === "expense" && styles.typeButtonActiveExpense]}
-            onPress={() => {
-              setType("expense");
-            }}
-          >
-            <Text style={[styles.typeText, type === "expense" && styles.typeTextActive]}>Chi tiêu</Text>
-          </Pressable>
-        </View>
+        <CategoryTypeSegmentedControl value={type} onChange={setType} />
 
         <Text style={styles.hintText}>{formHint}</Text>
 
         <Text style={styles.inputLabel}>Icon</Text>
-        <View style={styles.iconSelectorWrapper}>
-          <Pressable
-            style={styles.iconDropdownTrigger}
-            onPress={() => {
-              setIsIconDropdownOpen((prev) => !prev);
-            }}
-          >
-            <View style={styles.iconTriggerLeft}>
-              <View style={styles.iconPreviewBubble}>
-                <CategoryVectorIcon iconValue={selectedIcon} size={20} />
-              </View>
-              <Text style={styles.iconTriggerText}>{getIconLabel(selectedIcon)}</Text>
-            </View>
-            <Text style={styles.iconTriggerChevron}>{isIconDropdownOpen ? "▲" : "▼"}</Text>
-          </Pressable>
-
-          {isIconDropdownOpen ? (
-            <View style={styles.iconDropdownList}>
-              <FlatList
-                data={iconOptions}
-                keyExtractor={(item) => item.value}
-                nestedScrollEnabled
-                style={styles.iconDropdownScroll}
-                contentContainerStyle={styles.iconDropdownContent}
-                renderItem={({ item }) => {
-                  const isActive = item.value === selectedIcon;
-                  return (
-                    <Pressable
-                      style={[styles.iconOption, isActive && styles.iconOptionActive]}
-                      onPress={() => {
-                        setSelectedIcon(item.value);
-                        setIsIconDropdownOpen(false);
-                      }}
-                    >
-                      <View style={styles.iconOptionLeft}>
-                        <View style={styles.iconOptionBubble}>
-                          <CategoryVectorIcon iconValue={item.value} size={18} />
-                        </View>
-                        <Text style={styles.iconOptionLabel}>{item.label}</Text>
-                      </View>
-                      {isActive ? <Text style={styles.iconOptionCheck}>✓</Text> : null}
-                    </Pressable>
-                  );
-                }}
-              />
-            </View>
-          ) : null}
-        </View>
+        <Pressable
+          style={styles.iconPickerTrigger}
+          onPress={() => setIsIconPickerOpen(true)}
+        >
+          <View style={styles.iconPickerPreview}>
+            <CategoryVectorIcon iconValue={selectedIcon} size={22} />
+          </View>
+          <Text style={styles.iconPickerLabel}>{getIconLabel(selectedIcon)}</Text>
+          <Text style={styles.iconPickerChevron}>›</Text>
+        </Pressable>
 
         <Pressable style={[styles.saveButton, saving && styles.saveButtonDisabled]} onPress={onSave} disabled={saving}>
           <Text style={styles.saveButtonText}>{saving ? "Đang lưu..." : "Thêm danh mục"}</Text>
@@ -334,42 +335,19 @@ export default function CategoryScreen() {
             />
 
             <Text style={styles.inputLabel}>Loại danh mục</Text>
-            <View style={styles.typeRow}>
-              <Pressable
-                style={[styles.typeButton, styles.typeButtonLeft, editType === "income" && styles.typeButtonActiveIncome]}
-                onPress={() => setEditType("income")}
-              >
-                <Text style={[styles.typeText, editType === "income" && styles.typeTextActive]}>Thu nhập</Text>
-              </Pressable>
-              <Pressable
-                style={[styles.typeButton, editType === "expense" && styles.typeButtonActiveExpense]}
-                onPress={() => setEditType("expense")}
-              >
-                <Text style={[styles.typeText, editType === "expense" && styles.typeTextActive]}>Chi tiêu</Text>
-              </Pressable>
-            </View>
+            <CategoryTypeSegmentedControl value={editType} onChange={setEditType} />
 
-            <View style={styles.modalIconPreview}>
-              <CategoryVectorIcon iconValue={editIcon} size={24} />
-              <Text style={styles.modalIconLabel}>{getIconLabel(editIcon)}</Text>
-            </View>
-
-            <FlatList
-              data={editIconOptions}
-              keyExtractor={(item) => item.value}
-              numColumns={3}
-              style={styles.modalIconList}
-              columnWrapperStyle={styles.modalIconRow}
-              renderItem={({ item }) => {
-                const active = item.value === editIcon;
-                return (
-                  <Pressable style={[styles.modalIconItem, active && styles.modalIconItemActive]} onPress={() => setEditIcon(item.value)}>
-                    <CategoryVectorIcon iconValue={item.value} size={20} />
-                    <Text style={styles.modalIconItemLabel}>{item.label}</Text>
-                  </Pressable>
-                );
-              }}
-            />
+            <Text style={styles.inputLabel}>Icon</Text>
+            <Pressable
+              style={styles.iconPickerTrigger}
+              onPress={() => setIsEditIconPickerOpen(true)}
+            >
+              <View style={styles.iconPickerPreview}>
+                <CategoryVectorIcon iconValue={editIcon} size={22} />
+              </View>
+              <Text style={styles.iconPickerLabel}>{getIconLabel(editIcon)}</Text>
+              <Text style={styles.iconPickerChevron}>›</Text>
+            </Pressable>
 
             <View style={styles.modalActions}>
               <Pressable style={styles.modalCancelBtn} onPress={onCloseEditCategory} disabled={editingCategorySaving}>
@@ -386,6 +364,24 @@ export default function CategoryScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Icon Picker Bottom Sheet - Create Form */}
+      <IconPickerBottomSheet
+        visible={isIconPickerOpen}
+        onClose={() => setIsIconPickerOpen(false)}
+        onSelect={setSelectedIcon}
+        selectedIcon={selectedIcon}
+        type={type}
+      />
+
+      {/* Icon Picker Bottom Sheet - Edit Modal */}
+      <IconPickerBottomSheet
+        visible={isEditIconPickerOpen}
+        onClose={() => setIsEditIconPickerOpen(false)}
+        onSelect={setEditIcon}
+        selectedIcon={editIcon}
+        type={editType}
+      />
     </View>
   );
 }
@@ -425,97 +421,71 @@ const styles = StyleSheet.create({
   },
   typeRow: {
     flexDirection: "row",
-    marginBottom: 8
+    backgroundColor: "#F5F5F7",
+    borderWidth: 1.5,
+    borderColor: "#EA5A7A",
+    borderRadius: 16,
+    padding: 4,
+    marginBottom: 8,
+    position: "relative"
   },
   typeButton: {
     flex: 1,
-    paddingVertical: 12,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
-    alignItems: "center"
-  },
-  typeButtonLeft: {
-    marginRight: 10
-  },
-  typeButtonActiveExpense: {
-    borderColor: COLORS.EXPENSE,
-    backgroundColor: COLORS.EXPENSE_LIGHT
-  },
-  typeButtonActiveIncome: {
-    borderColor: COLORS.INCOME,
-    backgroundColor: COLORS.INCOME_LIGHT
-  },
-  typeText: { color: COLORS.TEXT, fontWeight: "700" },
-  typeTextActive: { color: COLORS.TEXT },
-  hintText: { color: COLORS.TEXT_SECONDARY, marginBottom: 12, fontSize: 12 },
-  iconSelectorWrapper: { marginBottom: 12 },
-  iconDropdownTrigger: {
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
-    backgroundColor: COLORS.BG,
-    paddingHorizontal: 12,
     paddingVertical: 10,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between"
-  },
-  iconTriggerLeft: {
-    flexDirection: "row",
-    alignItems: "center"
-  },
-  iconPreviewBubble: {
-    width: 30,
-    height: 30,
-    borderRadius: 8,
-    backgroundColor: COLORS.CARD,
-    borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 10
-  },
-  iconTriggerText: {
-    color: COLORS.TEXT,
-    fontWeight: "600"
-  },
-  iconTriggerChevron: { color: COLORS.TEXT_SECONDARY, fontSize: 12, fontWeight: "800" },
-  iconDropdownList: {
-    marginTop: 8,
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
-    backgroundColor: COLORS.CARD,
-    maxHeight: 220
+    backgroundColor: "transparent",
+    alignItems: "center",
+    zIndex: 2
   },
-  iconDropdownScroll: { maxHeight: 220 },
-  iconDropdownContent: { paddingVertical: 6 },
-  iconOption: {
+  typeActiveIndicator: {
+    position: "absolute",
+    top: 4,
+    bottom: 4,
+    left: 4,
+    borderRadius: 12,
+    backgroundColor: "#EA5A7A",
+    shadowColor: "#EA5A7A",
+    shadowOpacity: 0.22,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
+    zIndex: 1
+  },
+  typeText: { color: "#667085", fontWeight: "700" },
+  typeTextActive: { color: COLORS.WHITE },
+  hintText: { color: COLORS.TEXT_SECONDARY, marginBottom: 12, fontSize: 12 },
+  iconPickerTrigger: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    marginHorizontal: 6,
-    borderRadius: 10
-  },
-  iconOptionActive: { backgroundColor: COLORS.ROSE_MIST },
-  iconOptionLeft: {
-    flexDirection: "row",
-    alignItems: "center"
-  },
-  iconOptionBubble: {
-    width: 30,
-    height: 30,
-    borderRadius: 8,
     backgroundColor: COLORS.BG,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: COLORS.PRIMARY_LIGHT + "50",
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 14
+  },
+  iconPickerPreview: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: COLORS.ROSE_MIST,
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 10
+    marginRight: 12
   },
-  iconOptionLabel: { color: COLORS.TEXT, fontWeight: "600" },
-  iconOptionCheck: { color: COLORS.PRIMARY, fontWeight: "800" },
+  iconPickerLabel: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: "600",
+    color: COLORS.TEXT
+  },
+  iconPickerChevron: {
+    fontSize: 22,
+    fontWeight: "300",
+    color: COLORS.TEXT_MUTED,
+    marginLeft: 8
+  },
   saveButton: {
     backgroundColor: COLORS.PRIMARY,
     borderRadius: 12,
@@ -606,32 +576,6 @@ const styles = StyleSheet.create({
   },
   modalTitle: { color: COLORS.TEXT, fontWeight: "800", fontSize: 18 },
   modalSubTitle: { color: COLORS.TEXT_SECONDARY, marginTop: 2, marginBottom: 10 },
-  modalIconPreview: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 10
-  },
-  modalIconLabel: { marginLeft: 8, color: COLORS.TEXT, fontWeight: "600" },
-  modalIconList: { maxHeight: 300 },
-  modalIconRow: { justifyContent: "space-between" },
-  modalIconItem: {
-    width: "32%",
-    borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
-    borderRadius: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 6,
-    alignItems: "center",
-    marginBottom: 8,
-    backgroundColor: COLORS.CARD
-  },
-  modalIconItemActive: { borderColor: COLORS.PRIMARY, backgroundColor: COLORS.ROSE_MIST },
-  modalIconItemLabel: {
-    marginTop: 4,
-    fontSize: 11,
-    color: COLORS.TEXT,
-    textAlign: "center"
-  },
   modalActions: { marginTop: 8, flexDirection: "row", justifyContent: "flex-end" },
   modalCancelBtn: {
     borderWidth: 1,
