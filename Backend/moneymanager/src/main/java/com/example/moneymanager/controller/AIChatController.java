@@ -3,7 +3,6 @@ package com.example.moneymanager.controller;
 import com.example.moneymanager.dto.*;
 import com.example.moneymanager.service.AIChatService;
 import com.example.moneymanager.service.AIOrchestrationService;
-import com.example.moneymanager.service.AIRateLimitService;
 import com.example.moneymanager.service.CategoryService;
 import com.example.moneymanager.service.SavingGoalService;
 import lombok.RequiredArgsConstructor;
@@ -23,23 +22,19 @@ public class AIChatController {
     private final AIOrchestrationService aiOrchestrationService;
     private final CategoryService categoryService;
     private final SavingGoalService savingGoalService;
-    private final AIRateLimitService aiRateLimitService;
 
     @PostMapping("/chat")
     public ResponseEntity<AIChatResponseDTO> chat(@RequestBody AIChatRequestDTO dto) {
-        aiRateLimitService.checkLimit("CHAT");
         return ResponseEntity.ok(aiChatService.chat(dto));
     }
 
     @PostMapping("/parse-intent")
     public ResponseEntity<AIIntentResponseDTO> parseIntent(@RequestBody AIIntentRequestDTO dto) {
-        aiRateLimitService.checkLimit("AGENT");
         return ResponseEntity.ok(aiOrchestrationService.parseIntentFromChat(dto));
     }
 
     @PostMapping("/confirm-action")
     public ResponseEntity<AIConfirmActionResponseDTO> confirmAction(@RequestBody AIConfirmActionRequestDTO dto) {
-        aiRateLimitService.checkLimit("AGENT");
         return ResponseEntity.ok(aiOrchestrationService.executeConfirmedIntent(dto));
     }
 

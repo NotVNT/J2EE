@@ -2,6 +2,7 @@ package com.example.moneymanager.service;
 
 import com.example.moneymanager.config.GeminiProperties;
 import com.example.moneymanager.dto.*;
+import com.example.moneymanager.exception.ForbiddenException;
 import com.example.moneymanager.entity.*;
 import com.example.moneymanager.repository.*;
 import com.example.moneymanager.util.AIInstructionPromptBuilder;
@@ -50,12 +51,15 @@ public class AIOrchestrationService {
 
         try {
             ProfileEntity profile = profileService.getCurrentProfile();
+            SubscriptionPlan plan = profile.getSubscriptionPlan();
 
-            if ("ninerouter".equalsIgnoreCase(provider) && profile.getSubscriptionPlan() != SubscriptionPlan.PREMIUM) {
-                return AIIntentResponseDTO.builder()
-                        .intent("ANSWER_QUESTION")
-                        .answer("Model EXPERIMENTAL trong Agent mode ch\u1EC9 kh\u1EA3 d\u1EE5ng cho g\u00F3i PREMIUM. Vui l\u00F2ng n\u00E2ng c\u1EA5p \u0111\u1EC3 s\u1EED d\u1EE5ng.")
-                        .build();
+            // FREE users cannot use Agent at all
+            if (plan == SubscriptionPlan.FREE) {
+                throw new ForbiddenException("Nova Money Agent yêu cầu gói BASIC trở lên.");
+            }
+            // BASIC can only use ninerouter for Agent; Gemini requires PREMIUM
+            if (plan != SubscriptionPlan.PREMIUM && !"ninerouter".equalsIgnoreCase(provider)) {
+                throw new ForbiddenException("Model Gemini cho Agent yêu cầu gói PREMIUM. Gói BASIC chỉ được dùng Gemma 4 (ninerouter) cho Agent.");
             }
 
             String pageContext = request.getPageContext() != null ? request.getPageContext() : "dashboard";
@@ -122,6 +126,8 @@ public class AIOrchestrationService {
                     .provider(provider)
                     .modelUsed(model)
                     .build();
+        } catch (ForbiddenException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Error parsing intent: {}", e.getMessage(), e);
             try {
@@ -152,6 +158,15 @@ public class AIOrchestrationService {
 
     public AIConfirmActionResponseDTO executeConfirmedIntent(AIConfirmActionRequestDTO request) {
         ProfileEntity profile = profileService.getCurrentProfile();
+
+        // FREE users cannot execute any Agent actions \u2014 block direct API calls too
+        if (profile.getSubscriptionPlan() == SubscriptionPlan.FREE) {
+            return AIConfirmActionResponseDTO.builder()
+                    .status("ERROR")
+                    .message("Nova Money Agent y\u00EAu c\u1EA7u g\u00F3i BASIC tr\u1EDF l\u00EAn.")
+                    .build();
+        }
+
         String intent = request.getIntent();
         Map<String, Object> data = request.getExtractedData();
 

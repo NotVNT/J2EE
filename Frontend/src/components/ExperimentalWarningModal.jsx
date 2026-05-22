@@ -14,7 +14,7 @@ const ExperimentalWarningModal = ({ isOpen, onConfirm, onCancel }) => {
         </div>
 
         <p className="text-sm text-slate-700 dark:text-slate-300">
-          Bạn đang chọn sử dụng model <strong>EXPERIMENTAL</strong>.
+          Bạn đang chọn sử dụng model <strong>Nova Lite</strong>.
           Đây là tính năng thử nghiệm và có thể:
         </p>
 

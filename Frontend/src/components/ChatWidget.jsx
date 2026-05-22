@@ -64,7 +64,7 @@ const QUICK_ACTIONS = [
 
 const AGENT_MODEL_OPTIONS = [
   { value: "gemini",     label: "🤖 Gemini 3.1 Flash Lite" },
-  { value: "ninerouter", label: "🧪 Gemma 4 31B (Experimental)" },
+  { value: "ninerouter", label: "✨ Nova Lite" },
 ];
 
 const PUBLIC_PATHS = new Set([
@@ -175,12 +175,13 @@ const ChatWidget = () => {
   const shouldHideWidget = !token || PUBLIC_PATHS.has(location.pathname);
 
   const isFreePlan = !user?.subscriptionPlan || user?.subscriptionPlan === "FREE";
+  const isBasicPlan = user?.subscriptionPlan === "BASIC";
   const isPremiumPlan = user?.subscriptionPlan === "PREMIUM";
 
   const [messages, setMessages] = useState([WELCOME_MESSAGE]);
-  const [selectedProvider, setProvider] = useState(isFreePlan ? "gptoss" : "gemini");
-  const [chatModel, setChatModel] = useState("gptoss");
-  const [agentModel, setAgentModel] = useState("gemini");
+  const [selectedProvider, setProvider] = useState("gptoss");
+  const [chatModel, setChatModel] = useState("ninerouter");
+  const [agentModel, setAgentModel] = useState("ninerouter");
   const [showExperimentalWarning, setShowExperimentalWarning] = useState(false);
   const [pendingChatModel, setPendingChatModel] = useState(null);
   const [pendingAgentModel, setPendingAgentModel] = useState(null);
@@ -207,10 +208,19 @@ const ChatWidget = () => {
   }, [isOpen]);
 
   useEffect(() => {
-    if (isFreePlan && selectedProvider === "gemini") {
+    if (isPremiumPlan) {
+      // Premium: upgrade defaults to full models if still on ninerouter defaults
+      if (chatModel === "ninerouter" && agentModel === "ninerouter") {
+        setChatModel("gptoss");
+        setAgentModel("gemini");
+      }
+    } else {
+      // FREE and BASIC are forced to ninerouter (chat mode by default)
+      setChatModel("ninerouter");
+      setAgentModel("ninerouter");
       setProvider("gptoss");
     }
-  }, [isFreePlan, selectedProvider]);
+  }, [user?.subscriptionPlan]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -243,8 +253,8 @@ const ChatWidget = () => {
       ? (agentModel === "ninerouter" ? "gemma4-31B" : "gemini-3.1-flash-lite")
       : (chatModel === "ninerouter" ? "project-demo" : "gpt-oss-120b");
     const activeModelLabel = selectedProvider === "gemini"
-      ? (agentModel === "ninerouter" ? "Gemma 4 31B (Experimental)" : "Gemini 3.1 Flash Lite")
-      : (chatModel === "ninerouter" ? "Gemma 4 31B (Experimental)" : "GPT-OSS 120B");
+      ? (agentModel === "ninerouter" ? "Nova Lite (Gemma 4 31B)" : "Gemini 3.1 Flash Lite")
+      : (chatModel === "ninerouter" ? "Nova Lite (Gemma 4 31B)" : "GPT-OSS 120B");
 
     const userMessage = {
       id: `user-${Date.now()}`,
@@ -469,7 +479,7 @@ const ChatWidget = () => {
 
   const handleUndo = async (operationId) => {
     try {
-      await axiosConfig.post(`/ai/undo/${operationId}`);
+      await axiosConfig.post(API_ENDPOINTS.AI_UNDO(operationId));
       setMessages((prev) => [
         ...prev,
         {
@@ -494,7 +504,8 @@ const ChatWidget = () => {
 
   const handleProviderSwitch = (provider) => {
     if (provider === selectedProvider) return;
-    
+
+    // FREE users cannot use Agent mode at all
     if (provider === "gemini" && isFreePlan) {
       setMessages((prev) => [
         ...prev,
@@ -514,8 +525,10 @@ const ChatWidget = () => {
 
   const handleModelChange = (newModel) => {
     if (newModel === chatModel) return;
-    if (!isPremiumPlan && newModel === "ninerouter") return;
-    if (newModel === "ninerouter") {
+    // FREE and BASIC can only use ninerouter — silently block non-ninerouter selections
+    if (!isPremiumPlan && newModel !== "ninerouter") return;
+    // PREMIUM switching TO ninerouter shows experimental warning
+    if (newModel === "ninerouter" && isPremiumPlan) {
       setPendingChatModel("ninerouter");
       setShowExperimentalWarning(true);
       return;
@@ -525,8 +538,10 @@ const ChatWidget = () => {
 
   const handleAgentModelChange = (newModel) => {
     if (newModel === agentModel) return;
-    if (!isPremiumPlan && newModel === "ninerouter") return;
-    if (newModel === "ninerouter") {
+    // FREE and BASIC can only use ninerouter for Agent — silently block other selections
+    if (!isPremiumPlan && newModel !== "ninerouter") return;
+    // PREMIUM switching TO ninerouter shows experimental warning
+    if (newModel === "ninerouter" && isPremiumPlan) {
       setPendingAgentModel("ninerouter");
       setShowExperimentalWarning(true);
       return;
@@ -791,10 +806,10 @@ const ChatWidget = () => {
                 placeholder={
                   selectedProvider === "gemini"
                     ? agentModel === "ninerouter"
-                      ? "Nhập thao tác: tạo/sửa/xóa dữ liệu, xuất báo cáo... [EXPERIMENTAL]"
+                      ? "Nhập thao tác: tạo/sửa/xóa dữ liệu, xuất báo cáo... [Nova Lite]"
                       : "Nhập thao tác: tạo/sửa/xóa dữ liệu, xuất báo cáo... [Gemini 3.1 Flash-Lite]"
                     : chatModel === "ninerouter"
-                      ? "Nhập câu hỏi hoặc trò chuyện... [EXPERIMENTAL]"
+                      ? "Nhập câu hỏi hoặc trò chuyện... [Nova Lite]"
                       : "Nhập câu hỏi hoặc trò chuyện... [GPT-OSS 120B]"
                 }
                 rows={2}
@@ -822,7 +837,7 @@ const ChatWidget = () => {
                 <ModelSelector
                   value={chatModel}
                   onChange={handleModelChange}
-                  disabled={!isPremiumPlan}
+                  plan={user?.subscriptionPlan || "FREE"}
                 />
               </div>
             )}
@@ -833,9 +848,9 @@ const ChatWidget = () => {
                 <ModelSelector
                   value={agentModel}
                   onChange={handleAgentModelChange}
-                  disabled={!isPremiumPlan}
                   label="Agent model"
                   options={AGENT_MODEL_OPTIONS}
+                  plan={user?.subscriptionPlan || "FREE"}
                 />
               </div>
             )}

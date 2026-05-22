@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { Search, UserCircle2, Shield, ShieldOff, Trash2, Edit2, X, Check, LoaderCircle, ChevronDown, RefreshCw, RotateCcw } from "lucide-react";
+import { Search, UserCircle2, Shield, ShieldOff, Trash2, Edit2, X, Check, LoaderCircle, ChevronDown, RefreshCw } from "lucide-react";
 import axiosConfig from "../../util/axiosConfig.jsx";
 import { API_ENDPOINTS } from "../../util/apiEndpoints.js";
 import toast from "react-hot-toast";
@@ -153,7 +153,6 @@ const AdminUsers = () => {
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [editingUser, setEditingUser] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
-  const [resettingAiId, setResettingAiId] = useState(null);
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -190,18 +189,6 @@ const AdminUsers = () => {
   const handleSaved = (updated) => {
     setUsers(prev => prev.map(u => u.id === updated.id ? updated : u));
     setEditingUser(null);
-  };
-
-  const handleResetAI = async (id) => {
-    setResettingAiId(id);
-    try {
-      await axiosConfig.post(API_ENDPOINTS.ADMIN_RESET_AI_LIMITS(id));
-      toast.success("Đã reset hạn mức AI thành công.");
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Reset thất bại.");
-    } finally {
-      setResettingAiId(null);
-    }
   };
 
   return (
@@ -331,16 +318,6 @@ const AdminUsers = () => {
                     {/* Actions */}
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-1.5">
-                        <button
-                          onClick={() => handleResetAI(user.id)}
-                          disabled={resettingAiId === user.id}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-500/10 transition-colors disabled:opacity-50"
-                          title="Reset hạn mức AI"
-                        >
-                          {resettingAiId === user.id
-                            ? <LoaderCircle size={15} className="animate-spin" />
-                            : <RotateCcw size={15} />}
-                        </button>
                         <button
                           onClick={() => setEditingUser(user)}
                           className="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 transition-colors"
