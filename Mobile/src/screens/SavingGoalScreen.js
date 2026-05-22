@@ -7,6 +7,7 @@ import { SUCCESS_ALERT_MESSAGES, SUCCESS_ALERT_TITLE } from "../constants/alertM
 import { formatCurrencyInput, formatDate, formatMoney, getApiErrorMessage, parseCurrencyInput, todayIso } from "../utils/format";
 import { PickDateField } from "../utils/pickDate";
 import { COLORS } from "../constants/colors";
+import ShowMoreButton, { useVisibleItems } from "../components/ShowMoreButton";
 
 function getGoalVisual(goal) {
   const progressPercent = Number(goal?.progressPercent || 0);
@@ -117,6 +118,119 @@ function GoalCard({ item, onContribute, onDelete }) {
   );
 }
 
+function CompactGoalTab({ item, onPress }) {
+  const progress = Math.max(0, Math.min(100, Number(item?.progressPercent || 0)));
+  const visual = getGoalVisual(item);
+
+  return (
+    <Pressable style={styles.goalTab} onPress={() => onPress(item)}>
+      <View style={[styles.goalAccent, { backgroundColor: visual.color }]} />
+      <View style={styles.goalTabMain}>
+        <View style={styles.goalTabHeader}>
+          <Text style={styles.goalName} numberOfLines={1}>{item?.name || "Mục tiêu"}</Text>
+          <Text style={[styles.goalProgressPercent, { color: visual.color }]}>{progress.toFixed(0)}%</Text>
+        </View>
+        <Text style={styles.goalPeriod} numberOfLines={1}>{formatDate(item?.startDate)} {'>'} {formatDate(item?.targetDate)}</Text>
+        <View style={styles.progressTrackCompact}>
+          <View style={[styles.progressFill, { width: `${progress}%`, backgroundColor: visual.color }]} />
+        </View>
+      </View>
+      <View style={[styles.statusBadge, { backgroundColor: visual.bg }]}>
+        <Text style={[styles.statusBadgeText, { color: visual.color }]}>{visual.label}</Text>
+      </View>
+    </Pressable>
+  );
+}
+
+function GoalDetailModal({ goal, visible, onClose, onContribute, onDelete }) {
+  if (!goal) return null;
+
+  const target = Number(goal?.targetAmount || 0);
+  const current = Number(goal?.currentAmount || 0);
+  const remaining = Math.max(0, Number(goal?.remainingAmount ?? target - current));
+  const progress = Math.max(0, Math.min(100, Number(goal?.progressPercent || 0)));
+  const monthlyTarget = Number(goal?.monthlyTarget || 0);
+  const monthlyContributed = Number(goal?.monthlyContributed || 0);
+  const monthlyProgress = Math.max(0, Math.min(100, Number(goal?.monthlyProgressPercent || 0)));
+  const visual = getGoalVisual(goal);
+  const isActive = String(goal?.status || "ACTIVE").toUpperCase() === "ACTIVE";
+
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <View style={styles.modalOverlay}>
+        <View style={styles.detailCard}>
+          <View style={styles.detailHeader}>
+            <View style={styles.goalHeaderLeft}>
+              <Text style={styles.detailTitle} numberOfLines={2}>{goal?.name || "Mục tiêu"}</Text>
+              <Text style={styles.goalPeriod}>{formatDate(goal?.startDate)} {'>'} {formatDate(goal?.targetDate)}</Text>
+            </View>
+            <View style={[styles.statusBadge, { backgroundColor: visual.bg }]}>
+              <Text style={[styles.statusBadgeText, { color: visual.color }]}>{visual.label}</Text>
+            </View>
+          </View>
+
+          <View style={styles.progressTopRow}>
+            <Text style={styles.progressLabel}>Tiến độ tổng</Text>
+            <Text style={[styles.progressValue, { color: visual.color }]}>{progress.toFixed(1)}%</Text>
+          </View>
+          <View style={styles.progressTrack}>
+            <View style={[styles.progressFill, { width: `${progress}%`, backgroundColor: visual.color }]} />
+          </View>
+
+          <View style={styles.statsGrid}>
+            <View style={styles.statBox}>
+              <Text style={styles.statLabel}>Mục tiêu</Text>
+              <Text style={styles.statValue}>{formatMoney(target)}</Text>
+            </View>
+            <View style={styles.statBox}>
+              <Text style={styles.statLabel}>Đã có</Text>
+              <Text style={[styles.statValue, styles.statValueGood]}>{formatMoney(current)}</Text>
+            </View>
+            <View style={styles.statBox}>
+              <Text style={styles.statLabel}>Còn thiếu</Text>
+              <Text style={[styles.statValue, styles.statValueWarn]}>{formatMoney(remaining)}</Text>
+            </View>
+            <View style={styles.statBox}>
+              <Text style={styles.statLabel}>Cần/tháng</Text>
+              <Text style={[styles.statValue, styles.statValueInfo]}>{formatMoney(monthlyTarget)}</Text>
+            </View>
+          </View>
+
+          {isActive ? (
+            <View style={styles.monthlyCard}>
+              <View style={styles.progressTopRow}>
+                <Text style={styles.monthlyLabel}>Tiến độ tháng này</Text>
+                <Text style={styles.monthlyValue}>
+                  {formatMoney(monthlyContributed)} / {formatMoney(monthlyTarget)} ({monthlyProgress.toFixed(0)}%)
+                </Text>
+              </View>
+              <View style={styles.monthlyTrack}>
+                <View style={[styles.monthlyFill, { width: `${monthlyProgress}%` }]} />
+              </View>
+            </View>
+          ) : null}
+
+          <View style={styles.detailActions}>
+            <Pressable style={styles.secondaryButton} onPress={onClose}>
+              <Text style={styles.secondaryButtonText}>Đóng</Text>
+            </Pressable>
+            {isActive ? (
+              <>
+                <Pressable style={styles.deleteTextButton} onPress={() => onDelete(goal?.id)}>
+                  <Text style={styles.deleteText}>Xóa</Text>
+                </Pressable>
+                <Pressable style={styles.primaryButton} onPress={() => onContribute(goal)}>
+                  <Text style={styles.primaryButtonText}>Đóng góp</Text>
+                </Pressable>
+              </>
+            ) : null}
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
 export default function SavingGoalScreen() {
   const [goals, setGoals] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -127,7 +241,9 @@ export default function SavingGoalScreen() {
   const [startDate, setStartDate] = useState(todayIso());
   const [targetDate, setTargetDate] = useState(todayIso());
 
+  const [detailGoal, setDetailGoal] = useState(null);
   const [selectedGoal, setSelectedGoal] = useState(null);
+  const [returnGoalAfterContribution, setReturnGoalAfterContribution] = useState(null);
   const [contributionAmount, setContributionAmount] = useState("");
   const [contributionNote, setContributionNote] = useState("");
   const [contributionDate, setContributionDate] = useState(todayIso());
@@ -146,6 +262,13 @@ export default function SavingGoalScreen() {
       activeCount
     };
   }, [goals]);
+
+  const {
+    visibleItems: visibleGoals,
+    canToggle: canExpandGoals,
+    expanded: showAllGoals,
+    toggle: toggleGoals
+  } = useVisibleItems(goals, { initialCount: 3, mode: "toggle" });
 
   const fetchGoals = useCallback(async () => {
     const response = await http.get(API_ENDPOINTS.GET_SAVING_GOALS);
@@ -225,6 +348,7 @@ export default function SavingGoalScreen() {
         onPress: async () => {
           try {
             await http.delete(API_ENDPOINTS.DELETE_SAVING_GOAL(id));
+            setDetailGoal(null);
             await fetchGoals();
             Alert.alert(SUCCESS_ALERT_TITLE, SUCCESS_ALERT_MESSAGES.delete.savingGoal);
           } catch (error) {
@@ -236,6 +360,8 @@ export default function SavingGoalScreen() {
   };
 
   const openContributionModal = (goal) => {
+    setDetailGoal(null);
+    setReturnGoalAfterContribution(goal);
     setSelectedGoal(goal);
     setContributionAmount("");
     setContributionNote("");
@@ -243,6 +369,10 @@ export default function SavingGoalScreen() {
   };
 
   const closeContributionModal = () => {
+    if (returnGoalAfterContribution) {
+      setDetailGoal(returnGoalAfterContribution);
+    }
+    setReturnGoalAfterContribution(null);
     setSelectedGoal(null);
   };
 
@@ -267,6 +397,7 @@ export default function SavingGoalScreen() {
         note: contributionNote.trim()
       });
 
+      setReturnGoalAfterContribution(null);
       closeContributionModal();
       await fetchGoals();
       Alert.alert(SUCCESS_ALERT_TITLE, SUCCESS_ALERT_MESSAGES.contribute.savingGoal);
@@ -278,16 +409,45 @@ export default function SavingGoalScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.overviewCard}>
-        <Text style={styles.overviewTag}>Kế hoạch tích lũy</Text>
-        <Text style={styles.overviewTitle}>Mục tiêu tiết kiệm</Text>
-        <Text style={styles.overviewText}>Đang theo dõi {overview.activeCount} mục tiêu hoạt động</Text>
-        <Text style={styles.overviewMoney}>Đã có: {formatMoney(overview.totalCurrent)}</Text>
-        <Text style={styles.overviewSubMoney}>Mục tiêu: {formatMoney(overview.totalTarget)}</Text>
-
-        <View style={styles.overviewTrack}>
-          <View style={[styles.overviewFill, { width: `${overview.overallProgress}%` }]} />
+        {/* Top badge */}
+        <View style={styles.overviewBadgeRow}>
+          <View style={styles.overviewBadge}>
+            <Text style={styles.overviewBadgeIcon}>🎯</Text>
+            <Text style={styles.overviewTag}>Kế hoạch tích lũy</Text>
+          </View>
+          <View style={styles.overviewCountBadge}>
+            <Text style={styles.overviewCountText}>{overview.activeCount} mục tiêu</Text>
+          </View>
         </View>
-        <Text style={styles.overviewProgress}>{overview.overallProgress.toFixed(1)}% hoàn thành</Text>
+
+        {/* Title */}
+        <Text style={styles.overviewTitle}>Mục tiêu tiết kiệm</Text>
+
+        {/* Money stats — two column */}
+        <View style={styles.overviewMoneyRow}>
+          <View style={styles.overviewMoneyCol}>
+            <Text style={styles.overviewMoneyLabel}>💰 Đã tích lũy</Text>
+            <Text style={styles.overviewMoneyValue}>
+              {overview.totalCurrent > 0 ? formatMoney(overview.totalCurrent) : "0 ₫"}
+            </Text>
+          </View>
+          <View style={styles.overviewDivider} />
+          <View style={styles.overviewMoneyCol}>
+            <Text style={styles.overviewMoneyLabel}>🎯 Mục tiêu</Text>
+            <Text style={styles.overviewMoneyValueSub}>
+              {overview.totalTarget > 0 ? formatMoney(overview.totalTarget) : "0 ₫"}
+            </Text>
+          </View>
+        </View>
+
+        {/* Progress bar */}
+        <View style={styles.overviewProgressRow}>
+          <Text style={styles.overviewProgressPercent}>{overview.overallProgress.toFixed(0)}%</Text>
+          <Text style={styles.overviewProgressLabel}>hoàn thành</Text>
+        </View>
+        <View style={styles.overviewTrack}>
+          <View style={[styles.overviewFill, { width: `${Math.max(2, overview.overallProgress)}%` }]} />
+        </View>
       </View>
 
       <View style={styles.formCard}>
@@ -328,15 +488,16 @@ export default function SavingGoalScreen() {
       </View>
 
       <FlatList
-        data={goals}
+        data={visibleGoals}
         keyExtractor={(item) => String(item?.id)}
-        renderItem={({ item }) => <GoalCard item={item} onContribute={openContributionModal} onDelete={onDelete} />}
+        renderItem={({ item }) => <CompactGoalTab item={item} onPress={setDetailGoal} />}
         contentContainerStyle={[styles.listContent, !goals.length && styles.listContentEmpty]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         ListHeaderComponent={
           goals.length ? (
             <View style={styles.listHeader}>
               <Text style={styles.listTitle}>Danh sách mục tiêu</Text>
+              <ShowMoreButton visible={canExpandGoals} expanded={showAllGoals} onPress={toggleGoals} />
             </View>
           ) : null
         }
@@ -349,7 +510,15 @@ export default function SavingGoalScreen() {
         }
       />
 
-      <Modal visible={Boolean(selectedGoal)} transparent animationType="slide" onRequestClose={closeContributionModal}>
+      <GoalDetailModal
+        goal={detailGoal}
+        visible={Boolean(detailGoal)}
+        onClose={() => setDetailGoal(null)}
+        onContribute={openContributionModal}
+        onDelete={onDelete}
+      />
+
+      <Modal visible={Boolean(selectedGoal)} transparent animationType="fade" onRequestClose={closeContributionModal}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>Đóng góp mục tiêu</Text>
@@ -395,40 +564,117 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.BG, padding: 16, paddingTop: 24 },
   overviewCard: {
     backgroundColor: COLORS.PRIMARY,
-    borderRadius: 18,
-    padding: 14,
-    marginBottom: 12
+    borderRadius: 20,
+    padding: 18,
+    marginBottom: 14,
+    shadowColor: COLORS.PRIMARY,
+    shadowOpacity: 0.35,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 6,
   },
-  overviewTag: {
-    alignSelf: "flex-start",
+  // Badge row
+  overviewBadgeRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  overviewBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.18)",
     borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    backgroundColor: COLORS.PRIMARY_DARK,
-    color: COLORS.PEACH,
-    fontWeight: "700",
-    fontSize: 11
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    gap: 5,
   },
-  overviewTitle: { color: COLORS.WHITE, fontSize: 20, fontWeight: "800", marginTop: 8 },
-  overviewText: { color: COLORS.PEACH, marginTop: 2, fontSize: 12 },
-  overviewMoney: { color: COLORS.WHITE, marginTop: 8, fontWeight: "800", fontSize: 16 },
-  overviewSubMoney: { color: COLORS.PEACH, marginTop: 2, fontWeight: "700", fontSize: 13 },
+  overviewBadgeIcon: { fontSize: 13 },
+  overviewTag: {
+    color: COLORS.WHITE,
+    fontWeight: "700",
+    fontSize: 12,
+  },
+  overviewCountBadge: {
+    backgroundColor: "rgba(255,255,255,0.22)",
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+  },
+  overviewCountText: {
+    color: COLORS.PEACH,
+    fontWeight: "800",
+    fontSize: 12,
+  },
+  // Title
+  overviewTitle: {
+    color: COLORS.WHITE,
+    fontSize: 22,
+    fontWeight: "800",
+    marginBottom: 14,
+    letterSpacing: -0.3,
+  },
+  // Money row
+  overviewMoneyRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.12)",
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 14,
+  },
+  overviewMoneyCol: {
+    flex: 1,
+  },
+  overviewDivider: {
+    width: 1,
+    height: 36,
+    backgroundColor: "rgba(255,255,255,0.25)",
+    marginHorizontal: 12,
+  },
+  overviewMoneyLabel: {
+    color: "rgba(255,255,255,0.75)",
+    fontSize: 11,
+    fontWeight: "600",
+    marginBottom: 4,
+  },
+  overviewMoneyValue: {
+    color: COLORS.WHITE,
+    fontSize: 17,
+    fontWeight: "800",
+  },
+  overviewMoneyValueSub: {
+    color: COLORS.PEACH,
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  // Progress
+  overviewProgressRow: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    marginBottom: 8,
+    gap: 4,
+  },
+  overviewProgressPercent: {
+    color: COLORS.WHITE,
+    fontSize: 28,
+    fontWeight: "800",
+  },
+  overviewProgressLabel: {
+    color: "rgba(255,255,255,0.7)",
+    fontSize: 13,
+    fontWeight: "600",
+  },
   overviewTrack: {
-    marginTop: 10,
-    height: 8,
-    borderRadius: 8,
-    backgroundColor: COLORS.PRIMARY_DARK,
-    overflow: "hidden"
+    height: 10,
+    borderRadius: 10,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    overflow: "hidden",
   },
   overviewFill: {
     height: "100%",
-    backgroundColor: COLORS.PEACH
-  },
-  overviewProgress: {
-    marginTop: 6,
-    color: COLORS.WHITE,
-    fontWeight: "700",
-    fontSize: 12
+    borderRadius: 10,
+    backgroundColor: COLORS.PEACH,
   },
   formCard: {
     backgroundColor: COLORS.CARD,
@@ -464,8 +710,52 @@ const styles = StyleSheet.create({
   saveButtonText: { color: COLORS.WHITE, fontWeight: "800" },
   listContent: { paddingBottom: 30 },
   listContentEmpty: { flexGrow: 1, justifyContent: "center" },
-  listHeader: { marginBottom: 8 },
+  listHeader: {
+    marginBottom: 8,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center"
+  },
   listTitle: { color: COLORS.TEXT, fontWeight: "800", fontSize: 16 },
+  goalTab: {
+    backgroundColor: COLORS.CARD,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: COLORS.CARD_BORDER,
+    padding: 10,
+    marginBottom: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    minHeight: 74
+  },
+  goalAccent: {
+    width: 4,
+    alignSelf: "stretch",
+    borderRadius: 4,
+    marginRight: 10
+  },
+  goalTabMain: {
+    flex: 1,
+    paddingRight: 8
+  },
+  goalTabHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 2
+  },
+  goalProgressPercent: {
+    fontWeight: "900",
+    fontSize: 13,
+    marginLeft: 8
+  },
+  progressTrackCompact: {
+    marginTop: 7,
+    height: 5,
+    borderRadius: 5,
+    backgroundColor: COLORS.CARD_BORDER,
+    overflow: "hidden"
+  },
   goalCard: {
     backgroundColor: COLORS.CARD,
     borderRadius: 14,
@@ -484,7 +774,6 @@ const styles = StyleSheet.create({
   goalPeriod: { color: COLORS.TEXT_SECONDARY, fontSize: 12 },
   statusBadge: {
     borderRadius: 999,
-    borderWidth: 1,
     paddingHorizontal: 10,
     paddingVertical: 4
   },
@@ -563,6 +852,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6
   },
+  deleteTextButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 10
+  },
   deleteText: { color: COLORS.EXPENSE, fontWeight: "700" },
   emptyState: { alignItems: "center", paddingHorizontal: 24 },
   emptyIcon: { fontSize: 34, marginBottom: 8 },
@@ -579,6 +872,24 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     padding: 16
   },
+  detailCard: {
+    backgroundColor: COLORS.CARD,
+    borderRadius: 16,
+    padding: 16,
+    maxHeight: "82%"
+  },
+  detailHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 8
+  },
+  detailTitle: {
+    color: COLORS.TEXT,
+    fontWeight: "900",
+    fontSize: 18,
+    marginBottom: 3
+  },
   modalTitle: {
     color: COLORS.TEXT,
     fontWeight: "800",
@@ -593,6 +904,13 @@ const styles = StyleSheet.create({
     marginTop: 4,
     flexDirection: "row",
     justifyContent: "flex-end"
+  },
+  detailActions: {
+    marginTop: 10,
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    flexWrap: "wrap",
+    gap: 8
   },
   secondaryButton: {
     borderWidth: 1,

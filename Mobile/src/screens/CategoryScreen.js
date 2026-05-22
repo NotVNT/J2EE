@@ -1,5 +1,5 @@
 ﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Alert, Animated, FlatList, Modal, Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, Animated, Dimensions, FlatList, Modal, Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import http from "../services/http";
 import { API_ENDPOINTS } from "../constants/api";
@@ -8,6 +8,7 @@ import { getApiErrorMessage } from "../utils/format";
 import { COLORS } from "../constants/colors";
 import { CategoryVectorIcon, getFirstCategoryIcon, getIconColor, getIconLabel } from "../utils/VectorIcons";
 import IconPickerBottomSheet from "../components/IconPickerBottomSheet";
+import ShowMoreButton, { useVisibleItems } from "../components/ShowMoreButton";
 
 const TYPE_META = {
   expense: {
@@ -85,13 +86,38 @@ function CategoryTypeSegmentedControl({ value, onChange }) {
   );
 }
 
-function CategoryItem({ item, onEditCategory }) {
+function CategoryItem({ item, onEditCategory, onDeleteCategory }) {
   const normalizedType = String(item?.type || "").toLowerCase();
   const iconColor = getIconColor(item?.icon);
   const meta = TYPE_META[normalizedType] || {
     label: (item?.type || "-").toString().toUpperCase(),
     chipBg: COLORS.BG,
     chipText: COLORS.TEXT_SECONDARY
+  };
+  const [menuVisible, setMenuVisible] = useState(false);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, right: 16 });
+  const menuButtonRef = useRef(null);
+  const MENU_HEIGHT = 116;
+  const MENU_BOTTOM_MARGIN = 88;
+  const MENU_SCREEN_PADDING = 12;
+
+  const openMenu = () => {
+    menuButtonRef.current?.measureInWindow((x, y, width, height) => {
+      const screenWidth = Dimensions.get("window").width;
+      const screenHeight = Dimensions.get("window").height;
+      const anchoredTop = y + height / 2 - MENU_HEIGHT / 2;
+      const maxTop = screenHeight - MENU_BOTTOM_MARGIN - MENU_HEIGHT;
+      const top = Math.min(
+        Math.max(MENU_SCREEN_PADDING, anchoredTop),
+        Math.max(MENU_SCREEN_PADDING, maxTop)
+      );
+
+      setMenuPosition({
+        top,
+        right: Math.max(MENU_SCREEN_PADDING, screenWidth - x - width)
+      });
+      setMenuVisible(true);
+    });
   };
 
   return (
@@ -108,12 +134,45 @@ function CategoryItem({ item, onEditCategory }) {
           <Text style={[styles.typeChipText, { color: meta.chipText }]}>{meta.label}</Text>
         </View>
 
-        <View style={styles.itemActionRow}>
-          <Pressable style={styles.itemEditBtn} onPress={() => onEditCategory(item)}>
-            <Text style={styles.itemEditText}>📝</Text>
-          </Pressable>
-        </View>
+        {/* 3-dot menu button */}
+        <Pressable
+          ref={menuButtonRef}
+          style={styles.menuDots}
+          onPress={openMenu}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Text style={styles.menuDotsText}>⋮</Text>
+        </Pressable>
       </View>
+
+      {/* Dropdown Menu Modal */}
+      <Modal visible={menuVisible} transparent animationType="fade" onRequestClose={() => setMenuVisible(false)}>
+        <Pressable style={styles.menuOverlay} onPress={() => setMenuVisible(false)}>
+          <View style={[styles.menuDropdown, menuPosition]}>
+            <Pressable
+              style={styles.menuItem}
+              onPress={() => {
+                setMenuVisible(false);
+                onEditCategory(item);
+              }}
+            >
+              <Text style={styles.menuItemIcon}>✏️</Text>
+              <Text style={styles.menuItemText}>Chỉnh sửa</Text>
+            </Pressable>
+            <View style={styles.menuDivider} />
+            <Pressable
+              style={styles.menuItem}
+              onPress={() => {
+                setMenuVisible(false);
+                onDeleteCategory(item);
+              }}
+            >
+              <Text style={styles.menuItemIcon}>🗑️</Text>
+              <Text style={[styles.menuItemText, { color: COLORS.EXPENSE }]}>Xóa</Text>
+            </Pressable>
+          </View>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -145,6 +204,13 @@ export default function CategoryScreen() {
     }
     return "Gợi ý: Ăn uống, Di chuyển, Giải trí...";
   }, [type]);
+
+  const {
+    visibleItems: visibleCategories,
+    canToggle: canExpandCategories,
+    expanded: showAllCategories,
+    toggle: toggleCategories
+  } = useVisibleItems(categories, { initialCount: 3, mode: "toggle" });
 
   const fetchCategories = useCallback(async () => {
     const response = await http.get(API_ENDPOINTS.GET_ALL_CATEGORIES);
@@ -218,6 +284,30 @@ export default function CategoryScreen() {
     setEditType("income");
     setEditIcon(getFirstCategoryIcon("income"));
     setEditingCategorySaving(false);
+  };
+
+  const onDeleteCategory = (category) => {
+    if (!category?.id) return;
+    Alert.alert(
+      "Xóa danh mục",
+      `Bạn có chắc muốn xóa danh mục "${category.name}" không? Các giao dịch thuộc danh mục này sẽ không bị xóa.`,
+      [
+        { text: "Hủy", style: "cancel" },
+        {
+          text: "Xóa",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await http.delete(API_ENDPOINTS.DELETE_CATEGORY(category.id));
+              await fetchCategories();
+              Alert.alert(SUCCESS_ALERT_TITLE, SUCCESS_ALERT_MESSAGES.delete.category);
+            } catch (error) {
+              Alert.alert("Xóa thất bại", getApiErrorMessage(error, "Không thể xóa danh mục này"));
+            }
+          },
+        },
+      ]
+    );
   };
 
   useEffect(() => {
@@ -297,16 +387,22 @@ export default function CategoryScreen() {
       </View>
 
       <FlatList
-        data={categories}
+        data={visibleCategories}
         keyExtractor={(item) => String(item?.id)}
-        renderItem={({ item }) => <CategoryItem item={item} onEditCategory={onOpenEditCategory} />}
+        renderItem={({ item }) => (
+          <CategoryItem
+            item={item}
+            onEditCategory={onOpenEditCategory}
+            onDeleteCategory={onDeleteCategory}
+          />
+        )}
         contentContainerStyle={styles.listContent}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         ListHeaderComponent={
           categories.length ? (
             <View style={styles.listHeader}>
-              <Text style={styles.listTitle}>Danh sách danh mục</Text>
-              <Text style={styles.listCount}>{categories.length}</Text>
+              <Text style={styles.listTitle}>Danh mục gần đây</Text>
+              <ShowMoreButton visible={canExpandCategories} expanded={showAllCategories} onPress={toggleCategories} />
             </View>
           ) : null
         }
@@ -506,16 +602,6 @@ const styles = StyleSheet.create({
     marginBottom: 8
   },
   listTitle: { color: COLORS.TEXT, fontWeight: "800", fontSize: 16 },
-  listCount: {
-    minWidth: 24,
-    textAlign: "center",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 999,
-    backgroundColor: COLORS.ROSE_MIST,
-    color: COLORS.PRIMARY,
-    fontWeight: "800"
-  },
   listContent: { paddingBottom: 24 },
   itemCard: {
     backgroundColor: COLORS.CARD,
@@ -548,16 +634,55 @@ const styles = StyleSheet.create({
   itemRight: { alignItems: "flex-end" },
   typeChip: { borderRadius: 999, paddingVertical: 5, paddingHorizontal: 10 },
   typeChipText: { fontWeight: "800", fontSize: 12 },
-  itemActionRow: { flexDirection: "row", marginTop: 8 },
-  itemEditBtn: {
-    backgroundColor: COLORS.ROSE_MIST,
+  menuDots: {
+    marginTop: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  menuDotsText: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: COLORS.TEXT_SECONDARY,
+    letterSpacing: 1,
+  },
+  menuOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.25)",
+  },
+  menuDropdown: {
+    position: "absolute",
+    backgroundColor: COLORS.CARD,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: COLORS.CARD_BORDER,
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 4
+    minWidth: 120,
+    overflow: "hidden",
+    shadowColor: COLORS.TEXT,
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 8,
   },
-  itemEditText: { color: COLORS.PRIMARY, fontSize: 12, fontWeight: "700" },
+  menuItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    gap: 10,
+  },
+  menuItemIcon: {
+    fontSize: 16,
+  },
+  menuItemText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: COLORS.TEXT,
+  },
+  menuDivider: {
+    height: 1,
+    backgroundColor: COLORS.CARD_BORDER,
+    marginHorizontal: 18,
+  },
   emptyState: { alignItems: "center", marginTop: 44, paddingHorizontal: 24 },
   emptyIcon: { fontSize: 36, marginBottom: 8 },
   emptyTitle: { fontSize: 16, fontWeight: "800", color: COLORS.TEXT, marginBottom: 6 },

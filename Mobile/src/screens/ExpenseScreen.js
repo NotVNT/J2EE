@@ -1,6 +1,7 @@
-import React, { useCallback, useMemo, useState } from "react";
-import { Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from "react-native";
+import React, { useCallback, useContext, useMemo, useState } from "react";
+import { ActivityIndicator, Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from "react-native";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import * as ImagePicker from "expo-image-picker";
 import http from "../services/http";
 import { API_ENDPOINTS } from "../constants/api";
 import { SUCCESS_ALERT_MESSAGES, SUCCESS_ALERT_TITLE } from "../constants/alertMessages";
@@ -10,6 +11,14 @@ import { COLORS } from "../constants/colors";
 import { CategoryVectorIcon, getIconColor } from "../utils/VectorIcons";
 import VoiceInputButton from "../components/VoiceInputButton";
 import { downloadAndShareFile } from "../utils/fileDownload";
+import { AuthContext } from "../components/AuthContext";
+import { analyzeReceipt } from "../services/receiptImportService";
+import ShowMoreButton, { useVisibleItems } from "../components/ShowMoreButton";
+
+const FILTER_TYPES = {
+  current: "current",
+  all: "all"
+};
 
 /** Highlight keyword trong text */
 function HighlightText({ text, keyword }) {
@@ -68,8 +77,13 @@ function ExpenseItem({ item, onDelete, searchKeyword }) {
 
       <View style={styles.itemRight}>
         <Text style={styles.itemAmount}>- {formatMoney(amount)}</Text>
-        <Pressable onPress={() => onDelete(item?.id)} style={styles.deleteButton}>
-          <Text style={styles.deleteText}>Xóa</Text>
+        <Pressable
+          onPress={() => onDelete(item?.id)}
+          style={styles.deleteButton}
+          accessibilityRole="button"
+          accessibilityLabel="Xóa chi tiêu"
+        >
+          <Text style={styles.deleteIcon}>🗑️</Text>
         </Pressable>
       </View>
     </View>
@@ -78,10 +92,16 @@ function ExpenseItem({ item, onDelete, searchKeyword }) {
 
 export default function ExpenseScreen() {
   const navigation = useNavigation();
+  const { user } = useContext(AuthContext);
   const [expenses, setExpenses] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [filterType, setFilterType] = useState(FILTER_TYPES.current);
   const [isExporting, setIsExporting] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
+
+  const subscriptionPlan = String(user?.subscriptionPlan || "FREE").toUpperCase();
+  const isPremium = subscriptionPlan === "PREMIUM";
 
   // Lọc expenses theo search query
   const filteredExpenses = useMemo(() => {
@@ -100,10 +120,26 @@ export default function ExpenseScreen() {
     return expenses.reduce((sum, item) => sum + Number(item?.amount || 0), 0);
   }, [expenses]);
 
+  const {
+    visibleItems: visibleExpenses,
+    canToggle: canToggleExpenses,
+    expanded: expandedExpenses,
+    toggle: toggleExpenses
+  } = useVisibleItems(filteredExpenses, {
+    initialCount: 3,
+    mode: "toggle",
+    resetKey: `${filterType}|${searchQuery.trim()}`
+  });
+
   const fetchExpenses = useCallback(async () => {
-    const response = await http.get(API_ENDPOINTS.GET_ALL_EXPENSE);
+    const params = {};
+    if (filterType === FILTER_TYPES.all) {
+      params.all = true;
+    }
+
+    const response = await http.get(API_ENDPOINTS.GET_ALL_EXPENSE, { params });
     setExpenses(Array.isArray(response.data) ? response.data : []);
-  }, []);
+  }, [filterType]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -155,14 +191,111 @@ export default function ExpenseScreen() {
     }
   };
 
+  const handleScanReceipt = async () => {
+    // Premium gate
+    if (!isPremium) {
+      Alert.alert(
+        "Tính năng Premium",
+        "Quét hóa đơn bằng ảnh là tính năng dành riêng cho gói Premium.\n\nHãy nâng cấp tài khoản để sử dụng.",
+        [
+          { text: "Để sau", style: "cancel" },
+          { text: "Nâng cấp", onPress: () => navigation.navigate("Payment") },
+        ]
+      );
+      return;
+    }
+
+    // Request camera permission
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("Quyền bị từ chối", "Cần cấp quyền truy cập camera để quét hóa đơn.");
+      return;
+    }
+
+    // Show action sheet: Camera or Library
+    const result = await new Promise((resolve) => {
+      Alert.alert("Quét hóa đơn", "Chọn nguồn ảnh:", [
+        { text: "Chụp ảnh", onPress: () => resolve("camera") },
+        { text: "Thư viện", onPress: () => resolve("library") },
+        { text: "Hủy", style: "cancel", onPress: () => resolve(null) },
+      ]);
+    });
+
+    if (!result) return;
+
+    let pickerResult;
+    try {
+      if (result === "camera") {
+        pickerResult = await ImagePicker.launchCameraAsync({
+          mediaTypes: ["images"],
+          quality: 0.8,
+          allowsEditing: false,
+        });
+      } else {
+        pickerResult = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ["images"],
+          quality: 0.8,
+          allowsEditing: false,
+        });
+      }
+    } catch (pickerError) {
+      Alert.alert("Lỗi", "Không thể mở camera/thư viện: " + (pickerError.message || ""));
+      return;
+    }
+
+    if (pickerResult.canceled || !pickerResult.assets?.length) return;
+
+    const asset = pickerResult.assets[0];
+
+    // Client-side validation
+    if (!asset.uri) {
+      Alert.alert("Lỗi", "Không đọc được ảnh. Vui lòng thử lại.");
+      return;
+    }
+
+    const validMimes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+    if (asset.mimeType && !validMimes.includes(asset.mimeType)) {
+      Alert.alert("Định dạng không hỗ trợ", "Vui lòng chọn ảnh JPEG, PNG, GIF hoặc WebP.");
+      return;
+    }
+
+    // File size check (10MB = 10 * 1024 * 1024 bytes)
+    const MAX_SIZE = 10 * 1024 * 1024;
+    if (asset.fileSize && asset.fileSize > MAX_SIZE) {
+      Alert.alert("Ảnh quá lớn", "Vui lòng chọn ảnh dưới 10MB.");
+      return;
+    }
+
+    // Upload & analyze
+    setIsScanning(true);
+    try {
+      const analyzeResult = await analyzeReceipt(asset);
+      if (!analyzeResult?.items?.length) {
+        Alert.alert("Không nhận diện được", "Gemini không tìm thấy mặt hàng nào trong ảnh. Hãy thử ảnh khác.");
+        return;
+      }
+      navigation.navigate("ReceiptPreview", { analyzeResult });
+    } catch (error) {
+      Alert.alert("Lỗi phân tích", getApiErrorMessage(error, "Không thể phân tích hóa đơn. Vui lòng thử lại."));
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
   const handleExport = async () => {
     setIsExporting(true);
     try {
       const now = new Date();
-      const payload = { month: now.getMonth() + 1, year: now.getFullYear() };
+      const isAllReport = filterType === FILTER_TYPES.all;
+      const payload = isAllReport
+        ? { all: true, month: now.getMonth() + 1, year: now.getFullYear() }
+        : { month: now.getMonth() + 1, year: now.getFullYear() };
       const res = await http.post(API_ENDPOINTS.EXPORT_EXPENSE, payload);
       if (res.data && res.data.presignedUrl) {
-        await downloadAndShareFile(res.data.presignedUrl, `expense_report_${payload.month}_${payload.year}.xlsx`);
+        const fileName = isAllReport
+          ? "expense_report_all_months.xlsx"
+          : `expense_report_${payload.month}_${payload.year}.xlsx`;
+        await downloadAndShareFile(res.data.presignedUrl, fileName);
       } else {
         throw new Error("Không lấy được link tải file");
       }
@@ -175,6 +308,29 @@ export default function ExpenseScreen() {
 
   return (
     <View style={styles.container}>
+      <View style={styles.filterCard}>
+        <Text style={styles.filterTitle}>Khung thời gian</Text>
+        <View style={styles.filterRow}>
+          <Pressable
+            style={[styles.filterChip, filterType === FILTER_TYPES.current && styles.filterChipActive]}
+            onPress={() => setFilterType(FILTER_TYPES.current)}
+          >
+            <Text style={[styles.filterChipText, filterType === FILTER_TYPES.current && styles.filterChipTextActive]}>
+              Tháng này
+            </Text>
+          </Pressable>
+
+          <Pressable
+            style={[styles.filterChip, styles.filterChipLast, filterType === FILTER_TYPES.all && styles.filterChipActive]}
+            onPress={() => setFilterType(FILTER_TYPES.all)}
+          >
+            <Text style={[styles.filterChipText, filterType === FILTER_TYPES.all && styles.filterChipTextActive]}>
+              Tất cả
+            </Text>
+          </Pressable>
+        </View>
+      </View>
+
       <View style={styles.summaryCard}>
         <View style={styles.summaryContent}>
           <Text style={styles.summaryLabel}>Tổng chi tiêu</Text>
@@ -187,13 +343,35 @@ export default function ExpenseScreen() {
             <Text style={styles.addButtonText}>+ Thêm chi tiêu</Text>
           </Pressable>
           <VoiceInputButton onResult={handleVoiceResult} />
+          <Pressable
+            style={[styles.scanButton, isScanning && { opacity: 0.6 }]}
+            onPress={handleScanReceipt}
+            disabled={isScanning}
+          >
+            {isScanning ? (
+              <ActivityIndicator color={COLORS.PRIMARY} size="small" />
+            ) : (
+              <Text style={styles.scanButtonIcon}>📷</Text>
+            )}
+          </Pressable>
         </View>
+        {!isPremium && (
+          <Text style={styles.premiumHint}>
+            🔒 Quét hóa đơn là tính năng Premium
+          </Text>
+        )}
         <Pressable 
           style={[styles.exportButton, isExporting && { opacity: 0.7 }]} 
           onPress={handleExport}
           disabled={isExporting}
         >
-          <Text style={styles.exportText}>{isExporting ? "⏳ Đang tạo báo cáo..." : "📥 Tải báo cáo tháng này"}</Text>
+          <Text style={styles.exportText}>
+            {isExporting
+              ? "Đang tạo báo cáo..."
+              : filterType === FILTER_TYPES.all
+                ? "Tải báo cáo tất cả tháng"
+                : "Tải báo cáo tháng này"}
+          </Text>
         </Pressable>
       </View>
 
@@ -215,7 +393,7 @@ export default function ExpenseScreen() {
       </View>
 
       <FlatList
-        data={filteredExpenses}
+        data={visibleExpenses}
         keyExtractor={(item) => String(item?.id)}
         renderItem={({ item }) => (
           <ExpenseItem item={item} onDelete={onDelete} searchKeyword={searchQuery.trim()} />
@@ -232,6 +410,11 @@ export default function ExpenseScreen() {
                     ? `Kết quả tìm kiếm (${filteredExpenses.length})`
                     : "Danh sách chi tiêu"}
                 </Text>
+                <ShowMoreButton 
+                  visible={canToggleExpenses} 
+                  expanded={expandedExpenses} 
+                  onPress={toggleExpenses} 
+                />
               </View>
             </View>
           ) : null
@@ -265,6 +448,48 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.BG,
     padding: 16,
     paddingTop: 50
+  },
+  filterCard: {
+    backgroundColor: COLORS.CARD,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: COLORS.CARD_BORDER,
+    padding: 12,
+    marginBottom: 12
+  },
+  filterTitle: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: COLORS.TEXT,
+    marginBottom: 10
+  },
+  filterRow: {
+    flexDirection: "row"
+  },
+  filterChip: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: COLORS.CARD_BORDER,
+    backgroundColor: COLORS.CARD,
+    borderRadius: 10,
+    paddingVertical: 10,
+    alignItems: "center",
+    marginRight: 8
+  },
+  filterChipLast: {
+    marginRight: 0
+  },
+  filterChipActive: {
+    borderColor: COLORS.PRIMARY,
+    backgroundColor: COLORS.ROSE_MIST
+  },
+  filterChipText: {
+    color: COLORS.TEXT,
+    fontWeight: "700",
+    fontSize: 12
+  },
+  filterChipTextActive: {
+    color: COLORS.PRIMARY
   },
   summaryCard: {
     backgroundColor: COLORS.CARD,
@@ -321,6 +546,25 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     fontSize: 15
   },
+  scanButton: {
+    width: 46,
+    height: 46,
+    borderRadius: 12,
+    backgroundColor: COLORS.CARD,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1.5,
+    borderColor: COLORS.PRIMARY + "40",
+  },
+  scanButtonIcon: {
+    fontSize: 20,
+  },
+  premiumHint: {
+    fontSize: 11,
+    color: COLORS.TEXT_MUTED,
+    textAlign: "center",
+    marginTop: 6,
+  },
   exportButton: {
     backgroundColor: COLORS.BG,
     borderRadius: 12,
@@ -343,6 +587,9 @@ const styles = StyleSheet.create({
     justifyContent: "center"
   },
   listHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: 8
   },
   listTitle: {
@@ -401,17 +648,14 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     marginTop: 8,
-    backgroundColor: COLORS.EXPENSE_LIGHT,
-    borderColor: "#fecdca",
-    borderWidth: 1,
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 4
   },
-  deleteText: {
+  deleteIcon: {
     color: COLORS.EXPENSE,
-    fontWeight: "700",
-    fontSize: 12
+    fontSize: 14,
+    lineHeight: 16
   },
   emptyState: {
     alignItems: "center",
