@@ -1,6 +1,6 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { AlertTriangle, LoaderCircle, Trash2 } from "lucide-react";
+import { AlertTriangle, FileText, LoaderCircle, Trash2 } from "lucide-react";
 import CustomSelect from "../components/CustomSelect.jsx";
 import { AppContext } from "../context/AppContext.jsx";
 import { useUser } from "../hooks/useUser.jsx";
@@ -32,6 +32,7 @@ const Expense = () => {
   const [openReceiptPreviewModal, setOpenReceiptPreviewModal] = useState(false);
   const [receiptPreview, setReceiptPreview] = useState(null);
   const [jars, setJars] = useState([]);
+  const [openFormatInfoModal, setOpenFormatInfoModal] = useState(false);
   const receiptFileInputRef = useRef(null);
 
   const exportUpgradeMessage = "Nâng cấp gói để sử dụng tính năng này";
@@ -203,7 +204,11 @@ const Expense = () => {
   const handleImportReceipt = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    if (!file.type?.startsWith("image/")) { toast.error("Vui lòng chọn tệp ảnh hóa đơn."); event.target.value = ""; return; }
+    if (!file.type?.startsWith("image/") && file.type !== "application/pdf") {
+      toast.error("Vui lòng chọn tệp ảnh hoặc PDF.");
+      event.target.value = "";
+      return;
+    }
     const formData = new FormData();
     formData.append("file", file);
     setIsImportingReceipt(true);
@@ -280,8 +285,9 @@ const Expense = () => {
           onExpenseIncome={() => setOpenAddExpenseModal(true)}
           onImportReceipt={handleOpenReceiptPicker}
           isImportingReceipt={isImportingReceipt}
+          onOpenFormatInfo={() => setOpenFormatInfoModal(true)}
         />
-        <input ref={receiptFileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImportReceipt} disabled={isImportingReceipt} />
+        <input ref={receiptFileInputRef} type="file" accept="image/*,application/pdf" className="hidden" onChange={handleImportReceipt} disabled={isImportingReceipt} />
 
         {/* Quick Expense Templates */}
         <QuickExpenseTemplates
@@ -311,6 +317,35 @@ const Expense = () => {
 
         <Modal isOpen={openDeleteAlert.show} onClose={() => setOpenDeleteAlert({ show: false, data: null })} title="Xóa chi tiêu">
           <DeleteAlert content="Bạn có chắc chắn muốn xóa chi tiêu này không?" onDelete={() => deleteExpense(openDeleteAlert.data)} />
+        </Modal>
+
+        {/* Format Info Modal */}
+        <Modal isOpen={openFormatInfoModal} onClose={() => setOpenFormatInfoModal(false)} title="Định dạng tệp hỗ trợ">
+          <div className="space-y-4">
+            <p className="text-sm text-slate-600 dark:text-slate-300">
+              Tính năng kiểm tra hóa đơn hỗ trợ các định dạng sau:
+            </p>
+            <ul className="space-y-2">
+              {[
+                { ext: "JPEG / JPG", desc: "Ảnh chụp hóa đơn phổ biến nhất" },
+                { ext: "PNG",        desc: "Ảnh chụp màn hình hoặc scan" },
+                { ext: "WEBP",       desc: "Ảnh web nén nhỏ" },
+                { ext: "GIF",        desc: "Ảnh tĩnh định dạng GIF" },
+                { ext: "PDF",        desc: "Hóa đơn điện tử hoặc scan" },
+              ].map(({ ext, desc }) => (
+                <li key={ext} className="flex items-start gap-3 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 px-4 py-2.5">
+                  <FileText size={16} className="mt-0.5 shrink-0 text-violet-500 dark:text-amber-400" />
+                  <div>
+                    <span className="text-sm font-semibold text-slate-800 dark:text-white">{ext}</span>
+                    <span className="ml-2 text-xs text-slate-400 dark:text-slate-500">{desc}</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <p className="text-xs text-slate-400 dark:text-slate-500">
+              Kích thước tệp tối đa: <span className="font-medium text-slate-600 dark:text-slate-300">10 MB</span>
+            </p>
+          </div>
         </Modal>
 
         {/* Receipt Preview Modal */}

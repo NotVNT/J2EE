@@ -198,6 +198,7 @@ public class ReceiptImportService {
     private static final byte[] MAGIC_PNG  = {(byte) 0x89, 0x50, 0x4E, 0x47};
     private static final byte[] MAGIC_GIF  = {0x47, 0x49, 0x46, 0x38};
     private static final byte[] MAGIC_WEBP_RIFF = {0x52, 0x49, 0x46, 0x46};
+    private static final byte[] MAGIC_PDF  = {0x25, 0x50, 0x44, 0x46, 0x2D}; // %PDF-
 
     private void validateFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
@@ -209,13 +210,15 @@ public class ReceiptImportService {
         }
 
         String contentType = file.getContentType();
-        if (contentType == null || !contentType.toLowerCase(Locale.ROOT).startsWith("image/")) {
-            throw new RuntimeException("Định dạng tệp không hợp lệ. Vui lòng chọn tệp ảnh.");
+        if (contentType == null
+                || (!contentType.toLowerCase(Locale.ROOT).startsWith("image/")
+                        && !contentType.equalsIgnoreCase("application/pdf"))) {
+            throw new RuntimeException("Định dạng tệp không hợp lệ. Vui lòng chọn tệp ảnh hoặc PDF.");
         }
 
         try {
             byte[] header = file.getBytes();
-            if (!hasValidImageMagicBytes(header)) {
+            if (!hasValidFileMagicBytes(header)) {
                 throw new RuntimeException("Nội dung tệp không hợp lệ. Vui lòng chọn tệp ảnh thực sự.");
             }
         } catch (java.io.IOException e) {
@@ -223,11 +226,12 @@ public class ReceiptImportService {
         }
     }
 
-    private boolean hasValidImageMagicBytes(byte[] data) {
+    private boolean hasValidFileMagicBytes(byte[] data) {
         if (data == null || data.length < 4) return false;
         return startsWith(data, MAGIC_JPEG)
                 || startsWith(data, MAGIC_PNG)
                 || startsWith(data, MAGIC_GIF)
+                || startsWith(data, MAGIC_PDF)
                 || (startsWith(data, MAGIC_WEBP_RIFF) && data.length >= 12
                         && data[8] == 0x57 && data[9] == 0x45 && data[10] == 0x42 && data[11] == 0x50);
     }
