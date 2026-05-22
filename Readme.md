@@ -16,7 +16,7 @@
 ┌─────────────────┐     REST API / JWT                  │
 │   Mobile        │ ◄──────────────────────────────────►│
 │   React Native  │                          ┌──────────┴───────────┐
-│   Expo 53       │                          │   Dịch Vụ Bên Ngoài  │
+│   Expo 53       │                          │   External Services  │
 └─────────────────┘                          │   Redis · MySQL      │
                                              │   PayOS · Gemini API │
                                              │   OpenRouter · S3    │
@@ -34,69 +34,69 @@
 |---|---|---|
 | Framework | Spring Boot | 4.0.3 |
 | Ngôn Ngữ | Java | 21 |
-| Công Cụ Build | Maven | - |
-| Cơ Sở Dữ Liệu | MySQL + JPA/Hibernate | - |
-| Cache / Lưu Trữ Khóa | Redis | - |
-| Xác Thực | Spring Security + JWT | - |
+| Build Tool | Maven | - |
+| Database | MySQL + JPA/Hibernate | - |
+| Cache / API Key Store | Redis | - |
+| Authentication | Spring Security + JWT | - |
 | Thanh Toán | PayOS | - |
-| AI — Gemini | Google Gemini API | gemini-3.1-flash-lite |
+| AI — Agent | Google Gemini API | gemini-3.1-flash-lite |
 | AI — Chat | OpenRouter (GPT-OSS 120B) | - |
 | Excel | Apache POI | - |
 | Email | Spring Mail (Brevo SMTP) | - |
-| Lưu Trữ File | AWS S3 | - |
-| Tạo PDF | AWS Lambda | - |
+| File Storage | AWS S3 | - |
+| PDF Generation | AWS Lambda | - |
 | Lombok | Lombok | - |
 
-**Mô Hình**: `@Controller → @Service → @Repository` + lớp DTO
+**Pattern**: `@Controller → @Service → @Repository` + DTO layer
 
 ### Frontend — `Frontend/`
 
 | Danh Mục | Công Nghệ | Phiên Bản |
 |---|---|---|
 | Framework | React | 19.2 |
-| Công Cụ Build | Vite | 8.0 (beta) |
+| Build Tool | Vite | 8.0 (beta) |
 | CSS | Tailwind CSS | 4.2 |
-| Định Tuyến | React Router | 7 |
+| Routing | React Router | 7 |
 | HTTP | Axios | 1.13 |
-| Biểu Đồ | Recharts | 3.8 |
-| Biểu Tượng | Lucide React | 0.577 |
-| Kéo & Thả | @dnd-kit | 6/10 |
+| Charts | Recharts | 3.8 |
+| Icons | Lucide React | 0.577 |
+| Drag & Drop | @dnd-kit | 6/10 |
 | Markdown | react-markdown + remark-gfm + rehype-sanitize | - |
-| Thông Báo | react-hot-toast | 2.6 |
-| Bộ Chọn Emoji | emoji-picker-react | 4.18 |
+| Notifications | react-hot-toast | 2.6 |
+| Emoji Picker | emoji-picker-react | 4.18 |
 
 ### Mobile — `Mobile/`
 
 | Danh Mục | Công Nghệ | Phiên Bản |
 |---|---|---|
 | Framework | React Native | 0.79.6 |
-| Nền Tảng Build | Expo | 53 |
-| Điều Hướng | React Navigation (thanh tab dưới + native stack) | 7 |
-| Lưu Trữ Cục Bộ | AsyncStorage | 2.1 |
+| Build Platform | Expo | 53 |
+| Navigation | React Navigation (bottom tab + native stack) | 7 |
+| Local Storage | AsyncStorage | 2.1 |
 | HTTP | Axios | 1.13 |
 
 ---
 
 ## Các Gói Đăng Ký
 
-Ba cấp độ kiểm soát quyền truy cập tính năng. Các hạn chế được thực thi **ở tầng dịch vụ backend** — frontend chỉ ẩn các phần tử giao diện.
+Ba cấp độ kiểm soát quyền truy cập tính năng. Các hạn chế được thực thi **ở tầng service backend** — frontend chỉ ẩn UI.
 
-| Tính Năng | MIỄN PHÍ | CƠ BẢN | PREMIUM |
+| Tính Năng | FREE | BASIC | PREMIUM |
 |---|:---:|:---:|:---:|
-| Danh Mục | 10 | 30 | Không Giới Hạn |
-| Giao Dịch / tháng | 100 | 1.000 | Không Giới Hạn |
-| Độ Sâu Bộ Lọc Lịch Sử | 3 tháng | 12 tháng | Không Giới Hạn |
+| Danh Mục | 10 | 30 | Không giới hạn |
+| Giao Dịch / tháng | 100 | 1.000 | Không giới hạn |
+| History Filter | 3 tháng | 12 tháng | Không giới hạn |
 | Xuất Excel | ❌ | ✅ | ✅ |
 | Báo Cáo Email | ❌ | ✅ | ✅ |
-| Chế Độ Chat Nova Money | ✅ | ✅ | ✅ |
-| Chế Độ Agent Nova Money | ❌ | ✅ | ✅ |
-| Nhập Hóa Đơn (Gemini Vision) | ❌ | ❌ | ✅ |
-| Mẹo Tiết Kiệm AI | ❌ | ❌ | ✅ |
+| Nova Money Chat | ✅ | ✅ | ✅ |
+| Nova Money Agent | ❌ | ✅ | ✅ |
+| Receipt Import (Gemini Vision) | ❌ | ❌ | ✅ |
+| AI Smart Tips | ❌ | ❌ | ✅ |
 | Dự Báo Tài Chính | ❌ | ❌ | ✅ |
 
-**Các Điểm Thực Thi Backend**: `CategoryService.create()`, `ExpenseService.create()`, `IncomeService.create()`, `FilterController`, `ExcelService`, `EmailService`, `ReceiptService`, `AICoachService`, `ForecastService`
+**Backend enforcement points**: `CategoryService.create()`, `ExpenseService.create()`, `IncomeService.create()`, `FilterController`, `ExcelService`, `EmailService`, `ReceiptService`, `AICoachService`, `ForecastService`
 
-**Luồng Đăng Ký**: Người dùng thanh toán qua PayOS → webhook `PAID` → backend kích hoạt gói trên `ProfileEntity` (`subscriptionPlan`, `subscriptionStatus`, `subscriptionActivatedAt`, `subscriptionExpiresAt`, `autoRenew`)
+**Subscription flow**: Người dùng thanh toán qua PayOS → webhook `PAID` → backend kích hoạt gói trên `ProfileEntity` (`subscriptionPlan`, `subscriptionStatus`, `subscriptionActivatedAt`, `subscriptionExpiresAt`, `autoRenew`)
 
 ---
 
@@ -104,64 +104,71 @@ Ba cấp độ kiểm soát quyền truy cập tính năng. Các hạn chế đ�
 
 ### Tổng Quan
 
-Nova Money là trợ lý AI tích hợp sẵn, có thể truy cập từ nút chat nổi trên mọi trang đã xác thực. Nó có hai chế độ hoạt động mà người dùng có thể chọn:
+Nova Money là trợ lý AI tích hợp sẵn, có thể truy cập từ floating button góc phải dưới trên mọi trang đã xác thực. Hai chế độ hoạt động với model khác nhau tùy theo gói:
 
 ```
 ┌─────────────────────────────────────────┐
-│       Tiện Ích Nova Money               │
+│         Nova Money Widget               │
 ├────────────────────┬────────────────────┤
-│   Chế Độ Agent     │   Chế Độ Chat      │
-│   (Gemini)         │   (GPT-OSS)        │
-│   CƠ BẢN+          │   Tất Cả Gói       │
+│    Agent Mode      │    Chat Mode       │
+│    BASIC+          │    Tất cả gói      │
 │                    │                    │
-│ Phân Tích Ý Định → │ Q&A Tự Do          │
-│ Hoạt Động CRUD /   │ Lời Khuyên Tài Chính│
-│ Xuất Báo Cáo       │ Không Thay Đổi Dữ Liệu│
+│  Intent Parsing →  │  Q&A tự do         │
+│  CRUD / Export     │  Lời khuyên TC     │
+│                    │  No data changes   │
 └────────────────────┴────────────────────┘
 ```
 
-### Cơ Sở Hạ Tầng AI
+### Model Theo Gói Đăng Ký
 
-| Nhà Cung Cấp | Mô Hình | Được Sử Dụng Cho | Yêu Cầu Gói |
+| Gói | Chat Model | Agent Model |
+|---|---|---|
+| FREE | ✨ Nova Lite (NineRouter) | ❌ Không có |
+| BASIC | ✨ Nova Lite (NineRouter) | ✨ Nova Lite (NineRouter) |
+| PREMIUM | GPT-OSS 120B, Nova Lite, Gemini | Gemini, Nova Lite |
+
+### AI Infrastructure
+
+| Provider | Model | Dùng cho | Plan yêu cầu |
 |---|---|---|---|
-| Google Gemini | gemini-3.1-flash-lite | Chế độ Agent (phân tích ý định + thực thi) | CƠ BẢN+ |
-| OpenRouter | GPT-OSS 120B | Chế độ Chat (trò chuyện) | Tất cả gói |
-| NineRouter | EXPERIMENTAL | Chế độ Chat và Agent thử nghiệm (hiệu suất cao hơn) | PREMIUM |
+| Google Gemini | gemini-3.1-flash-lite | Agent mode (intent parsing + execution) | PREMIUM |
+| OpenRouter | GPT-OSS 120B | Chat mode | PREMIUM |
+| NineRouter | Nova Lite (Gemma 4 31B) | Chat và Agent mặc định cho tất cả gói | Tất cả gói |
 
-**Xoay Vòng Khóa API (Redis)**  
-Mỗi nhà cung cấp có một nhóm khóa API được lưu trữ trong Redis. Hệ thống theo dõi sử dụng hạn ngạch cho mỗi khóa và trạng thái cooldown. Khi một khóa vượt quá hạn ngạch hoặc trả về lỗi, khóa đó sẽ bị bỏ qua tự động và khóa có sẵn tiếp theo sẽ được sử dụng. Các khóa tự phục hồi sau khi thời gian cooldown hết hạn.
+**API Key Rotation (Redis)**  
+Mỗi provider có một pool API key lưu trong Redis. Hệ thống theo dõi quota và trạng thái cooldown từng key. Khi một key vượt quota hoặc lỗi, tự động failover sang key tiếp theo. Các key tự phục hồi sau cooldown.
 
 ---
 
-### Chế Độ Agent — Đường Ống Ý Định → CRUD
+### Agent Mode — Intent → CRUD Pipeline
 
-**Có sẵn từ gói CƠ BẢN.** Người dùng nhập lệnh bằng ngôn ngữ tự nhiên → Gemini phân tích ý định → frontend hiển thị biểu mẫu xác nhận → người dùng chấp phát hành → backend thực thi → hoàn tác có sẵn trong vài phút.
+**Có sẵn từ gói BASIC.** Người dùng nhập lệnh ngôn ngữ tự nhiên → AI parse intent (Nova Lite cho BASIC, Gemini hoặc Nova Lite cho PREMIUM) → frontend hiển thị confirmation form → người dùng xác nhận → backend thực thi → undo khả dụng trong vài phút.
 
-**Đường Ống**:
+**Pipeline**:
 ```
-Tin nhắn của người dùng
+User message
     │
     ▼
 POST /ai/parse-intent
-(Gemini, hệ thống prompt bao gồm dữ liệu trang hiện tại)
+(AI model + system prompt với dữ liệu trang hiện tại)
     │
     ▼
-Intent JSON trả về
+Intent JSON
     │
-    ├── Ý định CRUD / Hành động → hiển thị AIConfirmationForm cho người dùng
+    ├── CRUD / Action intent → hiển thị AIConfirmationForm
     │       │
-    │       ▼  (người dùng xác nhận)
+    │       ▼  (user confirms)
     │   POST /ai/confirm-action
     │       │
     │       ▼
-    │   Backend thực thi → trả về operationId để hoàn tác
+    │   Backend executes → trả về operationId để undo
     │
-    └── ANSWER_QUESTION → hiển thị câu trả lời inline (không xác nhận)
+    └── ANSWER_QUESTION → hiển thị inline answer (không cần confirm)
 ```
 
-**Các Ý Định Được Hỗ Trợ**:
+**Supported Intents**:
 
-| Nhóm | Ý Định |
+| Nhóm | Intent |
 |---|---|
 | Chi Tiêu | `CREATE_EXPENSE`, `UPDATE_EXPENSE`, `DELETE_EXPENSE` |
 | Thu Nhập | `CREATE_INCOME`, `UPDATE_INCOME`, `DELETE_INCOME` |
@@ -171,59 +178,59 @@ Intent JSON trả về
 | Xuất Báo Cáo | `EXPORT_EXCEL_INCOME`, `EXPORT_EXCEL_EXPENSE` |
 | Email | `EMAIL_INCOME_REPORT`, `EMAIL_EXPENSE_REPORT` |
 | Q&A | `ANSWER_QUESTION` |
-| Bảo Vệ | `INVALID_REQUEST` |
+| Guard | `INVALID_REQUEST` |
 
-**Nhận Thức Ngữ Cảnh**: Hệ thống prompt bao gồm dữ liệu thực tế từ trang hiện tại của người dùng (ví dụ: danh sách danh mục của họ khi ở trang Danh Mục) để Gemini có thể phân giải các tham chiếu như "xóa danh mục thực phẩm" thành một ID thực tế.
+**Context-aware**: System prompt bao gồm dữ liệu thực tế từ trang hiện tại (ví dụ: danh sách danh mục khi ở trang Danh Mục) để AI có thể resolve "xóa danh mục thực phẩm" thành ID thực tế.
 
-**Hoàn Tác**: Sau một hoạt động CRUD thành công, backend lưu trữ một `operationId`. Frontend hiển thị nút hoàn tác; gọi `POST /ai/undo/{operationId}` trong cửa sổ được phép sẽ đảo ngược hành động.
+**Undo**: Sau CRUD thành công, backend lưu `operationId`. Frontend hiển thị nút undo; gọi `POST /ai/undo/{operationId}` trong cửa sổ cho phép sẽ đảo ngược hành động.
 
 ---
 
-### Chế Độ Chat — Trò Chuyện Tự Do
+### Chat Mode — Q&A Tự Do
 
-**Có sẵn cho tất cả các gói (bao gồm MIỄN PHÍ).** Sử dụng GPT-OSS 120B qua OpenRouter. Không thực hiện bất kỳ hoạt động dữ liệu nào — chỉ là Q&A hội thoại thuần túy.
+**Có sẵn cho tất cả các gói (bao gồm FREE).** Mặc định dùng `✨ Nova Lite` (NineRouter / Gemma 4 31B). PREMIUM có thể chuyển sang GPT-OSS 120B hoặc Gemini. Không thực hiện bất kỳ data operation nào.
 
-Khả Năng:
+Capabilities:
 - Lời khuyên tài chính cá nhân
 - Phân tích tâm lý chi tiêu
 - Hỗ trợ cảm xúc về tiền bạc
 - Lập kế hoạch mục tiêu dài hạn
 - Câu hỏi tài chính chung
 
-Lịch Sử Trò Chuyện: 20 tin nhắn cuối cùng được gửi dưới dạng ngữ cảnh trên mỗi yêu cầu.
+Conversation history: 20 tin nhắn cuối được gửi kèm làm context mỗi request.
 
 ---
 
-### Mẹo Tiết Kiệm Thông Minh (AI Coach)
+### AI Smart Tips (AI Coach)
 
-**Chỉ PREMIUM.** Phân tích các giao dịch trong 3 tháng cuối cùng của người dùng và trả về các mẹo tiết kiệm theo tiếng Việt được cá nhân hóa. Được Gemini hỗ trợ.
-
----
-
-### Nhập Hóa Đơn (Gemini Vision)
-
-**Chỉ PREMIUM.** Người dùng tải lên hình ảnh hóa đơn (≤ 10 MB, JPEG/PNG/WebP) → Gemini Vision trích xuất tên thương gia, mục hàng và tổng số tiền → tự động điền vào biểu mẫu tạo chi tiêu.
+**Chỉ PREMIUM.** Phân tích giao dịch 3 tháng gần nhất và trả về mẹo tiết kiệm cá nhân hóa bằng tiếng Việt. Powered by Gemini.
 
 ---
 
-### Tiện Ích Nova Money — Chi Tiết Giao Diện
+### Receipt Import (Gemini Vision)
 
-Nút chat nổi nằm ở góc dưới bên phải trên tất cả các trang đã xác thực.
+**Chỉ PREMIUM.** Người dùng upload ảnh hóa đơn (≤ 10 MB, JPEG/PNG/WebP) → Gemini Vision trích xuất tên cửa hàng, danh mục và tổng tiền → tự động điền vào form tạo chi tiêu.
 
-- **Bong bóng lời chào**: Sau 5 giây không hoạt động, một bong bóng lời nói sẽ hiện lên với một thông điệp hài hước ngẫu nhiên (30 thông điệp quay vòng, thay đổi mỗi 20 giây). Biến mất khi chat mở.
-- **Hình đại diện**: Sử dụng `AI_favicon.png` ở khắp nơi — nút nổi, tiêu đề chat và hình đại diện cho từng tin nhắn.
-- **Bố cục hai bảng**: Bảng chat hỗ trợ các chế độ bình thường và mở rộng (800px rộng).
-- **Kết Xuất Markdown**: Phản hồi AI hỗ trợ bảng, khối mã, danh sách, blockquote thông qua `react-markdown` + `remark-gfm` + `rehype-sanitize`.
-- **Chỉ Số Nhập**: Hoạt ảnh ba chấm nảy lên trong khi chờ phản hồi.
-- **Bảo Vệ Ý Định Đang Chờ**: Khi biểu mẫu xác nhận CRUD đang mở, tin nhắn mới bị chặn cho đến khi người dùng xác nhận hoặc hủy.
-- **Chọn Model**: Người dùng PREMIUM có thể chuyển giữa `GPT-OSS 120B` (Chat mặc định), `Gemini 3.1 Flash Lite` (Agent mặc định) và `EXPERIMENTAL` (NineRouter). Khi chọn EXPERIMENTAL lần đầu, modal cảnh báo sẽ hiện để xác nhận. Selector được render bởi `ModelSelector.jsx` tái sử dụng được.
+---
+
+### Nova Money Widget — UI Details
+
+Floating button góc phải dưới trên tất cả các trang đã xác thực.
+
+- **Greeting bubble**: Sau 5 giây, một bubble hiện lên với thông điệp hài hước ngẫu nhiên (30 messages, rotate mỗi 20 giây). Ẩn khi chat mở.
+- **Avatar**: Dùng `AI_favicon.png` ở khắp nơi — floating button, chat header và từng message bubble.
+- **Layout**: Chat panel hỗ trợ normal và expanded mode (800px wide).
+- **Markdown rendering**: Response AI hỗ trợ table, code block, list, blockquote qua `react-markdown` + `remark-gfm` + `rehype-sanitize`.
+- **Typing indicator**: Animation ba chấm nảy lên khi chờ response.
+- **Pending Intent Guard**: Khi confirmation form đang mở, tin nhắn mới bị chặn cho đến khi user confirm hoặc cancel.
+- **Model Selector**: Mặc định `✨ Nova Lite` cho tất cả gói. PREMIUM có thể chuyển sang `GPT-OSS 120B` (Chat) hoặc `Gemini 3.1 Flash Lite` (Agent). Khi PREMIUM chọn Nova Lite, `ExperimentalWarningModal` hiện để xác nhận. FREE/BASIC bị lock ở Nova Lite — các model khác hiện `(PREMIUM)` và bị disable. Render bởi `ModelSelector.jsx`.
 
 ---
 
 ## Các Tính Năng Khác
 
 ### Dự Báo Tài Chính
-Dự đoán chi tiêu của tháng tới dựa trên 6 tháng lịch sử. Phát hiện bất thường (2+ độ lệch chuẩn từ trung bình). Phân tích xu hướng ở cấp danh mục. **Chỉ PREMIUM.**
+Dự đoán chi tiêu tháng tới dựa trên 6 tháng lịch sử. Anomaly detection (2+ standard deviations). Phân tích trend theo danh mục. **Chỉ PREMIUM.**
 
 ### Quản Lý Ngân Sách
 Giới hạn chi tiêu hàng tháng cho mỗi danh mục. Theo dõi % sử dụng. Cảnh báo khi vượt ngân sách.
@@ -244,20 +251,20 @@ Hũ mặc định **"Ví tổng"** được tạo tự động khi người dùn
 
 #### Phân Bổ Thu Nhập
 
-Mỗi Hũ có một **tỷ lệ phân bổ (%)** — khi thu nhập được ghi nhận, hệ thống tự động cộng phần tương ứng vào số dư từng Hũ. Tỷ lệ phân bổ phải nằm trong khoảng 0–100% và được xác thực ở cả frontend lẫn backend.
+Mỗi Hũ có một **tỷ lệ phân bổ (%)** — khi thu nhập được ghi nhận, hệ thống tự động cộng phần tương ứng vào số dư từng Hũ. Tỷ lệ phân bổ phải nằm trong khoảng 0–100% và được validate ở cả frontend lẫn backend.
 
 #### Chi Tiêu Theo Hũ
 
 Khi thêm một khoản chi tiêu (thủ công hoặc qua **Chi Tiêu Nhanh**), người dùng chọn Hũ cần trừ tiền. Số dư Hũ tương ứng giảm ngay lập tức.
 
-- **Chi Tiêu Nhanh (Quick Expense Templates)**: Khi nhấn vào mẫu chi tiêu nhanh, hộp thoại **"Trừ từ hũ nào?"** tự động hiện lên để người dùng chọn Hũ trước khi xác nhận.
+- **Chi Tiêu Nhanh (Quick Expense Templates)**: Khi nhấn vào template chi tiêu nhanh, dialog **"Trừ từ hũ nào?"** tự động hiện lên để người dùng chọn Hũ trước khi xác nhận.
 - `jarId` được gửi kèm trong payload `POST /api/v1.0/expenses` để backend liên kết khoản chi tiêu với Hũ tương ứng.
 
 #### Chuyển Tiền Giữa Các Hũ
 
 Cho phép di chuyển số dư từ Hũ này sang Hũ khác thông qua nút **"Chuyển tiền"** trên trang Hũ chi tiêu.
 
-**Quy tắc nghiệp vụ (thực thi ở backend)**:
+**Business rules (enforce ở backend)**:
 - Không thể chuyển tiền vào cùng một Hũ (`fromJarId == toJarId`).
 - Số tiền chuyển phải lớn hơn 0.
 - Số dư Hũ nguồn phải đủ để thực hiện giao dịch.
@@ -269,7 +276,7 @@ Mỗi Hũ có các thuộc tính tùy chỉnh:
 | Thuộc Tính | Mô Tả |
 |---|---|
 | Tên | Tên hiển thị của Hũ |
-| Biểu Tượng (Emoji) | Icon đại diện |
+| Icon (Emoji) | Icon đại diện |
 | Màu Sắc | Mã màu hex (10 màu có sẵn) |
 | Tỷ Lệ Phân Bổ | Phần trăm thu nhập được phân bổ (0–100%) |
 | Số Dư Hiện Tại | Tổng tiền đang có trong Hũ |
@@ -287,8 +294,8 @@ Mỗi Hũ có các thuộc tính tùy chỉnh:
 #### Các File Liên Quan
 
 **Backend**
-- `JarEntity.java` — Entity JPA cho Hũ chi tiêu
-- `JarService.java` — Logic nghiệp vụ (tạo, cập nhật, xóa, chuyển tiền, tái tính tỷ lệ Ví tổng)
+- `JarEntity.java` — JPA entity cho Hũ chi tiêu
+- `JarService.java` — Business logic (tạo, cập nhật, xóa, chuyển tiền, tái tính tỷ lệ Ví tổng)
 - `JarController.java` — REST controller
 
 **Frontend**
@@ -300,56 +307,56 @@ Mỗi Hũ có các thuộc tính tùy chỉnh:
 - `src/components/QuickExpenseTemplates.jsx` — Chi tiêu nhanh tích hợp chọn Hũ (JarPickerModal)
 
 ### Mục Tiêu Tiết Kiệm
-Tạo mục tiêu với số tiền mục tiêu và thời hạn. Ghi lại những khoản đóng góp. Theo dõi trạng thái ĐANG HOẠT ĐỘNG / HOÀN THÀNH / ĐÃ HỦY. Tự động tính toán khoản đóng góp hàng tháng cần thiết.
+Tạo mục tiêu với số tiền mục tiêu và thời hạn. Ghi lại các khoản đóng góp. Theo dõi trạng thái ACTIVE / COMPLETED / CANCELLED. Tự động tính khoản đóng góp hàng tháng cần thiết.
 
-**Tích hợp AI Agent**: Khi người dùng đang ở trang Mục Tiêu Tiết Kiệm, Nova Money nhận đầy đủ ngữ cảnh của từng mục tiêu (số tiền mục tiêu, đã tích lũy, còn thiếu, tiến độ %, cần/tháng, đã đóng tháng này, ngày hết hạn, trạng thái chậm/đúng tiến độ). AI có thể trả lời câu hỏi như *"còn thiếu bao nhiêu?"*, *"khi nào hoàn thành?"* và thực hiện CREATE / UPDATE / DELETE mục tiêu đúng theo ID.
+**AI Agent integration**: Khi người dùng ở trang Mục Tiêu Tiết Kiệm, Nova Money nhận đầy đủ context của từng mục tiêu (target amount, đã tích lũy, còn thiếu, progress %, cần/tháng, đã đóng tháng này, deadline, trạng thái on-track/behind). AI có thể trả lời *"còn thiếu bao nhiêu?"*, *"khi nào hoàn thành?"* và thực hiện CREATE / UPDATE / DELETE theo ID thực tế.
 
-### Tiện Ích Bảng Điều Khiển
-Bố cục tiện ích có thể tùy chỉnh kéo và thả (qua `@dnd-kit`). Thẻ báo cáo hàng tháng (`MonthlyReportCard`) với điểm chi tiêu A–F, phân tích danh mục, tiến trình tiết kiệm. Người dùng **PREMIUM** có thêm nút phân tích AI trong thẻ báo cáo — gọi Gemini để nhận nhận xét sâu về tình hình tài chính tháng đó.
+### Dashboard Widgets
+Layout có thể tùy chỉnh drag-and-drop (qua `@dnd-kit`). `MonthlyReportCard` với spending score A–F, phân tích danh mục, tiến trình tiết kiệm. **PREMIUM** có thêm nút AI analysis trong report card — gọi Gemini nhận nhận xét sâu về tình hình tài chính tháng đó.
 
-### Chế Độ Hiệu Suất Thấp
-Toggle hiệu suất thấp (lưu trong `localStorage`) giúp tắt các animation nặng trên thiết bị yếu. Trạng thái được cung cấp toàn cục qua `PerformanceContext` (`usePerformance()` hook) và áp dụng attribute `data-performance="low"` trên `<html>` để CSS có thể override.
+### Low Performance Mode
+Toggle (lưu trong `localStorage`) tắt các animation nặng trên thiết bị yếu. State cung cấp toàn cục qua `PerformanceContext` (`usePerformance()` hook) và apply attribute `data-performance="low"` trên `<html>` để CSS override.
 
 ### Xuất Excel
-Báo cáo XLSX qua Apache POI. Bản địa hóa Việt Nam, hàng có mã màu (xanh = thu nhập, đỏ = chi tiêu), màu hàng xen kẽ, tổng được định dạng VND. **Chỉ CƠ BẢN+.**
+Báo cáo XLSX qua Apache POI. Locale Việt Nam, hàng có màu (xanh = thu nhập, đỏ = chi tiêu), alternating row color, tổng định dạng VND. **Chỉ BASIC+.**
 
 ### Báo Cáo Email
-Báo cáo Excel được gửi dưới dạng tệp đính kèm email qua Spring Mail (Brevo SMTP). Bao gồm thẻ báo cáo hàng tháng với điểm chi tiêu. **Chỉ CƠ BẢN+.**
+Báo cáo Excel gửi dưới dạng email attachment qua Spring Mail (Brevo SMTP). Bao gồm monthly report card với spending score. **Chỉ BASIC+.**
 
 ### Xác Thực OTP
-OTP 6 chữ số (BCrypt-hashed) để kích hoạt tài khoản và đặt lại mật khẩu. Hiệu lực 210 giây, cooldown 180 giây, tối đa 5 lần thử, so sánh thời gian không đổi.
+OTP 6 chữ số (BCrypt-hashed) để activate tài khoản và reset mật khẩu. Hiệu lực 210 giây, cooldown 180 giây, tối đa 5 lần thử, constant-time comparison.
 
 ### Google OAuth2
-Đăng nhập bằng Google. Xác thực mã thông báo Google ID, tự động tạo hồ sơ cho người dùng mới, phát hành JWT.
+Đăng nhập bằng Google. Validate Google ID token, tự động tạo profile cho user mới, phát hành JWT.
 
 ### Thanh Toán PayOS
-Tạo liên kết thanh toán, xử lý webhook, tự động đồng bộ hóa trạng thái thanh toán mỗi 30 giây, kích hoạt đăng ký sau khi thanh toán thành công.
+Tạo payment link, xử lý webhook, auto-sync trạng thái thanh toán mỗi 30 giây, kích hoạt subscription sau khi thanh toán thành công.
 
-### Bảo Vệ Chống Spam
-Bảo vệ hai lớp:
-- **Dựa trên Redis**: Bộ đếm gửi email theo tài khoản. Trên 5/phút → khóa 10 phút. Trên 10 → khóa 5 giờ.
-- **Giới Hạn Tốc Độ Trong Bộ Nhớ**: Giới hạn mỗi IP cho mỗi điểm cuối (đăng nhập: 5/phút, quên mật khẩu: 5/phút, gửi lại OTP: 3/phút, AI chat: 15/phút). Trả về HTTP 429 khi vượt quá.
+### Spam Protection
+Hai lớp bảo vệ:
+- **Redis-based**: Đếm email gửi theo account. Trên 5/phút → lock 10 phút. Trên 10 → lock 5 giờ.
+- **In-memory rate limiting**: Giới hạn mỗi IP theo endpoint (login: 5/phút, forgot-password: 5/phút, OTP resend: 3/phút, AI chat: 15/phút). Trả về HTTP 429 khi vượt quá.
 
-### Tải Lên File
-Ảnh hồ sơ được tải lên AWS S3. Xác nhận magic bytes (JPEG/PNG/GIF/WebP chỉ).
+### File Upload
+Ảnh profile upload lên AWS S3. Validate magic bytes (JPEG/PNG/GIF/WebP only).
 
-### Hóa Đơn PDF
-AWS Lambda tạo hóa đơn PDF sau khi thanh toán thành công.
+### PDF Invoice
+AWS Lambda tạo PDF invoice sau khi thanh toán thành công.
 
-### Thông Báo
-Thông báo trong ứng dụng + email với các công tắc cho mỗi loại. Cảnh báo ngân sách, nhắc nhở mục tiêu tiết kiệm, xác nhận thanh toán.
+### Notifications
+In-app + email notifications với toggle cho từng loại. Budget alerts, saving goal reminders, payment confirmations.
 
-### Bảng Điều Khiển Quản Trị
-Chỉ vai trò `ADMIN`. Quản lý người dùng (CRUD), giám sát thanh toán, quản lý đăng ký, thông báo phát sóng, thống kê tổng quan.
+### Admin Dashboard
+Chỉ role `ADMIN`. Quản lý users (CRUD), giám sát payments, quản lý subscriptions, broadcast notifications, thống kê tổng quan.
 
-### Ứng Dụng Mobile
-React Native (Expo). Điều hướng tab dưới (Bảng Điều Khiển + Màn Hình Chi Tiêu). Xác thực JWT được lưu trữ trong AsyncStorage. Kéo để làm mới.
+### Mobile App
+React Native (Expo). Bottom tab navigation (Dashboard + Expenses). JWT auth lưu trong AsyncStorage. Pull-to-refresh.
 
 ---
 
-## Cổng Mặc Định
+## Default Ports
 
-| Dịch Vụ | Cổng |
+| Service | Port |
 |---|---|
 | Backend (Spring Boot) | 8080 |
 | Frontend (Vite dev) | 5173 |
@@ -358,7 +365,7 @@ React Native (Expo). Điều hướng tab dưới (Bảng Điều Khiển + Màn
 
 ---
 
-## Bắt Đầu Nhanh
+## Quick Start
 
 ```bash
 # Backend

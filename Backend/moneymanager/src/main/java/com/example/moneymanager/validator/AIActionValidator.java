@@ -40,12 +40,7 @@ public class AIActionValidator {
         if (!isCrud) return;
 
         if (features.getPlan() == com.example.moneymanager.entity.SubscriptionPlan.FREE) {
-            if (intent.contains("BUDGET") || intent.contains("SAVING_GOAL")) {
-                errors.add("Tính năng này yêu cầu gói BASIC trở lên. Vui lòng nâng cấp.");
-            }
-            if (intent.startsWith("DELETE_")) {
-                errors.add("Gói FREE không hỗ trợ xóa dữ liệu. Vui lòng nâng cấp.");
-            }
+            errors.add("Nova Money Agent yêu cầu gói BASIC trở lên.");
         }
     }
 

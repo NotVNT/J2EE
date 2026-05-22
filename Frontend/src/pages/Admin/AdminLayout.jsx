@@ -1,5 +1,5 @@
 import { Outlet, Link, useNavigate, useLocation } from "react-router-dom";
-import { LayoutDashboard, Wallet, Settings, LogOut, Package, Menu, X, ArrowLeft, Sun, Moon, Bell, Users, Sparkles } from "lucide-react";
+import { LayoutDashboard, Wallet, Settings, LogOut, Package, Menu, X, ArrowLeft, Sun, Moon, Bell, Users } from "lucide-react";
 import { useContext, useState } from "react";
 import { AppContext } from "../../context/AppContext";
 import { useTheme } from "../../context/ThemeContext";
@@ -59,7 +59,6 @@ const AdminLayout = () => {
         <NavItem to="/admin/payments" icon={Wallet} label="Thanh toán" onClick={closeSidebar} />
         <NavItem to="/admin/subscriptions" icon={Package} label="Gói cước" onClick={closeSidebar} />
         <NavItem to="/admin/notifications" icon={Bell} label="Thông báo" onClick={closeSidebar} />
-        <NavItem to="/admin/ai-limits" icon={Sparkles} label="Hạn mức AI" onClick={closeSidebar} />
         <NavItem to="/admin/settings" icon={Settings} label="Cài đặt" onClick={closeSidebar} />
       </nav>
 

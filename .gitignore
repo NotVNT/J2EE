@@ -1,6 +1,7 @@
 # === Personal configuration files (top-level guidance docs) ===
 CLAUDE.md
 COPILOT.md
+ANTIGRAVITY.md
 
 # === AI Assistant Rules & Guidelines (LOCAL ONLY) ===
 .claude/
@@ -16,6 +17,13 @@ COPILOT.md
 .agent.md
 AGENTS.md
 COMMANDCODE.md
+
+# GitHub Copilot agent-skills (local only — copied from agent-skills repo)
+.github/agents/
+.github/skills/
+
+# RTK / Antigravity agent rules (local only)
+.agents/
 
 
 # === Environment files (ALL levels — never commit secrets) ===

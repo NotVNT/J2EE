@@ -8,6 +8,7 @@ import com.example.moneymanager.dto.AIChatMessageDTO;
 import com.example.moneymanager.dto.AIChatRequestDTO;
 import com.example.moneymanager.dto.AIChatResponseDTO;
 import com.example.moneymanager.entity.SubscriptionPlan;
+import com.example.moneymanager.exception.ForbiddenException;
 import com.example.moneymanager.util.OpenRouterResponseParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -54,18 +55,16 @@ public class AIChatService {
         List<AIChatMessageDTO> trimmedMessages = trimHistory(request.getMessages());
 
         String provider = request.getProvider();
+        SubscriptionPlan plan = profileService.getCurrentProfile().getSubscriptionPlan();
+
+        if (plan != SubscriptionPlan.PREMIUM && !"ninerouter".equalsIgnoreCase(provider)) {
+            throw new ForbiddenException("Model này yêu cầu gói PREMIUM. Vui lòng nâng cấp để sử dụng.");
+        }
+
         if ("gptoss".equalsIgnoreCase(provider)) {
             return chatWithGptOss(trimmedMessages);
         }
         if ("ninerouter".equalsIgnoreCase(provider)) {
-            SubscriptionPlan plan = profileService.getCurrentProfile().getSubscriptionPlan();
-            if (plan != SubscriptionPlan.PREMIUM) {
-                return AIChatResponseDTO.builder()
-                        .reply("Model EXPERIMENTAL chỉ khả dụng cho gói PREMIUM. Vui lòng nâng cấp để sử dụng.")
-                        .provider("ninerouter")
-                        .modelUsed(nineRouterProperties.chat() != null ? nineRouterProperties.chat().model() : "project-demo")
-                        .build();
-            }
             return chatWithNineRouter(trimmedMessages);
         }
         return chatWithGemini(trimmedMessages);
@@ -76,6 +75,11 @@ public class AIChatService {
         List<AIChatMessageDTO> trimmedMessages = trimHistory(request.getMessages());
 
         String provider = request.getProvider() != null ? request.getProvider() : "gemini";
+        SubscriptionPlan plan = profileService.getCurrentProfile().getSubscriptionPlan();
+        if (plan != SubscriptionPlan.PREMIUM && !"ninerouter".equalsIgnoreCase(provider)) {
+            throw new ForbiddenException("Model này yêu cầu gói PREMIUM. Vui lòng nâng cấp để sử dụng.");
+        }
+
         if ("ninerouter".equalsIgnoreCase(provider)) {
             NineRouterProperties.Section agent = nineRouterProperties.agent();
             if (agent == null || agent.apiKey() == null || agent.apiKey().isBlank()) {

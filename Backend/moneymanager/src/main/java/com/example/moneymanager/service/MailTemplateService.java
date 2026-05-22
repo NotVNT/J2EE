@@ -230,7 +230,7 @@ public class MailTemplateService {
             // CTA button
             + "<table role=\"presentation\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\" width=\"100%\" style=\"margin:0 0 8px;\">"
             + "<tr><td align=\"center\">"
-            + "<a href=\"https://moneymanager.io/dashboard\" style=\"display:inline-block;background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%);color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;padding:14px 36px;border-radius:10px;letter-spacing:0.3px;\">&#128640; B&#7855;t &#273;&#7847;u ngay</a>"
+            + "<a href=\"https://botdevgroup.me/dashboard\" style=\"display:inline-block;background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%);color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;padding:14px 36px;border-radius:10px;letter-spacing:0.3px;\">&#128640; B&#7855;t &#273;&#7847;u ngay</a>"
             + "</td></tr></table>";
 
         return wrapInTemplate("Chào mừng đến với Money Manager", content);
