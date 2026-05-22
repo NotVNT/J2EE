@@ -27,6 +27,12 @@ export default function AddExpenseScreen() {
   const [splitInfo, setSplitInfo] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
+  // States for Spending Jars
+  const [jars, setJars] = useState([]);
+  const [jarId, setJarId] = useState("");
+  const [jarsLoading, setJarsLoading] = useState(true);
+
+  // Fetch Categories on mount
   useEffect(() => {
     const fetchCategories = async () => {
       setCategoryLoading(true);
@@ -45,6 +51,36 @@ export default function AddExpenseScreen() {
 
     fetchCategories();
   }, []);
+
+  // Fetch Jars on mount
+  useEffect(() => {
+    const fetchJars = async () => {
+      setJarsLoading(true);
+      try {
+        const res = await http.get(API_ENDPOINTS.GET_JARS);
+        const data = Array.isArray(res.data) ? res.data : [];
+        setJars(data);
+
+        // Pre-select logic based on defaultJarId from navigation params or Ví tổng
+        if (route.params?.defaultJarId) {
+          setJarId(String(route.params.defaultJarId));
+        } else if (data.length > 0) {
+          const parentWallet = data.find((j) => j.name === "Ví tổng");
+          if (parentWallet) {
+            setJarId(String(parentWallet.id));
+          } else {
+            setJarId(String(data[0].id));
+          }
+        }
+      } catch (error) {
+        console.error("Lỗi tải danh sách hũ:", error);
+      } finally {
+        setJarsLoading(false);
+      }
+    };
+
+    fetchJars();
+  }, [route.params?.defaultJarId]);
 
   // Cập nhật form nếu có initialData mới từ route params (từ Voice AI bên ngoài)
   useEffect(() => {
@@ -129,7 +165,8 @@ export default function AddExpenseScreen() {
         amount: numericAmount,
         categoryId: Number(categoryId),
         date,
-        icon: "💸"
+        icon: "💸",
+        jarId: jarId ? Number(jarId) : null,
       };
 
       // Gửi note nếu có
@@ -199,6 +236,42 @@ export default function AddExpenseScreen() {
 
       <PickDateField label="Ngày" value={date} onChange={setDate} />
 
+      {/* Hũ chi tiêu liên kết */}
+      <Text style={styles.label}>Hũ chi tiêu liên kết</Text>
+      {jarsLoading ? (
+        <Text style={styles.loadingText}>Đang tải danh sách hũ...</Text>
+      ) : jars.length === 0 ? (
+        <Text style={styles.emptyText}>Chưa tạo hũ chi tiêu nào. Hãy thiết lập trong Tiện ích khác.</Text>
+      ) : (
+        <View style={styles.jarsSection}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.jarsContainer}>
+            {jars.map((j) => {
+              const isSelected = String(j.id) === jarId;
+              return (
+                <Pressable
+                  key={j.id}
+                  onPress={() => setJarId(isSelected ? "" : String(j.id))}
+                  style={[
+                    styles.jarItem,
+                    isSelected && {
+                      borderColor: j.color || COLORS.PRIMARY,
+                      backgroundColor: (j.color || COLORS.PRIMARY) + "12",
+                    },
+                  ]}
+                >
+                  <View style={[styles.jarEmojiBox, { backgroundColor: (j.color || COLORS.PRIMARY) + "18" }]}>
+                    <Text style={styles.jarEmoji}>{j.icon || "🏺"}</Text>
+                  </View>
+                  <Text style={[styles.jarName, isSelected && { color: j.color || COLORS.PRIMARY, fontWeight: "800" }]}>
+                    {j.name}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </View>
+      )}
+
       <Text style={styles.label}>Danh mục</Text>
       <CategoryGridSelector
         categories={categories}
@@ -263,12 +336,57 @@ const styles = StyleSheet.create({
     color: COLORS.PRIMARY,
     marginTop: 4
   },
-
+  jarsSection: {
+    marginBottom: 12,
+  },
+  jarsContainer: {
+    paddingVertical: 4,
+    flexDirection: "row",
+    gap: 8,
+  },
+  jarItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: COLORS.CARD,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.CARD_BORDER,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginRight: 8,
+  },
+  jarEmojiBox: {
+    width: 26,
+    height: 26,
+    borderRadius: 6,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 8,
+  },
+  jarEmoji: {
+    fontSize: 14,
+  },
+  jarName: {
+    fontSize: 13,
+    color: COLORS.TEXT,
+    fontWeight: "600",
+  },
+  loadingText: {
+    fontSize: 13,
+    color: COLORS.TEXT_MUTED,
+    marginBottom: 12,
+  },
+  emptyText: {
+    fontSize: 13,
+    color: COLORS.TEXT_MUTED,
+    marginBottom: 12,
+  },
   saveButton: {
     backgroundColor: COLORS.PRIMARY,
     borderRadius: 12,
     paddingVertical: 13,
-    alignItems: "center"
+    alignItems: "center",
+    marginTop: 12
   },
   saveButtonDisabled: {
     opacity: 0.6

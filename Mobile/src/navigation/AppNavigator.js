@@ -36,6 +36,10 @@ import ChatScreen from "../screens/ChatScreen";
 import ReportsScreen from "../screens/ReportsScreen";
 import ReceiptPreviewScreen from "../screens/ReceiptPreviewScreen";
 import OnboardingScreen, { ONBOARDING_KEY } from "../screens/OnboardingScreen";
+import JarScreen from "../screens/JarScreen";
+import JarDetailScreen from "../screens/JarDetailScreen";
+import JarFormScreen from "../screens/JarFormScreen";
+import JarTransferScreen from "../screens/JarTransferScreen";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -161,6 +165,10 @@ function AppStack() {
       <Stack.Screen name="Forecast" component={ForecastScreen} options={{ title: "Dự báo & Bất thường" }} />
       <Stack.Screen name="Chat" component={ChatScreen} options={{ title: "Gemini AI Chat" }} />
       <Stack.Screen name="Reports" component={ReportsScreen} options={{ title: "Báo cáo tháng" }} />
+      <Stack.Screen name="Jars" component={JarScreen} options={{ title: "Hũ chi tiêu" }} />
+      <Stack.Screen name="JarDetail" component={JarDetailScreen} options={({ route }) => ({ title: route.params?.name || "Chi tiết hũ" })} />
+      <Stack.Screen name="JarForm" component={JarFormScreen} options={{ title: "Thiết lập hũ" }} />
+      <Stack.Screen name="JarTransfer" component={JarTransferScreen} options={{ title: "Chuyển tiền" }} />
       <Stack.Screen name="ReceiptPreview" component={ReceiptPreviewScreen} options={{ title: "Xem trước hóa đơn" }} />
     </Stack.Navigator>
   );

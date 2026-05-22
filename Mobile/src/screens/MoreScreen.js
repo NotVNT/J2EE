@@ -110,6 +110,16 @@ export default function MoreScreen() {
       />
 
       <View style={styles.sectionHeaderRow}>
+        <Text style={styles.sectionTitle}>Quản lý tài chính</Text>
+      </View>
+
+      <MenuCard
+        title="Hũ chi tiêu"
+        description="Phân bổ thu nhập & quản lý tiền theo từng ví phụ"
+        onPress={() => navigation.navigate("Jars")}
+      />
+
+      <View style={styles.sectionHeaderRow}>
         <Text style={styles.sectionTitle}>AI & Phân tích chuyên sâu</Text>
       </View>
 
