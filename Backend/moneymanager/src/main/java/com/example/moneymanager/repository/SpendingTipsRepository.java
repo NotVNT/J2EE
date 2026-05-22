@@ -7,4 +7,5 @@ import java.util.Optional;
 
 public interface SpendingTipsRepository extends JpaRepository<SpendingTipEntity, Long> {
     Optional<SpendingTipEntity> findTopByProfileIdOrderByGeneratedAtDesc(Long profileId);
+    void deleteByProfileId(Long profileId);
 }

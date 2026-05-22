@@ -43,7 +43,6 @@ export const API_ENDPOINTS = {
     // Expense endpoints
     GET_ALL_EXPENSE: "/expenses",
     ADD_EXPENSE: "/expenses",
-    IMPORT_EXPENSE_RECEIPT: "/expenses/import-receipt",
     ANALYZE_EXPENSE_RECEIPT: "/expenses/import-receipt/analyze",
     CONFIRM_EXPENSE_RECEIPT_IMPORT: "/expenses/import-receipt/confirm",
     DELETE_EXPENSE: (expenseId) => `/expenses/${expenseId}`,
@@ -61,8 +60,6 @@ export const API_ENDPOINTS = {
     DELETE_BUDGET: (budgetId) => `/budgets/${budgetId}`,
 
     // AI assistant endpoints
-    GEMINI_CHAT: "/gemini/chat",
-    GEMINI_SPENDING_TIPS: "/gemini/spending-tips",
     AI_CHAT: "/ai/chat",
     AI_PARSE_INTENT: "/ai/parse-intent",
     AI_CONFIRM_ACTION: "/ai/confirm-action",

@@ -12,4 +12,5 @@ public interface JarRepository extends JpaRepository<JarEntity, Long> {
     List<JarEntity> findByProfile(ProfileEntity profile);
     List<JarEntity> findByProfileId(Long profileId);
     long countByProfileId(Long profileId);
+    void deleteByProfileId(Long profileId);
 }

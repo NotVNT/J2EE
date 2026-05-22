@@ -30,6 +30,8 @@ public class AdminService {
     private final SavingGoalRepository savingGoalRepository;
     private final SavingGoalContributionRepository savingGoalContributionRepository;
     private final EmailNotificationPreferenceRepository emailNotificationPreferenceRepository;
+    private final JarRepository jarRepository;
+    private final SpendingTipsRepository spendingTipsRepository;
 
     @Transactional(readOnly = true)
     public AdminOverviewDTO getOverview() {
@@ -256,6 +258,8 @@ public class AdminService {
         categoryRepository.deleteByProfileId(id);
         paymentRepository.deleteByProfileId(id);
         emailNotificationPreferenceRepository.deleteByProfileId(id);
+        jarRepository.deleteByProfileId(id);
+        spendingTipsRepository.deleteByProfileId(id);
 
         profileRepository.deleteById(id);
     }
