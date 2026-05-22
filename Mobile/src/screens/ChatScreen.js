@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useContext } from "react";
 import {
   StyleSheet,
   Text,
@@ -9,10 +9,12 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  SafeAreaView
+  SafeAreaView,
+  Alert
 } from "react-native";
 import { COLORS } from "../constants/colors";
 import { sendAiChat } from "../services/aiService";
+import { AuthContext } from "../components/AuthContext";
 
 const SUGGESTED_PROMPTS = [
   "Làm sao tiết kiệm 20% thu nhập?",
@@ -38,7 +40,10 @@ function MessageBubble({ message }) {
 }
 
 export default function ChatScreen() {
-  const [provider, setProvider] = useState("gemini"); // "gemini" | "gptoss"
+  const { user } = useContext(AuthContext);
+  const isPremium = user?.subscriptionPlan === "PREMIUM";
+
+  const [provider, setProvider] = useState("gptoss"); // "gptoss" | "ninerouter"
   const [messages, setMessages] = useState([
     {
       id: "welcome",
@@ -106,24 +111,56 @@ export default function ChatScreen() {
     sendMessage(prompt);
   };
 
+  const handleModelChange = (targetProvider) => {
+    if (targetProvider === "ninerouter") {
+      if (!isPremium) {
+        Alert.alert(
+          "Yêu cầu gói PREMIUM",
+          "Model EXPERIMENTAL chỉ khả dụng cho gói PREMIUM. Vui lòng nâng cấp tài khoản để sử dụng.",
+          [{ text: "Đóng", style: "cancel" }]
+        );
+        return;
+      }
+
+      Alert.alert(
+        "Kích hoạt mô hình thử nghiệm",
+        "Bạn đang chọn sử dụng model EXPERIMENTAL (Gemma 4 31B). Mô hình này có hiệu suất cao nhưng có thể phản hồi không ổn định trong một số trường hợp. Bạn có muốn tiếp tục?",
+        [
+          { text: "Hủy", style: "cancel" },
+          {
+            text: "Xác nhận",
+            onPress: () => setProvider("ninerouter")
+          }
+        ]
+      );
+      return;
+    }
+    setProvider(targetProvider);
+  };
+
+  const getModelLabel = () => {
+    if (provider === "gptoss") return "GPT-OSS 120B";
+    return "Gemma 4 31B (Experimental)";
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Model Selector Bar */}
       <View style={styles.selectorContainer}>
         <Pressable
-          style={[styles.selectorButton, provider === "gemini" && styles.selectorActive]}
-          onPress={() => setProvider("gemini")}
+          style={[styles.selectorButton, provider === "gptoss" && styles.selectorActive]}
+          onPress={() => handleModelChange("gptoss")}
         >
-          <Text style={[styles.selectorText, provider === "gemini" && styles.selectorActiveText]}>
-            ✨ Gemini AI (Lite)
+          <Text style={[styles.selectorText, provider === "gptoss" && styles.selectorActiveText]}>
+            🤖 GPT-OSS 120B
           </Text>
         </Pressable>
         <Pressable
-          style={[styles.selectorButton, provider === "gptoss" && styles.selectorActive]}
-          onPress={() => setProvider("gptoss")}
+          style={[styles.selectorButton, provider === "ninerouter" && styles.selectorActive]}
+          onPress={() => handleModelChange("ninerouter")}
         >
-          <Text style={[styles.selectorText, provider === "gptoss" && styles.selectorActiveText]}>
-            ⚡ GPT-OSS (Nova)
+          <Text style={[styles.selectorText, provider === "ninerouter" && styles.selectorActiveText]}>
+            {isPremium ? "🧪 EXPERIMENTAL" : "🔒 EXPERIMENTAL"}
           </Text>
         </Pressable>
       </View>
@@ -144,7 +181,7 @@ export default function ChatScreen() {
               <View style={styles.loadingContainer}>
                 <ActivityIndicator color={COLORS.PRIMARY} size="small" />
                 <Text style={styles.loadingText}>
-                  {provider === "gemini" ? "Gemini AI" : "GPT-OSS Nova"} đang suy nghĩ...
+                  {getModelLabel()} đang suy nghĩ...
                 </Text>
               </View>
             ) : null
@@ -171,7 +208,7 @@ export default function ChatScreen() {
         <View style={styles.inputContainer}>
           <TextInput
             style={styles.input}
-            placeholder={`Hỏi ${provider === "gemini" ? "Gemini AI" : "GPT-OSS Nova"} về tài chính...`}
+            placeholder={`Hỏi ${getModelLabel()} về tài chính...`}
             placeholderTextColor={COLORS.TEXT_MUTED}
             value={inputText}
             onChangeText={setInputText}

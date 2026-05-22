@@ -12,9 +12,9 @@ export const sendGeminiChat = async (message) => {
 };
 
 /**
- * Send a multi-turn chat message to chosen provider (Gemini or GPT-OSS)
+ * Send a multi-turn chat message to chosen provider (Gemini, GPT-OSS, or NineRouter)
  * @param {Array<{role: string, content: string}>} messages 
- * @param {string} provider - "gemini" | "gptoss"
+ * @param {string} provider - "gemini" | "gptoss" | "ninerouter"
  * @returns {Promise<{reply: string, provider: string, modelUsed: string}>}
  */
 export const sendAiChat = async (messages, provider = "gemini") => {
