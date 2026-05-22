@@ -1,7 +1,7 @@
 package com.example.moneymanager.service;
 
-import com.example.moneymanager.config.GeminiKeyRotator;
-import com.example.moneymanager.config.GeminiProperties;
+import com.example.moneymanager.config.NineRouterProperties;
+import org.springframework.beans.factory.annotation.Qualifier;
 import com.example.moneymanager.dto.ExpenseDTO;
 import com.example.moneymanager.dto.ExpenseResponseDTO;
 import com.example.moneymanager.dto.ReceiptImportAnalyzeResponseDTO;
@@ -39,9 +39,9 @@ public class ReceiptImportService {
     private static final String OTHER_CATEGORY_NAME = "Khác";
     private static final String OTHER_CATEGORY_ICON = "CircleHelp";
 
-    private final RestClient geminiRestClient;
-    private final GeminiProperties geminiProperties;
-    private final GeminiKeyRotator geminiKeyRotator;
+    @Qualifier("nineRouterAgentRestClient")
+    private final RestClient nineRouterAgentRestClient;
+    private final NineRouterProperties nineRouterProperties;
     private final ObjectMapper objectMapper;
     private final ProfileService profileService;
     private final CategoryRepository categoryRepository;
@@ -68,7 +68,7 @@ public class ReceiptImportService {
         );
         CategoryEntity otherCategory = ensureOtherExpenseCategory(profile, expenseCategories);
 
-        JsonNode aiResult = analyzeReceiptWithGemini(file, expenseCategories);
+        JsonNode aiResult = analyzeReceiptWithOpenModel(file, expenseCategories);
         return buildPreviewFromAiResult(aiResult, expenseCategories, otherCategory);
     }
 
@@ -241,29 +241,27 @@ public class ReceiptImportService {
         return true;
     }
 
-    private JsonNode analyzeReceiptWithGemini(MultipartFile file, List<CategoryEntity> expenseCategories) {
+    private JsonNode analyzeReceiptWithOpenModel(MultipartFile file, List<CategoryEntity> expenseCategories) {
         try {
             String base64Image = Base64.getEncoder().encodeToString(file.getBytes());
-            ObjectNode requestBody = buildGeminiImageRequest(base64Image, file.getContentType(), expenseCategories);
+            ObjectNode requestBody = buildOpenAIImageRequest(base64Image, file.getContentType(), expenseCategories);
 
             String requestJson = objectMapper.writeValueAsString(requestBody);
-            String responseJson = geminiRestClient.post()
-                    .uri(uriBuilder -> uriBuilder
-                            .path("/v1beta/models/{model}:generateContent")
-                            .queryParam("key", geminiKeyRotator.nextKey())
-                            .build(geminiProperties.model()))
+            String responseJson = nineRouterAgentRestClient.post()
+                    .uri("/chat/completions")
+                    .header("Authorization", "Bearer " + nineRouterProperties.agent().apiKey())
                     .body(requestJson)
                     .retrieve()
                     .body(String.class);
 
             if (responseJson == null || responseJson.isBlank()) {
-                throw new RuntimeException("Gemini không trả về dữ liệu để phân tích hóa đơn.");
+                throw new RuntimeException("Model không trả về dữ liệu để phân tích hóa đơn.");
             }
 
             JsonNode root = objectMapper.readTree(responseJson);
-            String text = extractOutputText(root);
+            String text = extractOpenAIOutputText(root);
             if (text == null || text.isBlank()) {
-                throw new RuntimeException("Gemini không trả về kết quả phân tích hóa đơn hợp lệ.");
+                throw new RuntimeException("Model không trả về kết quả phân tích hóa đơn hợp lệ.");
             }
 
             String cleanJson = sanitizeJsonResponse(text);
@@ -273,141 +271,90 @@ public class ReceiptImportService {
         }
     }
 
-    private ObjectNode buildGeminiImageRequest(String base64Image, String mimeType, List<CategoryEntity> expenseCategories) {
+    private ObjectNode buildOpenAIImageRequest(String base64Image, String mimeType, List<CategoryEntity> expenseCategories) {
         List<String> categoryNames = expenseCategories.stream()
                 .map(CategoryEntity::getName)
                 .collect(Collectors.toCollection(ArrayList::new));
-        if (categoryNames.stream().noneMatch(n -> normalize(n).equals("khac"))) {
+        if (categoryNames.stream().noneMatch(n -> Normalizer.normalize(n, Normalizer.Form.NFD).replaceAll("\\p{M}", "").toLowerCase(Locale.ROOT).equals("khac"))) {
             categoryNames.add(OTHER_CATEGORY_NAME);
         }
         String categoryListText = String.join(", ", categoryNames);
 
         ObjectNode requestBody = objectMapper.createObjectNode();
+        requestBody.put("model", nineRouterProperties.agent().model());
+        requestBody.put("temperature", 0.1);
 
-        ArrayNode contents = objectMapper.createArrayNode();
+        ObjectNode responseFormat = objectMapper.createObjectNode();
+        responseFormat.put("type", "json_object");
+        requestBody.set("response_format", responseFormat);
+
+        ArrayNode messages = objectMapper.createArrayNode();
         ObjectNode userMessage = objectMapper.createObjectNode();
         userMessage.put("role", "user");
 
-        ArrayNode parts = objectMapper.createArrayNode();
-        ObjectNode promptPart = objectMapper.createObjectNode();
-        promptPart.put("text",
-                "Bạn là hệ thống OCR tài chính. Phân tích hóa đơn trong ảnh và trả về JSON hợp lệ.\n\n" +
+        ArrayNode content = objectMapper.createArrayNode();
+        
+        ObjectNode textContent = objectMapper.createObjectNode();
+        textContent.put("type", "text");
+        textContent.put("text", 
+                "Bạn là hệ thống OCR tài chính. Phân tích hóa đơn trong ảnh và trả về ĐÚNG MỘT JSON OBJECT hợp lệ (không chứa text bên ngoài JSON).\n\n" +
                 "Danh mục chi tiêu của người dùng (dùng đúng tên, phân biệt hoa thường):\n" +
                 categoryListText + "\n\n" +
-                """
-                Quy tắc bắt buộc:
-                1. Trích xuất TẤT CẢ dòng sản phẩm/dịch vụ trong hóa đơn, không bỏ sót.
-                2. amount là số nguyên VND. Nếu có "SL x đơn giá" hoặc "số lượng x đơn giá", tính amount = số lượng × đơn giá.
-                3. Hóa đơn VN dùng dấu chấm (.) phân cách hàng nghìn (45.000 = 45000, 1.200.000 = 1200000). Đọc đúng số.
-                4. BỎ QUA các dòng không phải sản phẩm cụ thể: Tổng cộng, Tổng tiền, Thành tiền, VAT, Thuế GTGT, Phí dịch vụ, Giảm giá, Khuyến mãi, Chiết khấu, Tiền thừa, Tiền trả lại.
-                5. Chỉ lấy item có amount > 0.
-                6. categoryName PHẢI là một trong các tên danh mục được liệt kê ở trên. Nếu không phù hợp thì dùng "Khác".
-                7. receiptDate định dạng YYYY-MM-DD, hoặc null nếu không có trên hóa đơn.
-                8. location là địa chỉ/tên chi nhánh ghi trên hóa đơn (không phải tên thương hiệu), null nếu không có.
-                """);
-        parts.add(promptPart);
+                "Quy tắc bắt buộc:\n" +
+                "1. Trích xuất TẤT CẢ dòng sản phẩm/dịch vụ trong hóa đơn.\n" +
+                "2. amount là số nguyên VND (VD: 45000). Nếu có số lượng và đơn giá, amount = số lượng x đơn giá.\n" +
+                "3. BỎ QUA các dòng không phải sản phẩm (Tổng cộng, VAT, Giảm giá, Tiền thối...).\n" +
+                "4. categoryName PHẢI thuộc danh sách ở trên.\n" +
+                "5. receiptDate định dạng YYYY-MM-DD, hoặc null.\n" +
+                "6. location là địa chỉ/tên chi nhánh ghi trên hóa đơn, hoặc null.\n" +
+                "7. Trả về đúng định dạng JSON object sau:\n" +
+                "{\n" +
+                "  \"merchant\": \"Tên cửa hàng\",\n" +
+                "  \"location\": \"Địa chỉ\",\n" +
+                "  \"receiptDate\": \"YYYY-MM-DD\",\n" +
+                "  \"items\": [\n" +
+                "    {\n" +
+                "      \"name\": \"Tên món\",\n" +
+                "      \"amount\": 150000,\n" +
+                "      \"categoryName\": \"Tên danh mục\"\n" +
+                "    }\n" +
+                "  ]\n" +
+                "}");
+        content.add(textContent);
 
-        ObjectNode imagePart = objectMapper.createObjectNode();
-        ObjectNode inlineData = objectMapper.createObjectNode();
-        inlineData.put("mime_type", mimeType != null ? mimeType : "image/jpeg");
-        inlineData.put("data", base64Image);
-        imagePart.set("inline_data", inlineData);
-        parts.add(imagePart);
+        ObjectNode imageContent = objectMapper.createObjectNode();
+        imageContent.put("type", "image_url");
+        ObjectNode imageUrl = objectMapper.createObjectNode();
+        String safeMimeType = mimeType != null ? mimeType : "image/jpeg";
+        imageUrl.put("url", "data:" + safeMimeType + ";base64," + base64Image);
+        imageContent.set("image_url", imageUrl);
+        content.add(imageContent);
 
-        userMessage.set("parts", parts);
-        contents.add(userMessage);
-        requestBody.set("contents", contents);
+        userMessage.set("content", content);
+        messages.add(userMessage);
 
-        ObjectNode generationConfig = objectMapper.createObjectNode();
-        generationConfig.put("temperature", 0.1);
-        generationConfig.put("maxOutputTokens", 4096);
-        generationConfig.put("responseMimeType", "application/json");
-        generationConfig.set("responseSchema", buildReceiptResponseSchema(categoryNames));
-        requestBody.set("generationConfig", generationConfig);
+        requestBody.set("messages", messages);
 
         return requestBody;
     }
 
-    private ObjectNode buildReceiptResponseSchema(List<String> categoryNames) {
-        ObjectNode nameField = objectMapper.createObjectNode();
-        nameField.put("type", "STRING");
-
-        ObjectNode amountField = objectMapper.createObjectNode();
-        amountField.put("type", "NUMBER");
-
-        ObjectNode categoryField = objectMapper.createObjectNode();
-        categoryField.put("type", "STRING");
-        ArrayNode enumValues = categoryField.putArray("enum");
-        categoryNames.forEach(enumValues::add);
-
-        ObjectNode itemProps = objectMapper.createObjectNode();
-        itemProps.set("name", nameField);
-        itemProps.set("amount", amountField);
-        itemProps.set("categoryName", categoryField);
-
-        ObjectNode itemSchema = objectMapper.createObjectNode();
-        itemSchema.put("type", "OBJECT");
-        itemSchema.set("properties", itemProps);
-        itemSchema.putArray("required").add("name").add("amount").add("categoryName");
-
-        ObjectNode itemsArray = objectMapper.createObjectNode();
-        itemsArray.put("type", "ARRAY");
-        itemsArray.set("items", itemSchema);
-
-        ObjectNode merchantField = objectMapper.createObjectNode();
-        merchantField.put("type", "STRING");
-
-        ObjectNode locationField = objectMapper.createObjectNode();
-        locationField.put("type", "STRING");
-        locationField.put("nullable", true);
-
-        ObjectNode dateField = objectMapper.createObjectNode();
-        dateField.put("type", "STRING");
-        dateField.put("nullable", true);
-
-        ObjectNode rootProps = objectMapper.createObjectNode();
-        rootProps.set("merchant", merchantField);
-        rootProps.set("location", locationField);
-        rootProps.set("receiptDate", dateField);
-        rootProps.set("items", itemsArray);
-
-        ObjectNode schema = objectMapper.createObjectNode();
-        schema.put("type", "OBJECT");
-        schema.set("properties", rootProps);
-        schema.putArray("required").add("merchant").add("items");
-
-        return schema;
-    }
-
-    private String extractOutputText(JsonNode responseBody) {
+    private String extractOpenAIOutputText(JsonNode responseBody) {
         if (responseBody == null) {
             return null;
         }
 
-        JsonNode candidates = responseBody.path("candidates");
-        if (!candidates.isArray() || candidates.isEmpty()) {
+        JsonNode choices = responseBody.path("choices");
+        if (!choices.isArray() || choices.isEmpty()) {
             return null;
         }
 
-        StringBuilder builder = new StringBuilder();
-        for (JsonNode candidate : candidates) {
-            JsonNode parts = candidate.path("content").path("parts");
-            if (!parts.isArray()) {
-                continue;
-            }
-
-            for (JsonNode part : parts) {
-                JsonNode text = part.get("text");
-                if (text != null && !text.isNull()) {
-                    if (!builder.isEmpty()) {
-                        builder.append('\n');
-                    }
-                    builder.append(text.asText());
-                }
-            }
+        JsonNode message = choices.get(0).path("message");
+        JsonNode content = message.get("content");
+        if (content != null && !content.isNull()) {
+            return content.asText().trim();
         }
 
-        return builder.toString().trim();
+        return null;
     }
 
     private String sanitizeJsonResponse(String rawText) {
