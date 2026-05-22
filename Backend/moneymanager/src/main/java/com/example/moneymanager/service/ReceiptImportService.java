@@ -10,6 +10,7 @@ import com.example.moneymanager.dto.ReceiptImportItemDTO;
 import com.example.moneymanager.dto.ReceiptImportResponseDTO;
 import com.example.moneymanager.entity.CategoryEntity;
 import com.example.moneymanager.entity.ProfileEntity;
+import com.example.moneymanager.exception.ReceiptImportException;
 import com.example.moneymanager.repository.CategoryRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -62,14 +63,14 @@ public class ReceiptImportService {
         subscriptionService.ensureCanImportReceipt(profile);
 
         if (file == null || file.isEmpty()) {
-            throw new RuntimeException("Vui lòng chọn hình ảnh hóa đơn để import.");
+            throw new ReceiptImportException("Vui lòng chọn hình ảnh hóa đơn để import.");
         }
 
         byte[] fileBytes;
         try {
             fileBytes = file.getBytes();
         } catch (java.io.IOException e) {
-            throw new RuntimeException("Không thể đọc tệp ảnh.", e);
+            throw new ReceiptImportException("Không thể đọc tệp ảnh.", e);
         }
 
         validateFile(file, fileBytes);
@@ -88,7 +89,7 @@ public class ReceiptImportService {
         subscriptionService.ensureCanImportReceipt(profile);
 
         if (requestDTO == null || requestDTO.getItems() == null || requestDTO.getItems().isEmpty()) {
-            throw new RuntimeException("Danh sách chi tiêu import không được để trống.");
+            throw new ReceiptImportException("Danh sách chi tiêu import không được để trống.");
         }
 
         String merchant = safeText(requestDTO.getMerchant());
@@ -145,7 +146,7 @@ public class ReceiptImportService {
         }
 
         if (importedExpenses.isEmpty()) {
-            throw new RuntimeException("Không có dòng chi tiêu hợp lệ để lưu từ hóa đơn.");
+            throw new ReceiptImportException("Không có dòng chi tiêu hợp lệ để lưu từ hóa đơn.");
         }
 
         return ReceiptImportResponseDTO.builder()
@@ -168,7 +169,7 @@ public class ReceiptImportService {
 
         JsonNode itemsNode = aiResult.path("items");
         if (!itemsNode.isArray() || itemsNode.isEmpty()) {
-            throw new RuntimeException("Không tìm thấy dòng chi tiêu hợp lệ từ hình ảnh hóa đơn.");
+            throw new ReceiptImportException("Không tìm thấy dòng chi tiêu hợp lệ từ hình ảnh hóa đơn.");
         }
 
         List<ReceiptImportItemDTO> items = new ArrayList<>();
@@ -194,7 +195,7 @@ public class ReceiptImportService {
         }
 
         if (items.isEmpty()) {
-            throw new RuntimeException("Không có dòng chi tiêu hợp lệ để preview từ hóa đơn.");
+            throw new ReceiptImportException("Không có dòng chi tiêu hợp lệ để preview từ hóa đơn.");
         }
 
         return ReceiptImportAnalyzeResponseDTO.builder()
@@ -214,20 +215,21 @@ public class ReceiptImportService {
 
     private void validateFile(MultipartFile file, byte[] fileBytes) {
         if (file.getSize() > MAX_IMAGE_SIZE_BYTES) {
-            throw new RuntimeException("Kích thước ảnh quá lớn. Vui lòng chọn ảnh tối đa 10MB.");
+            throw new ReceiptImportException("Kích thước ảnh quá lớn. Vui lòng chọn ảnh tối đa 10MB.");
         }
 
         String contentType = file.getContentType();
         String baseContentType = contentType == null ? "" : contentType.split(";")[0].trim().toLowerCase(Locale.ROOT);
         if (!baseContentType.startsWith("image/") && !baseContentType.equals("application/pdf")) {
-            throw new RuntimeException("Định dạng tệp không hợp lệ. Vui lòng chọn tệp ảnh hoặc PDF.");
+            throw new ReceiptImportException("Định dạng tệp không hợp lệ. Vui lòng chọn tệp ảnh hoặc PDF.");
         }
 
         if (!hasValidFileMagicBytes(fileBytes)) {
-            throw new RuntimeException("Nội dung tệp không hợp lệ. Vui lòng chọn tệp ảnh thực sự.");
+            throw new ReceiptImportException("Nội dung tệp không hợp lệ. Vui lòng chọn tệp ảnh thực sự.");
         }
     }
 
+    // First-pass integrity check only — not a guarantee of full file parsability.
     private boolean hasValidFileMagicBytes(byte[] data) {
         if (data == null || data.length < 4) return false;
         return startsWith(data, MAGIC_JPEG)
@@ -247,7 +249,7 @@ public class ReceiptImportService {
             return "image/webp";
         }
         if (data != null && startsWith(data, MAGIC_JPEG)) return "image/jpeg";
-        throw new RuntimeException("Nội dung tệp không hợp lệ.");
+        throw new ReceiptImportException("Nội dung tệp không hợp lệ.");
     }
 
     private boolean startsWith(byte[] data, byte[] prefix) {
@@ -275,19 +277,19 @@ public class ReceiptImportService {
                     .body(String.class);
 
             if (responseJson == null || responseJson.isBlank()) {
-                throw new RuntimeException("Gemini không trả về dữ liệu để phân tích hóa đơn.");
+                throw new ReceiptImportException("Gemini không trả về dữ liệu để phân tích hóa đơn.");
             }
 
             JsonNode root = objectMapper.readTree(responseJson);
             String text = extractOutputText(root);
             if (text == null || text.isBlank()) {
-                throw new RuntimeException("Gemini không trả về kết quả phân tích hóa đơn hợp lệ.");
+                throw new ReceiptImportException("Gemini không trả về kết quả phân tích hóa đơn hợp lệ.");
             }
 
             String cleanJson = sanitizeJsonResponse(text);
             return objectMapper.readTree(cleanJson);
         } catch (Exception exception) {
-            throw new RuntimeException("Không thể kết nối với Gemini để phân tích hóa đơn.", exception);
+            throw new ReceiptImportException("Không thể kết nối với Gemini để phân tích hóa đơn.", exception);
         }
     }
 
@@ -380,6 +382,11 @@ public class ReceiptImportService {
         String cleaned = rawText.trim();
         if (cleaned.startsWith("```")) {
             cleaned = cleaned.replaceFirst("^```(?:json)?", "").replaceFirst("```$", "").trim();
+        }
+        int start = cleaned.indexOf('{');
+        int end = cleaned.lastIndexOf('}');
+        if (start != -1 && end != -1 && end > start) {
+            cleaned = cleaned.substring(start, end + 1);
         }
         return cleaned;
     }

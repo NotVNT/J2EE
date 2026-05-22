@@ -204,6 +204,7 @@ const Expense = () => {
   const handleImportReceipt = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
+    // UX-only: browser-provided, backend enforces
     if (!file.type?.startsWith("image/") && file.type !== "application/pdf") {
       toast.error("Vui lòng chọn tệp ảnh hoặc PDF.");
       event.target.value = "";

@@ -47,13 +47,6 @@ public class ExpenseController {
         return ResponseEntity.ok(updated);
     }
 
-    @PostMapping(value = "/import-receipt", consumes = "multipart/form-data")
-    public ResponseEntity<ReceiptImportResponseDTO> importReceipt(
-            @RequestPart("file") MultipartFile file
-    ) {
-        return ResponseEntity.ok(receiptImportService.importReceipt(file));
-    }
-
     @PostMapping(value = "/import-receipt/analyze", consumes = "multipart/form-data")
     public ResponseEntity<ReceiptImportAnalyzeResponseDTO> analyzeReceipt(
             @RequestPart("file") MultipartFile file

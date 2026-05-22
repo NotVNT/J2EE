@@ -47,6 +47,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
 
+    @ExceptionHandler(ReceiptImportException.class)
+    public ResponseEntity<Map<String, String>> handleReceiptImport(ReceiptImportException ex) {
+        log.warn("Receipt import error: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("message", ex.getMessage() != null ? ex.getMessage() : "Lỗi xử lý hóa đơn."));
+    }
+
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, String>> handleRuntime(RuntimeException ex) {
         // RuntimeExceptions are intentionally thrown with user-facing messages
