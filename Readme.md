@@ -135,8 +135,8 @@ Nova Money là trợ lý AI tích hợp sẵn, có thể truy cập từ floatin
 | OpenRouter | GPT-OSS 120B | Chat mode | PREMIUM |
 | NineRouter | Nova Lite (Gemma 4 31B) | Chat và Agent mặc định cho tất cả gói | Tất cả gói |
 
-**API Key Rotation (Redis)**  
-Mỗi provider có một pool API key lưu trong Redis. Hệ thống theo dõi quota và trạng thái cooldown từng key. Khi một key vượt quota hoặc lỗi, tự động failover sang key tiếp theo. Các key tự phục hồi sau cooldown.
+**API Key Rotation (Redis cho Gemini)**  
+Google Gemini có một pool API key lưu trong Redis. Hệ thống theo dõi quota và trạng thái cooldown từng key. Khi một key vượt quota hoặc lỗi, tự động failover sang key tiếp theo. Các key tự phục hồi sau cooldown. Các provider khác (OpenRouter, NineRouter) sử dụng single key.
 
 ---
 
@@ -207,9 +207,9 @@ Conversation history: 20 tin nhắn cuối được gửi kèm làm context mỗ
 
 ---
 
-### Receipt Import (Gemini Vision)
+### Receipt Import (Gemini)
 
-**Chỉ PREMIUM.** Người dùng upload ảnh hóa đơn (≤ 10 MB, JPEG/PNG/WebP) → Gemini Vision trích xuất tên cửa hàng, danh mục và tổng tiền → tự động điền vào form tạo chi tiêu.
+**Chỉ PREMIUM.** Người dùng upload ảnh/PDF hóa đơn (≤ 10 MB, JPEG/PNG/WebP/PDF) → Gemini trích xuất tên cửa hàng, danh mục và tổng tiền → tự động điền vào form tạo chi tiêu.
 
 ---
 
