@@ -126,17 +126,7 @@ export default function AiInsightSheet({
             {/* ── Detailed Section ─────────────────────── */}
             {!loading && !error && insight && (
               <View style={styles.detailedSection}>
-                {!isPremium ? (
-                  /* Locked for non-Premium */
-                  <View style={styles.lockedCard}>
-                    <Text style={styles.lockedIcon}>🔒</Text>
-                    <Text style={styles.lockedTitle}>Phân tích chuyên sâu</Text>
-                    <Text style={styles.lockedText}>
-                      Nâng cấp lên Premium để xem dự báo dòng tiền, phân tích rủi ro và
-                      khuyến nghị cá nhân hóa.
-                    </Text>
-                  </View>
-                ) : !showDetailed ? (
+                {!showDetailed ? (
                   /* Show detailed button */
                   <Pressable
                     style={styles.detailedButton}

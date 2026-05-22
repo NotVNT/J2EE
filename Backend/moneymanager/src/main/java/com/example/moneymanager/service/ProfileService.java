@@ -43,16 +43,25 @@ public class ProfileService {
     // ─── Registration ─────────────────────────────────────────────────
 
     public ProfileDTO registerProfile(RegisterRequestDTO registerDTO) {
-        profileRepository.findByEmail(registerDTO.getEmail()).ifPresent(p -> {
+        profileRepository.findByEmail(registerDTO.getEmail().trim()).ifPresent(p -> {
             throw new RuntimeException("Email này đã được sử dụng.");
         });
 
         RoleEntity userRole = roleRepository.findByNameIgnoreCase("user")
                 .orElseThrow(() -> new RuntimeException("Role 'user' not found in database"));
+
+        String encodedPassword = null;
+        if (registerDTO.getPassword() != null && !registerDTO.getPassword().isBlank()) {
+            if (registerDTO.getPassword().trim().length() < 8) {
+                throw new RuntimeException("Mật khẩu phải có ít nhất 8 ký tự.");
+            }
+            encodedPassword = passwordEncoder.encode(registerDTO.getPassword().trim());
+        }
+
         ProfileEntity newProfile = ProfileEntity.builder()
-                .fullName(registerDTO.getFullName())
-                .email(registerDTO.getEmail())
-                .password(passwordEncoder.encode(registerDTO.getPassword()))
+                .fullName(registerDTO.getFullName() != null ? registerDTO.getFullName().trim() : "")
+                .email(registerDTO.getEmail().trim())
+                .password(encodedPassword)
                 .profileImageUrl(registerDTO.getProfileImageUrl())
                 .isActive(false)
                 .subscriptionPlan(SubscriptionPlan.FREE)
@@ -66,6 +75,23 @@ public class ProfileService {
         otpService.generateAndSendOtp(newProfile, OtpPurpose.ACCOUNT_ACTIVATION);
 
         return toDTO(newProfile);
+    }
+
+    public void completeProfile(CompleteProfileDTO dto) {
+        ProfileEntity profile = profileRepository.findByEmail(dto.getEmail().trim())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản với email này."));
+
+        if (!Boolean.TRUE.equals(profile.getIsActive())) {
+            throw new RuntimeException("Tài khoản chưa được kích hoạt qua OTP.");
+        }
+
+        if (dto.getPassword().trim().length() < 8) {
+            throw new RuntimeException("Mật khẩu phải có ít nhất 8 ký tự.");
+        }
+
+        profile.setFullName(dto.getFullName().trim());
+        profile.setPassword(passwordEncoder.encode(dto.getPassword().trim()));
+        profileRepository.save(profile);
     }
 
     // ─── Account Activation via OTP ──────────────────────────────────

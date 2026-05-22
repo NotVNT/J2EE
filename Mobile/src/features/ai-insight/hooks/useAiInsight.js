@@ -27,7 +27,10 @@ export function useAiInsight() {
 
   // ── Permission ──────────────────────────────────────────
   const subscriptionPlan = String(user?.subscriptionPlan || "FREE").toUpperCase();
-  const isPremium = subscriptionPlan === "PREMIUM" || subscriptionPlan === "BASIC";
+  const subscriptionStatus = String(user?.subscriptionStatus || "INACTIVE").toUpperCase();
+  const isPremium =
+    (subscriptionPlan === "PREMIUM" || subscriptionPlan === "BASIC") &&
+    subscriptionStatus === "ACTIVE";
 
   // ── Open sheet ───────────────────────────────────────────
   const openSheet = useCallback(async () => {

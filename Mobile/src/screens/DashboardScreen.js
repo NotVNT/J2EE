@@ -124,8 +124,12 @@ export default function DashboardScreen() {
   const [aiLockVisible, setAiLockVisible] = useState(false);
 
   const handleAiPress = () => {
-    console.log("[DashboardScreen] handleAiPress clicked! Calling ai.openSheet(). Hook visible state:", ai.visible);
-    ai.openSheet();
+    console.log("[DashboardScreen] handleAiPress clicked! User isPremium:", ai.isPremium);
+    if (ai.isPremium) {
+      ai.openSheet();
+    } else {
+      setAiLockVisible(true);
+    }
   };
 
 

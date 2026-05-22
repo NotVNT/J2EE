@@ -32,6 +32,14 @@ public class ProfileController {
         ));
     }
 
+    @PutMapping("/complete-profile")
+    public ResponseEntity<?> completeProfile(@Valid @RequestBody CompleteProfileDTO completeDTO) {
+        profileService.completeProfile(completeDTO);
+        return ResponseEntity.ok(Map.of(
+                "message", "Thiết lập tài khoản thành công."
+        ));
+    }
+
     // ─── OTP: Account Activation ─────────────────────────────────────
 
     @PostMapping("/verify-activation")
