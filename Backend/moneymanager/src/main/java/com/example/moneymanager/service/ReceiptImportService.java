@@ -60,14 +60,26 @@ public class ReceiptImportService {
         public ReceiptImportAnalyzeResponseDTO analyzeReceipt(MultipartFile file) {
         ProfileEntity profile = profileService.getCurrentProfile();
         subscriptionService.ensureCanImportReceipt(profile);
-        validateFile(file);
+
+        if (file == null || file.isEmpty()) {
+            throw new RuntimeException("Vui lòng chọn hình ảnh hóa đơn để import.");
+        }
+
+        byte[] fileBytes;
+        try {
+            fileBytes = file.getBytes();
+        } catch (java.io.IOException e) {
+            throw new RuntimeException("Không thể đọc tệp ảnh.", e);
+        }
+
+        validateFile(file, fileBytes);
 
         List<CategoryEntity> expenseCategories = new ArrayList<>(
                 categoryRepository.findByTypeAndProfileId(EXPENSE_TYPE, profile.getId())
         );
         CategoryEntity otherCategory = ensureOtherExpenseCategory(profile, expenseCategories);
 
-        JsonNode aiResult = analyzeReceiptWithGemini(file);
+        JsonNode aiResult = analyzeReceiptWithGemini(file, fileBytes);
         return buildPreviewFromAiResult(aiResult, expenseCategories, otherCategory);
     }
 
@@ -200,29 +212,19 @@ public class ReceiptImportService {
     private static final byte[] MAGIC_WEBP_RIFF = {0x52, 0x49, 0x46, 0x46};
     private static final byte[] MAGIC_PDF  = {0x25, 0x50, 0x44, 0x46, 0x2D}; // %PDF-
 
-    private void validateFile(MultipartFile file) {
-        if (file == null || file.isEmpty()) {
-            throw new RuntimeException("Vui lòng chọn hình ảnh hóa đơn để import.");
-        }
-
+    private void validateFile(MultipartFile file, byte[] fileBytes) {
         if (file.getSize() > MAX_IMAGE_SIZE_BYTES) {
             throw new RuntimeException("Kích thước ảnh quá lớn. Vui lòng chọn ảnh tối đa 10MB.");
         }
 
         String contentType = file.getContentType();
-        if (contentType == null
-                || (!contentType.toLowerCase(Locale.ROOT).startsWith("image/")
-                        && !contentType.equalsIgnoreCase("application/pdf"))) {
+        String baseContentType = contentType == null ? "" : contentType.split(";")[0].trim().toLowerCase(Locale.ROOT);
+        if (!baseContentType.startsWith("image/") && !baseContentType.equals("application/pdf")) {
             throw new RuntimeException("Định dạng tệp không hợp lệ. Vui lòng chọn tệp ảnh hoặc PDF.");
         }
 
-        try {
-            byte[] header = file.getBytes();
-            if (!hasValidFileMagicBytes(header)) {
-                throw new RuntimeException("Nội dung tệp không hợp lệ. Vui lòng chọn tệp ảnh thực sự.");
-            }
-        } catch (java.io.IOException e) {
-            throw new RuntimeException("Không thể đọc tệp ảnh.", e);
+        if (!hasValidFileMagicBytes(fileBytes)) {
+            throw new RuntimeException("Nội dung tệp không hợp lệ. Vui lòng chọn tệp ảnh thực sự.");
         }
     }
 
@@ -236,6 +238,18 @@ public class ReceiptImportService {
                         && data[8] == 0x57 && data[9] == 0x45 && data[10] == 0x42 && data[11] == 0x50);
     }
 
+    private String canonicalMimeType(byte[] data) {
+        if (data != null && startsWith(data, MAGIC_PDF)) return "application/pdf";
+        if (data != null && startsWith(data, MAGIC_PNG)) return "image/png";
+        if (data != null && startsWith(data, MAGIC_GIF)) return "image/gif";
+        if (data != null && startsWith(data, MAGIC_WEBP_RIFF) && data.length >= 12
+                && data[8] == 0x57 && data[9] == 0x45 && data[10] == 0x42 && data[11] == 0x50) {
+            return "image/webp";
+        }
+        if (data != null && startsWith(data, MAGIC_JPEG)) return "image/jpeg";
+        throw new RuntimeException("Nội dung tệp không hợp lệ.");
+    }
+
     private boolean startsWith(byte[] data, byte[] prefix) {
         if (data.length < prefix.length) return false;
         for (int i = 0; i < prefix.length; i++) {
@@ -244,10 +258,10 @@ public class ReceiptImportService {
         return true;
     }
 
-    private JsonNode analyzeReceiptWithGemini(MultipartFile file) {
+    private JsonNode analyzeReceiptWithGemini(MultipartFile file, byte[] fileBytes) {
         try {
-            String base64Image = Base64.getEncoder().encodeToString(file.getBytes());
-            ObjectNode requestBody = buildGeminiImageRequest(base64Image, file.getContentType());
+            String base64Image = Base64.getEncoder().encodeToString(fileBytes);
+            ObjectNode requestBody = buildGeminiImageRequest(base64Image, canonicalMimeType(fileBytes));
 
             String apiKey = geminiKeyRotator.nextKey();
             String requestJson = objectMapper.writeValueAsString(requestBody);
