@@ -1,8 +1,8 @@
 package com.example.moneymanager.service;
 
-import com.example.moneymanager.config.GptOssKeyRotator;
 import com.example.moneymanager.config.GptOssProperties;
 import com.example.moneymanager.dto.AssistantChatResponseDTO;
+import java.util.List;
 import com.example.moneymanager.util.OpenRouterResponseParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,13 +20,17 @@ public class GptOssService {
 
     private final RestClient gptOssRestClient;
     private final GptOssProperties gptOssProperties;
-    private final GptOssKeyRotator gptOssKeyRotator;
     private final ObjectMapper objectMapper;
 
-    public String callWithPrompt(String systemPrompt, String userMessage, int maxTokens) {
-        if (!gptOssKeyRotator.hasKeys()) {
+    private String apiKey() {
+        List<String> keys = gptOssProperties.apiKeys();
+        if (keys == null || keys.isEmpty()) {
             throw new RuntimeException("GPT-OSS ch\u01B0a \u0111\u01B0\u1EE3c c\u1EA5u h\u00ECnh API key.");
         }
+        return keys.get(0);
+    }
+
+    public String callWithPrompt(String systemPrompt, String userMessage, int maxTokens) {
 
         try {
             ObjectNode requestBody = objectMapper.createObjectNode();
@@ -55,7 +59,7 @@ public class GptOssService {
             // Read raw string first to avoid deserialization issues
             String rawResponse = gptOssRestClient.post()
                     .uri("/chat/completions")
-                    .header("Authorization", "Bearer " + gptOssKeyRotator.nextKey())
+                    .header("Authorization", "Bearer " + apiKey())
                     .body(requestJson)
                     .retrieve()
                     .onStatus(status -> !status.is2xxSuccessful(), (req, res) -> {
