@@ -282,15 +282,19 @@ export default function DashboardScreen() {
       <AiInsightSheet
         visible={ai.visible}
         onClose={ai.closeSheet}
-        insight={ai.insight}
+        selectedMonth={ai.selectedMonth}
+        selectedYear={ai.selectedYear}
+        availableMonths={ai.availableMonths}
+        goToPrevMonth={ai.goToPrevMonth}
+        goToNextMonth={ai.goToNextMonth}
+        canGoPrev={ai.canGoPrev}
+        canGoNext={ai.canGoNext}
+        result={ai.result}
         loading={ai.loading}
         error={ai.error}
+        isIdle={ai.isIdle}
         isPremium={ai.isPremium}
-        detailedInsight={ai.detailedInsight}
-        detailedLoading={ai.detailedLoading}
-        detailedError={ai.detailedError}
-        showDetailed={ai.showDetailed}
-        onLoadDetailed={ai.loadDetailed}
+        onAnalyze={ai.analyze}
         onRetry={ai.retry}
       />
 

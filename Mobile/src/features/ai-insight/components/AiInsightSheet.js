@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   ActivityIndicator,
   Modal,
@@ -8,226 +8,164 @@ import {
   Text,
   View,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { COLORS } from "../../../constants/colors";
 
-/**
- * Bottom Sheet hiển thị AI Insight.
- *
- * Props:
- *  - visible: boolean
- *  - onClose: () => void
- *  - insight: string | null       — nội dung insight cơ bản
- *  - loading: boolean             — đang tải insight cơ bản
- *  - error: string | null         — lỗi khi tải insight cơ bản
- *  - isPremium: boolean           — user có gói PREMIUM không
- *  - detailedInsight: object | null
- *  - detailedLoading: boolean
- *  - detailedError: string | null
- *  - showDetailed: boolean
- *  - onLoadDetailed: () => void   — gọi API detailed
- *  - onRetry: () => void          — thử lại insight cơ bản
- */
 export default function AiInsightSheet({
   visible,
   onClose,
-  insight,
+  selectedMonth,
+  selectedYear,
+  availableMonths = [],
+  goToPrevMonth,
+  goToNextMonth,
+  canGoPrev,
+  canGoNext,
+  result,
   loading,
   error,
+  isIdle,
   isPremium,
-  detailedInsight,
-  detailedLoading,
-  detailedError,
-  showDetailed,
-  onLoadDetailed,
+  onAnalyze,
   onRetry,
 }) {
-  const insets = useSafeAreaInsets();
+  const monthLabel = useMemo(() => {
+    const selected = (availableMonths || []).find(
+      (m) => m.month === selectedMonth && m.year === selectedYear
+    );
+    return selected ? selected.label : `Thang ${selectedMonth}/${selectedYear}`;
+  }, [availableMonths, selectedMonth, selectedYear]);
+
+  const categories = result?.categories || [];
+  const anomalies = result?.anomalies || [];
+  const topRiskCategory = result?.topRiskCategory;
+  const hasData = !!result;
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      statusBarTranslucent
-      animationType="fade"
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} transparent statusBarTranslucent animationType="fade" onRequestClose={onClose}>
       <View style={styles.overlay}>
-        {/* Backdrop */}
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-
-        {/* Sheet / Dialog */}
         <View style={styles.sheet}>
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.headerLeft}>
-              <View style={styles.headerIconWrap}>
-                <Text style={styles.headerIcon}>✨</Text>
-              </View>
-              <View>
-                <Text style={styles.headerTitle}>AI Insight</Text>
-                <Text style={styles.headerSubtitle}>Phân tích tài chính tháng này</Text>
-              </View>
+              <Text style={styles.headerIcon}>✨</Text>
+              <Text style={styles.headerTitle}>AI Insight</Text>
             </View>
-            <Pressable style={styles.closeButton} onPress={onClose} hitSlop={10}>
-              <Text style={styles.closeIcon}>✕</Text>
+            <Pressable style={styles.closeBtn} onPress={onClose} hitSlop={10}>
+              <Text style={styles.closeBtnText}>×</Text>
             </Pressable>
           </View>
 
-          <ScrollView
-            style={styles.body}
-            contentContainerStyle={styles.bodyContent}
-            showsVerticalScrollIndicator={false}
-            bounces={false}
-          >
-            {/* ── Loading ──────────────────────────────── */}
-            {loading && (
-              <View style={styles.stateCard}>
-                <ActivityIndicator size="large" color={COLORS.PRIMARY} />
-                <Text style={styles.stateText}>Đang phân tích thói quen chi tiêu của bạn...</Text>
+          <ScrollView style={styles.body} contentContainerStyle={styles.bodyContent} showsVerticalScrollIndicator={false}>
+            {/* Month Picker */}
+            <View style={styles.monthRow}>
+              <Pressable onPress={goToPrevMonth} disabled={!canGoPrev || loading} style={[styles.arrow, (!canGoPrev || loading) && styles.arrowOff]}>
+                <Text style={styles.arrowText}>‹</Text>
+              </Pressable>
+              <Text style={styles.monthLabel}>{monthLabel}</Text>
+              <Pressable onPress={goToNextMonth} disabled={!canGoNext || loading} style={[styles.arrow, (!canGoNext || loading) && styles.arrowOff]}>
+                <Text style={styles.arrowText}>›</Text>
+              </Pressable>
+            </View>
+
+            {/* Idle */}
+            {isPremium && isIdle && (
+              <Text style={styles.idleText}>
+                AI sẽ dùng dữ liệu các tháng trước để dự báo hành vi tài chính cho {monthLabel}.
+              </Text>
+            )}
+
+            {/* Not Premium */}
+            {!isPremium && (
+              <View style={styles.stateBox}>
+                <Text style={styles.stateIcon}>🔒</Text>
+                <Text style={styles.stateText}>Tính năng AI Insight cần gói Premium.</Text>
               </View>
             )}
 
-            {/* ── Error ────────────────────────────────── */}
+            {/* Analyze Button */}
+            {isPremium && !hasData && !loading && (
+              <Pressable style={styles.analyzeBtn} onPress={onAnalyze}>
+                <Text style={styles.analyzeBtnText}>✨ Phân tích</Text>
+              </Pressable>
+            )}
+
+            {/* Loading */}
+            {loading && (
+              <View style={styles.stateBox}>
+                <ActivityIndicator size="large" color={COLORS.PRIMARY} />
+                <Text style={styles.stateText}>Đang phân tích...</Text>
+              </View>
+            )}
+
+            {/* Error */}
             {!loading && error && (
-              <View style={styles.stateCard}>
-                <Text style={styles.errorIcon}>⚠️</Text>
-                <Text style={styles.errorText}>{error}</Text>
-                <Pressable style={styles.retryButton} onPress={onRetry}>
-                  <Text style={styles.retryButtonText}>Thử lại</Text>
+              <View style={styles.stateBox}>
+                <Text style={styles.stateIcon}>⚠</Text>
+                <Text style={styles.stateText}>{error}</Text>
+                <Pressable style={styles.retryBtn} onPress={onRetry}>
+                  <Text style={styles.retryBtnText}>Thu lai</Text>
                 </Pressable>
               </View>
             )}
 
-            {/* ── Basic Insight ────────────────────────── */}
-            {!loading && !error && insight && (
-              <View style={styles.insightCard}>
-                <View style={styles.insightHeader}>
-                  <Text style={styles.insightKicker}>Tóm tắt AI</Text>
-                  <View style={styles.liveBadge}>
-                    <View style={styles.liveDot} />
-                    <Text style={styles.liveText}>Trực tiếp</Text>
-                  </View>
-                </View>
-                <Text style={styles.insightText}>{insight}</Text>
-              </View>
-            )}
-
-            {/* ── No data ──────────────────────────────── */}
-            {!loading && !error && !insight && (
-              <View style={styles.stateCard}>
-                <Text style={styles.emptyIcon}>📊</Text>
-                <Text style={styles.emptyText}>
-                  Tháng này bạn chưa có đủ dữ liệu để AI phân tích.
+            {/* Results */}
+            {hasData && !loading && !error && (
+              <View style={styles.results}>
+                <Text style={styles.kicker}>
+                  Du bao thang {result.month}/{result.year}
                 </Text>
-              </View>
-            )}
 
-            {/* ── Detailed Section ─────────────────────── */}
-            {!loading && !error && insight && (
-              <View style={styles.detailedSection}>
-                {!showDetailed ? (
-                  /* Show detailed button */
-                  <Pressable
-                    style={styles.detailedButton}
-                    onPress={onLoadDetailed}
-                    disabled={detailedLoading}
-                  >
-                    <Text style={styles.detailedButtonText}>
-                      {detailedLoading ? "Đang tải..." : "Xem phân tích chi tiết"}
-                    </Text>
-                    <Text style={styles.detailedArrow}>→</Text>
-                  </Pressable>
-                ) : detailedLoading ? (
-                  /* Detailed loading */
-                  <View style={styles.detailedLoadingCard}>
-                    <ActivityIndicator size="small" color={COLORS.PRIMARY} />
-                    <Text style={styles.detailedLoadingText}>
-                      Đang trích xuất dữ liệu tài chính sâu hơn...
+                <View style={styles.totalRow}>
+                  <Text style={styles.totalLabel}>Tong chi tieu du kien</Text>
+                  <Text style={styles.totalValue}>{fmt(result.totalPredictedExpense)}</Text>
+                </View>
+
+                {topRiskCategory && (
+                  <View style={styles.riskRow}>
+                    <Text style={styles.riskIcon}>⚠</Text>
+                    <View style={styles.riskBody}>
+                      <Text style={styles.riskLabel}>Danh muc co nguy co tang manh</Text>
+                      <Text style={styles.riskName}>{topRiskCategory.categoryName}</Text>
+                      <Text style={styles.riskDetail}>
+                        Du kien: {fmt(topRiskCategory.predictedAmount)} · {trendText(topRiskCategory.trend)}
+                      </Text>
+                    </View>
+                  </View>
+                )}
+
+                {anomalies.length > 0 && (
+                  <View style={styles.anomalyRow}>
+                    <Text style={styles.anomalyIcon}>🚨</Text>
+                    <Text style={styles.anomalyText}>
+                      Phat hien {anomalies.length} giao dich bat thuong
                     </Text>
                   </View>
-                ) : detailedError ? (
-                  /* Detailed error */
-                  <View style={styles.detailedErrorCard}>
-                    <Text style={styles.errorIcon}>⚠️</Text>
-                    <Text style={styles.errorText}>{detailedError}</Text>
-                  </View>
-                ) : detailedInsight ? (
-                  /* Detailed insight content */
-                  <View style={styles.detailedContent}>
-                    {/* Forecast */}
-                    {detailedInsight.forecast && (
-                      <View style={styles.detailPanel}>
-                        <View style={styles.detailPanelHeader}>
-                          <Text style={styles.detailKicker}>Dự báo</Text>
-                          <View
-                            style={[
-                              styles.riskBadge,
-                              {
-                                backgroundColor:
-                                  detailedInsight.forecast.riskLevel === "CAO"
-                                    ? COLORS.EXPENSE_LIGHT
-                                    : detailedInsight.forecast.riskLevel === "TRUNG_BÌNH"
-                                    ? COLORS.WARNING_LIGHT
-                                    : COLORS.INCOME_LIGHT,
-                              },
-                            ]}
-                          >
-                            <Text
-                              style={[
-                                styles.riskText,
-                                {
-                                  color:
-                                    detailedInsight.forecast.riskLevel === "CAO"
-                                      ? COLORS.EXPENSE
-                                      : detailedInsight.forecast.riskLevel === "TRUNG_BÌNH"
-                                      ? COLORS.WARNING
-                                      : COLORS.INCOME,
-                                },
-                              ]}
-                            >
-                              {detailedInsight.forecast.riskLevel === "CAO"
-                                ? "Rủi ro: Cao"
-                                : detailedInsight.forecast.riskLevel === "TRUNG_BÌNH"
-                                ? "Rủi ro: Trung bình"
-                                : "Rủi ro: Thấp"}
-                            </Text>
-                          </View>
-                        </View>
-                        {detailedInsight.forecast.riskMessage && (
-                          <Text style={styles.detailText}>
-                            {detailedInsight.forecast.riskMessage}
-                          </Text>
-                        )}
-                        <View style={styles.metricRow}>
-                          <View style={styles.metricBox}>
-                            <Text style={styles.metricLabel}>Thu nhập dự kiến</Text>
-                            <Text style={[styles.metricValue, { color: COLORS.INCOME }]}>
-                              {formatMoneyLocal(detailedInsight.forecast.predictedNextMonthIncome)}
-                            </Text>
-                          </View>
-                          <View style={styles.metricBox}>
-                            <Text style={styles.metricLabel}>Chi tiêu dự kiến</Text>
-                            <Text style={[styles.metricValue, { color: COLORS.EXPENSE }]}>
-                              {formatMoneyLocal(detailedInsight.forecast.predictedNextMonthExpense)}
-                            </Text>
-                          </View>
-                        </View>
-                      </View>
-                    )}
+                )}
 
-                    {/* Advice */}
-                    {detailedInsight.detailedAdvice && (
-                      <View style={styles.detailPanel}>
-                        <Text style={styles.detailKicker}>Khuyến nghị</Text>
-                        <Text style={styles.detailTitle}>Bước tiếp theo cá nhân hóa</Text>
-                        <Text style={styles.adviceText}>
-                          "{detailedInsight.detailedAdvice}"
-                        </Text>
+                {categories.length > 0 && (
+                  <View style={styles.catSection}>
+                    <Text style={styles.sectionTitle}>Du bao theo danh muc</Text>
+                    {categories.slice(0, 6).map((c, i) => (
+                      <View key={c.categoryId || i} style={styles.catRow}>
+                        <View style={[styles.dot, { backgroundColor: trendColor(c.trend) }]} />
+                        <Text style={styles.catName}>{c.categoryName}</Text>
+                        <Text style={styles.catAmount}>{fmt(c.predictedAmount)}</Text>
                       </View>
-                    )}
+                    ))}
+                  </View>
+                )}
+
+                {result.narrative ? (
+                  <View style={styles.narrativeBox}>
+                    <Text style={styles.narrativeTitle}>🤖 Phân tích AI</Text>
+                    <Text style={styles.narrativeText}>{result.narrative}</Text>
                   </View>
                 ) : null}
+
+                <Pressable style={styles.reBtn} onPress={onRetry}>
+                  <Text style={styles.reBtnText}>🔄 Phân tích lại</Text>
+                </Pressable>
               </View>
             )}
           </ScrollView>
@@ -237,354 +175,89 @@ export default function AiInsightSheet({
   );
 }
 
-// ─── Local format helper (avoid import cycle) ─────────────────
-function formatMoneyLocal(value) {
+function fmt(v) {
   try {
     return new Intl.NumberFormat("vi-VN", {
       style: "currency",
       currency: "VND",
       maximumFractionDigits: 0,
-    }).format(Number(value || 0));
+    }).format(Number(v || 0));
   } catch {
-    return `${value || 0} VND`;
+    return `${v || 0} VND`;
   }
 }
 
-// ─── Styles ───────────────────────────────────────────────────
+function trendText(t) {
+  if (t === "UP") return "🔺 Tang";
+  if (t === "DOWN") return "🔻 Giam";
+  return "➖ On dinh";
+}
+
+function trendColor(t) {
+  if (t === "UP") return COLORS.EXPENSE;
+  if (t === "DOWN") return COLORS.INCOME;
+  return COLORS.INFO;
+}
+
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: COLORS.OVERLAY,
-  },
-  sheet: {
-    backgroundColor: COLORS.CARD,
-    borderRadius: 24,
-    maxHeight: "85%",
-    width: "90%",
-    paddingBottom: 24,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.15,
-    shadowRadius: 14,
-    elevation: 14,
-  },
+  overlay: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: COLORS.OVERLAY },
+  sheet: { backgroundColor: COLORS.CARD, borderRadius: 20, maxHeight: "82%", width: "90%", paddingBottom: 20 },
+  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: COLORS.CARD_BORDER },
+  headerLeft: { flexDirection: "row", alignItems: "center", gap: 8 },
+  headerIcon: { fontSize: 18 },
+  headerTitle: { fontSize: 16, fontWeight: "800", color: COLORS.TEXT },
+  closeBtn: { width: 30, height: 30, borderRadius: 15, backgroundColor: COLORS.BG, alignItems: "center", justifyContent: "center" },
+  closeBtnText: { fontSize: 18, fontWeight: "700", color: COLORS.TEXT_SECONDARY },
+  body: { flexShrink: 1 },
+  bodyContent: { padding: 14, gap: 12 },
 
-  // Header
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 18,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.CARD_BORDER,
-  },
-  headerLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  headerIconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 14,
-    backgroundColor: COLORS.ROSE_MIST,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 12,
-    borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
-  },
-  headerIcon: {
-    fontSize: 18,
-  },
-  headerTitle: {
-    color: COLORS.TEXT,
-    fontSize: 16,
-    fontWeight: "800",
-  },
-  headerSubtitle: {
-    color: COLORS.TEXT_MUTED,
-    fontSize: 12,
-    marginTop: 1,
-  },
-  closeButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: COLORS.BG,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  closeIcon: {
-    color: COLORS.TEXT_SECONDARY,
-    fontSize: 14,
-    fontWeight: "700",
-  },
+  monthRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 12 },
+  arrow: { paddingHorizontal: 10, paddingVertical: 6 },
+  arrowOff: { opacity: 0.3 },
+  arrowText: { fontSize: 22, fontWeight: "700", color: COLORS.PRIMARY },
+  monthLabel: { fontSize: 15, fontWeight: "800", color: COLORS.TEXT, minWidth: 120, textAlign: "center" },
 
-  body: {
-    flexShrink: 1,
-  },
-  bodyContent: {
-    padding: 16,
-    gap: 12,
-  },
+  idleText: { fontSize: 13, color: COLORS.TEXT_SECONDARY, textAlign: "center", lineHeight: 20 },
 
-  // State cards
-  stateCard: {
-    alignItems: "center",
-    paddingVertical: 32,
-    backgroundColor: COLORS.BG,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
-  },
-  stateText: {
-    color: COLORS.TEXT_SECONDARY,
-    fontSize: 13,
-    marginTop: 12,
-    textAlign: "center",
-    paddingHorizontal: 16,
-  },
-  errorIcon: {
-    fontSize: 28,
-    marginBottom: 8,
-  },
-  errorText: {
-    color: COLORS.TEXT_SECONDARY,
-    fontSize: 13,
-    textAlign: "center",
-    paddingHorizontal: 16,
-    lineHeight: 20,
-  },
-  retryButton: {
-    marginTop: 14,
-    backgroundColor: COLORS.ROSE_MIST,
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
-  },
-  retryButtonText: {
-    color: COLORS.PRIMARY,
-    fontSize: 13,
-    fontWeight: "700",
-  },
-  emptyIcon: {
-    fontSize: 32,
-    marginBottom: 8,
-  },
-  emptyText: {
-    color: COLORS.TEXT_SECONDARY,
-    fontSize: 13,
-    textAlign: "center",
-    paddingHorizontal: 20,
-    lineHeight: 20,
-  },
+  analyzeBtn: { backgroundColor: COLORS.PRIMARY, borderRadius: 12, paddingVertical: 13, alignItems: "center" },
+  analyzeBtnText: { color: "#FFF", fontSize: 15, fontWeight: "800" },
 
-  // Insight card
-  insightCard: {
-    backgroundColor: COLORS.BG,
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
-  },
-  insightHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  insightKicker: {
-    color: COLORS.PRIMARY,
-    fontSize: 11,
-    fontWeight: "800",
-    textTransform: "uppercase",
-    letterSpacing: 1,
-  },
-  liveBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: COLORS.INCOME_LIGHT,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 999,
-  },
-  liveDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: COLORS.INCOME,
-    marginRight: 4,
-  },
-  liveText: {
-    color: COLORS.INCOME,
-    fontSize: 10,
-    fontWeight: "700",
-  },
-  insightText: {
-    color: COLORS.TEXT,
-    fontSize: 14,
-    lineHeight: 22,
-  },
+  stateBox: { alignItems: "center", paddingVertical: 20, backgroundColor: COLORS.BG, borderRadius: 12, borderWidth: 1, borderColor: COLORS.CARD_BORDER, gap: 8 },
+  stateIcon: { fontSize: 26 },
+  stateText: { color: COLORS.TEXT_SECONDARY, fontSize: 13, textAlign: "center", paddingHorizontal: 12 },
 
-  // Detailed section
-  detailedSection: {
-    marginTop: 4,
-  },
+  retryBtn: { marginTop: 4, backgroundColor: COLORS.ROSE_MIST, paddingHorizontal: 18, paddingVertical: 7, borderRadius: 10, borderWidth: 1, borderColor: COLORS.CARD_BORDER },
+  retryBtnText: { color: COLORS.PRIMARY, fontSize: 13, fontWeight: "700" },
 
-  // Locked card
-  lockedCard: {
-    backgroundColor: COLORS.BG,
-    borderRadius: 14,
-    padding: 16,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
-  },
-  lockedIcon: {
-    fontSize: 24,
-    marginBottom: 8,
-  },
-  lockedTitle: {
-    color: COLORS.TEXT,
-    fontSize: 14,
-    fontWeight: "700",
-    marginBottom: 4,
-  },
-  lockedText: {
-    color: COLORS.TEXT_SECONDARY,
-    fontSize: 12,
-    textAlign: "center",
-    lineHeight: 18,
-    paddingHorizontal: 8,
-  },
+  results: { gap: 10 },
+  kicker: { fontSize: 13, fontWeight: "700", color: COLORS.PRIMARY, textAlign: "center" },
 
-  // Detailed button
-  detailedButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: COLORS.ROSE_MIST,
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
-    gap: 6,
-  },
-  detailedButtonText: {
-    color: COLORS.PRIMARY,
-    fontSize: 14,
-    fontWeight: "700",
-  },
-  detailedArrow: {
-    color: COLORS.PRIMARY,
-    fontSize: 14,
-    fontWeight: "700",
-  },
+  totalRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", backgroundColor: COLORS.BG, borderRadius: 10, padding: 12, borderWidth: 1, borderColor: COLORS.CARD_BORDER },
+  totalLabel: { fontSize: 13, color: COLORS.TEXT_SECONDARY, fontWeight: "600" },
+  totalValue: { fontSize: 17, fontWeight: "800", color: COLORS.EXPENSE },
 
-  // Detailed loading
-  detailedLoadingCard: {
-    alignItems: "center",
-    paddingVertical: 20,
-    backgroundColor: COLORS.BG,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
-  },
-  detailedLoadingText: {
-    color: COLORS.TEXT_SECONDARY,
-    fontSize: 12,
-    marginTop: 8,
-  },
+  riskRow: { flexDirection: "row", backgroundColor: "#FFF8E1", borderRadius: 10, padding: 10, gap: 8, borderWidth: 1, borderColor: "#FFE082" },
+  riskIcon: { fontSize: 16, marginTop: 1 },
+  riskBody: { flex: 1 },
+  riskLabel: { fontSize: 11, color: COLORS.TEXT_SECONDARY, fontWeight: "600" },
+  riskName: { fontSize: 14, fontWeight: "800", color: COLORS.TEXT, marginTop: 2 },
+  riskDetail: { fontSize: 11, color: COLORS.TEXT_MUTED, marginTop: 2 },
 
-  // Detailed error
-  detailedErrorCard: {
-    alignItems: "center",
-    paddingVertical: 16,
-    backgroundColor: COLORS.BG,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
-  },
+  anomalyRow: { flexDirection: "row", alignItems: "center", backgroundColor: "#FFEBEE", borderRadius: 10, padding: 10, gap: 8, borderWidth: 1, borderColor: "#FFCDD2" },
+  anomalyIcon: { fontSize: 14 },
+  anomalyText: { flex: 1, fontSize: 12, color: COLORS.EXPENSE, fontWeight: "600" },
 
-  // Detailed content
-  detailedContent: {
-    gap: 12,
-  },
-  detailPanel: {
-    backgroundColor: COLORS.BG,
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
-  },
-  detailPanelHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  detailKicker: {
-    color: COLORS.PRIMARY,
-    fontSize: 11,
-    fontWeight: "800",
-    textTransform: "uppercase",
-    letterSpacing: 1,
-  },
-  detailTitle: {
-    color: COLORS.TEXT,
-    fontSize: 14,
-    fontWeight: "700",
-    marginBottom: 6,
-  },
-  detailText: {
-    color: COLORS.TEXT_SECONDARY,
-    fontSize: 13,
-    lineHeight: 20,
-    marginBottom: 10,
-  },
-  riskBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 999,
-  },
-  riskText: {
-    fontSize: 10,
-    fontWeight: "700",
-  },
-  metricRow: {
-    flexDirection: "row",
-    gap: 10,
-  },
-  metricBox: {
-    flex: 1,
-    backgroundColor: COLORS.CARD,
-    borderRadius: 10,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
-  },
-  metricLabel: {
-    color: COLORS.TEXT_MUTED,
-    fontSize: 11,
-    marginBottom: 4,
-  },
-  metricValue: {
-    fontSize: 14,
-    fontWeight: "800",
-  },
-  adviceText: {
-    color: COLORS.TEXT,
-    fontSize: 13,
-    lineHeight: 20,
-    fontStyle: "italic",
-    borderLeftWidth: 3,
-    borderLeftColor: COLORS.PRIMARY,
-    paddingLeft: 12,
-  },
+  catSection: { backgroundColor: COLORS.BG, borderRadius: 12, padding: 12, borderWidth: 1, borderColor: COLORS.CARD_BORDER },
+  sectionTitle: { fontSize: 14, fontWeight: "800", color: COLORS.TEXT, marginBottom: 8 },
+  catRow: { flexDirection: "row", alignItems: "center", paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: COLORS.CARD_BORDER, gap: 8 },
+  dot: { width: 8, height: 8, borderRadius: 4 },
+  catName: { flex: 1, fontSize: 13, color: COLORS.TEXT, fontWeight: "600" },
+  catAmount: { fontSize: 13, fontWeight: "700", color: COLORS.TEXT },
+
+  narrativeBox: { backgroundColor: COLORS.BG, borderRadius: 12, padding: 12, borderWidth: 1, borderColor: COLORS.CARD_BORDER },
+  narrativeTitle: { fontSize: 13, fontWeight: "700", color: COLORS.TEXT, marginBottom: 6 },
+  narrativeText: { fontSize: 13, color: COLORS.TEXT_SECONDARY, lineHeight: 20 },
+
+  reBtn: { alignItems: "center", paddingVertical: 10, backgroundColor: COLORS.BG, borderRadius: 10, borderWidth: 1, borderColor: COLORS.CARD_BORDER },
+  reBtnText: { fontSize: 13, color: COLORS.PRIMARY, fontWeight: "700" },
 });
