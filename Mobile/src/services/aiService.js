@@ -15,12 +15,58 @@ export const sendGeminiChat = async (message) => {
  * Send a multi-turn chat message to chosen provider (Gemini, GPT-OSS, or NineRouter)
  * @param {Array<{role: string, content: string}>} messages 
  * @param {string} provider - "gemini" | "gptoss" | "ninerouter"
+ * @param {string} model - optional model identifier
  * @returns {Promise<{reply: string, provider: string, modelUsed: string}>}
  */
-export const sendAiChat = async (messages, provider = "gemini") => {
+export const sendAiChat = async (messages, provider = "gemini", model = null) => {
   const response = await http.post(API_ENDPOINTS.AI_CHAT, {
     provider,
+    model,
     messages
   });
+  return response.data;
+};
+
+/**
+ * Parse the user message to find their financial intent and extract fields.
+ * @param {string} userMessage 
+ * @param {string} pageContext 
+ * @param {Array<{role: string, content: string}>} conversationHistory 
+ * @param {string} provider 
+ * @param {string} model 
+ * @returns {Promise<any>}
+ */
+export const parseAiIntent = async (userMessage, pageContext = "dashboard", conversationHistory = [], provider = "gemini", model = null) => {
+  const response = await http.post(API_ENDPOINTS.AI_PARSE_INTENT, {
+    provider,
+    model,
+    userMessage,
+    pageContext,
+    conversationHistory
+  });
+  return response.data;
+};
+
+/**
+ * Execute the confirmed AI agent transaction.
+ * @param {string} intent 
+ * @param {object} extractedData 
+ * @returns {Promise<{status: string, message: string, operationId: string, undoable: boolean}>}
+ */
+export const confirmAiAction = async (intent, extractedData) => {
+  const response = await http.post(API_ENDPOINTS.AI_CONFIRM_ACTION, {
+    intent,
+    extractedData
+  });
+  return response.data;
+};
+
+/**
+ * Undo a previously executed transaction.
+ * @param {string} operationId 
+ * @returns {Promise<any>}
+ */
+export const undoAiAction = async (operationId) => {
+  const response = await http.post(API_ENDPOINTS.AI_UNDO(operationId));
   return response.data;
 };

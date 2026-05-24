@@ -48,6 +48,14 @@ export const API_ENDPOINTS = {
   VOICE_PARSE: "/gemini/voice-parse",
   GEMINI_CHAT: "/gemini/chat",
   AI_CHAT: "/ai/chat",
+  AI_PARSE_INTENT: "/ai/parse-intent",
+  AI_CONFIRM_ACTION: "/ai/confirm-action",
+  AI_UNDO: (operationId) => `/ai/undo/${operationId}`,
+  AI_PAGE_CONTEXT: (page) => `/ai/page-context?page=${page}`,
+  INCOME_EXCEL_DOWNLOAD: "/excel/download/income",
+  EXPENSE_EXCEL_DOWNLOAD: "/excel/download/expense",
+  EMAIL_INCOME: "/email/income-excel",
+  EMAIL_EXPENSE: "/email/expense-excel",
 
   // Reports
   MONTHLY_REPORT: "/reports/monthly",
