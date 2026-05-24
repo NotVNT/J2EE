@@ -12,7 +12,6 @@ const AdminSettings = lazy(() => import("./pages/Admin/AdminSettings.jsx"));
 const AdminSubscription = lazy(() => import("./pages/Admin/AdminSubscription.jsx"));
 const AdminNotifications = lazy(() => import("./pages/Admin/AdminNotifications.jsx"));
 const AdminUsers = lazy(() => import("./pages/Admin/AdminUsers.jsx"));
-const AdminAILimits = lazy(() => import("./pages/Admin/AdminAILimits.jsx"));
 const Home = lazy(() => import("./pages/Home.jsx"));
 const Notifications = lazy(() => import("./pages/Notifications.jsx"));
 const Income = lazy(() => import("./pages/Income.jsx"));
@@ -77,7 +76,6 @@ const App = () => {
                             <Route path="payments" element={<AdminPayments />} />
                             <Route path="subscriptions" element={<AdminSubscription />} />
                             <Route path="notifications" element={<AdminNotifications />} />
-                            <Route path="ai-limits" element={<AdminAILimits />} />
                             <Route path="settings" element={<AdminSettings />} />
                         </Route>
                     </Route>

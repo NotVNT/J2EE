@@ -20,8 +20,6 @@ export const API_ENDPOINTS = {
     GET_USER_INFO: "/profile",
     UPDATE_PROFILE: "/profile",
     UPDATE_AUTO_RENEW: "/profile/subscription/auto-renew",
-    GET_AI_USAGE: "/profile/ai-usage",
-
     // Payment endpoints
     CREATE_PAYMENT: "/payments/payos/create",
     CONFIRM_PAYMENT_WEBHOOK: "/payments/payos/confirm-webhook",
@@ -45,7 +43,6 @@ export const API_ENDPOINTS = {
     // Expense endpoints
     GET_ALL_EXPENSE: "/expenses",
     ADD_EXPENSE: "/expenses",
-    IMPORT_EXPENSE_RECEIPT: "/expenses/import-receipt",
     ANALYZE_EXPENSE_RECEIPT: "/expenses/import-receipt/analyze",
     CONFIRM_EXPENSE_RECEIPT_IMPORT: "/expenses/import-receipt/confirm",
     DELETE_EXPENSE: (expenseId) => `/expenses/${expenseId}`,
@@ -63,11 +60,10 @@ export const API_ENDPOINTS = {
     DELETE_BUDGET: (budgetId) => `/budgets/${budgetId}`,
 
     // AI assistant endpoints
-    GEMINI_CHAT: "/gemini/chat",
-    GEMINI_SPENDING_TIPS: "/gemini/spending-tips",
     AI_CHAT: "/ai/chat",
     AI_PARSE_INTENT: "/ai/parse-intent",
     AI_CONFIRM_ACTION: "/ai/confirm-action",
+    AI_UNDO: (operationId) => `/ai/undo/${operationId}`,
     AI_PAGE_CONTEXT: (page) => `/ai/page-context?page=${page}`,
 
     // Monthly Report endpoints
@@ -85,8 +81,6 @@ export const API_ENDPOINTS = {
     ADMIN_USER_DETAIL: (id) => `/admin/users/${id}`,
     ADMIN_USER_UPDATE: (id) => `/admin/users/${id}`,
     ADMIN_USER_DELETE: (id) => `/admin/users/${id}`,
-    ADMIN_RESET_AI_LIMITS: (id) => `/admin/users/${id}/reset-ai-limits`,
-    ADMIN_RESET_ALL_AI_LIMITS: "/admin/reset-ai-limits/all",
 
     // Subscription plan config endpoints
     GET_SUBSCRIPTION_PLANS: "/subscription-plans",

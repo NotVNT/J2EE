@@ -10,6 +10,7 @@ import com.example.moneymanager.dto.ReceiptImportItemDTO;
 import com.example.moneymanager.dto.ReceiptImportResponseDTO;
 import com.example.moneymanager.entity.CategoryEntity;
 import com.example.moneymanager.entity.ProfileEntity;
+import com.example.moneymanager.exception.ReceiptImportException;
 import com.example.moneymanager.repository.CategoryRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -28,7 +29,6 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -61,14 +61,26 @@ public class ReceiptImportService {
         public ReceiptImportAnalyzeResponseDTO analyzeReceipt(MultipartFile file) {
         ProfileEntity profile = profileService.getCurrentProfile();
         subscriptionService.ensureCanImportReceipt(profile);
-        validateFile(file);
+
+        if (file == null || file.isEmpty()) {
+            throw new ReceiptImportException("Vui lòng chọn hình ảnh hóa đơn để import.");
+        }
+
+        byte[] fileBytes;
+        try {
+            fileBytes = file.getBytes();
+        } catch (java.io.IOException e) {
+            throw new ReceiptImportException("Không thể đọc tệp ảnh.", e);
+        }
+
+        validateFile(file, fileBytes);
 
         List<CategoryEntity> expenseCategories = new ArrayList<>(
                 categoryRepository.findByTypeAndProfileId(EXPENSE_TYPE, profile.getId())
         );
         CategoryEntity otherCategory = ensureOtherExpenseCategory(profile, expenseCategories);
 
-        JsonNode aiResult = analyzeReceiptWithGemini(file, expenseCategories);
+        JsonNode aiResult = analyzeReceiptWithGemini(file, fileBytes);
         return buildPreviewFromAiResult(aiResult, expenseCategories, otherCategory);
     }
 
@@ -77,7 +89,7 @@ public class ReceiptImportService {
         subscriptionService.ensureCanImportReceipt(profile);
 
         if (requestDTO == null || requestDTO.getItems() == null || requestDTO.getItems().isEmpty()) {
-            throw new RuntimeException("Danh sách chi tiêu import không được để trống.");
+            throw new ReceiptImportException("Danh sách chi tiêu import không được để trống.");
         }
 
         String merchant = safeText(requestDTO.getMerchant());
@@ -134,7 +146,7 @@ public class ReceiptImportService {
         }
 
         if (importedExpenses.isEmpty()) {
-            throw new RuntimeException("Không có dòng chi tiêu hợp lệ để lưu từ hóa đơn.");
+            throw new ReceiptImportException("Không có dòng chi tiêu hợp lệ để lưu từ hóa đơn.");
         }
 
         return ReceiptImportResponseDTO.builder()
@@ -157,33 +169,33 @@ public class ReceiptImportService {
 
         JsonNode itemsNode = aiResult.path("items");
         if (!itemsNode.isArray() || itemsNode.isEmpty()) {
-            throw new RuntimeException("Không tìm thấy dòng chi tiêu hợp lệ từ hình ảnh hóa đơn.");
+            throw new ReceiptImportException("Không tìm thấy dòng chi tiêu hợp lệ từ hình ảnh hóa đơn.");
         }
 
         List<ReceiptImportItemDTO> items = new ArrayList<>();
         for (JsonNode item : itemsNode) {
             String itemName = safeText(item.path("name").asText(""));
             BigDecimal amount = parseAmount(item.path("amount"));
-            String categoryName = safeText(item.path("categoryName").asText(""));
+            String categoryHint = safeText(item.path("categoryHint").asText(""));
 
             if (itemName.isBlank() || amount.compareTo(BigDecimal.ZERO) <= 0) {
                 continue;
             }
 
             LocalDate transactionDate = receiptDate != null ? receiptDate : LocalDate.now();
-            CategoryEntity matchedCategory = resolveCategory(expenseCategories, categoryName, itemName, otherCategory);
+                CategoryEntity matchedCategory = resolveCategory(expenseCategories, categoryHint, itemName, otherCategory);
             items.add(ReceiptImportItemDTO.builder()
                     .name(itemName)
                     .amount(amount)
                     .categoryId(matchedCategory.getId())
-                    .categoryHint(categoryName)
+                    .categoryHint(categoryHint)
                     .icon(matchedCategory.getIcon())
                     .date(transactionDate)
                     .build());
         }
 
         if (items.isEmpty()) {
-            throw new RuntimeException("Không có dòng chi tiêu hợp lệ để preview từ hóa đơn.");
+            throw new ReceiptImportException("Không có dòng chi tiêu hợp lệ để preview từ hóa đơn.");
         }
 
         return ReceiptImportAnalyzeResponseDTO.builder()
@@ -199,38 +211,45 @@ public class ReceiptImportService {
     private static final byte[] MAGIC_PNG  = {(byte) 0x89, 0x50, 0x4E, 0x47};
     private static final byte[] MAGIC_GIF  = {0x47, 0x49, 0x46, 0x38};
     private static final byte[] MAGIC_WEBP_RIFF = {0x52, 0x49, 0x46, 0x46};
+    private static final byte[] MAGIC_PDF  = {0x25, 0x50, 0x44, 0x46, 0x2D}; // %PDF-
 
-    private void validateFile(MultipartFile file) {
-        if (file == null || file.isEmpty()) {
-            throw new RuntimeException("Vui lòng chọn hình ảnh hóa đơn để import.");
-        }
-
+    private void validateFile(MultipartFile file, byte[] fileBytes) {
         if (file.getSize() > MAX_IMAGE_SIZE_BYTES) {
-            throw new RuntimeException("Kích thước ảnh quá lớn. Vui lòng chọn ảnh tối đa 10MB.");
+            throw new ReceiptImportException("Kích thước ảnh quá lớn. Vui lòng chọn ảnh tối đa 10MB.");
         }
 
         String contentType = file.getContentType();
-        if (contentType == null || !contentType.toLowerCase(Locale.ROOT).startsWith("image/")) {
-            throw new RuntimeException("Định dạng tệp không hợp lệ. Vui lòng chọn tệp ảnh.");
+        String baseContentType = contentType == null ? "" : contentType.split(";")[0].trim().toLowerCase(Locale.ROOT);
+        if (!baseContentType.startsWith("image/") && !baseContentType.equals("application/pdf")) {
+            throw new ReceiptImportException("Định dạng tệp không hợp lệ. Vui lòng chọn tệp ảnh hoặc PDF.");
         }
 
-        try {
-            byte[] header = file.getBytes();
-            if (!hasValidImageMagicBytes(header)) {
-                throw new RuntimeException("Nội dung tệp không hợp lệ. Vui lòng chọn tệp ảnh thực sự.");
-            }
-        } catch (java.io.IOException e) {
-            throw new RuntimeException("Không thể đọc tệp ảnh.", e);
+        if (!hasValidFileMagicBytes(fileBytes)) {
+            throw new ReceiptImportException("Nội dung tệp không hợp lệ. Vui lòng chọn tệp ảnh thực sự.");
         }
     }
 
-    private boolean hasValidImageMagicBytes(byte[] data) {
+    // First-pass integrity check only — not a guarantee of full file parsability.
+    private boolean hasValidFileMagicBytes(byte[] data) {
         if (data == null || data.length < 4) return false;
         return startsWith(data, MAGIC_JPEG)
                 || startsWith(data, MAGIC_PNG)
                 || startsWith(data, MAGIC_GIF)
+                || startsWith(data, MAGIC_PDF)
                 || (startsWith(data, MAGIC_WEBP_RIFF) && data.length >= 12
                         && data[8] == 0x57 && data[9] == 0x45 && data[10] == 0x42 && data[11] == 0x50);
+    }
+
+    private String canonicalMimeType(byte[] data) {
+        if (data != null && startsWith(data, MAGIC_PDF)) return "application/pdf";
+        if (data != null && startsWith(data, MAGIC_PNG)) return "image/png";
+        if (data != null && startsWith(data, MAGIC_GIF)) return "image/gif";
+        if (data != null && startsWith(data, MAGIC_WEBP_RIFF) && data.length >= 12
+                && data[8] == 0x57 && data[9] == 0x45 && data[10] == 0x42 && data[11] == 0x50) {
+            return "image/webp";
+        }
+        if (data != null && startsWith(data, MAGIC_JPEG)) return "image/jpeg";
+        throw new ReceiptImportException("Nội dung tệp không hợp lệ.");
     }
 
     private boolean startsWith(byte[] data, byte[] prefix) {
@@ -241,47 +260,40 @@ public class ReceiptImportService {
         return true;
     }
 
-    private JsonNode analyzeReceiptWithGemini(MultipartFile file, List<CategoryEntity> expenseCategories) {
+    private JsonNode analyzeReceiptWithGemini(MultipartFile file, byte[] fileBytes) {
         try {
-            String base64Image = Base64.getEncoder().encodeToString(file.getBytes());
-            ObjectNode requestBody = buildGeminiImageRequest(base64Image, file.getContentType(), expenseCategories);
+            String base64Image = Base64.getEncoder().encodeToString(fileBytes);
+            ObjectNode requestBody = buildGeminiImageRequest(base64Image, canonicalMimeType(fileBytes));
 
+            String apiKey = geminiKeyRotator.nextKey();
             String requestJson = objectMapper.writeValueAsString(requestBody);
             String responseJson = geminiRestClient.post()
                     .uri(uriBuilder -> uriBuilder
                             .path("/v1beta/models/{model}:generateContent")
-                            .queryParam("key", geminiKeyRotator.nextKey())
+                            .queryParam("key", apiKey)
                             .build(geminiProperties.model()))
                     .body(requestJson)
                     .retrieve()
                     .body(String.class);
 
             if (responseJson == null || responseJson.isBlank()) {
-                throw new RuntimeException("Gemini không trả về dữ liệu để phân tích hóa đơn.");
+                throw new ReceiptImportException("Gemini không trả về dữ liệu để phân tích hóa đơn.");
             }
 
             JsonNode root = objectMapper.readTree(responseJson);
             String text = extractOutputText(root);
             if (text == null || text.isBlank()) {
-                throw new RuntimeException("Gemini không trả về kết quả phân tích hóa đơn hợp lệ.");
+                throw new ReceiptImportException("Gemini không trả về kết quả phân tích hóa đơn hợp lệ.");
             }
 
             String cleanJson = sanitizeJsonResponse(text);
             return objectMapper.readTree(cleanJson);
         } catch (Exception exception) {
-            throw new RuntimeException("Không thể kết nối", exception);
+            throw new ReceiptImportException("Không thể kết nối với Gemini để phân tích hóa đơn.", exception);
         }
     }
 
-    private ObjectNode buildGeminiImageRequest(String base64Image, String mimeType, List<CategoryEntity> expenseCategories) {
-        List<String> categoryNames = expenseCategories.stream()
-                .map(CategoryEntity::getName)
-                .collect(Collectors.toCollection(ArrayList::new));
-        if (categoryNames.stream().noneMatch(n -> normalize(n).equals("khac"))) {
-            categoryNames.add(OTHER_CATEGORY_NAME);
-        }
-        String categoryListText = String.join(", ", categoryNames);
-
+    private ObjectNode buildGeminiImageRequest(String base64Image, String mimeType) {
         ObjectNode requestBody = objectMapper.createObjectNode();
 
         ArrayNode contents = objectMapper.createArrayNode();
@@ -290,20 +302,30 @@ public class ReceiptImportService {
 
         ArrayNode parts = objectMapper.createArrayNode();
         ObjectNode promptPart = objectMapper.createObjectNode();
-        promptPart.put("text",
-                "Bạn là hệ thống OCR tài chính. Phân tích hóa đơn trong ảnh và trả về JSON hợp lệ.\n\n" +
-                "Danh mục chi tiêu của người dùng (dùng đúng tên, phân biệt hoa thường):\n" +
-                categoryListText + "\n\n" +
-                """
-                Quy tắc bắt buộc:
-                1. Trích xuất TẤT CẢ dòng sản phẩm/dịch vụ trong hóa đơn, không bỏ sót.
-                2. amount là số nguyên VND. Nếu có "SL x đơn giá" hoặc "số lượng x đơn giá", tính amount = số lượng × đơn giá.
-                3. Hóa đơn VN dùng dấu chấm (.) phân cách hàng nghìn (45.000 = 45000, 1.200.000 = 1200000). Đọc đúng số.
-                4. BỎ QUA các dòng không phải sản phẩm cụ thể: Tổng cộng, Tổng tiền, Thành tiền, VAT, Thuế GTGT, Phí dịch vụ, Giảm giá, Khuyến mãi, Chiết khấu, Tiền thừa, Tiền trả lại.
-                5. Chỉ lấy item có amount > 0.
-                6. categoryName PHẢI là một trong các tên danh mục được liệt kê ở trên. Nếu không phù hợp thì dùng "Khác".
-                7. receiptDate định dạng YYYY-MM-DD, hoặc null nếu không có trên hóa đơn.
-                8. location là địa chỉ/tên chi nhánh ghi trên hóa đơn (không phải tên thương hiệu), null nếu không có.
+        promptPart.put("text", """
+                Bạn là hệ thống OCR tài chính cho ứng dụng Money Manager.
+                Hãy đọc ảnh hóa đơn và chỉ trả về JSON hợp lệ theo đúng schema:
+                {
+                  "merchant": "string",
+                  "location": "string" hoặc null,
+                  "receiptDate": "YYYY-MM-DD" hoặc null,
+                  "items": [
+                    {
+                      "name": "string",
+                      "amount": number,
+                      "categoryHint": "food|transport|shopping|utilities|health|education|entertainment|other"
+                    }
+                  ]
+                }
+                Quy tắc:
+                - Không thêm markdown, không thêm ký tự thừa ngoài JSON.
+                - BẮT BUỘC trích xuất tối đa số dòng sản phẩm có thể đọc được trong hóa đơn, không chỉ 1 dòng.
+                - Với hóa đơn nhiều sản phẩm, trả về đầy đủ tất cả sản phẩm trong mảng items theo thứ tự xuất hiện.
+                - Nếu có số lượng x đơn giá, hãy tính amount = số lượng * đơn giá cho từng sản phẩm.
+                - Bỏ qua dòng tổng kết như tổng tiền, VAT, giảm giá nếu không phải mặt hàng mua cụ thể.
+                - location là địa điểm/cửa hàng trên hóa đơn (địa chỉ hoặc tên chi nhánh). Nếu không rõ thì null.
+                - Nếu thiếu ngày hóa đơn thì dùng null cho receiptDate.
+                - Chỉ lấy item có amount > 0.
                 """);
         parts.add(promptPart);
 
@@ -320,63 +342,9 @@ public class ReceiptImportService {
 
         ObjectNode generationConfig = objectMapper.createObjectNode();
         generationConfig.put("temperature", 0.1);
-        generationConfig.put("maxOutputTokens", 4096);
-        generationConfig.put("responseMimeType", "application/json");
-        generationConfig.set("responseSchema", buildReceiptResponseSchema(categoryNames));
+        generationConfig.put("maxOutputTokens", 2200);
         requestBody.set("generationConfig", generationConfig);
-
         return requestBody;
-    }
-
-    private ObjectNode buildReceiptResponseSchema(List<String> categoryNames) {
-        ObjectNode nameField = objectMapper.createObjectNode();
-        nameField.put("type", "STRING");
-
-        ObjectNode amountField = objectMapper.createObjectNode();
-        amountField.put("type", "NUMBER");
-
-        ObjectNode categoryField = objectMapper.createObjectNode();
-        categoryField.put("type", "STRING");
-        ArrayNode enumValues = categoryField.putArray("enum");
-        categoryNames.forEach(enumValues::add);
-
-        ObjectNode itemProps = objectMapper.createObjectNode();
-        itemProps.set("name", nameField);
-        itemProps.set("amount", amountField);
-        itemProps.set("categoryName", categoryField);
-
-        ObjectNode itemSchema = objectMapper.createObjectNode();
-        itemSchema.put("type", "OBJECT");
-        itemSchema.set("properties", itemProps);
-        itemSchema.putArray("required").add("name").add("amount").add("categoryName");
-
-        ObjectNode itemsArray = objectMapper.createObjectNode();
-        itemsArray.put("type", "ARRAY");
-        itemsArray.set("items", itemSchema);
-
-        ObjectNode merchantField = objectMapper.createObjectNode();
-        merchantField.put("type", "STRING");
-
-        ObjectNode locationField = objectMapper.createObjectNode();
-        locationField.put("type", "STRING");
-        locationField.put("nullable", true);
-
-        ObjectNode dateField = objectMapper.createObjectNode();
-        dateField.put("type", "STRING");
-        dateField.put("nullable", true);
-
-        ObjectNode rootProps = objectMapper.createObjectNode();
-        rootProps.set("merchant", merchantField);
-        rootProps.set("location", locationField);
-        rootProps.set("receiptDate", dateField);
-        rootProps.set("items", itemsArray);
-
-        ObjectNode schema = objectMapper.createObjectNode();
-        schema.put("type", "OBJECT");
-        schema.set("properties", rootProps);
-        schema.putArray("required").add("merchant").add("items");
-
-        return schema;
     }
 
     private String extractOutputText(JsonNode responseBody) {
@@ -415,6 +383,11 @@ public class ReceiptImportService {
         if (cleaned.startsWith("```")) {
             cleaned = cleaned.replaceFirst("^```(?:json)?", "").replaceFirst("```$", "").trim();
         }
+        int start = cleaned.indexOf('{');
+        int end = cleaned.lastIndexOf('}');
+        if (start != -1 && end != -1 && end > start) {
+            cleaned = cleaned.substring(start, end + 1);
+        }
         return cleaned;
     }
 
@@ -450,32 +423,34 @@ public class ReceiptImportService {
         }
     }
 
-    private CategoryEntity resolveCategory(List<CategoryEntity> categories, String categoryName, String itemName, CategoryEntity otherCategory) {
-        if (!categoryName.isBlank()) {
-            String normalized = normalize(categoryName);
+    private CategoryEntity resolveCategory(List<CategoryEntity> categories, String hint, String name, CategoryEntity otherCategory) {
+        String normalizedHint = normalize(hint);
+        String normalizedName = normalize(name);
 
-            CategoryEntity exact = categories.stream()
-                    .filter(c -> normalize(c.getName()).equals(normalized))
-                    .findFirst()
-                    .orElse(null);
-            if (exact != null) return exact;
-
-            CategoryEntity partial = categories.stream()
-                    .filter(c -> normalized.contains(normalize(c.getName()))
-                            || normalize(c.getName()).contains(normalized))
-                    .findFirst()
-                    .orElse(null);
-            if (partial != null) return partial;
+        if ("other".equals(normalizedHint) || "khac".equals(normalizedHint)) {
+            return otherCategory;
         }
 
-        if (!itemName.isBlank()) {
-            String normalizedItem = normalize(itemName);
-            CategoryEntity byItem = categories.stream()
-                    .filter(c -> normalizedItem.contains(normalize(c.getName()))
-                            || normalize(c.getName()).contains(normalizedItem))
+        if (!normalizedHint.isBlank()) {
+            CategoryEntity exact = categories.stream()
+                    .filter(category -> normalizedHint.contains(normalize(category.getName()))
+                            || normalize(category.getName()).contains(normalizedHint))
                     .findFirst()
                     .orElse(null);
-            if (byItem != null) return byItem;
+            if (exact != null) {
+                return exact;
+            }
+        }
+
+        if (!normalizedName.isBlank()) {
+            CategoryEntity byName = categories.stream()
+                    .filter(category -> normalizedName.contains(normalize(category.getName()))
+                            || normalize(category.getName()).contains(normalizedName))
+                    .findFirst()
+                    .orElse(null);
+            if (byName != null) {
+                return byName;
+            }
         }
 
         return otherCategory;

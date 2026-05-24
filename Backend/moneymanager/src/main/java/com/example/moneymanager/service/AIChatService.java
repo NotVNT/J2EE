@@ -1,13 +1,13 @@
 package com.example.moneymanager.service;
 
 import com.example.moneymanager.config.GeminiProperties;
-import com.example.moneymanager.config.GptOssKeyRotator;
 import com.example.moneymanager.config.GptOssProperties;
 import com.example.moneymanager.config.NineRouterProperties;
 import com.example.moneymanager.dto.AIChatMessageDTO;
 import com.example.moneymanager.dto.AIChatRequestDTO;
 import com.example.moneymanager.dto.AIChatResponseDTO;
 import com.example.moneymanager.entity.SubscriptionPlan;
+import com.example.moneymanager.exception.ForbiddenException;
 import com.example.moneymanager.util.OpenRouterResponseParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -42,7 +42,6 @@ public class AIChatService {
     private final GeminiProperties geminiProperties;
     private final RestClient gptOssRestClient;
     private final GptOssProperties gptOssProperties;
-    private final GptOssKeyRotator gptOssKeyRotator;
     private final RestClient nineRouterChatRestClient;
     private final RestClient nineRouterAgentRestClient;
     private final NineRouterProperties nineRouterProperties;
@@ -54,18 +53,16 @@ public class AIChatService {
         List<AIChatMessageDTO> trimmedMessages = trimHistory(request.getMessages());
 
         String provider = request.getProvider();
+        SubscriptionPlan plan = profileService.getCurrentProfile().getSubscriptionPlan();
+
+        if (plan != SubscriptionPlan.PREMIUM && !"ninerouter".equalsIgnoreCase(provider)) {
+            throw new ForbiddenException("Model này yêu cầu gói PREMIUM. Vui lòng nâng cấp để sử dụng.");
+        }
+
         if ("gptoss".equalsIgnoreCase(provider)) {
             return chatWithGptOss(trimmedMessages);
         }
         if ("ninerouter".equalsIgnoreCase(provider)) {
-            SubscriptionPlan plan = profileService.getCurrentProfile().getSubscriptionPlan();
-            if (plan != SubscriptionPlan.PREMIUM) {
-                return AIChatResponseDTO.builder()
-                        .reply("Model EXPERIMENTAL chỉ khả dụng cho gói PREMIUM. Vui lòng nâng cấp để sử dụng.")
-                        .provider("ninerouter")
-                        .modelUsed(nineRouterProperties.chat() != null ? nineRouterProperties.chat().model() : "project-demo")
-                        .build();
-            }
             return chatWithNineRouter(trimmedMessages);
         }
         return chatWithGemini(trimmedMessages);
@@ -76,6 +73,11 @@ public class AIChatService {
         List<AIChatMessageDTO> trimmedMessages = trimHistory(request.getMessages());
 
         String provider = request.getProvider() != null ? request.getProvider() : "gemini";
+        SubscriptionPlan plan = profileService.getCurrentProfile().getSubscriptionPlan();
+        if (plan != SubscriptionPlan.PREMIUM && !"ninerouter".equalsIgnoreCase(provider)) {
+            throw new ForbiddenException("Model này yêu cầu gói PREMIUM. Vui lòng nâng cấp để sử dụng.");
+        }
+
         if ("ninerouter".equalsIgnoreCase(provider)) {
             NineRouterProperties.Section agent = nineRouterProperties.agent();
             if (agent == null || agent.apiKey() == null || agent.apiKey().isBlank()) {
@@ -132,7 +134,8 @@ public class AIChatService {
     }
 
     private AIChatResponseDTO chatWithGptOss(List<AIChatMessageDTO> messages) {
-        if (!gptOssKeyRotator.hasKeys()) {
+        List<String> keys = gptOssProperties.apiKeys();
+        if (keys == null || keys.isEmpty()) {
             return AIChatResponseDTO.builder()
                     .reply("GPT-OSS ch\u01B0a \u0111\u01B0\u1EE3c c\u1EA5u h\u00ECnh. Vui l\u00F2ng d\u00F9ng Gemini ho\u1EB7c li\u00EAn h\u1EC7 qu\u1EA3n tr\u1ECB vi\u00EAn.")
                     .provider("gptoss")
@@ -140,7 +143,7 @@ public class AIChatService {
                     .build();
         }
         return chatWithOpenAICompatible(gptOssRestClient, gptOssProperties.model(),
-                gptOssKeyRotator.nextKey(), "gptoss", messages);
+                keys.get(0), "gptoss", messages);
     }
 
     private AIChatResponseDTO chatWithNineRouter(List<AIChatMessageDTO> messages) {
