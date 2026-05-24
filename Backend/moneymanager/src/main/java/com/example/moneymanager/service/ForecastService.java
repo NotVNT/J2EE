@@ -107,6 +107,31 @@ public class ForecastService {
         LocalDate startDate = LocalDate.now().minusMonths(3).withDayOfMonth(1);
         LocalDate endDate = LocalDate.now();
 
+        return detectAnomaliesBetween(profile, startDate, endDate, null);
+    }
+
+    public List<AnomalyDTO> detectAnomalies(Integer year, Integer month) {
+        ProfileEntity profile = profileService.getCurrentProfile();
+        subscriptionService.ensureCanUseForecast(profile);
+
+        if (year == null || month == null) {
+            LocalDate startDate = LocalDate.now().minusMonths(3).withDayOfMonth(1);
+            LocalDate endDate = LocalDate.now();
+            return detectAnomaliesBetween(profile, startDate, endDate, null);
+        }
+
+        YearMonth targetMonth = YearMonth.of(year, month);
+        LocalDate startDate = targetMonth.minusMonths(2).atDay(1);
+        LocalDate endDate = targetMonth.atEndOfMonth();
+
+        return detectAnomaliesBetween(profile, startDate, endDate, targetMonth);
+    }
+
+    private List<AnomalyDTO> detectAnomaliesBetween(
+            ProfileEntity profile,
+            LocalDate startDate,
+            LocalDate endDate,
+            YearMonth targetMonth) {
         List<ExpenseEntity> expenses = expenseRepository.findByProfileIdAndDateBetween(
                 profile.getId(), startDate, endDate);
 
@@ -123,6 +148,8 @@ public class ForecastService {
 
         for (ExpenseEntity e : expenses) {
             if (e.getCategory() == null) continue;
+            if (targetMonth != null && !YearMonth.from(e.getDate()).equals(targetMonth)) continue;
+
             Long catId = e.getCategory().getId();
             List<BigDecimal> amounts = categoryAmounts.get(catId);
 

@@ -92,7 +92,9 @@ export const API_ENDPOINTS = {
 
   // Forecast (PREMIUM)
   FORECAST_MONTHLY: (year, month) => `/forecast/monthly?year=${year}&month=${month}`,
-  FORECAST_ANOMALIES: "/forecast/anomalies",
+  FORECAST_ANOMALIES: (year, month) => (
+    year && month ? `/forecast/anomalies?year=${year}&month=${month}` : "/forecast/anomalies"
+  ),
   FORECAST_CATEGORY_TREND: (categoryId, months = 6) => `/forecast/category-trend/${categoryId}?months=${months}`,
   FORECAST_INSIGHTS: "/forecast/insights",
 

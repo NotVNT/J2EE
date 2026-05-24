@@ -14,8 +14,8 @@ export const fetchMonthlyForecast = async (year, month) => {
  * Lấy danh sách giao dịch bất thường (tối đa 5)
  * @returns {Promise<Array<{transactionId, type, amount, categoryName, date, meanAmount, stdDev}>>}
  */
-export const fetchAnomalies = async () => {
-  const response = await http.get(API_ENDPOINTS.FORECAST_ANOMALIES);
+export const fetchAnomalies = async (year, month) => {
+  const response = await http.get(API_ENDPOINTS.FORECAST_ANOMALIES(year, month));
   return Array.isArray(response.data) ? response.data : [];
 };
 

@@ -9,6 +9,7 @@ import com.example.moneymanager.repository.ExpenseRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -248,6 +249,40 @@ class ForecastServiceTest {
         List<AnomalyDTO> anomalies = forecastService.detectAnomalies();
 
         assertThat(anomalies).hasSizeLessThanOrEqualTo(5);
+    }
+
+    @Test
+    void detectAnomalies_withMonth_filtersResultsToRequestedMonth() {
+        CategoryEntity transport = new CategoryEntity();
+        transport.setId(20L);
+        transport.setName("Transport");
+
+        List<ExpenseEntity> expenses = List.of(
+                expense(1L, category, new BigDecimal("100000"), LocalDate.of(2026, 5, 2)),
+                expense(2L, category, new BigDecimal("100000"), LocalDate.of(2026, 5, 3)),
+                expense(3L, category, new BigDecimal("100000"), LocalDate.of(2026, 5, 4)),
+                expense(4L, category, new BigDecimal("100000"), LocalDate.of(2026, 5, 5)),
+                expense(5L, category, new BigDecimal("1000000"), LocalDate.of(2026, 5, 6)),
+                expense(6L, transport, new BigDecimal("100000"), LocalDate.of(2026, 4, 2)),
+                expense(7L, transport, new BigDecimal("100000"), LocalDate.of(2026, 4, 3)),
+                expense(8L, transport, new BigDecimal("100000"), LocalDate.of(2026, 4, 4)),
+                expense(9L, transport, new BigDecimal("100000"), LocalDate.of(2026, 4, 5)),
+                expense(10L, transport, new BigDecimal("1000000"), LocalDate.of(2026, 4, 6))
+        );
+
+        when(expenseRepository.findByProfileIdAndDateBetween(eq(1L), any(), any()))
+                .thenReturn(expenses);
+
+        List<AnomalyDTO> anomalies = forecastService.detectAnomalies(2026, 5);
+
+        assertThat(anomalies).hasSize(1);
+        assertThat(anomalies.get(0).getDate()).startsWith("2026-05");
+
+        ArgumentCaptor<LocalDate> startCaptor = ArgumentCaptor.forClass(LocalDate.class);
+        ArgumentCaptor<LocalDate> endCaptor = ArgumentCaptor.forClass(LocalDate.class);
+        verify(expenseRepository).findByProfileIdAndDateBetween(eq(1L), startCaptor.capture(), endCaptor.capture());
+        assertThat(startCaptor.getValue()).isEqualTo(LocalDate.of(2026, 3, 1));
+        assertThat(endCaptor.getValue()).isEqualTo(LocalDate.of(2026, 5, 31));
     }
 
     // ── getCategoryTrend ─────────────────────────────────────────────────────

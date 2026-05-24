@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Dimensions,
@@ -177,36 +177,55 @@ export default function ForecastScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [isTrendLoading, setIsTrendLoading] = useState(false);
   const [insightError, setInsightError] = useState(false);
+  const forecastRequestKeyRef = useRef("");
+  const anomalyRequestKeyRef = useRef("");
+  const insightRequestKeyRef = useRef("");
 
   // ── Fetch Monthly Forecast ──────────────────────────────────
   const loadMonthlyForecast = useCallback(async () => {
     if (!isPremium) return;
+    const requestKey = `${selectedYear}-${selectedMonth}`;
+    forecastRequestKeyRef.current = requestKey;
+    insightRequestKeyRef.current = requestKey;
     setIsLoading(true);
+    setMonthlyForecast(null);
+    setSelectedCategoryId(null);
+    setCategoryTrend(null);
+    setInsights(null);
+    setInsightError(false);
     try {
       const data = await fetchMonthlyForecast(selectedYear, selectedMonth);
+      if (forecastRequestKeyRef.current !== requestKey) return;
       setMonthlyForecast(data);
-      // Auto-select first category
       const categories = data?.categories || [];
-      if (categories.length > 0 && !selectedCategoryId) {
-        setSelectedCategoryId(categories[0].categoryId);
-      }
+      setSelectedCategoryId(categories.length > 0 ? categories[0].categoryId : null);
     } catch {
+      if (forecastRequestKeyRef.current !== requestKey) return;
       setMonthlyForecast(null);
+      setSelectedCategoryId(null);
+      setCategoryTrend(null);
     } finally {
-      setIsLoading(false);
+      if (forecastRequestKeyRef.current === requestKey) {
+        setIsLoading(false);
+      }
     }
-  }, [selectedYear, selectedMonth, isPremium, selectedCategoryId]);
+  }, [selectedYear, selectedMonth, isPremium]);
 
   // ── Fetch Anomalies ────────────────────────────────────────
   const loadAnomalies = useCallback(async () => {
     if (!isPremium) return;
+    const requestKey = `${selectedYear}-${selectedMonth}`;
+    anomalyRequestKeyRef.current = requestKey;
+    setAnomalies([]);
     try {
-      const data = await fetchAnomalies();
+      const data = await fetchAnomalies(selectedYear, selectedMonth);
+      if (anomalyRequestKeyRef.current !== requestKey) return;
       setAnomalies(data);
     } catch {
+      if (anomalyRequestKeyRef.current !== requestKey) return;
       setAnomalies([]);
     }
-  }, [isPremium]);
+  }, [selectedYear, selectedMonth, isPremium]);
 
   // ── Fetch Category Trend ───────────────────────────────────
   const loadCategoryTrend = useCallback(async (categoryId) => {
@@ -224,12 +243,18 @@ export default function ForecastScreen() {
 
   // ── Fetch AI Insights ──────────────────────────────────────
   const loadInsights = useCallback(async (forecastData) => {
-    if (!forecastData || !isPremium) return;
+    if (!forecastData?.categories?.length || !isPremium) return;
+    const forecastKey = `${forecastData.year}-${forecastData.month}`;
+    insightRequestKeyRef.current = forecastKey;
+    setInsights(null);
+    setInsightError(false);
     try {
       const data = await fetchInsights(forecastData);
-      setInsights(data);
+      if (insightRequestKeyRef.current !== forecastKey) return;
+      setInsights({ ...data, year: forecastData.year, month: forecastData.month });
       setInsightError(false);
     } catch {
+      if (insightRequestKeyRef.current !== forecastKey) return;
       setInsights(null);
       setInsightError(true);
     }
@@ -242,10 +267,17 @@ export default function ForecastScreen() {
   }, [loadMonthlyForecast, loadAnomalies]);
 
   useEffect(() => {
-    if (monthlyForecast) {
+    if (
+      monthlyForecast?.year === selectedYear &&
+      monthlyForecast?.month === selectedMonth &&
+      monthlyForecast?.categories?.length > 0
+    ) {
       loadInsights(monthlyForecast);
+    } else {
+      setInsights(null);
+      setInsightError(false);
     }
-  }, [monthlyForecast, loadInsights]);
+  }, [monthlyForecast, selectedYear, selectedMonth, loadInsights]);
 
   useEffect(() => {
     loadCategoryTrend(selectedCategoryId);
@@ -273,6 +305,11 @@ export default function ForecastScreen() {
     () => categories.find((c) => c.categoryId === selectedCategoryId) || null,
     [categories, selectedCategoryId]
   );
+
+  const currentInsight = useMemo(() => {
+    if (insights?.year !== selectedYear || insights?.month !== selectedMonth) return null;
+    return insights;
+  }, [insights, selectedYear, selectedMonth]);
 
   // ── BarChart Data ──────────────────────────────────────────
   const barChartData = useMemo(() => {
@@ -496,7 +533,7 @@ export default function ForecastScreen() {
           {/* Anomalies */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>
-              🚨 Cảnh báo tham khảo ({anomalies.length})
+              🚨 Cảnh báo tham khảo tháng {selectedMonth}/{selectedYear} ({anomalies.length})
             </Text>
             {anomalies.length > 0 ? (
               <View style={styles.anomalyList}>
@@ -505,19 +542,19 @@ export default function ForecastScreen() {
                 ))}
               </View>
             ) : (
-              <EmptyState message="Không phát hiện giao dịch bất thường nào gần đây" />
+              <EmptyState message="Không phát hiện giao dịch bất thường trong tháng này" />
             )}
           </View>
 
           {/* AI Insight */}
-          {insights?.narrative ? (
+          {currentInsight?.narrative ? (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>🤖 Phân tích AI</Text>
               <View style={styles.insightCard}>
-                <Text style={styles.insightText}>{insights.narrative}</Text>
-                {insights.generatedAt ? (
+                <Text style={styles.insightText}>{currentInsight.narrative}</Text>
+                {currentInsight.generatedAt ? (
                   <Text style={styles.insightTime}>
-                    {formatDate(insights.generatedAt)}
+                    {formatDate(currentInsight.generatedAt)}
                   </Text>
                 ) : null}
               </View>
