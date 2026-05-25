@@ -1,6 +1,7 @@
 import { useCallback, useContext, useMemo, useState } from "react";
 import { AuthContext } from "../../../components/AuthContext";
 import { fetchAiForecast } from "../services/aiInsightApi";
+import { saveAiForecastDraft } from "../services/forecastDraftCache";
 
 export function useAiInsight() {
   const { user } = useContext(AuthContext);
@@ -128,6 +129,12 @@ export function useAiInsight() {
     analyze();
   }, [analyze]);
 
+  const confirmAnalysis = useCallback(() => {
+    const draft = saveAiForecastDraft(result, selectedYear, selectedMonth);
+    closeSheet();
+    return draft;
+  }, [closeSheet, result, selectedMonth, selectedYear]);
+
   return {
     visible,
     openSheet,
@@ -144,6 +151,7 @@ export function useAiInsight() {
     error,
     analyze,
     retry,
+    confirmAnalysis,
     isIdle: !loading && !result && !error,
     isPremium,
     subscriptionPlan,

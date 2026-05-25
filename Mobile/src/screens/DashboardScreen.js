@@ -132,6 +132,18 @@ export default function DashboardScreen() {
     }
   };
 
+  const handleAiConfirm = useCallback(() => {
+    const draft = ai.confirmAnalysis();
+    if (draft) {
+      navigation.navigate("Forecast", {
+        year: draft.year,
+        month: draft.month,
+        source: "ai-insight",
+        draftSavedAt: draft.savedAt,
+      });
+    }
+  }, [ai, navigation]);
+
 
   const fetchDashboard = useCallback(async () => {
     const response = await http.get(API_ENDPOINTS.DASHBOARD_DATA);
@@ -296,6 +308,7 @@ export default function DashboardScreen() {
         isPremium={ai.isPremium}
         onAnalyze={ai.analyze}
         onRetry={ai.retry}
+        onConfirm={handleAiConfirm}
       />
 
       {/* ── AI Insight Locked Modal ────────────────────────── */}
