@@ -25,6 +25,7 @@ public class IncomeService {
     private final NotificationService notificationService;
     private final com.example.moneymanager.repository.JarRepository jarRepository;
     private final com.example.moneymanager.repository.IncomeAllocationRepository incomeAllocationRepository;
+    private final JarService jarService;
 
     // Adds a new income to the database
     public IncomeDTO addIncome(IncomeDTO dto) {
@@ -59,28 +60,38 @@ public class IncomeService {
             }
         } else {
             List<com.example.moneymanager.entity.JarEntity> jars = jarRepository.findByProfile(profile);
-            com.example.moneymanager.entity.JarEntity defaultJar;
             if (jars.isEmpty()) {
-                defaultJar = com.example.moneymanager.entity.JarEntity.builder()
-                        .profile(profile)
-                        .name("Ví tổng")
-                        .icon("")
-                        .color("#4CAF50")
-                        .targetPercentage(new java.math.BigDecimal("100.00"))
-                        .currentBalance(dto.getAmount())
-                        .build();
-            } else {
-                defaultJar = jars.get(0);
-                defaultJar.setCurrentBalance(defaultJar.getCurrentBalance().add(dto.getAmount()));
+                jars = jarService.initializeDefaultJars(profile);
             }
-            jarRepository.save(defaultJar);
             
-            com.example.moneymanager.entity.IncomeAllocationEntity allocation = com.example.moneymanager.entity.IncomeAllocationEntity.builder()
-                    .income(newIncome)
-                    .jar(defaultJar)
-                    .amount(dto.getAmount())
-                    .build();
-            incomeAllocationRepository.save(allocation);
+            java.math.BigDecimal totalAmount = dto.getAmount();
+            java.math.BigDecimal allocatedSum = java.math.BigDecimal.ZERO;
+            
+            for (int i = 0; i < jars.size(); i++) {
+                com.example.moneymanager.entity.JarEntity jar = jars.get(i);
+                java.math.BigDecimal pct = jar.getTargetPercentage() != null ? jar.getTargetPercentage() : java.math.BigDecimal.ZERO;
+                java.math.BigDecimal allocAmount;
+                
+                if (i == jars.size() - 1) {
+                    allocAmount = totalAmount.subtract(allocatedSum);
+                } else {
+                    allocAmount = totalAmount.multiply(pct).divide(new java.math.BigDecimal("100.00"), 2, java.math.RoundingMode.HALF_UP);
+                }
+                
+                if (allocAmount.compareTo(java.math.BigDecimal.ZERO) > 0) {
+                    jar.setCurrentBalance(jar.getCurrentBalance().add(allocAmount));
+                    jarRepository.save(jar);
+                    
+                    com.example.moneymanager.entity.IncomeAllocationEntity allocation = com.example.moneymanager.entity.IncomeAllocationEntity.builder()
+                            .income(newIncome)
+                            .jar(jar)
+                            .amount(allocAmount)
+                            .build();
+                    incomeAllocationRepository.save(allocation);
+                    
+                    allocatedSum = allocatedSum.add(allocAmount);
+                }
+            }
         }
 
         // Notify income added

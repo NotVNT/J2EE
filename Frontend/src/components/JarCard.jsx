@@ -1,5 +1,5 @@
 import { Pencil, Trash2, TrendingUp, TrendingDown, Vault } from "lucide-react";
-
+import { hasDisplayImage } from "../util/imageDisplay.js";
 const fmt = (n) =>
   new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(n ?? 0);
 
@@ -34,7 +34,11 @@ const JarCard = ({ jar, totalBalance, onEdit, onDelete, onClick }) => {
             style={{ backgroundColor: `${color || "#8B5CF6"}20` }}
           >
             {icon ? (
-              <img src={icon} alt={name} className="w-6 h-6" />
+              hasDisplayImage(icon) ? (
+                <img src={icon} alt={name} className="w-6 h-6 object-contain" />
+              ) : (
+                <span className="text-xl select-none">{icon}</span>
+              )
             ) : (
               <Vault size={20} style={{ color: color || "#8B5CF6" }} />
             )}

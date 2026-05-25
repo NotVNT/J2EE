@@ -37,6 +37,7 @@ public class ProfileEntity {
     private String activationToken;
     private String resetPasswordToken;
     private LocalDateTime resetPasswordTokenExpiry;
+
     @Enumerated(EnumType.STRING)
     private SubscriptionPlan subscriptionPlan;
     @Enumerated(EnumType.STRING)

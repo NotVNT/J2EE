@@ -28,6 +28,7 @@ const PaymentCancel = lazy(() => import("./pages/PaymentCancel.jsx"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword.jsx"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword.jsx"));
 const AccountActivation = lazy(() => import("./pages/AccountActivation.jsx"));
+const VerifyOtp = lazy(() => import("./pages/VerifyOtp.jsx"));
 const Profile = lazy(() => import("./pages/Profile.jsx"));
 const SavingGoals = lazy(() => import("./pages/SavingGoals.jsx"));
 const Jars = lazy(() => import("./pages/Jars.jsx"));
@@ -68,6 +69,7 @@ const App = () => {
                     <Route path="/signup" element={<Signup />} />
                     <Route path="/forgot-password" element={<ForgotPassword />} />
                     <Route path="/reset-password" element={<ResetPassword />} />
+                    <Route path="/verify-otp" element={<VerifyOtp />} />
                     <Route path="/activate" element={<AccountActivation />} />
                     <Route path="/admin" element={<AdminRoute />}>
                         <Route element={<AdminLayout />}>

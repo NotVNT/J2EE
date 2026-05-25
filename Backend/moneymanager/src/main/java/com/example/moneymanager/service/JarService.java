@@ -33,7 +33,7 @@ public class JarService {
 
         subscriptionService.ensureCanCreateJar(profile);
 
-        if (!"Ví tổng".equals(jarDTO.getName()) && jarDTO.getTargetPercentage() != null) {
+        if (jarDTO.getTargetPercentage() != null) {
             BigDecimal pct = jarDTO.getTargetPercentage();
             if (pct.compareTo(BigDecimal.ZERO) < 0 || pct.compareTo(new BigDecimal("100")) > 0) {
                 throw new RuntimeException("Tỷ lệ phân bổ phải trong khoảng 0-100%");
@@ -54,32 +54,76 @@ public class JarService {
                 .build();
 
         JarEntity savedJar = jarRepository.save(jar);
-        if (!"Ví tổng".equals(jar.getName())) {
-            recalculateDefaultJarPercentage(profile);
-        }
+
         return mapToDTO(savedJar);
     }
 
-    @Transactional
+    public List<JarEntity> initializeDefaultJars(ProfileEntity profile) {
+        List<JarEntity> defaultJars = List.of(
+            JarEntity.builder().profile(profile).name("Thiết yếu").icon("🏠").color("#EF4444").targetPercentage(new BigDecimal("55.00")).currentBalance(BigDecimal.ZERO).build(),
+            JarEntity.builder().profile(profile).name("Tiết kiệm").icon("💼").color("#10B981").targetPercentage(new BigDecimal("10.00")).currentBalance(BigDecimal.ZERO).build(),
+            JarEntity.builder().profile(profile).name("Giáo dục").icon("🎓").color("#3B82F6").targetPercentage(new BigDecimal("10.00")).currentBalance(BigDecimal.ZERO).build(),
+            JarEntity.builder().profile(profile).name("Hưởng thụ").icon("🎉").color("#EC4899").targetPercentage(new BigDecimal("10.00")).currentBalance(BigDecimal.ZERO).build(),
+            JarEntity.builder().profile(profile).name("Đầu tư").icon("📈").color("#F59E0B").targetPercentage(new BigDecimal("10.00")).currentBalance(BigDecimal.ZERO).build(),
+            JarEntity.builder().profile(profile).name("Từ thiện").icon("❤️").color("#F97316").targetPercentage(new BigDecimal("5.00")).currentBalance(BigDecimal.ZERO).build()
+        );
+        return jarRepository.saveAll(defaultJars);
+    }
     public List<JarDTO> getAllJars() {
         ProfileEntity profile = profileService.getCurrentProfile();
         List<JarEntity> jars = jarRepository.findByProfile(profile);
+        return jars.stream().map(this::mapToDTO).collect(Collectors.toList());
+    }
 
-        // Create Default Jar if none exists
-        if (jars.isEmpty()) {
-            JarEntity defaultJar = JarEntity.builder()
-                    .profile(profile)
-                    .name("Ví tổng")
-                    .icon("")
-                    .color("#4CAF50")
-                    .targetPercentage(new BigDecimal("100.00"))
-                    .currentBalance(BigDecimal.ZERO)
-                    .build();
-            jarRepository.save(defaultJar);
-            jars.add(defaultJar);
+    @Transactional
+    public List<JarDTO> createJarsBulk(List<JarDTO> jarDTOs) {
+        if (jarDTOs == null || jarDTOs.isEmpty()) {
+            throw new RuntimeException("Danh sách hũ khởi tạo không được để trống");
         }
 
-        return jars.stream().map(this::mapToDTO).collect(Collectors.toList());
+        ProfileEntity profile = profileService.getCurrentProfile();
+
+        // 1. Kiểm tra tổng tỷ lệ phân bổ phải bằng đúng 100%
+        BigDecimal totalPct = jarDTOs.stream()
+                .map(j -> j.getTargetPercentage() != null ? j.getTargetPercentage() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        if (totalPct.compareTo(new BigDecimal("100.00")) != 0) {
+            throw new RuntimeException("Tổng tỷ lệ phần trăm phân bổ của các hũ phải bằng đúng 100%");
+        }
+
+        // 2. Kiểm tra giới hạn số lượng hũ của gói Subscription hiện tại
+        long currentJarCount = jarRepository.countByProfileId(profile.getId());
+        long newJarCount = jarDTOs.size();
+        long totalJarCount = currentJarCount + newJarCount;
+
+        if (profile.getSubscriptionPlan() == SubscriptionPlan.FREE && totalJarCount > 1) {
+            throw new RuntimeException("Gói FREE chỉ được tạo tối đa 1 hũ. Vui lòng nâng cấp gói thành viên!");
+        } else if (profile.getSubscriptionPlan() == SubscriptionPlan.BASIC && totalJarCount > 6) {
+            throw new RuntimeException("Gói BASIC chỉ được tạo tối đa 6 hũ. Vui lòng nâng cấp gói thành viên!");
+        }
+
+        // 3. Thực hiện chuyển đổi và lưu hàng loạt
+        List<JarEntity> entitiesToSave = jarDTOs.stream().map(dto -> {
+            if (dto.getName() == null || dto.getName().trim().isEmpty()) {
+                throw new RuntimeException("Tên hũ không được để trống");
+            }
+            BigDecimal pct = dto.getTargetPercentage();
+            if (pct != null && (pct.compareTo(BigDecimal.ZERO) < 0 || pct.compareTo(new BigDecimal("100")) > 0)) {
+                throw new RuntimeException("Tỷ lệ phân bổ phải trong khoảng 0-100%");
+            }
+            return JarEntity.builder()
+                    .profile(profile)
+                    .name(dto.getName().trim())
+                    .icon(dto.getIcon())
+                    .color(dto.getColor())
+                    .targetPercentage(dto.getTargetPercentage() != null ? dto.getTargetPercentage() : BigDecimal.ZERO)
+                    .currentBalance(dto.getCurrentBalance() != null ? dto.getCurrentBalance() : BigDecimal.ZERO)
+                    .build();
+        }).toList();
+
+        List<JarEntity> saved = jarRepository.saveAll(entitiesToSave);
+        return saved.stream().map(this::mapToDTO).toList();
     }
 
     @Transactional
@@ -101,23 +145,14 @@ public class JarService {
         jar.setColor(jarDTO.getColor());
 
         if (jarDTO.getTargetPercentage() != null) {
-            if (!"Ví tổng".equals(jarDTO.getName())) {
-                BigDecimal pct = jarDTO.getTargetPercentage();
-                if (pct.compareTo(BigDecimal.ZERO) < 0 || pct.compareTo(new BigDecimal("100")) > 0) {
-                    throw new RuntimeException("Tỷ lệ phân bổ phải trong khoảng 0-100%");
-                }
-                BigDecimal currentTotal = jarRepository.sumNonDefaultPercentagesByProfile(profile.getId(), jarId);
-                if (currentTotal.add(pct).compareTo(new BigDecimal("100")) > 0) {
-                    throw new RuntimeException("Tổng tỷ lệ phân bổ của các hũ không được vượt quá 100%. Hiện tại đã dùng " + currentTotal + "% (không tính hũ này).");
-                }
+            BigDecimal pct = jarDTO.getTargetPercentage();
+            if (pct.compareTo(BigDecimal.ZERO) < 0 || pct.compareTo(new BigDecimal("100")) > 0) {
+                throw new RuntimeException("Tỷ lệ phân bổ phải trong khoảng 0-100%");
             }
             jar.setTargetPercentage(jarDTO.getTargetPercentage());
         }
 
         JarEntity savedJar = jarRepository.save(jar);
-        if (!"Ví tổng".equals(jar.getName())) {
-            recalculateDefaultJarPercentage(profile);
-        }
         return mapToDTO(savedJar);
     }
 
@@ -146,7 +181,6 @@ public class JarService {
 
         // 3. Now safe to delete the jar
         jarRepository.delete(jar);
-        recalculateDefaultJarPercentage(profile);
     }
 
     @Transactional
@@ -178,26 +212,7 @@ public class JarService {
         jarRepository.save(toJar);
     }
 
-    private void recalculateDefaultJarPercentage(ProfileEntity profile) {
-        List<JarEntity> jars = jarRepository.findByProfile(profile);
-        JarEntity defaultJar = jars.stream()
-                .filter(j -> "Ví tổng".equals(j.getName()))
-                .findFirst()
-                .orElse(null);
 
-        if (defaultJar != null) {
-            BigDecimal totalOther = jars.stream()
-                    .filter(j -> !j.getId().equals(defaultJar.getId()))
-                    .map(j -> j.getTargetPercentage() != null ? j.getTargetPercentage() : BigDecimal.ZERO)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-            BigDecimal remaining = new BigDecimal("100.00").subtract(totalOther);
-            if (remaining.compareTo(BigDecimal.ZERO) < 0) remaining = BigDecimal.ZERO;
-
-            defaultJar.setTargetPercentage(remaining);
-            jarRepository.save(defaultJar);
-        }
-    }
 
     public JarDTO mapToDTO(JarEntity entity) {
         return JarDTO.builder()

@@ -2,14 +2,28 @@ import axios from "axios";
 import { BASE_URL } from "../constants/api";
 import { tokenStorage } from "../storage/tokenStorage";
 
-const publicEndpoints = ["/login", "/register", "/activate", "/forgot-password", "/health"];
+const publicEndpoints = [
+  "/login",
+  "/register",
+  "/activate",
+  "/verify-activation",
+  "/verify-otp",
+  "/otp/resend",
+  "/resend-otp",
+  "/forgot-password",
+  "/verify-reset-otp",
+  "/reset-password",
+  "/auth/google",
+  "/health"
+];
 
 const http = axios.create({
   baseURL: BASE_URL,
-  timeout: 20000,
+  timeout: 120000,
   headers: {
     "Content-Type": "application/json",
-    Accept: "application/json"
+    Accept: "application/json",
+    "X-Client-Platform": "mobile"
   }
 });
 

@@ -1,12 +1,15 @@
 {
   "expo": {
-    "name": "MoneyManager Mobile",
+    "name": "Devbot",
     "slug": "moneymanager-mobile",
+    "scheme": "moneymanager",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "jsEngine": "hermes",
+    "icon": "./src/assets/devbot_logo_app.png",
     "splash": {
+      "image": "./src/assets/devbot_logo_app.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -14,10 +17,52 @@
       "**/*"
     ],
     "android": {
-      "package": "com.moneymanager.mobile"
+      "package": "com.money.manager.mobile",
+      "adaptiveIcon": {
+        "foregroundImage": "./src/assets/devbot_logo_app.png",
+        "backgroundColor": "#ffffff"
+      },
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "ios": {
-      "bundleIdentifier": "com.moneymanager.mobile"
+      "bundleIdentifier": "com.money.manager.mobile",
+      "icon": "./src/assets/devbot_logo_app.png",
+      "infoPlist": {
+        "CFBundleURLTypes": [
+          {
+            "CFBundleURLSchemes": [
+              "com.googleusercontent.apps.701235381529-etkkmljibnlelejgqfe894f81k2tnccd"
+            ]
+          },
+          {
+            "CFBundleURLSchemes": [
+              "com.googleusercontent.apps.701235381529-etkkmljibnlelejgqfe894f81k2tnccd"
+            ]
+          }
+        ],
+        "NSSpeechRecognitionUsageDescription": "Allow $(PRODUCT_NAME) to use speech recognition for converting voice to text.",
+        "NSMicrophoneUsageDescription": "Allow $(PRODUCT_NAME) to use the microphone for voice input.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "plugins": [
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Allow $(PRODUCT_NAME) to use the microphone for voice input.",
+          "speechRecognitionPermission": "Allow $(PRODUCT_NAME) to use speech recognition for converting voice to text.",
+          "androidSpeechServicePackages": [
+            "com.google.android.googlequicksearchbox"
+          ]
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "d4c3e013-5223-4605-982d-cd283c786fe1"
+      }
     }
   }
 }

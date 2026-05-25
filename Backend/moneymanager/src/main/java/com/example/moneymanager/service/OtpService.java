@@ -40,6 +40,10 @@ public class OtpService {
         profile.setOtpAttempts(0);
         profileRepository.save(profile);
 
+        System.out.println("==================================================");
+        System.out.println("Generated OTP for " + profile.getEmail() + " (" + purpose + "): " + rawOtp);
+        System.out.println("==================================================");
+
         String subject;
         String htmlBody;
         if (purpose == OtpPurpose.ACCOUNT_ACTIVATION) {
@@ -49,7 +53,12 @@ public class OtpService {
             subject = "Mã đặt lại mật khẩu Money Manager";
             htmlBody = mailTemplateService.buildPasswordResetOtpEmail(profile.getFullName(), rawOtp);
         }
-        emailService.sendHtmlEmail(profile.getEmail(), subject, htmlBody);
+
+        try {
+            emailService.sendHtmlEmail(profile.getEmail(), subject, htmlBody);
+        } catch (Exception e) {
+            System.err.println("Warning: Could not send OTP email to " + profile.getEmail() + ". Error: " + e.getMessage());
+        }
     }
 
     /**

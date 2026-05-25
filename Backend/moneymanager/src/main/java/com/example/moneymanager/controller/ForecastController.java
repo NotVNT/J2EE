@@ -23,8 +23,10 @@ public class ForecastController {
     }
 
     @GetMapping("/anomalies")
-    public ResponseEntity<List<AnomalyDTO>> getAnomalies() {
-        return ResponseEntity.ok(forecastService.detectAnomalies());
+    public ResponseEntity<List<AnomalyDTO>> getAnomalies(
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer month) {
+        return ResponseEntity.ok(forecastService.detectAnomalies(year, month));
     }
 
     @GetMapping("/category-trend/{categoryId}")
