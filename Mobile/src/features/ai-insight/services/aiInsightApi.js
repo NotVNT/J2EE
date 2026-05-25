@@ -19,3 +19,24 @@ export async function fetchDetailedAiInsight() {
   const response = await http.get(API_ENDPOINTS.AI_INSIGHT_DETAILED);
   return response.data;
 }
+
+/**
+ * Fetch AI forecast insight for a specific month.
+ * The user selects a month (current or future), the system uses historical data
+ * to predict financial behavior for that month.
+ *
+ * @param {number} year - Year to forecast (e.g., 2026)
+ * @param {number} month - Month to forecast (1-12)
+ * @returns {Promise<Object>} Comprehensive forecast result:
+ *   - totalPredictedExpense: total predicted spending
+ *   - categories: array of category forecasts
+ *   - topRiskCategory: category with highest risk
+ *   - anomalyCount: number of anomalies detected
+ *   - anomalies: array of anomaly items
+ *   - narrative: AI-generated insight text
+ *   - generatedAt: timestamp of generation
+ */
+export async function fetchAiForecast(year, month) {
+  const response = await http.get(API_ENDPOINTS.AI_INSIGHT_FORECAST(year, month));
+  return response.data;
+}

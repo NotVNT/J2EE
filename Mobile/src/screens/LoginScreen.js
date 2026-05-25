@@ -22,7 +22,7 @@ import {
   openActivationOtp
 } from "../utils/accountActivation";
 import { tokenStorage } from "../storage/tokenStorage";
-import devbotLogo from "../assets/devbot.png";
+import appLogo from "../assets/applogo.png";
 import { COLORS } from "../constants/colors";
 
 export default function LoginScreen() {
@@ -157,7 +157,7 @@ export default function LoginScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.brandRow}>
-          <Image source={devbotLogo} style={styles.brandLogo} resizeMode="contain" />
+          <Image source={appLogo} style={styles.brandLogo} resizeMode="contain" />
         </View>
 
         <Text style={styles.title}>Đăng nhập tài khoản</Text>

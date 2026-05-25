@@ -43,6 +43,7 @@ export const API_ENDPOINTS = {
   DASHBOARD_DATA: "/dashboard",
   AI_INSIGHT: "/dashboard/ai-insight",
   AI_INSIGHT_DETAILED: "/dashboard/ai-insight/detailed",
+  AI_INSIGHT_FORECAST: (year, month) => `/dashboard/ai-insight/forecast?year=${year}&month=${month}`,
 
   // Gemini AI
   VOICE_PARSE: "/gemini/voice-parse",

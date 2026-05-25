@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useRef, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import {
   Dimensions,
   FlatList,
@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import devbotLogo from "../assets/devbot.png";
+import appLogo from "../assets/applogo.png";
 import { COLORS } from "../constants/colors";
 
 const { width } = Dimensions.get("window");
@@ -78,7 +78,7 @@ export default function OnboardingScreen() {
       <View style={styles.bgGlowBottom} />
 
       <View style={styles.headerRow}>
-        <Image source={devbotLogo} style={styles.brandLogo} resizeMode="contain" />
+        <Image source={appLogo} style={styles.brandLogo} resizeMode="contain" />
         <Pressable onPress={finishOnboarding}>
           <Text style={styles.skipText}>Bỏ qua</Text>
         </Pressable>

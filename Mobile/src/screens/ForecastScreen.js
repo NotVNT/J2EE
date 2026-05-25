@@ -2,6 +2,7 @@ import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } 
 import {
   ActivityIndicator,
   Dimensions,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -165,8 +166,11 @@ export default function ForecastScreen() {
   const isPremium = String(user?.subscriptionPlan || "").toUpperCase() === "PREMIUM";
 
   const now = new Date();
-  const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1); // 1-12
-  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
+  const currentMonth = now.getMonth() + 1; // 1-12
+  const currentYear = now.getFullYear();
+  const [selectedMonth, setSelectedMonth] = useState(currentMonth);
+  const [selectedYear, setSelectedYear] = useState(currentYear);
+  const [isMonthPickerVisible, setIsMonthPickerVisible] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState(null);
 
   const [monthlyForecast, setMonthlyForecast] = useState(null);
@@ -179,7 +183,10 @@ export default function ForecastScreen() {
   const [insightError, setInsightError] = useState(false);
   const forecastRequestKeyRef = useRef("");
   const anomalyRequestKeyRef = useRef("");
+  const categoryTrendRequestKeyRef = useRef("");
   const insightRequestKeyRef = useRef("");
+  const isCurrentMonthSelected =
+    selectedMonth === currentMonth && selectedYear === currentYear;
 
   // ── Fetch Monthly Forecast ──────────────────────────────────
   const loadMonthlyForecast = useCallback(async () => {
@@ -230,20 +237,28 @@ export default function ForecastScreen() {
   // ── Fetch Category Trend ───────────────────────────────────
   const loadCategoryTrend = useCallback(async (categoryId) => {
     if (!categoryId || !isPremium) return;
+    const requestKey = `${selectedYear}-${selectedMonth}-${categoryId}`;
+    categoryTrendRequestKeyRef.current = requestKey;
     setIsTrendLoading(true);
     try {
       const data = await fetchCategoryTrend(categoryId, 6);
+      if (categoryTrendRequestKeyRef.current !== requestKey) return;
       setCategoryTrend(data);
     } catch {
+      if (categoryTrendRequestKeyRef.current !== requestKey) return;
       setCategoryTrend(null);
     } finally {
-      setIsTrendLoading(false);
+      if (categoryTrendRequestKeyRef.current === requestKey) {
+        setIsTrendLoading(false);
+      }
     }
-  }, [isPremium]);
+  }, [isPremium, selectedMonth, selectedYear]);
 
   // ── Fetch AI Insights ──────────────────────────────────────
   const loadInsights = useCallback(async (forecastData) => {
     if (!forecastData?.categories?.length || !isPremium) return;
+    if (forecastData.year === currentYear && forecastData.month === currentMonth) return;
+
     const forecastKey = `${forecastData.year}-${forecastData.month}`;
     insightRequestKeyRef.current = forecastKey;
     setInsights(null);
@@ -258,7 +273,7 @@ export default function ForecastScreen() {
       setInsights(null);
       setInsightError(true);
     }
-  }, [isPremium]);
+  }, [currentMonth, currentYear, isPremium]);
 
   // ── Effects ────────────────────────────────────────────────
   useEffect(() => {
@@ -270,14 +285,15 @@ export default function ForecastScreen() {
     if (
       monthlyForecast?.year === selectedYear &&
       monthlyForecast?.month === selectedMonth &&
-      monthlyForecast?.categories?.length > 0
+      monthlyForecast?.categories?.length > 0 &&
+      !isCurrentMonthSelected
     ) {
       loadInsights(monthlyForecast);
     } else {
       setInsights(null);
       setInsightError(false);
     }
-  }, [monthlyForecast, selectedYear, selectedMonth, loadInsights]);
+  }, [isCurrentMonthSelected, monthlyForecast, selectedYear, selectedMonth, loadInsights]);
 
   useEffect(() => {
     loadCategoryTrend(selectedCategoryId);
@@ -310,6 +326,33 @@ export default function ForecastScreen() {
     if (insights?.year !== selectedYear || insights?.month !== selectedMonth) return null;
     return insights;
   }, [insights, selectedYear, selectedMonth]);
+
+  const nextMonthDate = useMemo(
+    () => new Date(currentYear, currentMonth, 1),
+    [currentMonth, currentYear]
+  );
+
+  const isNextMonthSelected =
+    selectedMonth === nextMonthDate.getMonth() + 1 &&
+    selectedYear === nextMonthDate.getFullYear();
+
+  const monthPickerLabel = `${MONTHS[selectedMonth - 1]} ${selectedYear}`;
+  const monthPickerHint = isNextMonthSelected
+    ? "Dự báo cho tháng tiếp theo"
+    : `Dự báo cho tháng ${selectedMonth}/${selectedYear}`;
+
+  const monthOptions = useMemo(() => {
+    const options = [];
+    for (let offset = -6; offset <= 6; offset += 1) {
+      const d = new Date(currentYear, currentMonth - 1 + offset, 1);
+      options.push({
+        month: d.getMonth() + 1,
+        year: d.getFullYear(),
+        label: `${MONTHS[d.getMonth()]} ${d.getFullYear()}`
+      });
+    }
+    return options;
+  }, [currentMonth, currentYear]);
 
   // ── BarChart Data ──────────────────────────────────────────
   const barChartData = useMemo(() => {
@@ -354,24 +397,16 @@ export default function ForecastScreen() {
     };
   }, [categoryTrend]);
 
-  // ── Month Navigation ───────────────────────────────────────
-  const goToPrevMonth = () => {
-    if (selectedMonth === 1) {
-      setSelectedMonth(12);
-      setSelectedYear((y) => y - 1);
-    } else {
-      setSelectedMonth((m) => m - 1);
-    }
-  };
+  const selectMonth = useCallback((month, year) => {
+    setSelectedMonth(month);
+    setSelectedYear(year);
+    setIsMonthPickerVisible(false);
+  }, []);
 
-  const goToNextMonth = () => {
-    if (selectedMonth === 12) {
-      setSelectedMonth(1);
-      setSelectedYear((y) => y + 1);
-    } else {
-      setSelectedMonth((m) => m + 1);
-    }
-  };
+  const reloadSelectedForecastData = useCallback(() => {
+    loadMonthlyForecast();
+    loadAnomalies();
+  }, [loadMonthlyForecast, loadAnomalies]);
 
   // ── Paywall ────────────────────────────────────────────────
   if (!isPremium) {
@@ -380,26 +415,43 @@ export default function ForecastScreen() {
 
   // ── Main Forecast UI ───────────────────────────────────────
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      showsVerticalScrollIndicator={false}
-    >
-      {/* Header with month/year selector */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>🔮 Dự báo chi tiêu</Text>
-        <View style={styles.monthPicker}>
-          <Pressable onPress={goToPrevMonth} style={styles.monthArrow}>
-            <Text style={styles.monthArrowText}>‹</Text>
-          </Pressable>
-          <Text style={styles.monthLabel}>
-            {MONTHS[selectedMonth - 1]} {selectedYear}
-          </Text>
-          <Pressable onPress={goToNextMonth} style={styles.monthArrow}>
-            <Text style={styles.monthArrowText}>›</Text>
+    <>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Header with month/year selector */}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>🔮 Dự báo chi tiêu</Text>
+          <Pressable
+            style={({ pressed }) => [
+              styles.reloadButton,
+              pressed && styles.reloadButtonPressed,
+              isLoading && styles.reloadButtonDisabled,
+            ]}
+            onPress={reloadSelectedForecastData}
+            disabled={isLoading}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Tai lai du lieu du bao"
+          >
+            <Text style={styles.reloadIcon}>{"\u27F3"}</Text>
           </Pressable>
         </View>
-      </View>
+
+        <View style={styles.monthPickerRow}>
+          <Pressable
+            style={({ pressed }) => [styles.monthPicker, pressed && styles.monthPickerPressed]}
+            onPress={() => setIsMonthPickerVisible(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Chon thang du bao"
+          >
+            <Text style={styles.monthPickerIcon}>{"\uD83D\uDCC5"}</Text>
+            <Text style={styles.monthLabel}>{monthPickerLabel}</Text>
+          </Pressable>
+          <Text style={styles.monthHint}>{monthPickerHint}</Text>
+        </View>
 
       {/* Loading */}
       {isLoading ? (
@@ -533,7 +585,7 @@ export default function ForecastScreen() {
           {/* Anomalies */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>
-              🚨 Cảnh báo tham khảo tháng {selectedMonth}/{selectedYear} ({anomalies.length})
+              🚨 Cảnh báo tham khảo tháng {selectedMonth}/{selectedYear}
             </Text>
             {anomalies.length > 0 ? (
               <View style={styles.anomalyList}>
@@ -570,7 +622,37 @@ export default function ForecastScreen() {
           ) : null}
         </>
       )}
-    </ScrollView>
+      </ScrollView>
+
+      <Modal
+        transparent
+        visible={isMonthPickerVisible}
+        animationType="fade"
+        onRequestClose={() => setIsMonthPickerVisible(false)}
+      >
+        <View style={styles.monthModalOverlay}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setIsMonthPickerVisible(false)} />
+          <View style={styles.monthModalCard}>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {monthOptions.map((option) => {
+                const active = option.month === selectedMonth && option.year === selectedYear;
+                return (
+                  <Pressable
+                    key={`${option.year}-${option.month}`}
+                    style={[styles.monthOption, active && styles.monthOptionActive]}
+                    onPress={() => selectMonth(option.month, option.year)}
+                  >
+                    <Text style={[styles.monthOptionText, active && styles.monthOptionTextActive]}>
+                      {option.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+    </>
   );
 }
 
@@ -592,39 +674,112 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 10,
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: "800",
     color: COLORS.TEXT,
   },
+  reloadButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "transparent",
+  },
+  reloadButtonPressed: {
+    opacity: 0.7,
+    transform: [{ scale: 0.96 }],
+  },
+  reloadButtonDisabled: {
+    opacity: 0.45,
+  },
+  reloadIcon: {
+    color: COLORS.PRIMARY,
+    fontSize: 24,
+    fontWeight: "800",
+    lineHeight: 24,
+    includeFontPadding: false,
+    textAlign: "center",
+    textAlignVertical: "center",
+  },
+  monthPickerRow: {
+    alignItems: "center",
+    marginBottom: 16,
+  },
   monthPicker: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
     backgroundColor: COLORS.CARD,
-    borderRadius: 12,
+    borderRadius: 28,
     borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
+    borderColor: COLORS.PRIMARY_LIGHT,
+    width: "62%",
+    minWidth: 150,
+    maxWidth: 180,
+    height: 40,
+    paddingHorizontal: 16,
   },
-  monthArrow: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
+  monthPickerPressed: {
+    opacity: 0.78,
   },
-  monthArrowText: {
-    fontSize: 22,
-    fontWeight: "700",
+  monthPickerIcon: {
+    fontSize: 16,
     color: COLORS.PRIMARY,
+    marginRight: 8,
+    textAlign: "center",
   },
   monthLabel: {
-    fontSize: 14,
-    fontWeight: "700",
+    fontSize: 16,
+    fontWeight: "800",
     color: COLORS.TEXT,
-    marginHorizontal: 4,
-    minWidth: 120,
     textAlign: "center",
+  },
+  monthHint: {
+    color: COLORS.TEXT_SECONDARY,
+    fontSize: 15,
+    marginTop: 10,
+    textAlign: "center",
+  },
+  monthModalOverlay: {
+    flex: 1,
+    backgroundColor: COLORS.OVERLAY,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 24,
+  },
+  monthModalCard: {
+    width: "100%",
+    maxWidth: 340,
+    maxHeight: "72%",
+    backgroundColor: COLORS.CARD,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: COLORS.CARD_BORDER,
+    paddingVertical: 8,
+  },
+  monthOption: {
+    minHeight: 46,
+    justifyContent: "center",
+    paddingHorizontal: 18,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.CARD_BORDER,
+  },
+  monthOptionActive: {
+    backgroundColor: COLORS.ROSE_MIST,
+  },
+  monthOptionText: {
+    color: COLORS.TEXT,
+    fontSize: 15,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+  monthOptionTextActive: {
+    color: COLORS.PRIMARY,
+    fontWeight: "900",
   },
 
   // Loading
