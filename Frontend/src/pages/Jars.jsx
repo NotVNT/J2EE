@@ -7,6 +7,7 @@ import Dashboard from "../components/Dashboard.jsx";
 import JarCard from "../components/JarCard.jsx";
 import JarForm from "../components/JarForm.jsx";
 import JarTransferModal from "../components/JarTransferModal.jsx";
+import JarsSetup from "../components/JarsSetup.jsx";
 import Modal from "../components/Modal.jsx";
 import DeleteAlert from "../components/DeleteAlert.jsx";
 import { usePageTitle } from "../hooks/usePageTitle.js";
@@ -16,6 +17,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis
 import TransactionInfoCard from "../components/TransactionInfoCard.jsx";
 import AddExpenseForm from "../components/AddExpenseForm.jsx";
 import EditExpenseForm from "../components/EditExpenseForm.jsx";
+import { hasDisplayImage } from "../util/imageDisplay.js";
 
 const fmt = (n) =>
   new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(n ?? 0);
@@ -177,8 +179,32 @@ const Jars = () => {
 
   const handleUpdateJar = async (dto) => {
     try {
-      await axiosConfig.put(API_ENDPOINTS.UPDATE_JAR(editJar.id), dto);
-      toast.success("Cập nhật hũ thành công!");
+      const promises = [
+        axiosConfig.put(API_ENDPOINTS.UPDATE_JAR(editJar.id), {
+          name: dto.name,
+          icon: dto.icon,
+          color: dto.color,
+          targetPercentage: dto.targetPercentage
+        })
+      ];
+
+      if (dto.balancingJarId) {
+        const balJar = jars.find(j => j.id === dto.balancingJarId);
+        if (balJar) {
+          const balNewPct = Math.max(0, (balJar.targetPercentage || 0) - dto.balancingPercentageDiff);
+          promises.push(
+            axiosConfig.put(API_ENDPOINTS.UPDATE_JAR(dto.balancingJarId), {
+              name: balJar.name,
+              icon: balJar.icon,
+              color: balJar.color,
+              targetPercentage: balNewPct
+            })
+          );
+        }
+      }
+
+      await Promise.all(promises);
+      toast.success("Cập nhật hũ và cân đối tỷ lệ phân bổ thành công!");
       setEditJar(null);
       fetchJars();
     } catch (err) {
@@ -280,7 +306,11 @@ const Jars = () => {
                       style={{ backgroundColor: `${selectedJar.color || '#F59E0B'}20` }}
                     >
                       {selectedJar.icon ? (
-                        <img src={selectedJar.icon} alt={selectedJar.name} className="w-8 h-8" />
+                        hasDisplayImage(selectedJar.icon) ? (
+                          <img src={selectedJar.icon} alt={selectedJar.name} className="w-8 h-8 object-contain" />
+                        ) : (
+                          <span className="text-2xl select-none">{selectedJar.icon}</span>
+                        )
                       ) : (
                         <Vault size={28} style={{ color: selectedJar.color || "#F59E0B" }} />
                       )}
@@ -465,6 +495,25 @@ const Jars = () => {
     );
   }
 
+  if (jars.length === 0 && !loading) {
+    return (
+      <Dashboard activeMenu="Hũ chi tiêu">
+        <div className="my-5 mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div>
+            <h2 className="text-3xl font-bold text-slate-800 dark:text-white tracking-tight flex items-center gap-2">
+              <Vault size={28} className="text-amber-500" />
+              Hũ chi tiêu
+            </h2>
+            <p className="mt-1 text-slate-500 dark:text-slate-400">
+              Phân bổ thu nhập & quản lý tiền theo từng ví phụ
+            </p>
+          </div>
+          <JarsSetup onComplete={fetchJars} />
+        </div>
+      </Dashboard>
+    );
+  }
+
   return (
     <Dashboard activeMenu="Hũ chi tiêu">
       <div className="my-5 mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -627,7 +676,7 @@ const Jars = () => {
         </Modal>
 
         <Modal isOpen={!!editJar} onClose={() => setEditJar(null)} title="Cập nhật hũ chi tiêu">
-          <JarForm initialData={editJar} isEditing onSave={handleUpdateJar} onCancel={() => setEditJar(null)} />
+          <JarForm initialData={editJar} isEditing jars={jars} onSave={handleUpdateJar} onCancel={() => setEditJar(null)} />
         </Modal>
 
         <Modal isOpen={deleteAlert.show} onClose={() => setDeleteAlert({ show: false, id: null })} title="Xoá hũ chi tiêu">

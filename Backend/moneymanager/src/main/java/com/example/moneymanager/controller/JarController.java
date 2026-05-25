@@ -27,6 +27,16 @@ public class JarController {
         }
     }
 
+    @PostMapping("/bulk")
+    public ResponseEntity<?> createJarsBulk(@RequestBody List<JarDTO> jarDTOs) {
+        try {
+            List<JarDTO> created = jarService.createJarsBulk(jarDTOs);
+            return ResponseEntity.ok(created);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
     @GetMapping
     public ResponseEntity<List<JarDTO>> getAllJars() {
         return ResponseEntity.ok(jarService.getAllJars());

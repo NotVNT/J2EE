@@ -39,8 +39,8 @@ const Sidebar = ({ activeMenu, mobileOverlay = false }) => {
             </div>
           )}
           {user?.subscriptionPlan === "PREMIUM" && (
-            <span className="absolute -bottom-1 -right-1 bg-amber-500 text-[8px] text-white px-1 py-0.5 rounded-full font-bold uppercase">
-              PRO
+            <span className="absolute -bottom-1 -right-1 bg-amber-500 text-[8px] text-white px-1 py-0.5 rounded-full font-extrabold uppercase tracking-wider shadow-sm">
+              PRE
             </span>
           )}
         </div>
