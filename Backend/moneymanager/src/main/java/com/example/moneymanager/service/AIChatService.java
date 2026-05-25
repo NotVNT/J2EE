@@ -1,7 +1,7 @@
 package com.example.moneymanager.service;
 
+import com.example.moneymanager.config.ChatGptOssProperties;
 import com.example.moneymanager.config.GeminiProperties;
-import com.example.moneymanager.config.GptOssProperties;
 import com.example.moneymanager.config.NineRouterProperties;
 import com.example.moneymanager.dto.AIChatMessageDTO;
 import com.example.moneymanager.dto.AIChatRequestDTO;
@@ -40,8 +40,8 @@ public class AIChatService {
 
     private final GeminiService geminiService;
     private final GeminiProperties geminiProperties;
-    private final RestClient gptOssRestClient;
-    private final GptOssProperties gptOssProperties;
+    private final RestClient chatGptOssRestClient;
+    private final ChatGptOssProperties chatGptOssProperties;
     private final RestClient nineRouterChatRestClient;
     private final RestClient nineRouterAgentRestClient;
     private final NineRouterProperties nineRouterProperties;
@@ -134,15 +134,15 @@ public class AIChatService {
     }
 
     private AIChatResponseDTO chatWithGptOss(List<AIChatMessageDTO> messages) {
-        List<String> keys = gptOssProperties.apiKeys();
+        List<String> keys = chatGptOssProperties.apiKeys();
         if (keys == null || keys.isEmpty()) {
             return AIChatResponseDTO.builder()
                     .reply("GPT-OSS ch\u01B0a \u0111\u01B0\u1EE3c c\u1EA5u h\u00ECnh. Vui l\u00F2ng d\u00F9ng Gemini ho\u1EB7c li\u00EAn h\u1EC7 qu\u1EA3n tr\u1ECB vi\u00EAn.")
                     .provider("gptoss")
-                    .modelUsed(gptOssProperties.model())
+                    .modelUsed(chatGptOssProperties.model())
                     .build();
         }
-        return chatWithOpenAICompatible(gptOssRestClient, gptOssProperties.model(),
+        return chatWithOpenAICompatible(chatGptOssRestClient, chatGptOssProperties.model(),
                 keys.get(0), "gptoss", messages);
     }
 
