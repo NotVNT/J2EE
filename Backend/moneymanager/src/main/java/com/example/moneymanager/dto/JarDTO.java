@@ -1,5 +1,6 @@
 package com.example.moneymanager.dto;
 
+import jakarta.validation.constraints.DecimalMin;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,6 +19,7 @@ public class JarDTO {
     private String icon;
     private String color;
     private BigDecimal targetPercentage;
+    @DecimalMin(value = "0", message = "currentBalance không được âm")
     private BigDecimal currentBalance;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

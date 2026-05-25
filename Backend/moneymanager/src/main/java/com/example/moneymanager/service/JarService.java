@@ -3,7 +3,6 @@ package com.example.moneymanager.service;
 import com.example.moneymanager.dto.JarDTO;
 import com.example.moneymanager.entity.JarEntity;
 import com.example.moneymanager.entity.ProfileEntity;
-import com.example.moneymanager.entity.SubscriptionPlan;
 import com.example.moneymanager.repository.JarRepository;
 import com.example.moneymanager.repository.IncomeAllocationRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +19,7 @@ public class JarService {
 
     private final JarRepository jarRepository;
     private final ProfileService profileService;
+    private final SubscriptionService subscriptionService;
     private final IncomeAllocationRepository incomeAllocationRepository;
     private final com.example.moneymanager.repository.ExpenseRepository expenseRepository;
 
@@ -31,14 +31,7 @@ public class JarService {
 
         ProfileEntity profile = profileService.getCurrentProfile();
 
-        long currentJarCount = jarRepository.countByProfileId(profile.getId());
-
-        // Subscription check
-        if (profile.getSubscriptionPlan() == SubscriptionPlan.FREE && currentJarCount >= 1) {
-            throw new RuntimeException("Gói FREE chỉ được tạo 1 hũ. Vui lòng nâng cấp lên BASIC hoặc PREMIUM.");
-        } else if (profile.getSubscriptionPlan() == SubscriptionPlan.BASIC && currentJarCount >= 6) {
-            throw new RuntimeException("Gói BASIC tối đa 6 hũ. Vui lòng nâng cấp lên PREMIUM.");
-        }
+        subscriptionService.ensureCanCreateJar(profile);
 
         if (!"Ví tổng".equals(jarDTO.getName()) && jarDTO.getTargetPercentage() != null) {
             BigDecimal pct = jarDTO.getTargetPercentage();
@@ -53,7 +46,7 @@ public class JarService {
                 .icon(jarDTO.getIcon())
                 .color(jarDTO.getColor())
                 .targetPercentage(jarDTO.getTargetPercentage() != null ? jarDTO.getTargetPercentage() : BigDecimal.ZERO)
-                .currentBalance(jarDTO.getCurrentBalance() != null ? jarDTO.getCurrentBalance() : BigDecimal.ZERO)
+                .currentBalance(BigDecimal.ZERO)  // always zero on creation; use transfer to move funds
                 .build();
 
         JarEntity savedJar = jarRepository.save(jar);
