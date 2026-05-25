@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useMemo, useRef } from "react";
 import axiosConfig from "../util/axiosConfig";
 import toast from "react-hot-toast";
 import { AlertTriangle, Lightbulb, Activity, Crown } from "lucide-react";
@@ -11,6 +11,16 @@ import { useUser } from "../hooks/useUser";
 import { usePageTitle } from "../hooks/usePageTitle";
 import { useTheme } from "../context/ThemeContext";
 
+const getNearestMonths = (count) => {
+    const months = [];
+    const now = new Date();
+    for (let i = 0; i < count; i++) {
+        const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+        months.push({ month: d.getMonth() + 1, year: d.getFullYear(), label: `Tháng ${d.getMonth() + 1}/${d.getFullYear()}` });
+    }
+    return months;
+};
+
 const Forecast = () => {
     useUser();
     usePageTitle("Dự báo thông minh");
@@ -22,12 +32,15 @@ const Forecast = () => {
     const [insights, setInsights] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isInsightsLoading, setIsInsightsLoading] = useState(false);
-    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
-    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+    const [selectedIdx, setSelectedIdx] = useState(0);
+    const NEAREST_MONTHS = useMemo(() => getNearestMonths(6), []);
+    const selectedMonth = NEAREST_MONTHS[selectedIdx].month;
+    const selectedYear = NEAREST_MONTHS[selectedIdx].year;
     const navigate = useNavigate();
+    const insightsFetchRef = useRef(0);
 
-    const isCurrentOrPast = selectedYear < new Date().getFullYear() || 
-        (selectedYear === new Date().getFullYear() && selectedMonth <= new Date().getMonth() + 1);
+    // idx 0 = current month; idx 1-5 = future months
+    const isCurrentMonth = selectedIdx === 0;
 
     useEffect(() => {
         if (user && user.subscriptionPlan === "PREMIUM") {
@@ -35,7 +48,7 @@ const Forecast = () => {
         } else {
             setIsLoading(false);
         }
-    }, [user, selectedMonth, selectedYear]);
+    }, [user, selectedIdx]);
 
     const fetchData = async () => {
         setIsLoading(true);
@@ -48,7 +61,7 @@ const Forecast = () => {
             setMonthlyForecast(forecastRes.data);
             setAnomalies(anomaliesRes.data);
 
-            if (forecastRes.data && !isCurrentOrPast) {
+            if (forecastRes.data && !isCurrentMonth) {
                 fetchInsights(forecastRes.data);
             }
         } catch (error) {
@@ -60,17 +73,32 @@ const Forecast = () => {
     };
 
     const fetchInsights = async (forecastData) => {
+        const fetchId = ++insightsFetchRef.current;
         setIsInsightsLoading(true);
         setInsights(null);
         try {
             const res = await axiosConfig.post(API_ENDPOINTS.FORECAST_INSIGHTS, forecastData);
-            setInsights(res.data);
+            if (fetchId === insightsFetchRef.current) {
+                setInsights(res.data);
+            }
         } catch (error) {
             console.error("Error fetching insights:", error);
         } finally {
-            setIsInsightsLoading(false);
+            if (fetchId === insightsFetchRef.current) {
+                setIsInsightsLoading(false);
+            }
         }
     };
+
+    const chartData = useMemo(() =>
+        monthlyForecast?.categories?.map(c => ({
+            name: c.categoryName,
+            predicted: c.predictedAmount,
+            average: c.historicalAverage,
+            trend: c.trend
+        })) || [],
+        [monthlyForecast]
+    );
 
     if (user?.subscriptionPlan !== "PREMIUM") {
         return (
@@ -96,13 +124,6 @@ const Forecast = () => {
         );
     }
 
-    const chartData = monthlyForecast?.categories?.map(c => ({
-        name: c.categoryName,
-        predicted: c.predictedAmount,
-        average: c.historicalAverage,
-        trend: c.trend
-    })) || [];
-
     return (
         <Dashboard activeMenu="Dự báo">
             <div className="max-w-7xl mx-auto space-y-6">
@@ -114,21 +135,13 @@ const Forecast = () => {
                     </div>
                     <div className="flex gap-3">
                         <select
-                            value={selectedMonth}
-                            onChange={(e) => setSelectedMonth(Number(e.target.value))}
+                            aria-label="Chọn tháng dự báo"
+                            value={selectedIdx}
+                            onChange={(e) => setSelectedIdx(Number(e.target.value))}
                             className="border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-hidden bg-white dark:bg-slate-800 text-slate-800 dark:text-white"
                         >
-                            {Array.from({length: 12}, (_, i) => i + 1).map(m => (
-                                <option key={m} value={m} className="bg-white dark:bg-slate-800 text-slate-800 dark:text-white">Tháng {m}</option>
-                            ))}
-                        </select>
-                        <select
-                            value={selectedYear}
-                            onChange={(e) => setSelectedYear(Number(e.target.value))}
-                            className="border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-hidden bg-white dark:bg-slate-800 text-slate-800 dark:text-white"
-                        >
-                            {[selectedYear - 1, selectedYear, selectedYear + 1].map(y => (
-                                <option key={y} value={y} className="bg-white dark:bg-slate-800 text-slate-800 dark:text-white">Năm {y}</option>
+                            {NEAREST_MONTHS.map((m, idx) => (
+                                <option key={idx} value={idx} className="bg-white dark:bg-slate-800 text-slate-800 dark:text-white">{m.label}</option>
                             ))}
                         </select>
                     </div>
@@ -180,7 +193,7 @@ const Forecast = () => {
                             </div>
 
                             {/* AI Insights - chỉ hiển thị cho tháng tương lai */}
-                            {!isCurrentOrPast && (
+                            {!isCurrentMonth && (
                                 isInsightsLoading ? (
                                     <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-6 text-white shadow-md relative overflow-hidden">
                                         <div className="absolute top-0 right-0 p-4 opacity-10">
@@ -207,7 +220,7 @@ const Forecast = () => {
                                             Phân tích từ chuyên gia AI
                                         </h3>
                                         <div className="text-indigo-50 leading-relaxed relative z-10 text-sm space-y-2">
-                                            {insights.narrative
+                                            {(insights.narrative ?? "")
                                                 .replace(/([;:])\s*(\d+[)]\s)/g, "$1\n$2")
                                                 .split("\n")
                                                 .filter(line => line.trim())
