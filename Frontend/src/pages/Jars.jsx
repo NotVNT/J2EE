@@ -220,7 +220,7 @@ const Jars = () => {
     }));
 
   const plan = user?.subscriptionPlan || "FREE";
-  const maxJars = plan === "PREMIUM" ? Infinity : plan === "BASIC" ? 6 : 1;
+  const maxJars = user?.jarLimit === -1 ? Infinity : (user?.jarLimit ?? 1);
   const canCreate = jars.length < maxJars;
 
   if (selectedJar) {

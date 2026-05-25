@@ -28,6 +28,7 @@ public class ProfileDTO {
     private LocalDate subscriptionExpiresAt;
     private Boolean autoRenew;
     private Integer categoryLimit;
+    private Integer jarLimit;
     private Integer monthlyTransactionLimit;
     private Integer historyMonths;
     private Boolean canExportReports;

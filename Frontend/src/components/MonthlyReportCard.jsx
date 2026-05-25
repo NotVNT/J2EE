@@ -80,7 +80,7 @@ const MonthlyReportCard = ({ report }) => {
 
     try {
       const response = await axiosConfig.post(API_ENDPOINTS.AI_CHAT, {
-        provider: "ninerouter",
+        provider: "gptoss",
         messages: [{ role: "user", content: prompt }],
       });
       setAiAnalysis(response.data?.reply || "Không thể tạo phân tích.");
@@ -368,7 +368,7 @@ const MonthlyReportCard = ({ report }) => {
           <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20">
             <Lock size={16} className="text-amber-500 shrink-0 mt-0.5" />
             <p className="text-sm text-amber-700 dark:text-amber-300">
-              Tính năng phân tích hành vi AI sử dụng model EXPERIMENTAL, chỉ khả dụng cho gói PREMIUM.
+              Tính năng phân tích hành vi AI chỉ khả dụng cho gói PREMIUM.
             </p>
           </div>
         ) : isAnalyzing ? (
