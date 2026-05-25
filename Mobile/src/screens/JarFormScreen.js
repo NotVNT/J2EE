@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View, Modal, Dimensions } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import http from "../services/http";
 import { API_ENDPOINTS } from "../constants/api";
@@ -19,6 +19,25 @@ const JAR_COLORS = [
   { value: "#84CC16", label: "Xanh chuối" },
 ];
 
+const EMOJI_CATEGORIES = [
+  {
+    title: "💰 Tài chính & Tiết kiệm",
+    emojis: ["🏺", "🐖", "💰", "💵", "💳", "🏦", "📈", "📉", "💸", "🪙", "💎", "🔑"]
+  },
+  {
+    title: "🏠 Đời sống & Đi lại",
+    emojis: ["🏠", "🚗", "🛵", "✈️", "🛒", "🛍️", "👕", "👠", "🔌", "📦", "🏥", "🎓"]
+  },
+  {
+    title: "🍔 Ăn uống & Giải trí",
+    emojis: ["🍔", "🍕", "🍜", "🍣", "☕", "🍿", "🍰", "🍺", "🎮", "🎬", "🎤", "🎧"]
+  },
+  {
+    title: "🎪 Khác",
+    emojis: ["🏋️‍♂️", "🎫", "🎪", "🎨", "🎁", "👶", "👵", "🔒", "💼", "📊", "🚨", "✨"]
+  }
+];
+
 export default function JarFormScreen() {
   const navigation = useNavigation();
   const route = useRoute();
@@ -31,6 +50,7 @@ export default function JarFormScreen() {
   const [color, setColor] = useState("#8B5CF6");
   const [targetPercentage, setTargetPercentage] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   useEffect(() => {
     if (isEditing && initialData) {
@@ -95,14 +115,20 @@ export default function JarFormScreen() {
       />
 
       <Text style={styles.label}>Biểu tượng (Emoji)</Text>
-      <TextInput
-        style={styles.input}
-        value={icon}
-        onChangeText={setIcon}
-        placeholder="Nhập 1 emoji đại diện, ví dụ: 🍔, 🛍️"
-        placeholderTextColor={COLORS.TEXT_MUTED}
-        maxLength={5}
-      />
+      <View style={styles.emojiPickerContainer}>
+        <Pressable
+          style={[styles.emojiBubble, { borderColor: color || COLORS.PRIMARY }]}
+          onPress={() => setShowEmojiPicker(true)}
+        >
+          <Text style={styles.emojiBubbleText}>{icon || "🏺"}</Text>
+          <View style={[styles.emojiEditBadge, { backgroundColor: color || COLORS.PRIMARY }]}>
+            <Text style={styles.emojiEditBadgeText}>✎</Text>
+          </View>
+        </Pressable>
+        <Text style={styles.emojiPickerDesc}>
+          Nhấn vào vòng tròn biểu tượng để chọn hình ảnh đại diện thích hợp nhất cho hũ chi tiêu của bạn.
+        </Text>
+      </View>
 
       <Text style={styles.label}>Tỷ lệ phân bổ (%)</Text>
       {isParentWallet ? (
@@ -151,6 +177,51 @@ export default function JarFormScreen() {
           {submitting ? "Đang lưu..." : isEditing ? "Cập nhật hũ" : "Tạo hũ chi tiêu"}
         </Text>
       </Pressable>
+
+      {/* Bộ Chọn Emoji Modal Sheet */}
+      <Modal visible={showEmojiPicker} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Chọn biểu tượng hũ</Text>
+              <Pressable onPress={() => setShowEmojiPicker(false)}>
+                <Text style={styles.closeBtn}>Đóng</Text>
+              </Pressable>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.modalScroll}>
+              {EMOJI_CATEGORIES.map((cat, catIdx) => (
+                <View key={catIdx} style={styles.catSection}>
+                  <Text style={styles.catTitle}>{cat.title}</Text>
+                  <View style={styles.emojiGrid}>
+                    {cat.emojis.map((emoji) => {
+                      const isSelected = icon === emoji;
+                      return (
+                        <Pressable
+                          key={emoji}
+                          style={[
+                            styles.emojiGridCell,
+                            isSelected && {
+                              borderColor: color || COLORS.PRIMARY,
+                              backgroundColor: (color || COLORS.PRIMARY) + "18",
+                            },
+                          ]}
+                          onPress={() => {
+                            setIcon(emoji);
+                            setShowEmojiPicker(false);
+                          }}
+                        >
+                          <Text style={styles.emojiGridText}>{emoji}</Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                </View>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -232,5 +303,123 @@ const styles = StyleSheet.create({
     color: COLORS.WHITE,
     fontWeight: "800",
     fontSize: 15,
+  },
+
+  // Emojis Picker Giao Diện
+  emojiPickerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: COLORS.WHITE,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: COLORS.CARD_BORDER,
+    padding: 12,
+    gap: 14,
+    marginBottom: 12,
+  },
+  emojiBubble: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    borderWidth: 2,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: COLORS.BG,
+    position: "relative",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  emojiBubbleText: {
+    fontSize: 32,
+  },
+  emojiEditBadge: {
+    position: "absolute",
+    bottom: -2,
+    right: -2,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1.5,
+    borderColor: COLORS.WHITE,
+  },
+  emojiEditBadgeText: {
+    color: COLORS.WHITE,
+    fontSize: 10,
+    fontWeight: "800",
+  },
+  emojiPickerDesc: {
+    flex: 1,
+    fontSize: 12,
+    color: COLORS.TEXT_SECONDARY,
+    lineHeight: 18,
+  },
+
+  // Modal Bottom Sheet Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: COLORS.OVERLAY,
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    backgroundColor: COLORS.WHITE,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: "75%",
+    padding: 16,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.CARD_BORDER,
+    paddingBottom: 14,
+    marginBottom: 12,
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: COLORS.TEXT,
+  },
+  closeBtn: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: COLORS.PRIMARY,
+  },
+  modalScroll: {
+    paddingBottom: 24,
+  },
+  catSection: {
+    marginBottom: 16,
+  },
+  catTitle: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: COLORS.TEXT_SECONDARY,
+    marginBottom: 10,
+    letterSpacing: 0.3,
+  },
+  emojiGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  emojiGridCell: {
+    width: (Dimensions.get("window").width - 32 - 8 * 5) / 6, // 6 ô mỗi hàng
+    height: (Dimensions.get("window").width - 32 - 8 * 5) / 6,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: "transparent",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: COLORS.BG,
+  },
+  emojiGridText: {
+    fontSize: 24,
   },
 });
