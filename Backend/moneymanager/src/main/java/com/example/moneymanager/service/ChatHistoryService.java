@@ -1,5 +1,6 @@
 package com.example.moneymanager.service;
 
+import com.example.moneymanager.dto.ChatSessionDTO;
 import com.example.moneymanager.exception.ForbiddenException;
 import com.example.moneymanager.model.ChatMessage;
 import com.example.moneymanager.model.ChatSession;
@@ -23,16 +24,15 @@ public class ChatHistoryService {
     private final ChatSessionRepository sessionRepository;
     private final ChatMessageRepository messageRepository;
 
-    public List<Map<String, Object>> getSessionsByUserId(Long userId) {
+    public List<ChatSessionDTO> getSessionsByUserId(Long userId) {
         List<ChatSession> sessions = sessionRepository.findByUserIdOrderByUpdatedAtDesc(userId);
-        return sessions.stream().map(s -> {
-            Map<String, Object> m = new java.util.HashMap<>();
-            m.put("id", s.getId());
-            m.put("title", s.getTitle());
-            m.put("createdAt", s.getCreatedAt().toString());
-            m.put("updatedAt", s.getUpdatedAt().toString());
-            return m;
-        }).collect(Collectors.toList());
+        return sessions.stream().map(s -> ChatSessionDTO.builder()
+                .id(s.getId())
+                .title(s.getTitle())
+                .createdAt(s.getCreatedAt() != null ? s.getCreatedAt().toString() : null)
+                .updatedAt(s.getUpdatedAt() != null ? s.getUpdatedAt().toString() : null)
+                .build()
+        ).collect(Collectors.toList());
     }
 
     public List<Map<String, Object>> getMessagesBySessionId(String sessionId, Long currentUserId) {

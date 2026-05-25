@@ -222,7 +222,7 @@ public class AIOrchestrationService {
             case "CREATE_EXPENSE", "UPDATE_EXPENSE" -> {
                 Object amountObj = data.get("amount");
                 if (amountObj == null) yield "Vui l\u00F2ng nh\u1EADp s\u1ED1 ti\u1EC1n.";
-                BigDecimal amount = toBigDecimal(amountObj);
+                BigDecimal amount = toBigDecimal(amountObj, "amount");
                 if (amount.compareTo(BigDecimal.ZERO) <= 0) yield "S\u1ED1 ti\u1EC1n ph\u1EA3i l\u1EDBn h\u01A1n 0.";
                 String catName = (String) data.get("categoryName");
                 if (catName == null || catName.isBlank()) yield "Vui l\u00F2ng ch\u1ECDn danh m\u1EE5c.";
@@ -231,7 +231,7 @@ public class AIOrchestrationService {
             case "CREATE_INCOME", "UPDATE_INCOME" -> {
                 Object amountObj = data.get("amount");
                 if (amountObj == null) yield "Vui l\u00F2ng nh\u1EADp s\u1ED1 ti\u1EC1n.";
-                BigDecimal amount = toBigDecimal(amountObj);
+                BigDecimal amount = toBigDecimal(amountObj, "amount");
                 if (amount.compareTo(BigDecimal.ZERO) <= 0) yield "S\u1ED1 ti\u1EC1n ph\u1EA3i l\u1EDBn h\u01A1n 0.";
                 String catNameIncome = (String) data.get("categoryName");
                 if (catNameIncome == null || catNameIncome.isBlank()) yield "Vui l\u00F2ng ch\u1ECDn danh m\u1EE5c.";
@@ -245,7 +245,7 @@ public class AIOrchestrationService {
             case "CREATE_BUDGET", "UPDATE_BUDGET" -> {
                 Object amountObj = data.get("amount");
                 if (amountObj == null) yield "Vui l\u00F2ng nh\u1EADp s\u1ED1 ti\u1EC1n ng\u00E2n s\u00E1ch.";
-                BigDecimal amount = toBigDecimal(amountObj);
+                BigDecimal amount = toBigDecimal(amountObj, "amount");
                 if (amount.compareTo(BigDecimal.ZERO) <= 0) yield "S\u1ED1 ti\u1EC1n ng\u00E2n s\u00E1ch ph\u1EA3i l\u1EDBn h\u01A1n 0.";
                 String catName = (String) data.get("categoryName");
                 if (catName == null || catName.isBlank()) yield "Vui l\u00F2ng ch\u1ECDn danh m\u1EE5c.";
@@ -256,7 +256,7 @@ public class AIOrchestrationService {
                 if (name == null || name.isBlank()) yield "Vui l\u00F2ng nh\u1EADp t\u00EAn m\u1EE5c ti\u00EAu.";
                 Object targetObj = data.get("targetAmount");
                 if (targetObj == null) yield "Vui l\u00F2ng nh\u1EADp s\u1ED1 ti\u1EC1n m\u1EE5c ti\u00EAu.";
-                BigDecimal targetAmount = toBigDecimal(targetObj);
+                BigDecimal targetAmount = toBigDecimal(targetObj, "targetAmount");
                 if (targetAmount.compareTo(BigDecimal.ZERO) <= 0) yield "S\u1ED1 ti\u1EC1n m\u1EE5c ti\u00EAu ph\u1EA3i l\u1EDBn h\u01A1n 0.";
                 yield null;
             }
@@ -265,7 +265,7 @@ public class AIOrchestrationService {
                 if (name == null || name.isBlank()) yield "Vui l\u00F2ng nh\u1EADp t\u00EAn h\u0169.";
                 Object pctObj = data.get("targetPercentage");
                 if (pctObj != null) {
-                    BigDecimal pct = toBigDecimal(pctObj);
+                    BigDecimal pct = toBigDecimal(pctObj, "targetPercentage");
                     if (pct.compareTo(BigDecimal.ZERO) < 0 || pct.compareTo(new BigDecimal("100")) > 0)
                         yield "T\u1EF7 l\u1EC7 ph\u00E2n b\u1ED5 ph\u1EA3i trong kho\u1EA3ng 0-100%.";
                 }
@@ -274,7 +274,7 @@ public class AIOrchestrationService {
             case "UPDATE_JAR" -> {
                 Object pctObj = data.get("targetPercentage");
                 if (pctObj != null) {
-                    BigDecimal pct = toBigDecimal(pctObj);
+                    BigDecimal pct = toBigDecimal(pctObj, "targetPercentage");
                     if (pct.compareTo(BigDecimal.ZERO) < 0 || pct.compareTo(new BigDecimal("100")) > 0)
                         yield "T\u1EF7 l\u1EC7 ph\u00E2n b\u1ED5 ph\u1EA3i trong kho\u1EA3ng 0-100%.";
                 }
@@ -284,7 +284,7 @@ public class AIOrchestrationService {
             case "TRANSFER_JAR" -> {
                 Object amountObj = data.get("amount");
                 if (amountObj == null) yield "Vui l\u00F2ng nh\u1EADp s\u1ED1 ti\u1EC1n.";
-                BigDecimal amount = toBigDecimal(amountObj);
+                BigDecimal amount = toBigDecimal(amountObj, "amount");
                 if (amount.compareTo(BigDecimal.ZERO) <= 0) yield "S\u1ED1 ti\u1EC1n ph\u1EA3i l\u1EDBn h\u01A1n 0.";
                 String fromJarName = (String) data.get("fromJarName");
                 String toJarName = (String) data.get("toJarName");
@@ -410,11 +410,16 @@ public class AIOrchestrationService {
                     String available = String.join(", ", jarRepository.findByProfile(profile).stream().map(JarEntity::getName).toList());
                     yield "\u26A0\uFE0F Kh\u00F4ng t\u00ECm th\u1EA5y h\u0169 \"" + jarName + "\". H\u0169 hi\u1EC7n c\u00F3: " + (available.isBlank() ? "(ch\u01B0a c\u00F3)" : available);
                 }
-                JarDTO jarDTO = JarDTO.builder().build();
-                if (data.get("name") != null) jarDTO.setName((String) data.get("name"));
-                if (data.get("icon") != null) jarDTO.setIcon((String) data.get("icon"));
-                if (data.get("color") != null) jarDTO.setColor((String) data.get("color"));
-                if (data.get("targetPercentage") != null) jarDTO.setTargetPercentage(toBigDecimal(data.get("targetPercentage")));
+                JarEntity existingJar = jarRepository.findById(jarId)
+                        .orElseThrow(() -> new RuntimeException("Kh\u00F4ng t\u00ECm th\u1EA5y h\u0169"));
+                JarDTO jarDTO = JarDTO.builder()
+                        .name(data.get("name") != null ? (String) data.get("name") : existingJar.getName())
+                        .icon(data.get("icon") != null ? (String) data.get("icon") : existingJar.getIcon())
+                        .color(data.get("color") != null ? (String) data.get("color") : existingJar.getColor())
+                        .targetPercentage(data.get("targetPercentage") != null
+                                ? toBigDecimal(data.get("targetPercentage"), "targetPercentage")
+                                : existingJar.getTargetPercentage())
+                        .build();
                 JarDTO result = jarService.updateJar(jarId, jarDTO);
                 yield "\u2705 \u0110\u00E3 c\u1EADp nh\u1EADt h\u0169 \"" + result.getName() + "\"";
             }
@@ -744,13 +749,18 @@ public class AIOrchestrationService {
         return intent != null && (intent.startsWith("CREATE_") || intent.startsWith("UPDATE_") || intent.startsWith("DELETE_") || intent.startsWith("TRANSFER_"));
     }
 
-    private BigDecimal toBigDecimal(Object value) {
+    private BigDecimal toBigDecimal(Object value, String fieldName) {
         if (value == null) return BigDecimal.ZERO;
         try {
-            return new BigDecimal(value.toString());
+            return new BigDecimal(value.toString().trim());
         } catch (NumberFormatException e) {
+            log.warn("Invalid BigDecimal for field '{}': '{}'. Defaulting to ZERO.", fieldName, value);
             return BigDecimal.ZERO;
         }
+    }
+
+    private BigDecimal toBigDecimal(Object value) {
+        return toBigDecimal(value, "unknown");
     }
 
     private Long toLong(Object value) {

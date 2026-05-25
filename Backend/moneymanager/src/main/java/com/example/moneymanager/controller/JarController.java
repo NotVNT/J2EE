@@ -1,13 +1,13 @@
 package com.example.moneymanager.controller;
 
 import com.example.moneymanager.dto.JarDTO;
+import com.example.moneymanager.dto.TransferRequest;
 import com.example.moneymanager.service.JarService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -47,11 +47,8 @@ public class JarController {
     }
 
     @PostMapping("/transfer")
-    public ResponseEntity<Map<String, String>> transferBalance(@RequestBody Map<String, Object> payload) {
-        Long fromJarId = ((Number) payload.get("fromJarId")).longValue();
-        Long toJarId = ((Number) payload.get("toJarId")).longValue();
-        BigDecimal amount = new BigDecimal(payload.get("amount").toString());
-        jarService.transferBalance(fromJarId, toJarId, amount);
+    public ResponseEntity<Map<String, String>> transferBalance(@Valid @RequestBody TransferRequest request) {
+        jarService.transferBalance(request.getFromJarId(), request.getToJarId(), request.getAmount());
         return ResponseEntity.ok(Map.of("message", "Transfer successful"));
     }
 }

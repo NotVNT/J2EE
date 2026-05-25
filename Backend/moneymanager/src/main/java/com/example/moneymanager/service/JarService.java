@@ -38,6 +38,10 @@ public class JarService {
             if (pct.compareTo(BigDecimal.ZERO) < 0 || pct.compareTo(new BigDecimal("100")) > 0) {
                 throw new RuntimeException("Tỷ lệ phân bổ phải trong khoảng 0-100%");
             }
+            BigDecimal currentTotal = jarRepository.sumNonDefaultPercentagesByProfile(profile.getId(), null);
+            if (currentTotal.add(pct).compareTo(new BigDecimal("100")) > 0) {
+                throw new RuntimeException("Tổng tỷ lệ phân bổ của các hũ không được vượt quá 100%. Hiện tại đã dùng " + currentTotal + "%.");
+            }
         }
 
         JarEntity jar = JarEntity.builder()
@@ -101,6 +105,10 @@ public class JarService {
                 BigDecimal pct = jarDTO.getTargetPercentage();
                 if (pct.compareTo(BigDecimal.ZERO) < 0 || pct.compareTo(new BigDecimal("100")) > 0) {
                     throw new RuntimeException("Tỷ lệ phân bổ phải trong khoảng 0-100%");
+                }
+                BigDecimal currentTotal = jarRepository.sumNonDefaultPercentagesByProfile(profile.getId(), jarId);
+                if (currentTotal.add(pct).compareTo(new BigDecimal("100")) > 0) {
+                    throw new RuntimeException("Tổng tỷ lệ phân bổ của các hũ không được vượt quá 100%. Hiện tại đã dùng " + currentTotal + "% (không tính hũ này).");
                 }
             }
             jar.setTargetPercentage(jarDTO.getTargetPercentage());

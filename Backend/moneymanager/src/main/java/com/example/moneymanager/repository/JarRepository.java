@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Repository
@@ -21,4 +22,10 @@ public interface JarRepository extends JpaRepository<JarEntity, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT COUNT(j) FROM JarEntity j WHERE j.profile.id = :profileId AND j.name != :excludedName")
     long countByProfileIdExcludingNameForUpdate(@Param("profileId") Long profileId, @Param("excludedName") String excludedName);
+
+    @Query("SELECT COALESCE(SUM(j.targetPercentage), 0) FROM JarEntity j " +
+           "WHERE j.profile.id = :profileId AND j.name <> 'Ví tổng' " +
+           "AND (:excludeJarId IS NULL OR j.id <> :excludeJarId)")
+    BigDecimal sumNonDefaultPercentagesByProfile(@Param("profileId") Long profileId,
+                                                 @Param("excludeJarId") Long excludeJarId);
 }

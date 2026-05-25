@@ -73,7 +73,7 @@ public class AIChatController {
     }
 
     @GetMapping("/chat/sessions")
-    public ResponseEntity<List<Map<String, Object>>> getSessions() {
+    public ResponseEntity<List<ChatSessionDTO>> getSessions() {
         Long userId = profileService.getCurrentProfile().getId();
         return ResponseEntity.ok(chatHistoryService.getSessionsByUserId(userId));
     }
