@@ -62,10 +62,22 @@ function describeArc(cx, cy, outerR, innerR, startAngle, endAngle) {
 
 function formatShortMoney(val) {
   const abs = Math.abs(val);
-  if (abs >= 1_000_000_000) return `${(abs / 1_000_000_000).toFixed(1)}B`;
-  if (abs >= 1_000_000) return `${Math.round(abs / 1_000_000)}M`;
-  if (abs >= 1_000) return `${Math.round(abs / 1_000)}K`;
-  return String(abs);
+  if (abs >= 1_000_000_000) {
+    const billions = abs / 1_000_000_000;
+    const formatted = billions % 1 === 0 ? billions.toFixed(0) : billions.toFixed(1);
+    return `${formatted.replace(".", ",")} tỷ VND`;
+  }
+  if (abs >= 1_000_000) {
+    const millions = abs / 1_000_000;
+    const formatted = millions % 1 === 0 ? millions.toFixed(0) : millions.toFixed(1);
+    return `${formatted.replace(".", ",")} tr VND`;
+  }
+  if (abs >= 1_000) {
+    const thousands = abs / 1_000;
+    const formatted = thousands % 1 === 0 ? thousands.toFixed(0) : thousands.toFixed(1);
+    return `${formatted.replace(".", ",")}K`;
+  }
+  return `${abs} VND`;
 }
 
 function formatShortSignedMoney(val) {
@@ -440,7 +452,11 @@ const FinanceOverviewChart = ({ totalBalance, totalIncome, totalExpense, monthly
                   x={cx}
                   y={cy + 14}
                   textAnchor="middle"
-                  fontSize="22"
+                  fontSize={
+                    formatShortSignedMoney(balance).length > 12 ? 14 :
+                    formatShortSignedMoney(balance).length > 10 ? 16 :
+                    formatShortSignedMoney(balance).length > 8 ? 19 : 22
+                  }
                   fontWeight="900"
                   fill="url(#center-total-gradient)"
                 >
