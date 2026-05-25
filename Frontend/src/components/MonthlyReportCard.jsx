@@ -1,4 +1,4 @@
-import { useMemo, useState, useContext } from "react";
+import { useMemo, useState, useContext, useEffect } from "react";
 import InfoCard from "./InfoCard";
 import CustomPieChart from "./CustomPieChart";
 import ReactMarkdown from "react-markdown";
@@ -92,6 +92,13 @@ const MonthlyReportCard = ({ report }) => {
       setIsAnalyzing(false);
     }
   };
+
+  useEffect(() => {
+    if (isPremium) {
+      analyzeWithAI();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [report.month, report.year, isPremium]);
 
   const spendingChangeInfo = useMemo(() => {
     if (report.spendingChangePercent === 0) return { icon: Minus, color: "text-slate-500", text: "Không đổi" };
