@@ -49,7 +49,9 @@ const LandingPage = () => {
                     <div className="h-16 flex items-center justify-between">
                         {/* Logo */}
                         <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => scrollTo('hero')}>
-                            <img src="/favicon.png" alt="Money Manager Logo" className="w-8 h-8 drop-shadow-md" />
+                            <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center shrink-0 shadow-md">
+                                <img src="/favicon.png" alt="Money Manager Logo" className="w-12 h-12 max-w-none object-cover scale-110" />
+                            </div>
                             <span className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
                                 Money<span className="text-amber-500">Manager</span>
                             </span>
@@ -211,7 +213,7 @@ const LandingPage = () => {
                                     </div>
                                     <div>
                                         <p className="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest mb-1">Thu Nhập Tháng</p>
-                                        <p className="text-2xl font-black text-slate-900 dark:text-white">+85,5Mđ</p>
+                                        <p className="text-2xl font-black text-slate-900 dark:text-white">+85.500.000 VND</p>
                                     </div>
                                 </div>
                             </div>
@@ -227,7 +229,7 @@ const LandingPage = () => {
                                             <p className="font-bold text-slate-900 dark:text-white">Siêu thị Lotte</p>
                                             <p className="text-xs text-slate-500">Hôm qua</p>
                                         </div>
-                                        <span className="font-black text-slate-900 dark:text-white">-1.200K</span>
+                                        <span className="font-black text-slate-900 dark:text-white">-1.200.000 VND</span>
                                     </div>
                                     <div className="flex items-center gap-4 text-sm">
                                         <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-500/20 flex items-center justify-center text-xl">💼</div>
@@ -235,7 +237,7 @@ const LandingPage = () => {
                                             <p className="font-bold text-slate-900 dark:text-white">Lương Tháng</p>
                                             <p className="text-xs text-slate-500">25 Thg 5</p>
                                         </div>
-                                        <span className="font-black text-emerald-600 dark:text-emerald-400">+45.000K</span>
+                                        <span className="font-black text-emerald-600 dark:text-emerald-400">+45.000.000 VND</span>
                                     </div>
                                 </div>
                             </div>
@@ -474,7 +476,9 @@ const LandingPage = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
                         <div className="lg:col-span-2">
                             <div className="flex items-center gap-2 mb-6 cursor-pointer" onClick={() => scrollTo('hero')}>
-                                <img src="/favicon.png" alt="Money Manager Logo" className="w-8 h-8" />
+                                <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center shrink-0 shadow-md">
+                                    <img src="/favicon.png" alt="Money Manager Logo" className="w-12 h-12 max-w-none object-cover scale-110" />
+                                </div>
                                 <span className="text-xl font-bold text-slate-900 dark:text-white">
                                     Money<span className="text-amber-500">Manager</span>
                                 </span>

@@ -587,7 +587,7 @@ const ChatWidget = () => {
             <div className="flex items-center gap-3">
               <div className="relative flex-shrink-0">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 overflow-hidden">
-                  <img src={aiLogo} alt="Nova Money AI" className="h-8 w-8 object-contain" />
+                  <img src={aiLogo} alt="Nova Money AI" className="h-10 w-10 object-cover scale-125" />
                 </div>
                 <div className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-amber-400 bg-green-400" />
               </div>
@@ -694,7 +694,7 @@ const ChatWidget = () => {
                 {chatMessage.role === "assistant" && (
                   <div className="mr-2 flex-shrink-0 pt-1">
                     <div className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-500/20 overflow-hidden">
-                      <img src={aiLogo} alt="Nova" className="h-5 w-5 object-contain" />
+                      <img src={aiLogo} alt="Nova" className="h-7 w-7 object-cover scale-125" />
                     </div>
                   </div>
                 )}
@@ -777,7 +777,7 @@ const ChatWidget = () => {
               <div className="flex justify-start">
                 <div className="mr-2 flex-shrink-0 pt-1">
                   <div className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-500/20 overflow-hidden">
-                    <img src={aiLogo} alt="Nova" className="h-5 w-5 object-contain" />
+                    <img src={aiLogo} alt="Nova" className="h-7 w-7 object-cover scale-125" />
                   </div>
                 </div>
                 <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-4 py-3 shadow-sm">
@@ -914,12 +914,12 @@ const ChatWidget = () => {
         <button
           type="button"
           onClick={() => setIsOpen((v) => !v)}
-          className="group relative inline-flex h-16 w-16 items-center justify-center rounded-full bg-amber-500 hover:bg-amber-600 text-white shadow-xl shadow-amber-500/30 transition"
+          className="group relative inline-flex h-16 w-16 items-center justify-center rounded-full bg-amber-500 hover:bg-amber-600 text-white shadow-xl shadow-amber-500/30 transition overflow-hidden"
           aria-label={isOpen ? "Đóng trợ lý" : "Mở trợ lý"}
         >
           {isOpen
             ? <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/15"><X size={20} /></span>
-            : <img src={aiLogo} alt="Nova Money AI" className="h-12 w-12 object-contain rounded-2xl" />
+            : <img src={aiLogo} alt="Nova Money AI" className="h-16 w-16 object-cover scale-125" />
           }
         </button>
       </div>
