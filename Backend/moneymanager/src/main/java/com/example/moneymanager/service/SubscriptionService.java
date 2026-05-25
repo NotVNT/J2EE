@@ -43,6 +43,13 @@ public class SubscriptionService {
         this.planConfigService = planConfigService;
     }
 
+    // TODO(refactor): getPlanFeatures() calls refreshSubscriptionIfExpired() which may invoke
+    // profileRepository.save() — a DB write — inside a method that callers treat as read-only.
+    // Every ensureCanCreate* call and every GET /profile currently triggers this implicit write.
+    // The proper fix is to separate expiry refresh into an explicit step called only before
+    // write operations or on login/token refresh, then mark getPlanFeatures @Transactional(readOnly=true).
+    // Deferred because all existing callers rely on the implicit refresh; separating them requires
+    // auditing each call site to ensure expiry is still checked at the right moment.
     public PlanFeatures getPlanFeatures(ProfileEntity profile) {
         refreshSubscriptionIfExpired(profile);
 
