@@ -308,6 +308,7 @@ export default function AppNavigator() {
   const { user, isBootstrapping } = useContext(AuthContext);
   const [isOnboardingResolved, setIsOnboardingResolved] = useState(false);
   const [shouldShowOnboarding, setShouldShowOnboarding] = useState(false);
+  const [isStartupDelayDone, setIsStartupDelayDone] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -334,8 +335,12 @@ export default function AppNavigator() {
     };
   }, []);
 
-  if (isBootstrapping || !isOnboardingResolved) {
-    return <LoadingScreen text="Đang khởi tạo phiên đăng nhập..." />;
+  const handleSplashComplete = () => {
+    setIsStartupDelayDone(true);
+  };
+
+  if (isBootstrapping || !isOnboardingResolved || !isStartupDelayDone) {
+    return <LoadingScreen onComplete={handleSplashComplete} />;
   }
 
   return (
