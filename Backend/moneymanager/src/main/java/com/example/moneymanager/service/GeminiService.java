@@ -536,19 +536,19 @@ public class GeminiService {
             if (avgExpenseChange.compareTo(BigDecimal.valueOf(0.05)) > 0) {
                 analysis.setExpenseTrend("TĂNG MẠNH");
                 analysis.setExpenseTrendMessage(String.format("Chi tiêu đang tăng %.1f%% mỗi tháng",
-                        avgExpenseChange.multiply(BigDecimal.valueOf(100))));
+                        avgExpenseChange.multiply(BigDecimal.valueOf(100)).doubleValue()));
             } else if (avgExpenseChange.compareTo(BigDecimal.ZERO) > 0) {
                 analysis.setExpenseTrend("TĂNG NHẸ");
                 analysis.setExpenseTrendMessage(String.format("Chi tiêu tăng %.1f%% mỗi tháng",
-                        avgExpenseChange.multiply(BigDecimal.valueOf(100))));
+                        avgExpenseChange.multiply(BigDecimal.valueOf(100)).doubleValue()));
             } else if (avgExpenseChange.compareTo(BigDecimal.valueOf(-0.05)) < 0) {
                 analysis.setExpenseTrend("GIẢM MẠNH");
                 analysis.setExpenseTrendMessage(String.format("Chi tiêu giảm %.1f%% mỗi tháng, rất tốt!",
-                        avgExpenseChange.abs().multiply(BigDecimal.valueOf(100))));
+                        avgExpenseChange.abs().multiply(BigDecimal.valueOf(100)).doubleValue()));
             } else if (avgExpenseChange.compareTo(BigDecimal.ZERO) < 0) {
                 analysis.setExpenseTrend("GIẢM NHẸ");
                 analysis.setExpenseTrendMessage(String.format("Chi tiêu giảm %.1f%% mỗi tháng",
-                        avgExpenseChange.abs().multiply(BigDecimal.valueOf(100))));
+                        avgExpenseChange.abs().multiply(BigDecimal.valueOf(100)).doubleValue()));
             } else {
                 analysis.setExpenseTrend("ỔN ĐỊNH");
                 analysis.setExpenseTrendMessage("Chi tiêu ổn định qua các tháng");
@@ -566,19 +566,19 @@ public class GeminiService {
             if (avgIncomeChange.compareTo(BigDecimal.valueOf(0.05)) > 0) {
                 analysis.setIncomeTrend("TĂNG MẠNH");
                 analysis.setIncomeTrendMessage(String.format("Thu nhập đang tăng %.1f%% mỗi tháng",
-                        avgIncomeChange.multiply(BigDecimal.valueOf(100))));
+                        avgIncomeChange.multiply(BigDecimal.valueOf(100)).doubleValue()));
             } else if (avgIncomeChange.compareTo(BigDecimal.ZERO) > 0) {
                 analysis.setIncomeTrend("TĂNG NHẸ");
                 analysis.setIncomeTrendMessage(String.format("Thu nhập tăng %.1f%% mỗi tháng",
-                        avgIncomeChange.multiply(BigDecimal.valueOf(100))));
+                        avgIncomeChange.multiply(BigDecimal.valueOf(100)).doubleValue()));
             } else if (avgIncomeChange.compareTo(BigDecimal.valueOf(-0.05)) < 0) {
                 analysis.setIncomeTrend("GIẢM MẠNH");
                 analysis.setIncomeTrendMessage(String.format("Thu nhập đang giảm %.1f%% mỗi tháng, cần lưu ý!",
-                        avgIncomeChange.abs().multiply(BigDecimal.valueOf(100))));
+                        avgIncomeChange.abs().multiply(BigDecimal.valueOf(100)).doubleValue()));
             } else if (avgIncomeChange.compareTo(BigDecimal.ZERO) < 0) {
                 analysis.setIncomeTrend("GIẢM NHẸ");
                 analysis.setIncomeTrendMessage(String.format("Thu nhập giảm %.1f%% mỗi tháng",
-                        avgIncomeChange.abs().multiply(BigDecimal.valueOf(100))));
+                        avgIncomeChange.abs().multiply(BigDecimal.valueOf(100)).doubleValue()));
             } else {
                 analysis.setIncomeTrend("ỔN ĐỊNH");
                 analysis.setIncomeTrendMessage("Thu nhập ổn định qua các tháng");
@@ -673,8 +673,8 @@ public class GeminiService {
         advice.append(String.format("• %s\n", trend.getIncomeTrendMessage()));
 
         advice.append("\n💪 CHỆ SỐ TÀI CHÍNH:\n");
-        advice.append(String.format("• Tỷ lệ tiết kiệm: %.1f%% (%s)\n", ratios.getSavingsRate(), ratios.getHealthMessage()));
-        advice.append(String.format("• Số tháng có thể sống nếu không có thu nhập: %.1f tháng\n", ratios.getMonthsOfSurvival()));
+        advice.append(String.format("• Tỷ lệ tiết kiệm: %.1f%% (%s)\n", ratios.getSavingsRate().doubleValue(), ratios.getHealthMessage()));
+        advice.append(String.format("• Số tháng có thể sống nếu không có thu nhập: %.1f tháng\n", ratios.getMonthsOfSurvival().doubleValue()));
 
         advice.append("\n🎯 KHUYếN NGHị CỤ THỂ:\n");
         if ("CAO".equals(forecast.getRiskLevel())) {

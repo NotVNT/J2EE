@@ -1,7 +1,9 @@
 package com.example.moneymanager.controller;
 
+import com.example.moneymanager.dto.ForecastDTOs.*;
 import com.example.moneymanager.entity.ProfileEntity;
 import com.example.moneymanager.service.DashboardService;
+import com.example.moneymanager.service.ForecastService;
 import com.example.moneymanager.service.ProfileService;
 import com.example.moneymanager.service.SubscriptionService;
 import lombok.RequiredArgsConstructor;
@@ -9,9 +11,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.YearMonth;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -21,6 +26,7 @@ import java.util.Map;
 public class DashboardController {
 
     private final DashboardService dashboardService;
+    private final ForecastService forecastService;
     private final ProfileService profileService;
     private final SubscriptionService subscriptionService;
 
@@ -128,6 +134,96 @@ public class DashboardController {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("error", e.getMessage());
             errorResponse.put("message", "Không thể tải phân tích chi tiết: " + e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
+    }
+
+    /**
+     * AI Insight dự báo cho tháng được chọn.
+     * Người dùng chọn tháng (hiện tại hoặc tương lai), hệ thống dùng dữ liệu lịch sử
+     * để tạo dự báo hành vi tài chính cho tháng đó.
+     *
+     * @param year  Năm dự báo (vd: 2026)
+     * @param month Tháng dự báo (1-12)
+     * @return Dự báo tổng hợp: tổng chi tiêu dự kiến, danh mục có nguy cơ, cảnh báo bất thường, gợi ý tiết kiệm
+     */
+    @GetMapping("/ai-insight/forecast")
+    public ResponseEntity<Map<String, Object>> getAiForecastInsight(
+            @RequestParam int year,
+            @RequestParam int month) {
+        try {
+            // 1. Kiểm tra profile
+            ProfileEntity currentProfile = profileService.getCurrentProfile();
+            if (currentProfile == null) {
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("error", "User not authenticated");
+                errorResponse.put("message", "Vui lòng đăng nhập để sử dụng tính năng này");
+                return ResponseEntity.status(401).body(errorResponse);
+            }
+
+            // 2. Kiểm tra quyền PREMIUM
+            subscriptionService.ensureCanUseDetailedAi(currentProfile);
+
+            YearMonth requestedMonth = YearMonth.of(year, month);
+            YearMonth currentMonth = YearMonth.now();
+            if (!requestedMonth.isAfter(currentMonth)) {
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("error", "AI forecast is only available from next month");
+                errorResponse.put("message", "AI Insight chỉ dự báo từ tháng tiếp theo.");
+                return ResponseEntity.badRequest().body(errorResponse);
+            }
+
+            // 3. Lấy dự báo theo tháng
+            MonthlyForecastDTO forecast = forecastService.getMonthlyForecast(year, month);
+
+            // 4. Lấy danh sách bất thường
+            List<AnomalyDTO> anomalies = forecastService.detectAnomalies(year, month);
+
+            // 5. Tạo AI insight từ dữ liệu dự báo
+            ForecastInsightDTO aiInsight = forecastService.getGeminiInsights(forecast);
+
+            // 6. Tổng hợp kết quả
+            Map<String, Object> result = new HashMap<>();
+            result.put("year", year);
+            result.put("month", month);
+
+            // Tổng chi tiêu dự kiến
+            double totalPredicted = forecast.getCategories().stream()
+                    .mapToDouble(c -> c.getPredictedAmount().doubleValue())
+                    .sum();
+            result.put("totalPredictedExpense", totalPredicted);
+
+            // Các danh mục dự báo
+            result.put("categories", forecast.getCategories());
+
+            // Danh mục có nguy cơ tăng mạnh nhất (trend UP, predicted cao nhất)
+            CategoryForecastItem topRiskCategory = forecast.getCategories().stream()
+                    .filter(c -> "UP".equals(c.getTrend()))
+                    .max((a, b) -> a.getPredictedAmount().compareTo(b.getPredictedAmount()))
+                    .orElse(null);
+            result.put("topRiskCategory", topRiskCategory);
+
+            // Số lượng bất thường
+            result.put("anomalyCount", anomalies.size());
+            result.put("anomalies", anomalies);
+
+            // AI narrative
+            result.put("narrative", aiInsight.getNarrative());
+            result.put("generatedAt", aiInsight.getGeneratedAt() != null
+                    ? aiInsight.getGeneratedAt().toString()
+                    : null);
+
+            // Gợi ý tiết kiệm (từ AI narrative, backend có thể tách riêng nếu cần)
+            // Hiện tại gợi ý nằm trong narrative
+
+            log.info("AI forecast insight generated for {}/{}", year, month);
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            log.error("Error generating AI forecast insight: {}", e.getMessage(), e);
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", e.getMessage());
+            errorResponse.put("message", "Không thể tạo dự báo AI: " + e.getMessage());
             return ResponseEntity.badRequest().body(errorResponse);
         }
     }

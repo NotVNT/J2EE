@@ -230,7 +230,7 @@ Floating button góc phải dưới trên tất cả các trang đã xác thực
 ## Các Tính Năng Khác
 
 ### Dự Báo Tài Chính
-Dự đoán chi tiêu tháng tới dựa trên 6 tháng lịch sử. Anomaly detection (2+ standard deviations). Phân tích trend theo danh mục. **Chỉ PREMIUM.**
+Dự đoán chi tiêu cho 6 tháng tới (tháng hiện tại + 5 tháng tiếp theo) dựa trên 6 tháng lịch sử. Người dùng chọn tháng từ dropdown hiển thị đúng 6 tháng gần nhất. Anomaly detection (2+ standard deviations). AI Insights chỉ hiển thị cho tháng tương lai. **Chỉ PREMIUM.**
 
 ### Quản Lý Ngân Sách
 Giới hạn chi tiêu hàng tháng cho mỗi danh mục. Theo dõi % sử dụng. Cảnh báo khi vượt ngân sách.

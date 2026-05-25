@@ -12,8 +12,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -47,6 +49,27 @@ public class EmailNotificationPreferenceService {
         if (entities.isEmpty()) {
             initializeDefaultPreferences(profileId);
             entities = repository.findByProfileId(profileId);
+        } else {
+            // Add records for any enum types added after this user was first initialized
+            Set<EmailNotificationType> existing = entities.stream()
+                .map(EmailNotificationPreferenceEntity::getType)
+                .collect(Collectors.toSet());
+            List<EmailNotificationType> missing = Arrays.stream(EmailNotificationType.values())
+                .filter(t -> !existing.contains(t))
+                .collect(Collectors.toList());
+            if (!missing.isEmpty()) {
+                ProfileEntity profile = profileRepository.findById(profileId)
+                    .orElseThrow(() -> new RuntimeException("Profile not found: " + profileId));
+                List<EmailNotificationPreferenceEntity> newPrefs = missing.stream()
+                    .map(type -> EmailNotificationPreferenceEntity.builder()
+                        .profile(profile)
+                        .type(type)
+                        .isEnabled(type.getDefaultEnabled())
+                        .build())
+                    .collect(Collectors.toList());
+                repository.saveAll(newPrefs);
+                entities = repository.findByProfileId(profileId);
+            }
         }
         return entities.stream()
             .map(EmailNotificationPreferenceDTO::fromEntity)
@@ -63,16 +86,23 @@ public class EmailNotificationPreferenceService {
 
     @Transactional
     public void updatePreferences(Long profileId, List<EmailNotificationPreferenceDTO> updates) {
+        ProfileEntity profile = profileRepository.findById(profileId)
+            .orElseThrow(() -> new RuntimeException("Profile not found: " + profileId));
         for (EmailNotificationPreferenceDTO dto : updates) {
             EmailNotificationType type = EmailNotificationType.valueOf(dto.getType());
             if (type.isCritical() && Boolean.FALSE.equals(dto.getIsEnabled())) {
                 log.warn("Attempt to disable critical email type {} for profile {}", type, profileId);
                 continue;
             }
-            repository.findByProfileIdAndType(profileId, type).ifPresent(preference -> {
-                preference.setIsEnabled(dto.getIsEnabled());
-                repository.save(preference);
-            });
+            // Upsert: update existing record or create a new one if missing
+            EmailNotificationPreferenceEntity preference = repository
+                .findByProfileIdAndType(profileId, type)
+                .orElseGet(() -> EmailNotificationPreferenceEntity.builder()
+                    .profile(profile)
+                    .type(type)
+                    .build());
+            preference.setIsEnabled(dto.getIsEnabled());
+            repository.save(preference);
         }
         log.info("Updated email preferences for profile: {}", profileId);
     }

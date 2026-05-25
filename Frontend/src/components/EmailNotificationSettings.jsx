@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 const EmailNotificationSettings = () => {
     const [preferences, setPreferences] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [saving, setSaving] = useState(false);
+    const [savingType, setSavingType] = useState(null);
     const [resetting, setResetting] = useState(false);
 
     useEffect(() => {
@@ -29,26 +29,21 @@ const EmailNotificationSettings = () => {
         }
     };
 
-    const handleToggle = (type) => {
-        setPreferences(prev =>
-            prev.map(pref =>
-                pref.type === type ? { ...pref, isEnabled: !pref.isEnabled } : pref
-            )
+    const handleToggle = async (type) => {
+        const updated = preferences.map(pref =>
+            pref.type === type ? { ...pref, isEnabled: !pref.isEnabled } : pref
         );
-    };
-
-    const handleSave = async () => {
-        setSaving(true);
+        setPreferences(updated);
+        setSavingType(type);
         try {
-            const res = await axiosConfig.put(API_ENDPOINTS.UPDATE_EMAIL_PREFERENCES, preferences);
-            if (res.status === 200) {
-                toast.success("Cập nhật cài đặt email thành công");
-            }
+            await axiosConfig.put(API_ENDPOINTS.UPDATE_EMAIL_PREFERENCES, updated);
         } catch (error) {
-            toast.error("Lỗi cập nhật cài đặt");
+            // Revert on failure
+            setPreferences(preferences);
+            toast.error("Lỗi cập nhật cài đặt email");
             console.error(error);
         } finally {
-            setSaving(false);
+            setSavingType(null);
         }
     };
 
@@ -124,16 +119,20 @@ const EmailNotificationSettings = () => {
                                 <span className="text-xl leading-none">{pref.icon}</span>
                                 <span className="text-sm text-slate-700 dark:text-slate-300">{pref.displayName}</span>
                             </div>
-                            <label className="relative inline-flex cursor-pointer items-center">
-                                <input
-                                    type="checkbox"
-                                    checked={!!pref.isEnabled}
-                                    onChange={() => handleToggle(pref.type)}
-                                    className="sr-only peer"
-                                />
-                                <div className="h-6 w-11 rounded-full bg-slate-200 dark:bg-slate-700 peer-checked:bg-violet-600 transition-colors" />
-                                <div className="absolute left-1 top-1 h-4 w-4 rounded-full bg-white transition-transform peer-checked:translate-x-5" />
-                            </label>
+                            {savingType === pref.type ? (
+                                <LoaderCircle className="animate-spin text-violet-500 shrink-0" size={20} />
+                            ) : (
+                                <label className="relative inline-flex cursor-pointer items-center">
+                                    <input
+                                        type="checkbox"
+                                        checked={!!pref.isEnabled}
+                                        onChange={() => handleToggle(pref.type)}
+                                        className="sr-only peer"
+                                    />
+                                    <div className="h-6 w-11 rounded-full bg-slate-200 dark:bg-slate-700 peer-checked:bg-violet-600 transition-colors" />
+                                    <div className="absolute left-1 top-1 h-4 w-4 rounded-full bg-white transition-transform peer-checked:translate-x-5" />
+                                </label>
+                            )}
                         </div>
                     ))}
                 </div>
@@ -143,22 +142,11 @@ const EmailNotificationSettings = () => {
             <div className="flex gap-3 justify-end pt-1">
                 <button
                     onClick={handleReset}
-                    disabled={resetting || saving}
+                    disabled={resetting || !!savingType}
                     className="inline-flex items-center gap-2 rounded-2xl border border-slate-300 dark:border-white/10 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 transition hover:bg-slate-50 dark:hover:bg-white/5 disabled:opacity-50"
                 >
                     {resetting ? <LoaderCircle className="animate-spin" size={15} /> : <RefreshCw size={15} />}
                     Đặt lại mặc định
-                </button>
-                <button
-                    onClick={handleSave}
-                    disabled={saving || resetting}
-                    className="inline-flex items-center justify-center gap-2 rounded-2xl bg-violet-600 hover:bg-violet-500 px-6 py-2 text-sm font-semibold text-white transition disabled:opacity-50"
-                >
-                    {saving ? (
-                        <><LoaderCircle className="animate-spin" size={15} />Đang lưu...</>
-                    ) : (
-                        "Lưu thay đổi"
-                    )}
                 </button>
             </div>
         </div>

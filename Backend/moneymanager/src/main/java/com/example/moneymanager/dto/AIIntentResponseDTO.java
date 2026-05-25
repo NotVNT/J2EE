@@ -14,6 +14,7 @@ import java.util.Map;
 @AllArgsConstructor
 public class AIIntentResponseDTO {
     private String status;
+    private String sessionId;
     private String intent;
     private Map<String, Object> extractedFields;
     private Map<String, Object> suggestedValues;

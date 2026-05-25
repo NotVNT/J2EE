@@ -5,6 +5,7 @@ import {LoaderCircle, ChevronDown, ChevronUp} from "lucide-react";
 import { formatCurrency, parseCurrency } from "../util/helper.js";
 import axiosConfig from "../util/axiosConfig.jsx";
 import { API_ENDPOINTS } from "../util/apiEndpoints.js";
+import { hasDisplayImage } from "../util/imageDisplay.js";
 
 const fmt = (n) =>
   new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(n ?? 0);
@@ -192,7 +193,11 @@ const AddIncomeForm = ({onAddIncome, categories}) => {
                                         style={{ backgroundColor: `${alloc.jarColor}20` }}
                                     >
                                         {alloc.jarIcon ? (
-                                            <img src={alloc.jarIcon} alt={alloc.jarName} className="w-5 h-5" />
+                                            hasDisplayImage(alloc.jarIcon) ? (
+                                                <img src={alloc.jarIcon} alt={alloc.jarName} className="w-5 h-5 object-contain" />
+                                            ) : (
+                                                <span className="text-lg select-none">{alloc.jarIcon}</span>
+                                            )
                                         ) : "🏦"}
                                     </div>
                                     <div className="flex-1 min-w-0">

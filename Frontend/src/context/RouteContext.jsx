@@ -18,7 +18,8 @@ const PAGE_MAP = {
   "/filter": "filter",
   "/forecast": "forecast",
   "/profile": "profile",
-  "/notifications": "notifications"
+  "/notifications": "notifications",
+  "/ai-chat": "aiChat"
 };
 
 const PAGE_LABELS = {
@@ -32,7 +33,8 @@ const PAGE_LABELS = {
   filter: "Bộ lọc",
   forecast: "Dự báo",
   profile: "Hồ sơ",
-  notifications: "Thông báo"
+  notifications: "Thông báo",
+  aiChat: "Trợ lý AI"
 };
 
 export const RouteContextProvider = ({ children }) => {

@@ -15,26 +15,39 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class AIOrchestrationService {
 
+    private static final int MAX_USER_MESSAGE_LENGTH = 500;
+
+    private static final Pattern INJECTION_PATTERN = Pattern.compile(
+        "(?i)(ignore|forget|disregard).{0,20}(instruction|above|previous|system|prompt)|" +
+        "(?i)(you are now|act as|pretend|roleplay)|" +
+        "(?i)return.{0,30}(json|true|false|null)",
+        Pattern.CASE_INSENSITIVE
+    );
+
     private final AIChatService aiChatService;
     private final GeminiProperties geminiProperties;
     private final ProfileService profileService;
+    private final ChatHistoryService chatHistoryService;
     private final ExpenseService expenseService;
     private final IncomeService incomeService;
     private final CategoryService categoryService;
     private final BudgetService budgetService;
     private final SavingGoalService savingGoalService;
+    private final JarService jarService;
     private final CategoryRepository categoryRepository;
     private final ExpenseRepository expenseRepository;
     private final IncomeRepository incomeRepository;
     private final BudgetRepository budgetRepository;
     private final SavingGoalRepository savingGoalRepository;
     private final ProfileRepository profileRepository;
+    private final JarRepository jarRepository;
     private final ObjectMapper objectMapper;
 
     public AIIntentResponseDTO parseIntentFromChat(AIIntentRequestDTO request) {
@@ -45,6 +58,7 @@ public class AIOrchestrationService {
                     .validationErrors(List.of("Tin nh\u1EAFn kh\u00F4ng \u0111\u01B0\u1EE3c \u0111\u1EC3 tr\u1ED1ng."))
                     .build();
         }
+        userMessage = sanitizeUserMessage(userMessage);
 
         String provider = request.getProvider() != null ? request.getProvider() : "gemini";
         String model = request.getModel() != null ? request.getModel() : geminiProperties.model();
@@ -55,22 +69,24 @@ public class AIOrchestrationService {
 
             // FREE users cannot use Agent at all
             if (plan == SubscriptionPlan.FREE) {
-                throw new ForbiddenException("Nova Money Agent yêu cầu gói BASIC trở lên.");
+                throw new ForbiddenException("Nova Money Agent y\u00EAu c\u1EA7u g\u00F3i BASIC tr\u1EDF l\u00EAn.");
             }
             // BASIC can only use ninerouter for Agent; Gemini requires PREMIUM
             if (plan != SubscriptionPlan.PREMIUM && !"ninerouter".equalsIgnoreCase(provider)) {
-                throw new ForbiddenException("Model Gemini cho Agent yêu cầu gói PREMIUM. Gói BASIC chỉ được dùng Gemma 4 (ninerouter) cho Agent.");
+                throw new ForbiddenException("Model Gemini cho Agent y\u00EAu c\u1EA7u g\u00F3i PREMIUM. G\u00F3i BASIC ch\u1EC9 \u0111\u01B0\u1EE3c d\u00F9ng Gemma 4 (ninerouter) cho Agent.");
             }
 
             String pageContext = request.getPageContext() != null ? request.getPageContext() : "dashboard";
             Map<String, Object> pageData = loadPageData(pageContext, profile);
             String systemPrompt = AIInstructionPromptBuilder.buildSystemPrompt(pageContext, pageData);
 
-            String crudInstruction = userMessage + "\n\n" +
+            String crudInstruction = "<user_request>\n" + userMessage + "\n</user_request>\n\n" +
+                    "<system_instruction>\n" +
                     "CH\u1EC8 TR\u1EA2 V\u1EC0 JSON THU\u1EA6N. KH\u00D4NG C\u00D3 TEXT N\u00C0O KH\u00C1C. " +
                     "Ph\u00E2n t\u00EDch y\u00EAu c\u1EA7u v\u00E0 tr\u1EA3 v\u1EC1 m\u1ED9t JSON object theo \u0111\u00FAng format. " +
                     "B\u1EAFt \u0111\u1EA7u b\u1EB1ng { v\u00E0 k\u1EBFt th\u00FAc b\u1EB1ng }. " +
-                    "N\u1EBFu l\u00E0 CRUD, bao g\u1ED3m confirmationPrompt b\u1EB1ng ti\u1EBFng Vi\u1EC7t.";
+                    "N\u1EBFu l\u00E0 CRUD, bao g\u1ED3m confirmationPrompt b\u1EB1ng ti\u1EBFng Vi\u1EC7t." +
+                    "\n</system_instruction>";
 
             String rawResponse = callProviderForIntent(provider, systemPrompt, crudInstruction, request.getConversationHistory());
 
@@ -115,8 +131,11 @@ public class AIOrchestrationService {
                 confirmationPrompt = generateConfirmationPrompt(intent, extractedFields);
             }
 
+            String sessionId = persistAgentUserMessage(request.getSessionId(), profile.getId(), userMessage, intent, answer);
+
             return AIIntentResponseDTO.builder()
                     .status("NEED_CONFIRMATION")
+                    .sessionId(sessionId)
                     .intent(intent)
                     .extractedFields(extractedFields)
                     .suggestedValues(suggestedValues)
@@ -188,6 +207,8 @@ public class AIOrchestrationService {
 
             String resultMessage = executeIntent(intent, data, profile);
 
+            persistAgentAssistantMessage(request.getSessionId(), resultMessage);
+
             return AIConfirmActionResponseDTO.builder()
                     .status("SUCCESS")
                     .message(resultMessage)
@@ -207,7 +228,7 @@ public class AIOrchestrationService {
             case "CREATE_EXPENSE", "UPDATE_EXPENSE" -> {
                 Object amountObj = data.get("amount");
                 if (amountObj == null) yield "Vui l\u00F2ng nh\u1EADp s\u1ED1 ti\u1EC1n.";
-                BigDecimal amount = toBigDecimal(amountObj);
+                BigDecimal amount = toBigDecimal(amountObj, "amount");
                 if (amount.compareTo(BigDecimal.ZERO) <= 0) yield "S\u1ED1 ti\u1EC1n ph\u1EA3i l\u1EDBn h\u01A1n 0.";
                 String catName = (String) data.get("categoryName");
                 if (catName == null || catName.isBlank()) yield "Vui l\u00F2ng ch\u1ECDn danh m\u1EE5c.";
@@ -216,7 +237,7 @@ public class AIOrchestrationService {
             case "CREATE_INCOME", "UPDATE_INCOME" -> {
                 Object amountObj = data.get("amount");
                 if (amountObj == null) yield "Vui l\u00F2ng nh\u1EADp s\u1ED1 ti\u1EC1n.";
-                BigDecimal amount = toBigDecimal(amountObj);
+                BigDecimal amount = toBigDecimal(amountObj, "amount");
                 if (amount.compareTo(BigDecimal.ZERO) <= 0) yield "S\u1ED1 ti\u1EC1n ph\u1EA3i l\u1EDBn h\u01A1n 0.";
                 String catNameIncome = (String) data.get("categoryName");
                 if (catNameIncome == null || catNameIncome.isBlank()) yield "Vui l\u00F2ng ch\u1ECDn danh m\u1EE5c.";
@@ -230,7 +251,7 @@ public class AIOrchestrationService {
             case "CREATE_BUDGET", "UPDATE_BUDGET" -> {
                 Object amountObj = data.get("amount");
                 if (amountObj == null) yield "Vui l\u00F2ng nh\u1EADp s\u1ED1 ti\u1EC1n ng\u00E2n s\u00E1ch.";
-                BigDecimal amount = toBigDecimal(amountObj);
+                BigDecimal amount = toBigDecimal(amountObj, "amount");
                 if (amount.compareTo(BigDecimal.ZERO) <= 0) yield "S\u1ED1 ti\u1EC1n ng\u00E2n s\u00E1ch ph\u1EA3i l\u1EDBn h\u01A1n 0.";
                 String catName = (String) data.get("categoryName");
                 if (catName == null || catName.isBlank()) yield "Vui l\u00F2ng ch\u1ECDn danh m\u1EE5c.";
@@ -241,8 +262,45 @@ public class AIOrchestrationService {
                 if (name == null || name.isBlank()) yield "Vui l\u00F2ng nh\u1EADp t\u00EAn m\u1EE5c ti\u00EAu.";
                 Object targetObj = data.get("targetAmount");
                 if (targetObj == null) yield "Vui l\u00F2ng nh\u1EADp s\u1ED1 ti\u1EC1n m\u1EE5c ti\u00EAu.";
-                BigDecimal targetAmount = toBigDecimal(targetObj);
+                BigDecimal targetAmount = toBigDecimal(targetObj, "targetAmount");
                 if (targetAmount.compareTo(BigDecimal.ZERO) <= 0) yield "S\u1ED1 ti\u1EC1n m\u1EE5c ti\u00EAu ph\u1EA3i l\u1EDBn h\u01A1n 0.";
+                yield null;
+            }
+            case "CREATE_JAR" -> {
+                String name = (String) data.get("name");
+                if (name == null || name.isBlank()) yield "Vui l\u00F2ng nh\u1EADp t\u00EAn h\u0169.";
+                Object pctObj = data.get("targetPercentage");
+                if (pctObj != null) {
+                    BigDecimal pct = toBigDecimal(pctObj, "targetPercentage");
+                    if (pct.compareTo(BigDecimal.ZERO) < 0 || pct.compareTo(new BigDecimal("100")) > 0)
+                        yield "T\u1EF7 l\u1EC7 ph\u00E2n b\u1ED5 ph\u1EA3i trong kho\u1EA3ng 0-100%.";
+                }
+                yield null;
+            }
+            case "UPDATE_JAR" -> {
+                Object pctObj = data.get("targetPercentage");
+                if (pctObj != null) {
+                    BigDecimal pct = toBigDecimal(pctObj, "targetPercentage");
+                    if (pct.compareTo(BigDecimal.ZERO) < 0 || pct.compareTo(new BigDecimal("100")) > 0)
+                        yield "T\u1EF7 l\u1EC7 ph\u00E2n b\u1ED5 ph\u1EA3i trong kho\u1EA3ng 0-100%.";
+                }
+                yield null;
+            }
+            case "DELETE_JAR" -> null;
+            case "TRANSFER_JAR" -> {
+                Object amountObj = data.get("amount");
+                if (amountObj == null) yield "Vui l\u00F2ng nh\u1EADp s\u1ED1 ti\u1EC1n.";
+                BigDecimal amount = toBigDecimal(amountObj, "amount");
+                if (amount.compareTo(BigDecimal.ZERO) <= 0) yield "S\u1ED1 ti\u1EC1n ph\u1EA3i l\u1EDBn h\u01A1n 0.";
+                String fromJarName = (String) data.get("fromJarName");
+                String toJarName = (String) data.get("toJarName");
+                if (fromJarName == null || fromJarName.isBlank()) yield "Vui l\u00F2ng ch\u1ECDn h\u0169 ngu\u1ED3n.";
+                if (toJarName == null || toJarName.isBlank()) yield "Vui l\u00F2ng ch\u1ECDn h\u0169 \u0111\u00EDch.";
+                if (fromJarName.equals(toJarName)) yield "Kh\u00F4ng th\u1EC3 chuy\u1EC3n ti\u1EC1n v\u00E0o c\u00F9ng m\u1ED9t h\u0169.";
+                Long fromId = findJarId(fromJarName, profile.getId());
+                Long toId = findJarId(toJarName, profile.getId());
+                if (fromId == null) yield "Kh\u00F4ng t\u00ECm th\u1EA5y h\u0169 \"" + fromJarName + "\".";
+                if (toId == null) yield "Kh\u00F4ng t\u00ECm th\u1EA5y h\u0169 \"" + toJarName + "\".";
                 yield null;
             }
             default -> null;
@@ -260,8 +318,10 @@ public class AIOrchestrationService {
                     yield "\u26A0\uFE0F Kh\u00F4ng t\u00ECm th\u1EA5y danh m\u1EE5c \"" + catNameExp + "\". Danh m\u1EE5c chi ti\u00EAu hi\u1EC7n c\u00F3: " + (available.isBlank() ? "(ch\u01B0a c\u00F3)" : available);
                 }
                 ExpenseDTO dto = mapToExpenseDTO(data, catIdExp);
+                dto.setJarId(extractJarId(data, profile));
                 expenseService.addExpense(dto);
-                yield "\u2705 \u0110\u00E3 t\u1EA1o chi ti\u00EAu " + formatCurrency(dto.getAmount()) + "\u0111 cho " + dto.getCategoryName();
+                String jarInfo = dto.getJarId() != null ? " v\u00E0o h\u0169 " + dto.getJarName() : "";
+                yield "\u2705 \u0110\u00E3 t\u1EA1o chi ti\u00EAu " + formatCurrency(dto.getAmount()) + "\u0111 cho " + dto.getCategoryName() + jarInfo;
             }
             case "UPDATE_EXPENSE" -> updateExpenseFromAI(data, profile);
             case "CREATE_INCOME" -> {
@@ -335,6 +395,59 @@ public class AIOrchestrationService {
                 }
                 yield "\u26A0\uFE0F Kh\u00F4ng t\u00ECm th\u1EA5y m\u1EE5c ti\u00EAu \u0111\u1EC3 x\u00F3a.";
             }
+            case "CREATE_JAR" -> {
+                String name = (String) data.get("name");
+                String icon = (String) data.getOrDefault("icon", "\uD83C\uDFEB");
+                String color = (String) data.getOrDefault("color", "#4CAF50");
+                BigDecimal targetPct = data.get("targetPercentage") != null ? toBigDecimal(data.get("targetPercentage")) : BigDecimal.ZERO;
+                JarDTO jarDTO = JarDTO.builder()
+                        .name(name)
+                        .icon(icon)
+                        .color(color)
+                        .targetPercentage(targetPct)
+                        .build();
+                JarDTO result = jarService.createJar(jarDTO);
+                yield "\u2705 \u0110\u00E3 t\u1EA1o h\u0169 \"" + result.getName() + "\"" + (targetPct.compareTo(BigDecimal.ZERO) > 0 ? " v\u1EDBi " + targetPct + "% ph\u00E2n b\u1ED5" : "");
+            }
+            case "UPDATE_JAR" -> {
+                String jarName = (String) data.get("jarName");
+                Long jarId = findJarId(jarName, profile.getId());
+                if (jarId == null) {
+                    String available = String.join(", ", jarRepository.findByProfile(profile).stream().map(JarEntity::getName).toList());
+                    yield "\u26A0\uFE0F Kh\u00F4ng t\u00ECm th\u1EA5y h\u0169 \"" + jarName + "\". H\u0169 hi\u1EC7n c\u00F3: " + (available.isBlank() ? "(ch\u01B0a c\u00F3)" : available);
+                }
+                JarEntity existingJar = jarRepository.findById(jarId)
+                        .orElseThrow(() -> new RuntimeException("Kh\u00F4ng t\u00ECm th\u1EA5y h\u0169"));
+                JarDTO jarDTO = JarDTO.builder()
+                        .name(data.get("name") != null ? (String) data.get("name") : existingJar.getName())
+                        .icon(data.get("icon") != null ? (String) data.get("icon") : existingJar.getIcon())
+                        .color(data.get("color") != null ? (String) data.get("color") : existingJar.getColor())
+                        .targetPercentage(data.get("targetPercentage") != null
+                                ? toBigDecimal(data.get("targetPercentage"), "targetPercentage")
+                                : existingJar.getTargetPercentage())
+                        .build();
+                JarDTO result = jarService.updateJar(jarId, jarDTO);
+                yield "\u2705 \u0110\u00E3 c\u1EADp nh\u1EADt h\u0169 \"" + result.getName() + "\"";
+            }
+            case "DELETE_JAR" -> {
+                String jarName = (String) data.get("jarName");
+                Long jarId = findJarId(jarName, profile.getId());
+                if (jarId == null) {
+                    String available = String.join(", ", jarRepository.findByProfile(profile).stream().map(JarEntity::getName).toList());
+                    yield "\u26A0\uFE0F Kh\u00F4ng t\u00ECm th\u1EA5y h\u0169 \"" + jarName + "\". H\u0169 hi\u1EC7n c\u00F3: " + (available.isBlank() ? "(ch\u01B0a c\u00F3)" : available);
+                }
+                jarService.deleteJar(jarId);
+                yield "\u2705 \u0110\u00E3 x\u00F3a h\u0169 \"" + jarName + "\".";
+            }
+            case "TRANSFER_JAR" -> {
+                String fromJarName = (String) data.get("fromJarName");
+                String toJarName = (String) data.get("toJarName");
+                BigDecimal amount = toBigDecimal(data.get("amount"));
+                Long fromId = findJarId(fromJarName, profile.getId());
+                Long toId = findJarId(toJarName, profile.getId());
+                jarService.transferBalance(fromId, toId, amount);
+                yield "\u2705 \u0110\u00E3 chuy\u1EC3n " + formatCurrency(amount) + "\u0111 t\u1EEB \"" + fromJarName + "\" sang \"" + toJarName + "\".";
+            }
             default -> throw new IllegalArgumentException("Intent kh\u00F4ng \u0111\u01B0\u1EE3c h\u1ED7 tr\u1EE3: " + intent);
         };
     }
@@ -356,6 +469,12 @@ public class AIOrchestrationService {
             }
         }
         if (data.get("date") != null) entity.setDate(parseDate((String) data.get("date")));
+        if (data.get("jarName") != null) {
+            Long jarId = findJarId((String) data.get("jarName"), profile.getId());
+            if (jarId != null) {
+                entity.setJar(jarRepository.findById(jarId).orElse(null));
+            }
+        }
         String catDisplayName = entity.getCategory() != null ? entity.getCategory().getName() : "danh m\u1EE5c";
         expenseRepository.save(entity);
         return "\u2705 \u0110\u00E3 c\u1EADp nh\u1EADt chi ti\u00EAu " + formatCurrency(entity.getAmount()) + "\u0111 cho " + catDisplayName;
@@ -465,6 +584,22 @@ public class AIOrchestrationService {
                         amount != null ? formatCurrency(toBigDecimal(amount)) : "?",
                         category != null ? category : "?");
             }
+            case "CREATE_JAR" -> {
+                Object name = data.get("name");
+                Object pct = data.get("targetPercentage");
+                yield String.format("B\u1EA1n mu\u1ED1n t\u1EA1o h\u0169 \"%s\"%s, \u0111\u00FAng kh\u00F4ng?",
+                        name != null ? name : "?",
+                        pct != null ? " v\u1EDBi " + pct + "% ph\u00E2n b\u1ED5" : "");
+            }
+            case "TRANSFER_JAR" -> {
+                Object amount = data.get("amount");
+                Object from = data.get("fromJarName");
+                Object to = data.get("toJarName");
+                yield String.format("B\u1EA1n mu\u1ED1n chuy\u1EC3n %s\u0111 t\u1EEB \"%s\" sang \"%s\", \u0111\u00FAng kh\u00F4ng?",
+                        amount != null ? formatCurrency(toBigDecimal(amount)) : "?",
+                        from != null ? from : "?",
+                        to != null ? to : "?");
+            }
             default -> "B\u1EA1n x\u00E1c nh\u1EADn th\u1EF1c hi\u1EC7n thao t\u00E1c n\u00E0y?";
         };
     }
@@ -550,7 +685,7 @@ public class AIOrchestrationService {
                 case "savinggoals" -> {
                     List<SavingGoalDTO> goals = savingGoalService.getAllGoals();
                     result.put("savingGoals", goals.stream().map(g -> {
-                        Map<String, Object> m = new java.util.HashMap<>();
+                        Map<String, Object> m = new HashMap<>();
                         m.put("id", g.getId());
                         m.put("name", g.getName());
                         m.put("targetAmount", g.getTargetAmount());
@@ -562,6 +697,19 @@ public class AIOrchestrationService {
                         m.put("isBehindSchedule", g.getIsBehindSchedule());
                         m.put("startDate", g.getStartDate());
                         m.put("targetDate", g.getTargetDate());
+                        return m;
+                    }).toList());
+                }
+                case "jars" -> {
+                    List<JarDTO> jars = jarService.getAllJars();
+                    result.put("jars", jars.stream().map(j -> {
+                        Map<String, Object> m = new HashMap<>();
+                        m.put("id", j.getId());
+                        m.put("name", j.getName());
+                        m.put("icon", j.getIcon() != null ? j.getIcon() : "");
+                        m.put("color", j.getColor());
+                        m.put("targetPercentage", j.getTargetPercentage());
+                        m.put("currentBalance", j.getCurrentBalance());
                         return m;
                     }).toList());
                 }
@@ -589,6 +737,7 @@ public class AIOrchestrationService {
         m.put("categoryName", e.getCategoryName() != null ? e.getCategoryName() : "");
         m.put("date", e.getDate() != null ? e.getDate().toString() : "");
         m.put("name", e.getName() != null ? e.getName() : "");
+        m.put("jarName", e.getJarName() != null ? e.getJarName() : "");
         return m;
     }
 
@@ -603,16 +752,21 @@ public class AIOrchestrationService {
     }
 
     private boolean isCrudIntent(String intent) {
-        return intent != null && (intent.startsWith("CREATE_") || intent.startsWith("UPDATE_") || intent.startsWith("DELETE_"));
+        return intent != null && (intent.startsWith("CREATE_") || intent.startsWith("UPDATE_") || intent.startsWith("DELETE_") || intent.startsWith("TRANSFER_"));
+    }
+
+    private BigDecimal toBigDecimal(Object value, String fieldName) {
+        if (value == null) return BigDecimal.ZERO;
+        try {
+            return new BigDecimal(value.toString().trim());
+        } catch (NumberFormatException e) {
+            log.warn("Invalid BigDecimal for field '{}': '{}'. Defaulting to ZERO.", fieldName, value);
+            return BigDecimal.ZERO;
+        }
     }
 
     private BigDecimal toBigDecimal(Object value) {
-        if (value == null) return BigDecimal.ZERO;
-        try {
-            return new BigDecimal(value.toString());
-        } catch (NumberFormatException e) {
-            return BigDecimal.ZERO;
-        }
+        return toBigDecimal(value, "unknown");
     }
 
     private Long toLong(Object value) {
@@ -705,12 +859,66 @@ public class AIOrchestrationService {
                 .map(CategoryEntity::getId).orElse(null);
     }
 
+    private Long findJarId(String jarName, Long profileId) {
+        if (jarName == null || jarName.isBlank()) return null;
+        return jarRepository.findByProfileId(profileId).stream()
+                .filter(j -> j.getName().equalsIgnoreCase(jarName))
+                .findFirst()
+                .map(JarEntity::getId)
+                .orElse(null);
+    }
+
+    private Long extractJarId(Map<String, Object> data, ProfileEntity profile) {
+        String jarName = (String) data.get("jarName");
+        if (jarName == null || jarName.isBlank()) return null;
+        return findJarId(jarName, profile.getId());
+    }
+
+    private String sanitizeUserMessage(String message) {
+        if (message.length() > MAX_USER_MESSAGE_LENGTH) {
+            log.warn("User message truncated from {} to {} chars", message.length(), MAX_USER_MESSAGE_LENGTH);
+            message = message.substring(0, MAX_USER_MESSAGE_LENGTH);
+        }
+        if (INJECTION_PATTERN.matcher(message).find()) {
+            log.warn("Potential prompt injection detected in user message");
+            throw new IllegalArgumentException("Tin nhắn không hợp lệ. Vui lòng thử lại.");
+        }
+        return message;
+    }
+
     private LocalDate parseDate(String dateStr) {
         if (dateStr == null || dateStr.isBlank()) return LocalDate.now();
         try {
             return LocalDate.parse(dateStr);
         } catch (Exception e) {
             return LocalDate.now();
+        }
+    }
+
+    private String persistAgentUserMessage(String sessionId, Long userId, String userMessage, String intent, String answer) {
+        try {
+            if (sessionId == null || sessionId.isBlank()) {
+                String title = userMessage.length() > 50 ? userMessage.substring(0, 50) + "..." : userMessage;
+                var session = chatHistoryService.createSession(userId, title);
+                sessionId = session.getId();
+            }
+            chatHistoryService.addMessage(sessionId, "user", userMessage);
+            if ("ANSWER_QUESTION".equals(intent) && answer != null && !answer.isBlank()) {
+                chatHistoryService.addMessage(sessionId, "assistant", answer);
+            }
+            return sessionId;
+        } catch (Exception e) {
+            log.warn("Failed to persist agent user message: {}", e.getMessage());
+            return sessionId;
+        }
+    }
+
+    private void persistAgentAssistantMessage(String sessionId, String message) {
+        if (sessionId == null || sessionId.isBlank() || message == null) return;
+        try {
+            chatHistoryService.addMessage(sessionId, "assistant", message);
+        } catch (Exception e) {
+            log.warn("Failed to persist agent assistant message: {}", e.getMessage());
         }
     }
 }

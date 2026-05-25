@@ -17,6 +17,7 @@ public class AIInstructionPromptBuilder {
                     "- Danh m\u1EE5c: CREATE_CATEGORY, UPDATE_CATEGORY, DELETE_CATEGORY\n" +
                     "- Ng\u00E2n s\u00E1ch: CREATE_BUDGET, UPDATE_BUDGET, DELETE_BUDGET\n" +
                     "- M\u1EE5c ti\u00EAu ti\u1EBFt ki\u1EC7m: CREATE_SAVING_GOAL, UPDATE_SAVING_GOAL, DELETE_SAVING_GOAL\n" +
+                    "- H\u0169 chi ti\u00EAu: CREATE_JAR, UPDATE_JAR, DELETE_JAR, TRANSFER_JAR\n" +
                     "- Xu\u1EA5t file Excel: EXPORT_EXCEL_INCOME (thu nh\u1EADp), EXPORT_EXCEL_EXPENSE (chi ti\u00EAu)\n" +
                     "- G\u1EEDi email b\u00E1o c\u00E1o: EMAIL_INCOME_REPORT (thu nh\u1EADp), EMAIL_EXPENSE_REPORT (chi ti\u00EAu)\n" +
                     "- C\u00E2u h\u1ECFi th\u00F4ng th\u01B0\u1EDDng: ANSWER_QUESTION\n\n" +
@@ -29,18 +30,22 @@ public class AIInstructionPromptBuilder {
                     "6. Ch\u1EC9 d\u00F9ng ANSWER_QUESTION khi user h\u1ECFi th\u00F4ng tin/th\u1ED1ng k\u00EA, kh\u00F4ng ph\u1EA3i thao t\u00E1c.\n" +
                     "7. INVALID_REQUEST ch\u1EC9 d\u00F9ng cho y\u00EAu c\u1EA7u phi t\u00E0i ch\u00EDnh (ch\u00EDnh tr\u1ECB, y t\u1EBF, v.v.).\n\n" +
                     "C\u00C1CH X\u1EEC L\u00DD X\u00D3A (DELETE):\n" +
-                    "- T\u00ECm id c\u1EE7a record trong d\u1EEF li\u1EC7u ng\u1EEF c\u1EA3nh (recentExpenses, recentIncomes, budgets, savingGoals)\n" +
+                    "- T\u00ECm id c\u1EE7a record trong d\u1EEF li\u1EC7u ng\u1EEF c\u1EA3nh (recentExpenses, recentIncomes, budgets, savingGoals, jars)\n" +
                     "- Kh\u1EDBp theo name + amount + date \u0111\u1EC3 x\u00E1c \u0111\u1ECBnh \u0111\u00FAng record\n" +
                     "- Return: {\"intent\": \"DELETE_INCOME\", \"incomeId\": <id>, \"confirmationPrompt\": \"...\"}\n" +
-                    "- Cho DELETE_EXPENSE: d\u00F9ng key 'expenseId'; DELETE_INCOME: 'incomeId'; DELETE_BUDGET: 'budgetId'; DELETE_SAVING_GOAL: 'savingGoalId'; DELETE_CATEGORY: 'categoryId'\n\n" +
+                    "- Cho DELETE_EXPENSE: d\u00F9ng key 'expenseId'; DELETE_INCOME: 'incomeId'; DELETE_BUDGET: 'budgetId'; DELETE_SAVING_GOAL: 'savingGoalId'; DELETE_CATEGORY: 'categoryId'; DELETE_JAR: 'jarName'\n\n" +
                     "FORMAT RESPONSE (ch\u1EC9 JSON thu\u1EA7n, kh\u00F4ng c\u00F3 text ngo\u00E0i):\n" +
-                    "CREATE_EXPENSE: {\"intent\": \"CREATE_EXPENSE\", \"amount\": 50000, \"categoryName\": \"\u0102n u\u1ED1ng\", \"date\": \"2026-05-14\", \"description\": \"\u0103n tr\u01B0a\", \"confirmationPrompt\": \"...\"}\n" +
+                    "CREATE_EXPENSE: {\"intent\": \"CREATE_EXPENSE\", \"amount\": 50000, \"categoryName\": \"\u0102n u\u1ED1ng\", \"date\": \"2026-05-14\", \"description\": \"\u0103n tr\u01B0a\", \"jarName\": \"V\u00ED t\u1ED5ng\", \"confirmationPrompt\": \"...\"}\n" +
                     "UPDATE_EXPENSE: {\"intent\": \"UPDATE_EXPENSE\", \"expenseId\": 123, \"amount\": 200000, \"categoryName\": \"Chi ti\u00EAu\", \"date\": \"2026-05-14\", \"confirmationPrompt\": \"S\u1EEDa chi ti\u00EAu #123 th\u00E0nh 200.000\u0111?\"}\n" +
                     "DELETE_EXPENSE: {\"intent\": \"DELETE_EXPENSE\", \"expenseId\": 123, \"confirmationPrompt\": \"X\u00F3a chi ti\u00EAu 120.000\u0111 ng\u00E0y 14/05?\"}\n" +
                     "CREATE_INCOME: {\"intent\": \"CREATE_INCOME\", \"amount\": 5000000, \"categoryName\": \"L\u01B0\u01A1ng\", \"date\": \"2026-05-14\", \"description\": \"l\u01B0\u01A1ng th\u00E1ng 5\", \"confirmationPrompt\": \"...\"}\n" +
                     "UPDATE_INCOME: {\"intent\": \"UPDATE_INCOME\", \"incomeId\": 456, \"amount\": 6000000, \"categoryName\": \"L\u01B0\u01A1ng\", \"date\": \"2026-05-14\", \"confirmationPrompt\": \"S\u1EEDa thu nh\u1EADp #456 th\u00E0nh 6.000.000\u0111?\"}\n" +
                     "DELETE_INCOME: {\"intent\": \"DELETE_INCOME\", \"incomeId\": 456, \"confirmationPrompt\": \"X\u00F3a thu nh\u1EADp 5.000.000\u0111 ng\u00E0y 14/05?\"}\n" +
                     "CREATE_SAVING_GOAL: {\"intent\": \"CREATE_SAVING_GOAL\", \"name\": \"Mua xe m\u00E1y\", \"targetAmount\": 30000000, \"currentAmount\": 0, \"confirmationPrompt\": \"...\"}\n" +
+                    "CREATE_JAR: {\"intent\": \"CREATE_JAR\", \"name\": \"Gi\u1EA3i tr\u00ED\", \"targetPercentage\": 20, \"icon\": \"\uD83C\uDFAE\", \"color\": \"#FF5733\", \"confirmationPrompt\": \"...\"}\n" +
+                    "UPDATE_JAR: {\"intent\": \"UPDATE_JAR\", \"jarName\": \"Gi\u1EA3i tr\u00ED\", \"name\": \"Games\", \"targetPercentage\": 25, \"confirmationPrompt\": \"...\"}\n" +
+                    "DELETE_JAR: {\"intent\": \"DELETE_JAR\", \"jarName\": \"Gi\u1EA3i tr\u00ED\", \"confirmationPrompt\": \"X\u00F3a h\u0169 Gi\u1EA3i tr\u00ED?\"}\n" +
+                    "TRANSFER_JAR: {\"intent\": \"TRANSFER_JAR\", \"fromJarName\": \"Ti\u1EBFt ki\u1EC7m\", \"toJarName\": \"Gi\u1EA3i tr\u00ED\", \"amount\": 500000, \"confirmationPrompt\": \"Chuy\u1EC3n 500.000\u0111 t\u1EEB Ti\u1EBFt ki\u1EC7m sang Gi\u1EA3i tr\u00ED?\"}\n" +
                     "Xu\u1EA5t Excel thu nh\u1EADp: {\"intent\": \"EXPORT_EXCEL_INCOME\", \"confirmationPrompt\": \"Xu\u1EA5t b\u00E1o c\u00E1o Excel thu nh\u1EADp th\u00E1ng n\u00E0y v\u1EC1 m\u00E1y b\u1EA1n?\"}\n" +
                     "Xu\u1EA5t Excel chi ti\u00EAu: {\"intent\": \"EXPORT_EXCEL_EXPENSE\", \"confirmationPrompt\": \"Xu\u1EA5t b\u00E1o c\u00E1o Excel chi ti\u00EAu th\u00E1ng n\u00E0y v\u1EC1 m\u00E1y b\u1EA1n?\"}\n" +
                     "G\u1EEDi email thu nh\u1EADp: {\"intent\": \"EMAIL_INCOME_REPORT\", \"confirmationPrompt\": \"G\u1EEDi b\u00E1o c\u00E1o thu nh\u1EADp th\u00E1ng n\u00E0y \u0111\u1EBFn email c\u1EE7a b\u1EA1n?\"}\n" +
@@ -54,6 +59,10 @@ public class AIInstructionPromptBuilder {
                     "- 'x\u00F3a thu nh\u1EADp' \u2192 DELETE_INCOME (PH\u1EA2I c\u00F3 incomeId t\u1EEB recentIncomes)\n" +
                     "- 'thu nh\u1EADp/l\u01B0\u01A1ng/income' \u2192 CREATE_INCOME (KH\u00D4NG PH\u1EA2I CREATE_EXPENSE)\n" +
                     "- 'chi ti\u00EAu/mua/ti\u00EAu/expense' \u2192 CREATE_EXPENSE\n" +
+                    "- 't\u1EA1o h\u0169/th\u00EAm h\u0169/jar' \u2192 CREATE_JAR (ph\u1EA3i c\u00F3 name, c\u00F3 th\u1EC3 c\u00F3 targetPercentage, icon)\n" +
+                    "- 's\u1EEDa h\u0169/\u0111\u1ED5i t\u00EAn h\u0169' \u2192 UPDATE_JAR (ph\u1EA3i c\u00F3 jarName l\u00E0 t\u00EAn hi\u1EC7n t\u1EA1i c\u1EE7a h\u0169)\n" +
+                    "- 'x\u00F3a h\u0169' \u2192 DELETE_JAR (ph\u1EA3i c\u00F3 jarName l\u00E0 t\u00EAn h\u0169 mu\u1ED1n x\u00F3a)\n" +
+                    "- 'chuy\u1EC3n ti\u1EC1n/d\u1EDDi ti\u1EC1n/transfer t\u1EEB h\u0169...sang...' \u2192 TRANSFER_JAR (ph\u1EA3i c\u00F3 fromJarName, toJarName, amount)\n" +
                     "- 'g\u1EEDi email b\u00E1o c\u00E1o chi ti\u00EAu/t\u00E0i ch\u00EDnh/expense' \u2192 EMAIL_EXPENSE_REPORT\n" +
                     "- 'g\u1EEDi email b\u00E1o c\u00E1o thu nh\u1EADp/income' \u2192 EMAIL_INCOME_REPORT\n" +
                     "- 'xu\u1EA5t excel chi ti\u00EAu/t\u00E0i ch\u00EDnh' \u2192 EXPORT_EXCEL_EXPENSE\n" +
@@ -65,7 +74,7 @@ public class AIInstructionPromptBuilder {
     private static final String PAGE_LABELS_VI =
             "dashboard: T\u1ED5ng quan, income: Thu nh\u1EADp, expense: Chi ti\u00EAu, " +
                     "budget: Ng\u00E2n s\u00E1ch, savingGoals: M\u1EE5c ti\u00EAu ti\u1EBFt ki\u1EC7m, " +
-                    "category: Danh m\u1EE5c, filter: B\u1ED9 l\u1ECDc, forecast: D\u1EF1 b\u00E1o, reports: B\u00E1o c\u00E1o";
+                    "category: Danh m\u1EE5c, filter: B\u1ED9 l\u1ECDc, forecast: D\u1EF1 b\u00E1o, reports: B\u00E1o c\u00E1o, jars: H\u0169 chi ti\u00EAu";
 
     public static String buildSystemPrompt(String pageContext, Map<String, Object> pageData) {
         String pageLabel = getPageLabel(pageContext).replace("%", "%%");
@@ -92,6 +101,7 @@ public class AIInstructionPromptBuilder {
             case "filter" -> "B\u1ED9 l\u1ECDc";
             case "forecast" -> "D\u1EF1 b\u00E1o";
             case "reports" -> "B\u00E1o c\u00E1o";
+            case "jars" -> "H\u0169 chi ti\u00EAu";
             default -> "T\u1ED5ng quan";
         };
     }
@@ -114,6 +124,26 @@ public class AIInstructionPromptBuilder {
                     }
                 }
             }
+            case "jars" -> {
+                if (pageData.containsKey("jars")) {
+                    List<Map<String, Object>> jars = (List<Map<String, Object>>) pageData.get("jars");
+                    sb.append(jars.size()).append(" h\u0169: ");
+                    for (int i = 0; i < Math.min(jars.size(), 10); i++) {
+                        Map<String, Object> j = jars.get(i);
+                        sb.append(j.get("name"));
+                        sb.append(" [jarId=").append(j.get("id")).append("]");
+                        Object balance = j.get("currentBalance");
+                        Object pct = j.get("targetPercentage");
+                        sb.append("(s\u1ED1 d\u01B0=").append(balance != null ? balance : 0).append("\u0111");
+                        sb.append(", ph\u00E2n b\u1ED5=").append(pct != null ? pct : 0).append("%");
+                        if (j.get("icon") != null && !j.get("icon").toString().isBlank()) {
+                            sb.append(", icon=").append(j.get("icon"));
+                        }
+                        sb.append(")");
+                        if (i < Math.min(jars.size(), 10) - 1) sb.append(", ");
+                    }
+                }
+            }
             case "expense" -> {
                 if (pageData.containsKey("totalExpenseCount")) {
                     sb.append("T\u1ED5ng s\u1ED1 chi ti\u00EAu: ").append(pageData.get("totalExpenseCount")).append(" giao d\u1ECBch");
@@ -128,6 +158,9 @@ public class AIInstructionPromptBuilder {
                         for (int i = 0; i < expenses.size(); i++) {
                             Map<String, Object> e = expenses.get(i);
                             sb.append(e.get("categoryName")).append(" ").append(e.get("amount")).append("\u0111 (").append(e.get("date")).append(") [expenseId=").append(e.get("id")).append("]");
+                            if (e.get("jarName") != null && !e.get("jarName").toString().isBlank()) {
+                                sb.append("[jarName=").append(e.get("jarName")).append("]");
+                            }
                             if (i < expenses.size() - 1) sb.append(", ");
                         }
                     }

@@ -28,11 +28,13 @@ const PaymentCancel = lazy(() => import("./pages/PaymentCancel.jsx"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword.jsx"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword.jsx"));
 const AccountActivation = lazy(() => import("./pages/AccountActivation.jsx"));
+const VerifyOtp = lazy(() => import("./pages/VerifyOtp.jsx"));
 const Profile = lazy(() => import("./pages/Profile.jsx"));
 const SavingGoals = lazy(() => import("./pages/SavingGoals.jsx"));
 const Jars = lazy(() => import("./pages/Jars.jsx"));
 const Reports = lazy(() => import("./pages/Reports.jsx"));
 const Forecast = lazy(() => import("./pages/Forecast.jsx"));
+const AIChat = lazy(() => import("./pages/AIChat.jsx"));
 
 const LoadingFallback = () => (
     <div className="flex justify-center items-center h-screen w-full">
@@ -60,12 +62,14 @@ const App = () => {
                     <Route path="/payment/success" element={<PaymentSuccess />} />
                     <Route path="/payment/cancel" element={<PaymentCancel />} />
                     <Route path="/forecast" element={<Forecast />} />
+                    <Route path="/ai-chat" element={<AIChat />} />
                     <Route path="/profile" element={<Profile />} />
                     <Route path="/notifications" element={<Notifications />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/signup" element={<Signup />} />
                     <Route path="/forgot-password" element={<ForgotPassword />} />
                     <Route path="/reset-password" element={<ResetPassword />} />
+                    <Route path="/verify-otp" element={<VerifyOtp />} />
                     <Route path="/activate" element={<AccountActivation />} />
                     <Route path="/admin" element={<AdminRoute />}>
                         <Route element={<AdminLayout />}>
