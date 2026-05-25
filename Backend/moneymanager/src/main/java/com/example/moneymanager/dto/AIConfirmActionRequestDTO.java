@@ -13,5 +13,6 @@ import java.util.Map;
 @AllArgsConstructor
 public class AIConfirmActionRequestDTO {
     private String intent;
+    private String sessionId;
     private Map<String, Object> extractedData;
 }

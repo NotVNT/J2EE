@@ -14,6 +14,10 @@ export const INTENT_TYPES = {
   CREATE_SAVING_GOAL: "CREATE_SAVING_GOAL",
   UPDATE_SAVING_GOAL: "UPDATE_SAVING_GOAL",
   DELETE_SAVING_GOAL: "DELETE_SAVING_GOAL",
+  CREATE_JAR: "CREATE_JAR",
+  UPDATE_JAR: "UPDATE_JAR",
+  DELETE_JAR: "DELETE_JAR",
+  TRANSFER_JAR: "TRANSFER_JAR",
   EXPORT_EXCEL_INCOME: "EXPORT_EXCEL_INCOME",
   EXPORT_EXCEL_EXPENSE: "EXPORT_EXCEL_EXPENSE",
   EMAIL_INCOME_REPORT: "EMAIL_INCOME_REPORT",
@@ -38,6 +42,10 @@ export const INTENT_LABELS = {
   CREATE_SAVING_GOAL: "Tạo mục tiêu",
   UPDATE_SAVING_GOAL: "Sửa mục tiêu",
   DELETE_SAVING_GOAL: "Xóa mục tiêu",
+  CREATE_JAR: "Tạo hũ tiền",
+  UPDATE_JAR: "Sửa hũ tiền",
+  DELETE_JAR: "Xóa hũ tiền",
+  TRANSFER_JAR: "Chuyển tiền giữa hũ",
   EXPORT_EXCEL_INCOME: "Xuất Excel thu nhập",
   EXPORT_EXCEL_EXPENSE: "Xuất Excel chi tiêu",
   EMAIL_INCOME_REPORT: "Gửi email báo cáo thu nhập",
@@ -62,6 +70,10 @@ export const INTENT_ICONS = {
   CREATE_SAVING_GOAL: "🎯",
   UPDATE_SAVING_GOAL: "✏️",
   DELETE_SAVING_GOAL: "🗑️",
+  CREATE_JAR: "🏦",
+  UPDATE_JAR: "✏️",
+  DELETE_JAR: "🗑️",
+  TRANSFER_JAR: "↔️",
   EXPORT_EXCEL_INCOME: "📥",
   EXPORT_EXCEL_EXPENSE: "📥",
   EMAIL_INCOME_REPORT: "📧",
@@ -92,7 +104,8 @@ export const isCrudIntent = (intent) => {
   return intent && (
     intent.startsWith("CREATE_") ||
     intent.startsWith("UPDATE_") ||
-    intent.startsWith("DELETE_")
+    intent.startsWith("DELETE_") ||
+    intent.startsWith("TRANSFER_")
   );
 };
 
@@ -117,7 +130,8 @@ export const getFieldsForIntent = (intent) => {
         { key: "amount", label: "Số tiền", type: "number", required: true },
         { key: "categoryName", label: "Danh mục", type: "category_select", categoryType: "expense", required: true },
         { key: "date", label: "Ngày", type: "date", required: true },
-        { key: "description", label: "Mô tả", type: "text", required: false }
+        { key: "description", label: "Mô tả", type: "text", required: false },
+        { key: "jarName", label: "Hũ", type: "jar_select", required: false }
       ];
     case INTENT_TYPES.UPDATE_EXPENSE:
       return [
@@ -158,6 +172,31 @@ export const getFieldsForIntent = (intent) => {
         { key: "name", label: "Tên mục tiêu", type: "text", required: true },
         { key: "targetAmount", label: "Số tiền mục tiêu", type: "number", required: true },
         { key: "currentAmount", label: "Số tiền hiện tại", type: "number", required: false }
+      ];
+    case INTENT_TYPES.CREATE_JAR:
+      return [
+        { key: "name", label: "Tên hũ", type: "text", required: true },
+        { key: "targetPercentage", label: "Tỷ lệ phân bổ (%)", type: "number", required: false },
+        { key: "icon", label: "Icon", type: "text", required: false },
+        { key: "color", label: "Màu sắc", type: "text", required: false }
+      ];
+    case INTENT_TYPES.UPDATE_JAR:
+      return [
+        { key: "jarName", label: "Tên hũ hiện tại", type: "jar_select", required: true },
+        { key: "name", label: "Tên mới", type: "text", required: false },
+        { key: "targetPercentage", label: "Tỷ lệ phân bổ (%)", type: "number", required: false },
+        { key: "icon", label: "Icon", type: "text", required: false },
+        { key: "color", label: "Màu sắc", type: "text", required: false }
+      ];
+    case INTENT_TYPES.DELETE_JAR:
+      return [
+        { key: "jarName", label: "Tên hũ", type: "jar_select", required: true }
+      ];
+    case INTENT_TYPES.TRANSFER_JAR:
+      return [
+        { key: "fromJarName", label: "Hũ nguồn", type: "jar_select", required: true },
+        { key: "toJarName", label: "Hũ đích", type: "jar_select", required: true },
+        { key: "amount", label: "Số tiền", type: "number", required: true }
       ];
     default:
       return [];

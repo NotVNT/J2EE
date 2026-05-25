@@ -15,6 +15,7 @@ import java.util.Map;
 public class AIIntentRequestDTO {
     private String provider;
     private String model;
+    private String sessionId;
     private String userMessage;
     private String pageContext;
     private List<AIChatMessageDTO> conversationHistory;

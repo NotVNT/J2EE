@@ -33,6 +33,7 @@ const SavingGoals = lazy(() => import("./pages/SavingGoals.jsx"));
 const Jars = lazy(() => import("./pages/Jars.jsx"));
 const Reports = lazy(() => import("./pages/Reports.jsx"));
 const Forecast = lazy(() => import("./pages/Forecast.jsx"));
+const AIChat = lazy(() => import("./pages/AIChat.jsx"));
 
 const LoadingFallback = () => (
     <div className="flex justify-center items-center h-screen w-full">
@@ -60,6 +61,7 @@ const App = () => {
                     <Route path="/payment/success" element={<PaymentSuccess />} />
                     <Route path="/payment/cancel" element={<PaymentCancel />} />
                     <Route path="/forecast" element={<Forecast />} />
+                    <Route path="/ai-chat" element={<AIChat />} />
                     <Route path="/profile" element={<Profile />} />
                     <Route path="/notifications" element={<Notifications />} />
                     <Route path="/login" element={<Login />} />

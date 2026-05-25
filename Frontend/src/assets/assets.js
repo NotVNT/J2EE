@@ -1,4 +1,4 @@
-import {BadgeDollarSign, ChartBar, Coins, FunnelPlus, LayoutDashboard, List, PiggyBank, Target, Wallet, Activity, Vault} from "lucide-react";
+import {BadgeDollarSign, ChartBar, Coins, FunnelPlus, LayoutDashboard, List, PiggyBank, Target, Wallet, Activity, Vault, BotMessageSquare} from "lucide-react";
 
 export const SIDE_BAR_DATA = [
     {
@@ -66,5 +66,11 @@ export const SIDE_BAR_DATA = [
         label: "Thanh toán",
         icon: BadgeDollarSign,
         path: "/payment",
+    },
+    {
+        id: "11",
+        label: "Trợ lý AI",
+        icon: BotMessageSquare,
+        path: "/ai-chat",
     },
 ];

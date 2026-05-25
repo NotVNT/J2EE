@@ -46,6 +46,7 @@ public class AIChatService {
     private final RestClient nineRouterAgentRestClient;
     private final NineRouterProperties nineRouterProperties;
     private final ProfileService profileService;
+    private final ChatHistoryService chatHistoryService;
     private final ObjectMapper objectMapper;
 
     public AIChatResponseDTO chat(AIChatRequestDTO request) {
@@ -59,13 +60,69 @@ public class AIChatService {
             throw new ForbiddenException("Model này yêu cầu gói PREMIUM. Vui lòng nâng cấp để sử dụng.");
         }
 
+        AIChatResponseDTO response;
         if ("gptoss".equalsIgnoreCase(provider)) {
-            return chatWithGptOss(trimmedMessages);
+            response = chatWithGptOss(trimmedMessages);
+        } else if ("ninerouter".equalsIgnoreCase(provider)) {
+            response = chatWithNineRouter(trimmedMessages);
+        } else {
+            response = chatWithGemini(trimmedMessages);
         }
-        if ("ninerouter".equalsIgnoreCase(provider)) {
-            return chatWithNineRouter(trimmedMessages);
+
+        persistChatHistory(request, response);
+
+        return response;
+    }
+
+    private void persistChatHistory(AIChatRequestDTO request, AIChatResponseDTO response) {
+        try {
+            Long userId = profileService.getCurrentProfile().getId();
+            String sessionId = request.getSessionId();
+
+            if (sessionId == null || sessionId.isBlank()) {
+                // --- Session mới ---
+                List<AIChatMessageDTO> messages = request.getMessages();
+                String title = "Cuộc trò chuyện mới";
+                if (messages != null && !messages.isEmpty()) {
+                    AIChatMessageDTO firstUserMsg = messages.stream()
+                            .filter(m -> "user".equals(m.getRole()))
+                            .findFirst().orElse(null);
+                    if (firstUserMsg != null && firstUserMsg.getContent() != null) {
+                        String content = firstUserMsg.getContent().trim();
+                        title = content.length() > 50 ? content.substring(0, 50) + "..." : content;
+                    }
+                }
+                var session = chatHistoryService.createSession(userId, title);
+                sessionId = session.getId();
+                response.setSessionId(sessionId);
+
+                // Lưu toàn bộ history messages trước đó (nếu có) rồi mới lưu assistant reply
+                // Bỏ qua message cuối cùng (user message mới nhất) vì sẽ lưu riêng bên dưới
+                if (messages != null && messages.size() > 1) {
+                    for (int i = 0; i < messages.size() - 1; i++) {
+                        AIChatMessageDTO msg = messages.get(i);
+                        if (msg.getRole() != null && msg.getContent() != null) {
+                            chatHistoryService.addMessage(sessionId, msg.getRole(), msg.getContent());
+                        }
+                    }
+                }
+                // Lưu user message mới nhất
+                if (messages != null && !messages.isEmpty()) {
+                    chatHistoryService.addMessage(sessionId, "user",
+                            messages.get(messages.size() - 1).getContent());
+                }
+            } else {
+                // --- Session đã tồn tại --- chỉ lưu user message mới nhất
+                var messages = request.getMessages();
+                chatHistoryService.addMessage(sessionId, "user",
+                        messages.get(messages.size() - 1).getContent());
+                response.setSessionId(sessionId);
+            }
+
+            chatHistoryService.addMessage(sessionId, "assistant", response.getReply());
+        } catch (Exception e) {
+            log.warn("Failed to persist chat history: {}", e.getMessage(), e);
         }
-        return chatWithGemini(trimmedMessages);
     }
 
     public String chatWithSystemPrompt(String systemPrompt, AIChatRequestDTO request) {
@@ -207,7 +264,6 @@ public class AIChatService {
             }
             log.info("[{}] response (first 500 chars): {}", provider, rawResponse.length() > 500 ? rawResponse.substring(0, 500) : rawResponse);
 
-            // Some providers (e.g. NineRouter) return SSE streaming format even when stream=false is set
             if (OpenRouterResponseParser.isSseFormat(rawResponse)) {
                 String sseReply = OpenRouterResponseParser.parseSseStream(rawResponse, objectMapper);
                 if (sseReply == null || sseReply.isBlank()) {
@@ -318,7 +374,6 @@ public class AIChatService {
             }
             log.info("[{}] agent response (first 500 chars): {}", provider, rawResponse.length() > 500 ? rawResponse.substring(0, 500) : rawResponse);
 
-            // Some providers (e.g. NineRouter) return SSE streaming format even when stream=false is set
             if (OpenRouterResponseParser.isSseFormat(rawResponse)) {
                 String sseReply = OpenRouterResponseParser.parseSseStream(rawResponse, objectMapper);
                 if (sseReply == null || sseReply.isBlank()) {

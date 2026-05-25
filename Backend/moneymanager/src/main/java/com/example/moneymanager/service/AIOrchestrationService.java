@@ -34,6 +34,7 @@ public class AIOrchestrationService {
     private final AIChatService aiChatService;
     private final GeminiProperties geminiProperties;
     private final ProfileService profileService;
+    private final ChatHistoryService chatHistoryService;
     private final ExpenseService expenseService;
     private final IncomeService incomeService;
     private final CategoryService categoryService;
@@ -130,8 +131,11 @@ public class AIOrchestrationService {
                 confirmationPrompt = generateConfirmationPrompt(intent, extractedFields);
             }
 
+            String sessionId = persistAgentUserMessage(request.getSessionId(), profile.getId(), userMessage, intent, answer);
+
             return AIIntentResponseDTO.builder()
                     .status("NEED_CONFIRMATION")
+                    .sessionId(sessionId)
                     .intent(intent)
                     .extractedFields(extractedFields)
                     .suggestedValues(suggestedValues)
@@ -202,6 +206,8 @@ public class AIOrchestrationService {
             }
 
             String resultMessage = executeIntent(intent, data, profile);
+
+            persistAgentAssistantMessage(request.getSessionId(), resultMessage);
 
             return AIConfirmActionResponseDTO.builder()
                     .status("SUCCESS")
@@ -886,6 +892,33 @@ public class AIOrchestrationService {
             return LocalDate.parse(dateStr);
         } catch (Exception e) {
             return LocalDate.now();
+        }
+    }
+
+    private String persistAgentUserMessage(String sessionId, Long userId, String userMessage, String intent, String answer) {
+        try {
+            if (sessionId == null || sessionId.isBlank()) {
+                String title = userMessage.length() > 50 ? userMessage.substring(0, 50) + "..." : userMessage;
+                var session = chatHistoryService.createSession(userId, title);
+                sessionId = session.getId();
+            }
+            chatHistoryService.addMessage(sessionId, "user", userMessage);
+            if ("ANSWER_QUESTION".equals(intent) && answer != null && !answer.isBlank()) {
+                chatHistoryService.addMessage(sessionId, "assistant", answer);
+            }
+            return sessionId;
+        } catch (Exception e) {
+            log.warn("Failed to persist agent user message: {}", e.getMessage());
+            return sessionId;
+        }
+    }
+
+    private void persistAgentAssistantMessage(String sessionId, String message) {
+        if (sessionId == null || sessionId.isBlank() || message == null) return;
+        try {
+            chatHistoryService.addMessage(sessionId, "assistant", message);
+        } catch (Exception e) {
+            log.warn("Failed to persist agent assistant message: {}", e.getMessage());
         }
     }
 }
