@@ -9,7 +9,7 @@ import {
   isActivationRequiredError,
   openActivationOtp
 } from "../utils/accountActivation";
-import devbotLogo from "../assets/devbot.png";
+import appLogo from "../assets/applogo.png";
 import { COLORS } from "../constants/colors";
 
 export default function SignupScreen() {
@@ -80,7 +80,7 @@ export default function SignupScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.brandRow}>
-          <Image source={devbotLogo} style={styles.brandLogo} resizeMode="contain" />
+          <Image source={appLogo} style={styles.brandLogo} resizeMode="contain" />
         </View>
 
         <Text style={styles.title}>Tạo tài khoản</Text>
