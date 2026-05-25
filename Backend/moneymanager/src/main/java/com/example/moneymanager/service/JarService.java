@@ -56,6 +56,7 @@ public class JarService {
         return mapToDTO(savedJar);
     }
 
+    @Transactional
     public List<JarDTO> getAllJars() {
         ProfileEntity profile = profileService.getCurrentProfile();
         List<JarEntity> jars = jarRepository.findByProfile(profile);
