@@ -3,6 +3,7 @@ package com.example.moneymanager.service;
 import com.example.moneymanager.dto.JarDTO;
 import com.example.moneymanager.entity.JarEntity;
 import com.example.moneymanager.entity.ProfileEntity;
+import com.example.moneymanager.entity.SubscriptionPlan;
 import com.example.moneymanager.repository.JarRepository;
 import com.example.moneymanager.repository.IncomeAllocationRepository;
 import lombok.RequiredArgsConstructor;

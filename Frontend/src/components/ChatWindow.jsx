@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { SendHorizontal, Bot, Sparkles, PanelLeft, RotateCcw } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { SendHorizontal, Bot, Sparkles, PanelLeft, RotateCcw, ArrowLeft } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
@@ -83,6 +84,7 @@ const ChatWindow = ({
   onCancelConfirmation,
   onUndo,
 }) => {
+  const navigate = useNavigate();
   const [input, setInput] = useState("");
 
   const hasModelControls = !!onProviderSwitch; // only shown when parent passes the handlers
@@ -118,6 +120,18 @@ const ChatWindow = ({
 
   return (
     <div className="flex-1 flex flex-col min-w-0 bg-[#1a1a2e]">
+      {/* Header bar */}
+      <div className="flex items-center gap-3 border-b border-white/5 px-4 py-3 shrink-0">
+        <button
+          type="button"
+          onClick={() => navigate("/dashboard")}
+          className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm text-slate-400 hover:text-amber-400 hover:bg-white/5 transition"
+        >
+          <ArrowLeft size={16} />
+          <span>Dashboard</span>
+        </button>
+      </div>
+
       <div className="flex-1 overflow-y-auto px-4 lg:px-8">
         {isEmpty ? (
           <div className="flex flex-col items-center justify-center h-full animate-fade-in-up">
