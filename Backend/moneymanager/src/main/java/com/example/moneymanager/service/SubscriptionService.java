@@ -4,6 +4,7 @@ import com.example.moneymanager.dto.SubscriptionPlanConfigDTO;
 import com.example.moneymanager.entity.ProfileEntity;
 import com.example.moneymanager.entity.SubscriptionPlan;
 import com.example.moneymanager.entity.SubscriptionStatus;
+import com.example.moneymanager.exception.ForbiddenException;
 import com.example.moneymanager.repository.CategoryRepository;
 import com.example.moneymanager.repository.ExpenseRepository;
 import com.example.moneymanager.repository.IncomeRepository;
@@ -119,7 +120,7 @@ public class SubscriptionService {
         // "Ví tổng" is the system jar and does not count against the user's limit.
         long currentJarCount = jarRepository.countByProfileIdExcludingNameForUpdate(profile.getId(), "Ví tổng");
         if (currentJarCount >= features.jarLimit) {
-            throw new RuntimeException("Bạn đã đạt đến giới hạn " + features.jarLimit + " hũ của gói hiện tại. Vui lòng nâng cấp để thêm nhiều hũ hơn.");
+            throw new ForbiddenException("Bạn đã đạt đến giới hạn " + features.jarLimit + " hũ của gói hiện tại. Vui lòng nâng cấp để thêm nhiều hũ hơn.");
         }
     }
 
