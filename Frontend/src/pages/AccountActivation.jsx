@@ -108,7 +108,9 @@ const AccountActivation = () => {
           {/* Left info */}
           <section className="space-y-5">
             <div className="flex items-center justify-center gap-2 mb-3 lg:justify-start">
-              <img src="/favicon.png" alt="Money Manager Logo" className="w-8 h-8" />
+              <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center shrink-0 shadow-md">
+                <img src="/favicon.png" alt="Money Manager Logo" className="w-12 h-12 max-w-none object-cover scale-110" />
+              </div>
               <span className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Money<span className="text-amber-500">Manager</span></span>
             </div>
             <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white leading-snug">

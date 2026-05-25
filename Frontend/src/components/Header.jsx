@@ -8,7 +8,9 @@ const Header = () => {
       bg-white/80 dark:bg-[#0F172A]/90 backdrop-blur-xl">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <Link to="/home" className="flex items-center gap-2.5" aria-label="Go to home page">
-          <img src="/favicon.png" alt="Money Manager Logo" className="w-7 h-7" />
+          <div className="w-7 h-7 rounded-full overflow-hidden flex items-center justify-center shrink-0 shadow-sm">
+            <img src="/favicon.png" alt="Money Manager Logo" className="w-10 h-10 max-w-none object-cover scale-110" />
+          </div>
           <span className="text-base font-bold text-slate-900 dark:text-white tracking-tight">
             Money<span className="text-amber-500">Manager</span>
           </span>
