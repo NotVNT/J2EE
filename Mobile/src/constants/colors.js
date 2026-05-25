@@ -48,6 +48,19 @@ export const COLORS = {
   INFO: '#6B9BD2',
   INFO_LIGHT: '#E8F0FE',
 
+  // ─── Chat Bot UI ────────────────────────────────────────
+  CHAT_BG: '#FFF7FC',
+  CHAT_PURPLE: '#8B3DFF',
+  CHAT_PURPLE_DARK: '#6D22E8',
+  CHAT_PURPLE_LIGHT: '#F1E5FF',
+  CHAT_PURPLE_SOFT: '#F3E9FF',
+  CHAT_PINK: '#FF8BDD',
+  CHAT_BORDER: 'rgba(139, 61, 255, 0.16)',
+  CHAT_SHADOW: 'rgba(139, 61, 255, 0.18)',
+  CHAT_TEXT: '#14071F',
+  CHAT_MUTED: '#91859D',
+  CHAT_BUBBLE: '#FFFFFF',
+
   // ─── Utility ────────────────────────────────────────────
   WHITE: '#FFFFFF',
   BLACK: '#000000',
