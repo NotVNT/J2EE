@@ -2,6 +2,7 @@ package com.example.moneymanager.controller;
 
 import com.example.moneymanager.dto.JarDTO;
 import com.example.moneymanager.service.JarService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,7 +24,7 @@ public class JarController {
     //   Exception           → 500 (unexpected errors, generic message)
 
     @PostMapping
-    public ResponseEntity<JarDTO> createJar(@RequestBody JarDTO jarDTO) {
+    public ResponseEntity<JarDTO> createJar(@Valid @RequestBody JarDTO jarDTO) {
         JarDTO created = jarService.createJar(jarDTO);
         return ResponseEntity.ok(created);
     }

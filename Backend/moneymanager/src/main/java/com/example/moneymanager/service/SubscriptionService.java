@@ -123,8 +123,11 @@ public class SubscriptionService {
         if (features.jarLimit < 0) {
             return;
         }
-        // Use a pessimistic write lock to prevent TOCTOU race on concurrent POST /jars.
-        // "Ví tổng" is the system jar and does not count against the user's limit.
+        // Lock the profile row first to serialize all concurrent jar-creation attempts
+        // for the same user, even when the jar table has no rows yet to lock directly.
+        // Then count user-owned jars (excluding "Ví tổng" system jar) under that lock.
+        profileRepository.findByIdForUpdate(profile.getId())
+                .orElseThrow(() -> new RuntimeException("Profile not found"));
         long currentJarCount = jarRepository.countByProfileIdExcludingNameForUpdate(profile.getId(), "Ví tổng");
         if (currentJarCount >= features.jarLimit) {
             throw new ForbiddenException("Bạn đã đạt đến giới hạn " + features.jarLimit + " hũ của gói hiện tại. Vui lòng nâng cấp để thêm nhiều hũ hơn.");
