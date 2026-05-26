@@ -10,8 +10,7 @@ import ExperimentalWarningModal from "../components/ExperimentalWarningModal.jsx
 import { parseIntentResponse, isCrudIntent, isActionIntent } from "../util/aiIntentParser.js";
 
 const AGENT_MODEL_OPTIONS = [
-  { value: "gemini",     label: "🤖 Gemini 3.1 Flash Lite" },
-  { value: "ninerouter", label: "✨ Nova Lite" },
+  { value: "gemini", label: "Gemini Flash", description: "Phản hồi nhanh, tiết kiệm", icon: "🤖" },
 ];
 
 const buildHistory = (msgs) =>
@@ -26,7 +25,7 @@ const AIChat = () => {
   const { user } = useContext(AppContext);
   const { currentPage } = useRouteContext();
 
-  // Plan-based flags (same logic as ChatWidget)
+  // Plan-based flags
   const isFreePlan  = !user?.subscriptionPlan || user?.subscriptionPlan === "FREE";
   const isPremiumPlan = user?.subscriptionPlan === "PREMIUM";
 
@@ -39,13 +38,12 @@ const AIChat = () => {
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
   const messagesEndRef = useRef(null);
   const fetchSessionsTimerRef = useRef(null);
+  const abortControllerRef = useRef(null);
 
-  // Model / provider state (mirrors ChatWidget)
+  // Model / provider state
   const [selectedProvider, setProvider] = useState("gptoss");
-  const [chatModel,  setChatModel]  = useState("ninerouter");
-  const [agentModel, setAgentModel] = useState("ninerouter");
+  const [agentModel, setAgentModel] = useState("gemini");
   const [showExperimentalWarning, setShowExperimentalWarning] = useState(false);
-  const [pendingChatModel,  setPendingChatModel]  = useState(null);
   const [pendingAgentModel, setPendingAgentModel] = useState(null);
 
   // Intent handling state
@@ -55,14 +53,7 @@ const AIChat = () => {
   // Sync model defaults when plan changes
   useEffect(() => {
     if (isPremiumPlan) {
-      if (chatModel === "ninerouter" && agentModel === "ninerouter") {
-        setChatModel("gptoss");
-        setAgentModel("gemini");
-      }
-    } else {
-      setChatModel("ninerouter");
-      setAgentModel("ninerouter");
-      setProvider("gptoss");
+      setAgentModel("gemini");
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.subscriptionPlan]);
@@ -86,32 +77,28 @@ const AIChat = () => {
 
   useEffect(() => { fetchSessions(); }, [fetchSessions]);
 
-  useEffect(() => {
-    if (activeSessionId) {
-      axiosConfig.get(API_ENDPOINTS.AI_CHAT_MESSAGES(activeSessionId))
-        .then(({ data }) => setMessages(data))
-        .catch(() => setMessages([]));
-    } else {
-      setMessages([]);
-    }
-  }, [activeSessionId]);
+
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Resolve active provider / model / label (same logic as ChatWidget)
+  // Resolve active provider / model / label
   const resolveModel = () => {
-    const activeProvider = selectedProvider === "gemini"
-      ? (agentModel === "ninerouter" ? "ninerouter" : "gemini")
-      : (chatModel  === "ninerouter" ? "ninerouter" : "gptoss");
-    const activeModel = selectedProvider === "gemini"
-      ? (agentModel === "ninerouter" ? "gemma4-31B" : "gemini-3.1-flash-lite")
-      : (chatModel  === "ninerouter" ? "project-demo" : "gpt-oss-120b");
-    const activeModelLabel = selectedProvider === "gemini"
-      ? (agentModel === "ninerouter" ? "Nova Lite (Gemma 4 31B)" : "Gemini 3.1 Flash Lite")
-      : (chatModel  === "ninerouter" ? "Nova Lite (Gemma 4 31B)" : "GPT-OSS 120B");
-    return { activeProvider, activeModel, activeModelLabel };
+    if (selectedProvider === "gemini") {
+      // Agent mode — luôn dùng Gemini
+      return {
+        activeProvider: "gemini",
+        activeModel: "gemini-3.1-flash-lite",
+        activeModelLabel: "Gemini 3.1 Flash Lite",
+      };
+    }
+    // Chat mode — luôn dùng GPT-OSS
+    return {
+      activeProvider: "gptoss",
+      activeModel: "gpt-oss-120b",
+      activeModelLabel: "GPT-OSS 120B",
+    };
   };
 
   const handleSendMessage = async (text) => {
@@ -148,6 +135,8 @@ const AIChat = () => {
     setMessages(updatedMessages);
 
     try {
+      abortControllerRef.current = new AbortController();
+      const signal = abortControllerRef.current.signal;
       const conversationHistory = buildHistory(updatedMessages);
 
       if (selectedProvider === "gptoss") {
@@ -155,8 +144,9 @@ const AIChat = () => {
           provider: activeProvider,
           model: activeModel,
           sessionId: activeSessionId,
+          saveHistory: true,
           messages: conversationHistory,
-        });
+        }, { signal });
 
         setMessages(prev => [...prev, {
           id: `assistant-${Date.now()}`,
@@ -184,7 +174,7 @@ const AIChat = () => {
         userMessage: trimmedMessage,
         pageContext: currentPage || "dashboard",
         conversationHistory
-      });
+      }, { signal });
 
       const parsed = parseIntentResponse(intentResponse.data);
 
@@ -234,8 +224,9 @@ const AIChat = () => {
           provider: activeProvider,
           model: activeModel,
           sessionId: activeSessionId,
+          saveHistory: true,
           messages: conversationHistory,
-        });
+        }, { signal });
         
         setMessages((prev) => [
           ...prev,
@@ -256,15 +247,31 @@ const AIChat = () => {
       
       debouncedFetchSessions();
     } catch (error) {
-      setMessages(prev => [...prev, {
-        id: `assistant-error-${Date.now()}`,
-        role: "assistant",
-        content: error.response?.data?.message || "Hiện tại tôi chưa phản hồi được. Bạn thử lại sau giúp mình nhé.",
-        timestamp: new Date().toISOString(),
-        isError: true,
-      }]);
+      if (error.name === "CanceledError" || error.message === "canceled") {
+        setMessages(prev => [...prev, {
+          id: `assistant-canceled-${Date.now()}`,
+          role: "assistant",
+          content: "[Đã dừng phản hồi]",
+          timestamp: new Date().toISOString(),
+        }]);
+      } else {
+        setMessages(prev => [...prev, {
+          id: `assistant-error-${Date.now()}`,
+          role: "assistant",
+          content: error.response?.data?.message || "Hiện tại tôi chưa phản hồi được. Bạn thử lại sau giúp mình nhé.",
+          timestamp: new Date().toISOString(),
+          isError: true,
+        }]);
+      }
     } finally {
       setIsSending(false);
+      abortControllerRef.current = null;
+    }
+  };
+
+  const handleStopGenerating = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
     }
   };
 
@@ -407,6 +414,9 @@ const AIChat = () => {
     setActiveSessionId(sessionId);
     setShowMobileSidebar(false);
     setPendingIntent(null);
+    axiosConfig.get(API_ENDPOINTS.AI_CHAT_MESSAGES(sessionId))
+      .then(({ data }) => setMessages(data))
+      .catch(() => setMessages([]));
   };
 
   const handleDeleteSession = async (sessionId) => {
@@ -424,7 +434,7 @@ const AIChat = () => {
     } catch {}
   };
 
-  // Model change handlers (same as ChatWidget)
+  // Model change handlers
   const handleProviderSwitch = (provider) => {
     if (provider === selectedProvider) return;
     if (provider === "gemini" && isFreePlan) {
@@ -434,42 +444,41 @@ const AIChat = () => {
     setProvider(provider);
   };
 
-  const handleModelChange = (newModel) => {
-    if (newModel === chatModel) return;
-    if (!isPremiumPlan && newModel !== "ninerouter") return;
-    if (newModel === "ninerouter" && isPremiumPlan) {
-      setPendingChatModel("ninerouter");
-      setShowExperimentalWarning(true);
-      return;
-    }
-    setChatModel(newModel);
-  };
-
   const handleAgentModelChange = (newModel) => {
     if (newModel === agentModel) return;
-    if (!isPremiumPlan && newModel !== "ninerouter") return;
-    if (newModel === "ninerouter" && isPremiumPlan) {
-      setPendingAgentModel("ninerouter");
-      setShowExperimentalWarning(true);
-      return;
-    }
+    if (!isPremiumPlan) return;
     setAgentModel(newModel);
   };
 
   const confirmExperimentalModel = () => {
-    if (pendingChatModel)  { setChatModel(pendingChatModel);   setPendingChatModel(null); }
     if (pendingAgentModel) { setAgentModel(pendingAgentModel); setPendingAgentModel(null); }
     setShowExperimentalWarning(false);
   };
 
   const cancelExperimentalModel = () => {
     setShowExperimentalWarning(false);
-    setPendingChatModel(null);
     setPendingAgentModel(null);
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#1a1a2e] text-slate-200">
+    <div className="flex h-screen overflow-hidden bg-white dark:bg-[#131314] text-slate-800 dark:text-slate-200 transition-colors duration-300 relative">
+      <div className="pointer-events-none absolute inset-0 dark:block hidden">
+        <div
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-3xl opacity-[0.15]"
+          style={{
+            background:
+              "radial-gradient(circle at 30% 30%, #3b82f6 0%, transparent 50%), radial-gradient(circle at 70% 70%, #a855f7 0%, transparent 55%), radial-gradient(circle at 50% 50%, #6366f1 0%, transparent 60%)",
+          }}
+        />
+      </div>
+
+      {showMobileSidebar && (
+        <div
+          className="fixed inset-0 bg-black/40 dark:bg-black/60 z-40 lg:hidden backdrop-blur-sm transition-opacity"
+          onClick={() => setShowMobileSidebar(false)}
+        />
+      )}
+
       <ChatSidebar
         sessions={sessions}
         activeSessionId={activeSessionId}
@@ -489,15 +498,14 @@ const AIChat = () => {
         userName={user?.fullName}
         messagesEndRef={messagesEndRef}
         onToggleSidebar={() => setShowMobileSidebar(!showMobileSidebar)}
+        onStopGenerating={handleStopGenerating}
         /* Model selector props */
         selectedProvider={selectedProvider}
-        chatModel={chatModel}
         agentModel={agentModel}
         agentModelOptions={AGENT_MODEL_OPTIONS}
         plan={user?.subscriptionPlan || "FREE"}
         isFreePlan={isFreePlan}
         onProviderSwitch={handleProviderSwitch}
-        onModelChange={handleModelChange}
         onAgentModelChange={handleAgentModelChange}
         /* Intent handling props */
         onConfirmAction={handleConfirmAction}

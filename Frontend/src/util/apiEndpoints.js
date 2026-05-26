@@ -36,6 +36,7 @@ export const API_ENDPOINTS = {
     // Income endpoints
     GET_ALL_INCOMES: "/incomes",
     ADD_INCOME: "/incomes",
+    UPDATE_INCOME: (incomeId) => `/incomes/${incomeId}`,
     DELETE_INCOME: (incomeId) => `/incomes/${incomeId}`,
     INCOME_EXCEL_DOWNLOAD: "excel/download/income",
     EMAIL_INCOME: "/email/income-excel",

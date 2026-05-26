@@ -59,7 +59,7 @@ const Jars = () => {
 
   const fetchExpenses = async () => {
     try {
-      const res = await axiosConfig.get(API_ENDPOINTS.GET_ALL_EXPENSE);
+      const res = await axiosConfig.get(`${API_ENDPOINTS.GET_ALL_EXPENSE}?all=true`);
       if (res.data) setExpenses(res.data);
     } catch (err) {
       console.error("Lỗi tải chi tiêu:", err);

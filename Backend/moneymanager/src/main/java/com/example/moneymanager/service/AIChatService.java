@@ -1,8 +1,8 @@
 package com.example.moneymanager.service;
 
-import com.example.moneymanager.config.ChatGptOssProperties;
 import com.example.moneymanager.config.GeminiProperties;
-import com.example.moneymanager.config.NineRouterProperties;
+import com.example.moneymanager.config.GptOssKeyRotator;
+import com.example.moneymanager.config.GptOssProperties;
 import com.example.moneymanager.dto.AIChatMessageDTO;
 import com.example.moneymanager.dto.AIChatRequestDTO;
 import com.example.moneymanager.dto.AIChatResponseDTO;
@@ -40,11 +40,9 @@ public class AIChatService {
 
     private final GeminiService geminiService;
     private final GeminiProperties geminiProperties;
-    private final RestClient chatGptOssRestClient;
-    private final ChatGptOssProperties chatGptOssProperties;
-    private final RestClient nineRouterChatRestClient;
-    private final RestClient nineRouterAgentRestClient;
-    private final NineRouterProperties nineRouterProperties;
+    private final RestClient gptOssRestClient;
+    private final GptOssProperties gptOssProperties;
+    private final GptOssKeyRotator gptOssKeyRotator;
     private final ProfileService profileService;
     private final ChatHistoryService chatHistoryService;
     private final ObjectMapper objectMapper;
@@ -56,20 +54,24 @@ public class AIChatService {
         String provider = request.getProvider();
         SubscriptionPlan plan = profileService.getCurrentProfile().getSubscriptionPlan();
 
-        if (plan != SubscriptionPlan.PREMIUM && !"ninerouter".equalsIgnoreCase(provider)) {
+        // GPT-OSS chat (provider="gptoss") không yêu cầu PREMIUM
+        // Gemini chat yêu cầu PREMIUM
+        boolean isGptOssMode = "gptoss".equalsIgnoreCase(provider);
+        if (!isGptOssMode && plan != SubscriptionPlan.PREMIUM) {
             throw new ForbiddenException("Model này yêu cầu gói PREMIUM. Vui lòng nâng cấp để sử dụng.");
         }
 
         AIChatResponseDTO response;
-        if ("gptoss".equalsIgnoreCase(provider)) {
-            response = chatWithGptOss(trimmedMessages);
-        } else if ("ninerouter".equalsIgnoreCase(provider)) {
-            response = chatWithNineRouter(trimmedMessages);
-        } else {
+        if ("gemini".equalsIgnoreCase(provider)) {
             response = chatWithGemini(trimmedMessages);
+        } else {
+            // GPT-OSS với rotate key
+            response = chatWithGptOss(trimmedMessages);
         }
 
-        persistChatHistory(request, response);
+        if (Boolean.TRUE.equals(request.getSaveHistory())) {
+            persistChatHistory(request, response);
+        }
 
         return response;
     }
@@ -131,23 +133,14 @@ public class AIChatService {
 
         String provider = request.getProvider() != null ? request.getProvider() : "gemini";
         SubscriptionPlan plan = profileService.getCurrentProfile().getSubscriptionPlan();
-        if (plan != SubscriptionPlan.PREMIUM && !"ninerouter".equalsIgnoreCase(provider)) {
-            throw new ForbiddenException("Model này yêu cầu gói PREMIUM. Vui lòng nâng cấp để sử dụng.");
+
+        // Agent intent parsing luôn dùng Gemini
+        // Agent yêu cầu gói PREMIUM
+        if (plan != SubscriptionPlan.PREMIUM) {
+            throw new ForbiddenException("Nova Money Agent yêu cầu gói PREMIUM.");
         }
 
-        if ("ninerouter".equalsIgnoreCase(provider)) {
-            NineRouterProperties.Section agent = nineRouterProperties.agent();
-            if (agent == null || agent.apiKey() == null || agent.apiKey().isBlank()) {
-                log.warn("NineRouter agent not configured, falling back to Gemini for agent intent");
-                return geminiService.generateMultiTurn(systemPrompt, trimmedMessages, 1024);
-            }
-            AIChatResponseDTO response = chatWithOpenAICompatibleCustomPrompt(
-                    nineRouterAgentRestClient, agent.model(),
-                    agent.apiKey(), "ninerouter",
-                    trimmedMessages, systemPrompt
-            );
-            return response.getReply();
-        }
+        // Tất cả provider đều dùng Gemini cho Agent intent
         return geminiService.generateMultiTurn(systemPrompt, trimmedMessages, 1024);
     }
 
@@ -191,30 +184,19 @@ public class AIChatService {
     }
 
     private AIChatResponseDTO chatWithGptOss(List<AIChatMessageDTO> messages) {
-        List<String> keys = chatGptOssProperties.apiKeys();
-        if (keys == null || keys.isEmpty()) {
+        if (!gptOssKeyRotator.hasKeys()) {
             return AIChatResponseDTO.builder()
-                    .reply("GPT-OSS ch\u01B0a \u0111\u01B0\u1EE3c c\u1EA5u h\u00ECnh. Vui l\u00F2ng d\u00F9ng Gemini ho\u1EB7c li\u00EAn h\u1EC7 qu\u1EA3n tr\u1ECB vi\u00EAn.")
+                    .reply("GPT-OSS chưa được cấu hình. Vui lòng liên hệ quản trị viên.")
                     .provider("gptoss")
-                    .modelUsed(chatGptOssProperties.model())
+                    .modelUsed(gptOssProperties.model())
                     .build();
         }
-        return chatWithOpenAICompatible(chatGptOssRestClient, chatGptOssProperties.model(),
-                keys.get(0), "gptoss", messages);
+        String apiKey = gptOssKeyRotator.nextKey();
+        log.debug("[gptoss] rotate key, total keys={}", gptOssKeyRotator.keyCount());
+        return chatWithOpenAICompatible(gptOssRestClient, gptOssProperties.model(),
+                apiKey, "gptoss", messages);
     }
 
-    private AIChatResponseDTO chatWithNineRouter(List<AIChatMessageDTO> messages) {
-        NineRouterProperties.Section chat = nineRouterProperties.chat();
-        if (chat == null || chat.apiKey() == null || chat.apiKey().isBlank()) {
-            return AIChatResponseDTO.builder()
-                    .reply("9Router ch\u01B0a \u0111\u01B0\u1EE3c c\u1EA5u h\u00ECnh. Vui l\u00F2ng d\u00F9ng GPT-OSS ho\u1EB7c li\u00EAn h\u1EC7 qu\u1EA3n tr\u1ECB vi\u00EAn.")
-                    .provider("ninerouter")
-                    .modelUsed("project-demo")
-                    .build();
-        }
-        return chatWithOpenAICompatible(nineRouterChatRestClient, chat.model(),
-                chat.apiKey(), "ninerouter", messages);
-    }
 
     private AIChatResponseDTO chatWithOpenAICompatible(
             RestClient restClient, String model, String apiKey,

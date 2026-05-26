@@ -31,6 +31,8 @@ const Expense = () => {
   const [isConfirmingImport, setIsConfirmingImport] = useState(false);
   const [openReceiptPreviewModal, setOpenReceiptPreviewModal] = useState(false);
   const [receiptPreview, setReceiptPreview] = useState(null);
+  const [expensesLoaded, setExpensesLoaded] = useState(false);
+  const [showAllExpenses, setShowAllExpenses] = useState(false);
   const [jars, setJars] = useState([]);
   const [openFormatInfoModal, setOpenFormatInfoModal] = useState(false);
   const receiptFileInputRef = useRef(null);
@@ -41,10 +43,9 @@ const Expense = () => {
   const receiptImportUpgradeMessage = "Tính năng kiểm tra hoá đơn bằng ảnh chỉ có ở gói Premium. Vui lòng nâng cấp để tiếp tục";
 
   const fetchExpenseDetails = async () => {
-    if (loading) return;
     setLoading(true);
     try {
-      const response = await axiosConfig.get(`${API_ENDPOINTS.GET_ALL_EXPENSE}`);
+      const response = await axiosConfig.get(`${API_ENDPOINTS.GET_ALL_EXPENSE}?all=true`);
       if (response.data) setExpenseData(response.data);
     } catch (error) {
       console.error("Failed to fetch expense details:", error);
@@ -251,8 +252,8 @@ const Expense = () => {
   const handleConfirmReceiptImport = async () => {
     if (!receiptPreview) return;
     const cleanedItems = (receiptPreview.items || [])
-      .map((item) => ({ name: String(item.name || "").trim(), amount: Number(item.amount || 0), categoryId: Number(item.categoryId), icon: item.icon || "", date: item.date || receiptPreview.receiptDate }))
-      .filter((item) => item.name && item.amount > 0 && Number.isFinite(item.categoryId));
+      .map((item) => ({ name: String(item.name || "").trim(), amount: Number(item.amount || 0), categoryId: item.categoryId ? Number(item.categoryId) : null, icon: item.icon || "", date: item.date || receiptPreview.receiptDate }))
+      .filter((item) => item.name && item.amount > 0);
     if (cleanedItems.length === 0) { toast.error("Danh sách import không hợp lệ. Vui lòng kiểm tra lại sản phẩm."); return; }
     setIsConfirmingImport(true);
     try {

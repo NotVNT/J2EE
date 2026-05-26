@@ -2,7 +2,6 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import { LoaderCircle } from "lucide-react";
 import AdminRoute from "./components/AdminRoute.jsx";
-import ChatWidget from "./components/ChatWidget.jsx";
 import { RouteContextProvider } from "./context/RouteContext.jsx";
 
 const AdminLayout = lazy(() => import("./pages/Admin/AdminLayout.jsx"));
@@ -83,7 +82,6 @@ const App = () => {
                     </Route>
                 </Routes>
             </Suspense>
-            <ChatWidget />
         </RouteContextProvider>
     );
 }

@@ -71,9 +71,9 @@ public class AIOrchestrationService {
             if (plan == SubscriptionPlan.FREE) {
                 throw new ForbiddenException("Nova Money Agent y\u00EAu c\u1EA7u g\u00F3i BASIC tr\u1EDF l\u00EAn.");
             }
-            // BASIC can only use ninerouter for Agent; Gemini requires PREMIUM
-            if (plan != SubscriptionPlan.PREMIUM && !"ninerouter".equalsIgnoreCase(provider)) {
-                throw new ForbiddenException("Model Gemini cho Agent y\u00EAu c\u1EA7u g\u00F3i PREMIUM. G\u00F3i BASIC ch\u1EC9 \u0111\u01B0\u1EE3c d\u00F9ng Gemma 4 (ninerouter) cho Agent.");
+            // Agent luôn yêu cầu PREMIUM (dùng Gemini); chat GPT-OSS không cần PREMIUM
+            if (plan != SubscriptionPlan.PREMIUM) {
+                throw new ForbiddenException("Nova Money Agent yêu cầu gói PREMIUM. Vui lòng nâng cấp để sử dụng.");
             }
 
             String pageContext = request.getPageContext() != null ? request.getPageContext() : "dashboard";

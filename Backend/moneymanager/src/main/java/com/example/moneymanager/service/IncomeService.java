@@ -121,6 +121,98 @@ public class IncomeService {
         return list.stream().map(this::toDTO).toList();
     }
 
+    @Transactional
+    public IncomeDTO updateIncome(Long incomeId, IncomeDTO dto) {
+        ProfileEntity profile = profileService.getCurrentProfile();
+        IncomeEntity income = incomeRepository.findById(incomeId)
+                .orElseThrow(() -> new RuntimeException("Income not found"));
+        if (!income.getProfile().getId().equals(profile.getId())) {
+            throw new RuntimeException("Unauthorized to update this income");
+        }
+
+        List<com.example.moneymanager.entity.IncomeAllocationEntity> oldAllocations = incomeAllocationRepository.findByIncomeId(incomeId);
+        for (com.example.moneymanager.entity.IncomeAllocationEntity alloc : oldAllocations) {
+            com.example.moneymanager.entity.JarEntity jar = alloc.getJar();
+            jar.setCurrentBalance(jar.getCurrentBalance().subtract(alloc.getAmount()));
+            jarRepository.save(jar);
+        }
+        incomeAllocationRepository.deleteAll(oldAllocations);
+
+        if (dto.getCategoryId() != null) {
+            CategoryEntity category = categoryRepository.findById(dto.getCategoryId())
+                    .orElseThrow(() -> new RuntimeException("Category not found"));
+            income.setCategory(category);
+        }
+        if (dto.getName() != null) {
+            income.setName(dto.getName());
+        }
+        if (dto.getIcon() != null) {
+            income.setIcon(dto.getIcon());
+        }
+        if (dto.getAmount() != null) {
+            income.setAmount(dto.getAmount());
+        }
+        if (dto.getDate() != null) {
+            income.setDate(dto.getDate());
+        }
+        income = incomeRepository.save(income);
+
+        if (dto.getAllocations() != null && !dto.getAllocations().isEmpty()) {
+            for (com.example.moneymanager.dto.IncomeAllocationDTO allocDTO : dto.getAllocations()) {
+                com.example.moneymanager.entity.JarEntity jar = jarRepository.findById(allocDTO.getJarId())
+                        .orElseThrow(() -> new RuntimeException("Jar not found"));
+                if (!jar.getProfile().getId().equals(profile.getId())) {
+                    throw new RuntimeException("Unauthorized jar access");
+                }
+                jar.setCurrentBalance(jar.getCurrentBalance().add(allocDTO.getAmount()));
+                jarRepository.save(jar);
+
+                com.example.moneymanager.entity.IncomeAllocationEntity allocation = com.example.moneymanager.entity.IncomeAllocationEntity.builder()
+                        .income(income)
+                        .jar(jar)
+                        .amount(allocDTO.getAmount())
+                        .build();
+                incomeAllocationRepository.save(allocation);
+            }
+        } else if (dto.getAmount() != null && dto.getAmount().compareTo(java.math.BigDecimal.ZERO) > 0) {
+            List<com.example.moneymanager.entity.JarEntity> jars = jarRepository.findByProfile(profile);
+            if (jars.isEmpty()) {
+                jars = jarService.initializeDefaultJars(profile);
+            }
+
+            java.math.BigDecimal totalAmount = dto.getAmount();
+            java.math.BigDecimal allocatedSum = java.math.BigDecimal.ZERO;
+
+            for (int i = 0; i < jars.size(); i++) {
+                com.example.moneymanager.entity.JarEntity jar = jars.get(i);
+                java.math.BigDecimal pct = jar.getTargetPercentage() != null ? jar.getTargetPercentage() : java.math.BigDecimal.ZERO;
+                java.math.BigDecimal allocAmount;
+
+                if (i == jars.size() - 1) {
+                    allocAmount = totalAmount.subtract(allocatedSum);
+                } else {
+                    allocAmount = totalAmount.multiply(pct).divide(new java.math.BigDecimal("100.00"), 2, java.math.RoundingMode.HALF_UP);
+                }
+
+                if (allocAmount.compareTo(java.math.BigDecimal.ZERO) > 0) {
+                    jar.setCurrentBalance(jar.getCurrentBalance().add(allocAmount));
+                    jarRepository.save(jar);
+
+                    com.example.moneymanager.entity.IncomeAllocationEntity allocation = com.example.moneymanager.entity.IncomeAllocationEntity.builder()
+                            .income(income)
+                            .jar(jar)
+                            .amount(allocAmount)
+                            .build();
+                    incomeAllocationRepository.save(allocation);
+
+                    allocatedSum = allocatedSum.add(allocAmount);
+                }
+            }
+        }
+
+        return toDTO(income);
+    }
+
     //delete income by id for current user
     @Transactional
     public void deleteIncome(Long incomeId) {
