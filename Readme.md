@@ -104,11 +104,11 @@ Ba cấp độ kiểm soát quyền truy cập tính năng. Các hạn chế đ�
 
 ### Tổng Quan
 
-Nova Money là trợ lý AI tích hợp sẵn, có thể truy cập từ floating button góc phải dưới trên mọi trang đã xác thực. Hai chế độ hoạt động với model khác nhau tùy theo gói:
+Nova Money là trợ lý AI tích hợp sẵn, có hai chế độ hoạt động với model khác nhau tùy theo gói:
 
 ```
 ┌─────────────────────────────────────────┐
-│         Nova Money Widget               │
+│              Nova Money                 │
 ├────────────────────┬────────────────────┤
 │    Agent Mode      │    Chat Mode       │
 │    BASIC+          │    Tất cả gói      │
@@ -142,215 +142,89 @@ Google Gemini có một pool API key lưu trong Redis. Hệ thống theo dõi qu
 
 ### Agent Mode — Intent → CRUD Pipeline
 
-**Có sẵn từ gói BASIC.** Người dùng nhập lệnh ngôn ngữ tự nhiên → AI parse intent (Nova Lite cho BASIC, Gemini hoặc Nova Lite cho PREMIUM) → frontend hiển thị confirmation form → người dùng xác nhận → backend thực thi → undo khả dụng trong vài phút.
+**Có sẵn từ gói BASIC.** Người dùng nhập lệnh ngôn ngữ tự nhiên → AI parse intent → frontend hiển thị confirmation form → người dùng xác nhận → backend thực thi → undo khả dụng trong vài phút.
 
-**Pipeline**:
-```
-User message
-    │
-    ▼
-POST /ai/parse-intent
-(AI model + system prompt với dữ liệu trang hiện tại)
-    │
-    ▼
-Intent JSON
-    │
-    ├── CRUD / Action intent → hiển thị AIConfirmationForm
-    │       │
-    │       ▼  (user confirms)
-    │   POST /ai/confirm-action
-    │       │
-    │       ▼
-    │   Backend executes → trả về operationId để undo
-    │
-    └── ANSWER_QUESTION → hiển thị inline answer (không cần confirm)
-```
+**Supported Intents**: `CREATE_EXPENSE`, `UPDATE_EXPENSE`, `DELETE_EXPENSE`, `CREATE_INCOME`, `UPDATE_INCOME`, `DELETE_INCOME`, `CREATE_CATEGORY`, `UPDATE_CATEGORY`, `DELETE_CATEGORY`, `CREATE_BUDGET`, `UPDATE_BUDGET`, `DELETE_BUDGET`, `CREATE_SAVING_GOAL`, `UPDATE_SAVING_GOAL`, `DELETE_SAVING_GOAL`, `EXPORT_EXCEL_INCOME`, `EXPORT_EXCEL_EXPENSE`, `EMAIL_INCOME_REPORT`, `EMAIL_EXPENSE_REPORT`, `ANSWER_QUESTION`, `INVALID_REQUEST`
 
-**Supported Intents**:
+**Context-aware**: System prompt bao gồm dữ liệu thực tế từ trang hiện tại để AI có thể resolve ID thực tế.
 
-| Nhóm | Intent |
-|---|---|
-| Chi Tiêu | `CREATE_EXPENSE`, `UPDATE_EXPENSE`, `DELETE_EXPENSE` |
-| Thu Nhập | `CREATE_INCOME`, `UPDATE_INCOME`, `DELETE_INCOME` |
-| Danh Mục | `CREATE_CATEGORY`, `UPDATE_CATEGORY`, `DELETE_CATEGORY` |
-| Ngân Sách | `CREATE_BUDGET`, `UPDATE_BUDGET`, `DELETE_BUDGET` |
-| Mục Tiêu Tiết Kiệm | `CREATE_SAVING_GOAL`, `UPDATE_SAVING_GOAL`, `DELETE_SAVING_GOAL` |
-| Xuất Báo Cáo | `EXPORT_EXCEL_INCOME`, `EXPORT_EXCEL_EXPENSE` |
-| Email | `EMAIL_INCOME_REPORT`, `EMAIL_EXPENSE_REPORT` |
-| Q&A | `ANSWER_QUESTION` |
-| Guard | `INVALID_REQUEST` |
-
-**Context-aware**: System prompt bao gồm dữ liệu thực tế từ trang hiện tại (ví dụ: danh sách danh mục khi ở trang Danh Mục) để AI có thể resolve "xóa danh mục thực phẩm" thành ID thực tế.
-
-**Undo**: Sau CRUD thành công, backend lưu `operationId`. Frontend hiển thị nút undo; gọi `POST /ai/undo/{operationId}` trong cửa sổ cho phép sẽ đảo ngược hành động.
+**Undo**: Sau CRUD thành công, backend lưu `operationId`. Frontend hiển thị nút undo; gọi API `/ai/undo/{operationId}` sẽ đảo ngược hành động.
 
 ---
 
 ### Chat Mode — Q&A Tự Do
 
-**Có sẵn cho tất cả các gói (bao gồm FREE).** Mặc định dùng `✨ Nova Lite` (NineRouter / Gemma 4 31B). PREMIUM có thể chuyển sang GPT-OSS 120B hoặc Gemini. Không thực hiện bất kỳ data operation nào.
-
-Capabilities:
+**Có sẵn cho tất cả các gói.** Không thực hiện bất kỳ data operation nào. Capabilities:
 - Lời khuyên tài chính cá nhân
 - Phân tích tâm lý chi tiêu
-- Hỗ trợ cảm xúc về tiền bạc
 - Lập kế hoạch mục tiêu dài hạn
-- Câu hỏi tài chính chung
-
 Conversation history: 20 tin nhắn cuối được gửi kèm làm context mỗi request.
 
 ---
 
 ### AI Smart Tips (AI Coach)
 
-**Chỉ PREMIUM.** Phân tích giao dịch 3 tháng gần nhất và trả về mẹo tiết kiệm cá nhân hóa bằng tiếng Việt. Powered by Gemini.
-
----
+**Chỉ PREMIUM.** Phân tích giao dịch 3 tháng gần nhất và trả về mẹo tiết kiệm cá nhân hóa.
 
 ### Receipt Import (Gemini)
 
-**Chỉ PREMIUM.** Người dùng upload ảnh/PDF hóa đơn (≤ 10 MB, JPEG/PNG/WebP/PDF) → Gemini trích xuất tên cửa hàng, danh mục và tổng tiền → tự động điền vào form tạo chi tiêu.
+**Chỉ PREMIUM.** Người dùng upload ảnh/PDF hóa đơn → Gemini trích xuất thông tin → tự động điền vào form tạo chi tiêu.
+
+### Nova Money UI — Widget & Full-page
+
+- **Trang AI Chat Chuyên Biệt** (`/ai-chat`): Giao diện toàn màn hình, thiết kế hiện đại (matching UI reference), responsive, cung cấp không gian trò chuyện rộng rãi với AI.
+- **Floating Widget**: Nút góc phải dưới màn hình trên các trang khác. Có **Greeting bubble** hiện lên thông điệp hài hước sau 5 giây.
+- **Markdown rendering**: Hỗ trợ table, code block, list, blockquote.
+- **Pending Intent Guard**: Khi form xác nhận CRUD đang mở, block nhắn tin tiếp cho đến khi xử lý xong.
+- **Model Selector**: Cho phép người dùng PREMIUM linh hoạt chọn model (GPT-OSS, Nova Lite, Gemini).
 
 ---
 
-### Nova Money Widget — UI Details
+## Tính Năng Cốt Lõi
 
-Floating button góc phải dưới trên tất cả các trang đã xác thực.
+### Quản Lý Thu Nhập & Chi Tiêu
+Theo dõi và thao tác CRUD chi tiết cho các khoản thu nhập và chi tiêu:
+- **Thu nhập (`/income`)**: Cho phép thêm thu nhập, tự động phân bổ thu nhập thành các phần nhỏ vào các Hũ Chi Tiêu (Jars) dựa trên thiết lập tỷ lệ %.
+- **Chi tiêu (`/expense`)**: Ghi nhận chi tiêu, hỗ trợ gán danh mục, upload hóa đơn (OCR) và đặc biệt tích hợp tính năng **Chi Tiêu Nhanh (Templates)** để thao tác 1-click. Khi tạo chi tiêu, người dùng được chọn trực tiếp Hũ trừ tiền.
 
-- **Greeting bubble**: Sau 5 giây, một bubble hiện lên với thông điệp hài hước ngẫu nhiên (30 messages, rotate mỗi 20 giây). Ẩn khi chat mở.
-- **Avatar**: Dùng `AI_favicon.png` ở khắp nơi — floating button, chat header và từng message bubble.
-- **Layout**: Chat panel hỗ trợ normal và expanded mode (800px wide).
-- **Markdown rendering**: Response AI hỗ trợ table, code block, list, blockquote qua `react-markdown` + `remark-gfm` + `rehype-sanitize`.
-- **Typing indicator**: Animation ba chấm nảy lên khi chờ response.
-- **Pending Intent Guard**: Khi confirmation form đang mở, tin nhắn mới bị chặn cho đến khi user confirm hoặc cancel.
-- **Model Selector**: Mặc định `✨ Nova Lite` cho tất cả gói. PREMIUM có thể chuyển sang `GPT-OSS 120B` (Chat) hoặc `Gemini 3.1 Flash Lite` (Agent). Khi PREMIUM chọn Nova Lite, `ExperimentalWarningModal` hiện để xác nhận. FREE/BASIC bị lock ở Nova Lite — các model khác hiện `(PREMIUM)` và bị disable. Render bởi `ModelSelector.jsx`.
+### Quản Lý Danh Mục (`/category`)
+Tạo, sửa, xóa các danh mục thu chi. Phân loại dễ dàng qua hệ thống biểu tượng (Emoji Picker) và màu sắc.
 
----
+### Bộ Lọc Nâng Cao (`/filter`)
+Trang chuyên biệt hỗ trợ tìm kiếm và lọc giao dịch lịch sử theo nhiều chiều (thời gian, loại, danh mục). Giới hạn theo gói: 3 tháng (FREE), 12 tháng (BASIC), Không giới hạn (PREMIUM).
 
-## Các Tính Năng Khác
+### Báo Cáo Tài Chính (`/reports`)
+Trang báo cáo tổng hợp chi tiết theo từng tháng. 
+Sử dụng `MonthlyReportCard` với thang điểm tài chính (Spending score A–F), phân tích danh mục qua biểu đồ trực quan, và đo lường tiến trình tiết kiệm. Đặc biệt, người dùng PREMIUM có thể nhấn nút để nhận **AI Analysis** chuyên sâu từ Gemini.
 
-### Dự Báo Tài Chính
-Dự đoán chi tiêu cho 6 tháng tới (tháng hiện tại + 5 tháng tiếp theo) dựa trên 6 tháng lịch sử. Người dùng chọn tháng từ dropdown hiển thị đúng 6 tháng gần nhất. Anomaly detection (2+ standard deviations). AI Insights chỉ hiển thị cho tháng tương lai. **Chỉ PREMIUM.**
+### Dự Báo Tài Chính (`/forecast`)
+Dự đoán chi tiêu cho 6 tháng tới (tháng hiện tại + 5 tháng) dựa trên 6 tháng lịch sử. Anomaly detection. AI Insights hiển thị dự báo chi tiết cho tương lai. **Chỉ PREMIUM.**
 
-### Quản Lý Ngân Sách
-Giới hạn chi tiêu hàng tháng cho mỗi danh mục. Theo dõi % sử dụng. Cảnh báo khi vượt ngân sách.
+### Quản Lý Ngân Sách (`/budget`)
+Giới hạn chi tiêu hàng tháng cho mỗi danh mục. Theo dõi % sử dụng và cảnh báo khi vượt mức.
 
-### Hệ Thống Các Hũ Chi Tiêu (Jars / Envelopes)
+### Hệ Thống Các Hũ Chi Tiêu (`/jars`)
+Phân bổ thu nhập vào nhiều "ví phụ" riêng biệt theo tỷ lệ phần trăm (Ví sinh hoạt, tiết kiệm, giải trí,...).
+- **Hạn mức Hũ**: FREE (1 Hũ), BASIC (6 Hũ), PREMIUM (Không giới hạn). 
+- **Phân bổ**: Khi có thu nhập mới, tự động phân bổ tiền vào các Hũ theo tỷ lệ định trước (0-100%).
+- **Chuyển tiền**: Cho phép luân chuyển số dư giữa các Hũ.
+- **Thanh toán từ Hũ**: Mọi khoản chi tiêu đều có thể được chỉ định trừ tiền từ một Hũ cụ thể.
 
-Cho phép người dùng phân bổ thu nhập vào nhiều "ví phụ" riêng biệt theo tỷ lệ phần trăm, giúp kiểm soát chi tiêu theo từng mục đích cụ thể (ví dụ: Sinh hoạt, Giải trí, Đầu tư, Tiết kiệm).
+### Mục Tiêu Tiết Kiệm (`/saving-goals`)
+Quản lý mục tiêu (ví dụ: Mua xe, Đi du lịch) với số tiền mong đợi và deadline. Ghi lại các khoản đóng góp và theo dõi tiến độ. Tích hợp AI Agent nhận diện chính xác trạng thái mục tiêu hiện tại.
 
-#### Giới Hạn Theo Gói
+### Dashboard Tổng Quan (`/dashboard`)
+Widgets hỗ trợ kéo thả (`@dnd-kit`), thống kê số dư, chi tiêu gần đây, và truy cập nhanh vào các tính năng.
 
-| Gói | Số Hũ Tối Đa |
-|---|:---:|
-| FREE | 1 Hũ |
-| BASIC | 6 Hũ |
-| PREMIUM | Không giới hạn |
-
-Hũ mặc định **"Ví tổng"** được tạo tự động khi người dùng lần đầu truy cập tính năng. Tỷ lệ của Ví tổng được tính tự động bằng phần còn lại (100% − tổng tỷ lệ các Hũ khác).
-
-#### Phân Bổ Thu Nhập
-
-Mỗi Hũ có một **tỷ lệ phân bổ (%)** — khi thu nhập được ghi nhận, hệ thống tự động cộng phần tương ứng vào số dư từng Hũ. Tỷ lệ phân bổ phải nằm trong khoảng 0–100% và được validate ở cả frontend lẫn backend.
-
-#### Chi Tiêu Theo Hũ
-
-Khi thêm một khoản chi tiêu (thủ công hoặc qua **Chi Tiêu Nhanh**), người dùng chọn Hũ cần trừ tiền. Số dư Hũ tương ứng giảm ngay lập tức.
-
-- **Chi Tiêu Nhanh (Quick Expense Templates)**: Khi nhấn vào template chi tiêu nhanh, dialog **"Trừ từ hũ nào?"** tự động hiện lên để người dùng chọn Hũ trước khi xác nhận.
-- `jarId` được gửi kèm trong payload `POST /api/v1.0/expenses` để backend liên kết khoản chi tiêu với Hũ tương ứng.
-
-#### Chuyển Tiền Giữa Các Hũ
-
-Cho phép di chuyển số dư từ Hũ này sang Hũ khác thông qua nút **"Chuyển tiền"** trên trang Hũ chi tiêu.
-
-**Business rules (enforce ở backend)**:
-- Không thể chuyển tiền vào cùng một Hũ (`fromJarId == toJarId`).
-- Số tiền chuyển phải lớn hơn 0.
-- Số dư Hũ nguồn phải đủ để thực hiện giao dịch.
-
-#### Quản Lý Hũ
-
-Mỗi Hũ có các thuộc tính tùy chỉnh:
-
-| Thuộc Tính | Mô Tả |
-|---|---|
-| Tên | Tên hiển thị của Hũ |
-| Icon (Emoji) | Icon đại diện |
-| Màu Sắc | Mã màu hex (10 màu có sẵn) |
-| Tỷ Lệ Phân Bổ | Phần trăm thu nhập được phân bổ (0–100%) |
-| Số Dư Hiện Tại | Tổng tiền đang có trong Hũ |
-
-#### API Endpoints
-
-| Method | Endpoint | Mô Tả |
-|---|---|---|
-| `GET` | `/api/v1.0/jars` | Lấy danh sách tất cả Hũ |
-| `POST` | `/api/v1.0/jars` | Tạo Hũ mới |
-| `PUT` | `/api/v1.0/jars/{id}` | Cập nhật Hũ |
-| `DELETE` | `/api/v1.0/jars/{id}` | Xóa Hũ |
-| `POST` | `/api/v1.0/jars/transfer` | Chuyển tiền giữa hai Hũ |
-
-#### Các File Liên Quan
-
-**Backend**
-- `JarEntity.java` — JPA entity cho Hũ chi tiêu
-- `JarService.java` — Business logic (tạo, cập nhật, xóa, chuyển tiền, tái tính tỷ lệ Ví tổng)
-- `JarController.java` — REST controller
-
-**Frontend**
-- `src/pages/Jars.jsx` — Trang Hũ chi tiêu: tổng quan, PieChart / BarChart phân bổ, danh sách Hũ, xem và quản lý chi tiêu trong từng Hũ (thêm/sửa/xóa trực tiếp từ detail view)
-- `src/components/JarForm.jsx` — Form tạo / chỉnh sửa Hũ
-- `src/components/JarTransferModal.jsx` — Modal chuyển tiền giữa các Hũ
-- `src/components/AddExpenseForm.jsx` — Form thêm chi tiêu (hỗ trợ chọn Hũ)
-- `src/components/EditExpenseForm.jsx` — Form sửa chi tiêu (hỗ trợ chọn Hũ)
-- `src/components/QuickExpenseTemplates.jsx` — Chi tiêu nhanh tích hợp chọn Hũ (JarPickerModal)
-
-### Mục Tiêu Tiết Kiệm
-Tạo mục tiêu với số tiền mục tiêu và thời hạn. Ghi lại các khoản đóng góp. Theo dõi trạng thái ACTIVE / COMPLETED / CANCELLED. Tự động tính khoản đóng góp hàng tháng cần thiết.
-
-**AI Agent integration**: Khi người dùng ở trang Mục Tiêu Tiết Kiệm, Nova Money nhận đầy đủ context của từng mục tiêu (target amount, đã tích lũy, còn thiếu, progress %, cần/tháng, đã đóng tháng này, deadline, trạng thái on-track/behind). AI có thể trả lời *"còn thiếu bao nhiêu?"*, *"khi nào hoàn thành?"* và thực hiện CREATE / UPDATE / DELETE theo ID thực tế.
-
-### Dashboard Widgets
-Layout có thể tùy chỉnh drag-and-drop (qua `@dnd-kit`). `MonthlyReportCard` với spending score A–F, phân tích danh mục, tiến trình tiết kiệm. **PREMIUM** có thêm nút AI analysis trong report card — gọi Gemini nhận nhận xét sâu về tình hình tài chính tháng đó.
-
-### Low Performance Mode
-Toggle (lưu trong `localStorage`) tắt các animation nặng trên thiết bị yếu. State cung cấp toàn cục qua `PerformanceContext` (`usePerformance()` hook) và apply attribute `data-performance="low"` trên `<html>` để CSS override.
-
-### Xuất Excel
-Báo cáo XLSX qua Apache POI. Locale Việt Nam, hàng có màu (xanh = thu nhập, đỏ = chi tiêu), alternating row color, tổng định dạng VND. **Chỉ BASIC+.**
-
-### Báo Cáo Email
-Báo cáo Excel gửi dưới dạng email attachment qua Spring Mail (Brevo SMTP). Bao gồm monthly report card với spending score. **Chỉ BASIC+.**
-
-### Xác Thực OTP
-OTP 6 chữ số (BCrypt-hashed) để activate tài khoản và reset mật khẩu. Hiệu lực 210 giây, cooldown 180 giây, tối đa 5 lần thử, constant-time comparison.
-
-### Google OAuth2
-Đăng nhập bằng Google. Validate Google ID token, tự động tạo profile cho user mới, phát hành JWT.
-
-### Thanh Toán PayOS
-Tạo payment link, xử lý webhook, auto-sync trạng thái thanh toán mỗi 30 giây, kích hoạt subscription sau khi thanh toán thành công.
-
-### Spam Protection
-Hai lớp bảo vệ:
-- **Redis-based**: Đếm email gửi theo account. Trên 5/phút → lock 10 phút. Trên 10 → lock 5 giờ.
-- **In-memory rate limiting**: Giới hạn mỗi IP theo endpoint (login: 5/phút, forgot-password: 5/phút, OTP resend: 3/phút, AI chat: 15/phút). Trả về HTTP 429 khi vượt quá.
-
-### File Upload
-Ảnh profile upload lên AWS S3. Validate magic bytes (JPEG/PNG/GIF/WebP only).
-
-### PDF Invoice
-AWS Lambda tạo PDF invoice sau khi thanh toán thành công.
-
-### Notifications
-In-app + email notifications với toggle cho từng loại. Budget alerts, saving goal reminders, payment confirmations.
-
-### Admin Dashboard
-Chỉ role `ADMIN`. Quản lý users (CRUD), giám sát payments, quản lý subscriptions, broadcast notifications, thống kê tổng quan.
-
-### Mobile App
-React Native (Expo). Bottom tab navigation (Dashboard + Expenses). JWT auth lưu trong AsyncStorage. Pull-to-refresh.
+### Các Tiện Ích & Tuỳ Chọn Khác
+- **Low Performance Mode**: Tắt animations trên thiết bị yếu.
+- **Xuất Báo Cáo Excel / PDF Invoice**: Báo cáo chi tiêu/thu nhập thành Excel đa sắc thái; hóa đơn PDF cho các lượt thanh toán (AWS Lambda).
+- **Báo Cáo Email định kỳ**: Báo cáo gửi qua Spring Mail (Brevo SMTP).
+- **Xác Thực OTP & Google OAuth2**: Hỗ trợ đăng nhập qua Google hoặc xác thực 2 bước bằng mã OTP.
+- **Thanh Toán PayOS**: Tự động kích hoạt gói Premium ngay khi thanh toán qua mã QR (webhook payload).
+- **Spam Protection**: Giới hạn rate limiting bảo vệ API.
+- **Admin Dashboard**: Quản lý người dùng, thống kê doanh thu và broadcast thông báo (Dành riêng cho ADMIN).
+- **React Native Mobile App**: Ứng dụng điện thoại với Bottom tab navigation, đồng bộ hóa 100% với phiên bản Web.
 
 ---
 
