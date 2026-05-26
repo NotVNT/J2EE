@@ -28,6 +28,14 @@ public class NineRouterConfig {
         return buildRestClient(baseUrl, timeout);
     }
 
+    @Bean
+    public RestClient nineRouterOcrRestClient(NineRouterProperties properties) {
+        NineRouterProperties.Section ocr = properties.ocr();
+        int timeout = (ocr != null && ocr.timeoutSeconds() != null) ? ocr.timeoutSeconds() : 120;
+        String baseUrl = (ocr != null && ocr.baseUrl() != null) ? ocr.baseUrl() : "https://proxy-ai.botdevgroup.me/v1";
+        return buildRestClient(baseUrl, timeout);
+    }
+
     private RestClient buildRestClient(String baseUrl, int timeoutSeconds) {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(Duration.ofSeconds(timeoutSeconds));

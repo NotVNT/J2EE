@@ -1,7 +1,6 @@
 package com.example.moneymanager.service;
 
-import com.example.moneymanager.config.GeminiKeyRotator;
-import com.example.moneymanager.config.GeminiProperties;
+import com.example.moneymanager.config.NineRouterProperties;
 import com.example.moneymanager.dto.ExpenseDTO;
 import com.example.moneymanager.dto.ExpenseResponseDTO;
 import com.example.moneymanager.dto.ReceiptImportAnalyzeResponseDTO;
@@ -12,6 +11,7 @@ import com.example.moneymanager.entity.CategoryEntity;
 import com.example.moneymanager.entity.ProfileEntity;
 import com.example.moneymanager.exception.ReceiptImportException;
 import com.example.moneymanager.repository.CategoryRepository;
+import com.example.moneymanager.util.OpenRouterResponseParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -39,9 +39,8 @@ public class ReceiptImportService {
     private static final String OTHER_CATEGORY_NAME = "Khác";
     private static final String OTHER_CATEGORY_ICON = "CircleHelp";
 
-    private final RestClient geminiRestClient;
-    private final GeminiProperties geminiProperties;
-    private final GeminiKeyRotator geminiKeyRotator;
+    private final RestClient nineRouterOcrRestClient;
+    private final NineRouterProperties nineRouterProperties;
     private final ObjectMapper objectMapper;
     private final ProfileService profileService;
     private final CategoryRepository categoryRepository;
@@ -80,7 +79,7 @@ public class ReceiptImportService {
         );
         CategoryEntity otherCategory = ensureOtherExpenseCategory(profile, expenseCategories);
 
-        JsonNode aiResult = analyzeReceiptWithGemini(file, fileBytes);
+        JsonNode aiResult = analyzeReceiptWithNineRouter(file, fileBytes);
         return buildPreviewFromAiResult(aiResult, expenseCategories, otherCategory);
     }
 
@@ -260,49 +259,54 @@ public class ReceiptImportService {
         return true;
     }
 
-    private JsonNode analyzeReceiptWithGemini(MultipartFile file, byte[] fileBytes) {
+    private JsonNode analyzeReceiptWithNineRouter(MultipartFile file, byte[] fileBytes) {
         try {
             String base64Image = Base64.getEncoder().encodeToString(fileBytes);
-            ObjectNode requestBody = buildGeminiImageRequest(base64Image, canonicalMimeType(fileBytes));
+            ObjectNode requestBody = buildNineRouterOcrRequest(base64Image, canonicalMimeType(fileBytes));
 
-            String apiKey = geminiKeyRotator.nextKey();
+            NineRouterProperties.Section ocr = nineRouterProperties.ocr();
+            String apiKey = ocr.apiKey();
+            String model = ocr.model();
+
             String requestJson = objectMapper.writeValueAsString(requestBody);
-            String responseJson = geminiRestClient.post()
-                    .uri(uriBuilder -> uriBuilder
-                            .path("/v1beta/models/{model}:generateContent")
-                            .queryParam("key", apiKey)
-                            .build(geminiProperties.model()))
+            String responseJson = nineRouterOcrRestClient.post()
+                    .uri("/chat/completions")
+                    .header("Authorization", "Bearer " + apiKey)
                     .body(requestJson)
                     .retrieve()
                     .body(String.class);
 
             if (responseJson == null || responseJson.isBlank()) {
-                throw new ReceiptImportException("Gemini không trả về dữ liệu để phân tích hóa đơn.");
+                throw new ReceiptImportException("9Router OCR không trả về dữ liệu để phân tích hóa đơn.");
             }
 
             JsonNode root = objectMapper.readTree(responseJson);
-            String text = extractOutputText(root);
+            String text = OpenRouterResponseParser.extractAssistantText(root);
             if (text == null || text.isBlank()) {
-                throw new ReceiptImportException("Gemini không trả về kết quả phân tích hóa đơn hợp lệ.");
+                throw new ReceiptImportException("9Router OCR không trả về kết quả phân tích hóa đơn hợp lệ.");
             }
 
             String cleanJson = sanitizeJsonResponse(text);
             return objectMapper.readTree(cleanJson);
         } catch (Exception exception) {
-            throw new ReceiptImportException("Không thể kết nối với Gemini để phân tích hóa đơn.", exception);
+            throw new ReceiptImportException("Không thể kết nối với 9Router OCR để phân tích hóa đơn.", exception);
         }
     }
 
-    private ObjectNode buildGeminiImageRequest(String base64Image, String mimeType) {
+    private ObjectNode buildNineRouterOcrRequest(String base64Image, String mimeType) {
         ObjectNode requestBody = objectMapper.createObjectNode();
+        requestBody.put("model", nineRouterProperties.ocr().model());
+        requestBody.put("stream", false);
 
-        ArrayNode contents = objectMapper.createArrayNode();
+        ArrayNode messages = objectMapper.createArrayNode();
         ObjectNode userMessage = objectMapper.createObjectNode();
         userMessage.put("role", "user");
 
-        ArrayNode parts = objectMapper.createArrayNode();
-        ObjectNode promptPart = objectMapper.createObjectNode();
-        promptPart.put("text", """
+        ArrayNode content = objectMapper.createArrayNode();
+
+        ObjectNode textPart = objectMapper.createObjectNode();
+        textPart.put("type", "text");
+        textPart.put("text", """
                 Bạn là hệ thống OCR tài chính cho ứng dụng Money Manager.
                 Hãy đọc ảnh hóa đơn và chỉ trả về JSON hợp lệ theo đúng schema:
                 {
@@ -327,55 +331,21 @@ public class ReceiptImportService {
                 - Nếu thiếu ngày hóa đơn thì dùng null cho receiptDate.
                 - Chỉ lấy item có amount > 0.
                 """);
-        parts.add(promptPart);
+        content.add(textPart);
 
         ObjectNode imagePart = objectMapper.createObjectNode();
-        ObjectNode inlineData = objectMapper.createObjectNode();
-        inlineData.put("mime_type", mimeType != null ? mimeType : "image/jpeg");
-        inlineData.put("data", base64Image);
-        imagePart.set("inline_data", inlineData);
-        parts.add(imagePart);
+        imagePart.put("type", "image_url");
 
-        userMessage.set("parts", parts);
-        contents.add(userMessage);
-        requestBody.set("contents", contents);
+        ObjectNode imageUrl = objectMapper.createObjectNode();
+        imageUrl.put("url", "data:" + mimeType + ";base64," + base64Image);
+        imagePart.set("image_url", imageUrl);
+        content.add(imagePart);
 
-        ObjectNode generationConfig = objectMapper.createObjectNode();
-        generationConfig.put("temperature", 0.1);
-        generationConfig.put("maxOutputTokens", 2200);
-        requestBody.set("generationConfig", generationConfig);
+        userMessage.set("content", content);
+        messages.add(userMessage);
+        requestBody.set("messages", messages);
+
         return requestBody;
-    }
-
-    private String extractOutputText(JsonNode responseBody) {
-        if (responseBody == null) {
-            return null;
-        }
-
-        JsonNode candidates = responseBody.path("candidates");
-        if (!candidates.isArray() || candidates.isEmpty()) {
-            return null;
-        }
-
-        StringBuilder builder = new StringBuilder();
-        for (JsonNode candidate : candidates) {
-            JsonNode parts = candidate.path("content").path("parts");
-            if (!parts.isArray()) {
-                continue;
-            }
-
-            for (JsonNode part : parts) {
-                JsonNode text = part.get("text");
-                if (text != null && !text.isNull()) {
-                    if (!builder.isEmpty()) {
-                        builder.append('\n');
-                    }
-                    builder.append(text.asText());
-                }
-            }
-        }
-
-        return builder.toString().trim();
     }
 
     private String sanitizeJsonResponse(String rawText) {
