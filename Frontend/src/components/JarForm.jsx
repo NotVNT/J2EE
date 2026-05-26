@@ -16,13 +16,18 @@ const JAR_COLORS = [
   { value: "#84CC16", label: "Xanh chuối" },
 ];
 
-const JarForm = ({ initialData, isEditing = false, onSave, onCancel }) => {
+const JarForm = ({ initialData, isEditing = false, jars = [], onSave, onCancel }) => {
   const [form, setForm] = useState({
     name: "",
     icon: "",
     color: "#8B5CF6",
     targetPercentage: "",
   });
+  const [balancingJarId, setBalancingJarId] = useState("");
+
+  const originalPct = initialData ? (initialData.targetPercentage || 0) : 0;
+  const currentPct = parseFloat(form.targetPercentage) || 0;
+  const pctDiff = currentPct - originalPct;
 
   useEffect(() => {
     if (initialData) {
@@ -32,6 +37,7 @@ const JarForm = ({ initialData, isEditing = false, onSave, onCancel }) => {
         color: initialData.color || "#8B5CF6",
         targetPercentage: initialData.targetPercentage?.toString() || "",
       });
+      setBalancingJarId("");
     }
   }, [initialData]);
 
@@ -42,11 +48,19 @@ const JarForm = ({ initialData, isEditing = false, onSave, onCancel }) => {
       toast.error("Vui lòng nhập tên hũ.");
       return;
     }
+
+    if (isEditing && pctDiff !== 0 && !balancingJarId && jars.length > 1) {
+      toast.error(`Vui lòng chọn hũ đối ứng để ${pctDiff > 0 ? "giảm" : "tăng"} tỷ lệ.`);
+      return;
+    }
+
     onSave({
       name: form.name.trim(),
       icon: form.icon,
       color: form.color,
       targetPercentage: parseFloat(form.targetPercentage) || 0,
+      balancingJarId: balancingJarId ? Number(balancingJarId) : null,
+      balancingPercentageDiff: pctDiff,
     });
   };
 
@@ -65,20 +79,78 @@ const JarForm = ({ initialData, isEditing = false, onSave, onCancel }) => {
         type="text"
       />
 
-      {form.name === "Ví tổng" ? (
-        <div className="p-3 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10">
-          <p className="text-sm text-slate-600 dark:text-slate-400">
-            Tỷ lệ của Ví tổng được <strong>tự động tính</strong> bằng phần trăm còn lại (100% - tổng các hũ khác).
-          </p>
+      <div className="space-y-1.5">
+        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+          Tỷ lệ phân bổ (%)
+        </label>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              const currentVal = parseFloat(form.targetPercentage) || 0;
+              handleChange("targetPercentage", Math.max(0, currentVal - 1).toString());
+            }}
+            className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-lg font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10 active:scale-95 transition-all cursor-pointer"
+          >
+            -
+          </button>
+          <input
+            className="flex-1 w-full text-center rounded-xl px-4 py-2.5 text-sm outline-none transition-colors font-bold
+              bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10
+              text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500
+              focus:border-violet-500 dark:focus:border-amber-500
+              focus:ring-1 focus:ring-violet-500/30 dark:focus:ring-amber-500/30"
+            value={form.targetPercentage}
+            onChange={({ target }) => handleChange("targetPercentage", target.value.replace(/[^0-9.]/g, ""))}
+            placeholder="VD: 55"
+            type="text"
+          />
+          <button
+            type="button"
+            onClick={() => {
+              const currentVal = parseFloat(form.targetPercentage) || 0;
+              handleChange("targetPercentage", Math.min(100, currentVal + 1).toString());
+            }}
+            className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-lg font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10 active:scale-95 transition-all cursor-pointer"
+          >
+            +
+          </button>
         </div>
-      ) : (
-        <Input
-          value={form.targetPercentage}
-          onChange={({ target }) => handleChange("targetPercentage", target.value.replace(/[^0-9.]/g, ""))}
-          label="Tỷ lệ phân bổ (%)"
-          placeholder="VD: 55"
-          type="text"
-        />
+      </div>
+
+      {/* Cân bằng tỷ lệ thông minh */}
+      {isEditing && pctDiff !== 0 && jars.length > 1 && (
+        <div className={`p-3 rounded-xl border text-xs leading-relaxed space-y-1.5 animate-in fade-in slide-in-from-top-2 duration-200 ${
+          pctDiff > 0 
+            ? "bg-amber-50 dark:bg-amber-500/5 border-amber-200 dark:border-amber-500/20 text-amber-700 dark:text-amber-400"
+            : "bg-blue-50 dark:bg-blue-500/5 border-blue-200 dark:border-blue-500/20 text-blue-700 dark:text-blue-400"
+        }`}>
+          <p className="font-bold flex items-center gap-1">
+            ⚖️ Tự động cân bằng tỷ lệ phân bổ:
+          </p>
+          <p className="text-slate-600 dark:text-slate-400">
+            {pctDiff > 0 ? (
+              <>Bạn đang tăng tỷ lệ hũ này thêm <strong className="font-extrabold text-amber-600">{pctDiff.toFixed(1)}%</strong>. Vui lòng chọn hũ muốn **giảm đi {pctDiff.toFixed(1)}%** để tổng luôn bằng 100%:</>
+            ) : (
+              <>Bạn đang giảm tỷ lệ hũ này đi <strong className="font-extrabold text-blue-600">{Math.abs(pctDiff).toFixed(1)}%</strong>. Vui lòng chọn hũ muốn **tăng thêm {Math.abs(pctDiff).toFixed(1)}%** để tổng luôn bằng 100%:</>
+            )}
+          </p>
+          <select
+            value={balancingJarId}
+            onChange={(e) => setBalancingJarId(e.target.value)}
+            className="w-full mt-2 px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 outline-none text-slate-700 dark:text-slate-300 text-xs font-semibold focus:ring-1 focus:ring-slate-400/20 cursor-pointer"
+          >
+            <option value="">-- Chọn hũ đối ứng để cân bằng --</option>
+            {jars
+              .filter(j => j.id !== initialData?.id)
+              .map(j => (
+                <option key={j.id} value={j.id}>
+                  {j.icon || "🏺"} {j.name} (Tỷ lệ hiện tại: {j.targetPercentage}%)
+                </option>
+              ))
+            }
+          </select>
+        </div>
       )}
 
       {/* Color picker */}

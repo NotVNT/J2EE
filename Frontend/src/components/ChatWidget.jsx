@@ -1,7 +1,7 @@
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import aiLogo from "../assets/logo/AI_favicon.png";
-import { useLocation } from "react-router-dom";
-import { ChevronDown, ChevronUp, MessageCircle, RotateCcw, SendHorizontal, X, Maximize2, Minimize2 } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { ChevronDown, ChevronUp, MessageCircle, RotateCcw, SendHorizontal, X, Maximize2, Minimize2, ExternalLink } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
@@ -168,11 +168,12 @@ const ChatWidget = () => {
   const { user } = useContext(AppContext);
   const { currentPage, pageLabel } = useRouteContext();
   const location = useLocation();
+  const navigate = useNavigate();
   const messagesEndRef = useRef(null);
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-  const shouldHideWidget = !token || PUBLIC_PATHS.has(location.pathname);
+  const shouldHideWidget = !token || PUBLIC_PATHS.has(location.pathname) || location.pathname.startsWith("/ai-chat");
 
   const isFreePlan = !user?.subscriptionPlan || user?.subscriptionPlan === "FREE";
   const isBasicPlan = user?.subscriptionPlan === "BASIC";
@@ -606,6 +607,14 @@ const ChatWidget = () => {
                 aria-label={isExpanded ? "Thu nhỏ" : "Phóng to"}
               >
                 {isExpanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+              </button>
+              <button
+                type="button"
+                onClick={() => { navigate("/ai-chat"); setIsOpen(false); }}
+                className="rounded-full bg-white/15 p-1.5 text-white transition hover:bg-white/25"
+                aria-label="Mở toàn màn hình"
+              >
+                <ExternalLink size={16} />
               </button>
               <button
                 type="button"

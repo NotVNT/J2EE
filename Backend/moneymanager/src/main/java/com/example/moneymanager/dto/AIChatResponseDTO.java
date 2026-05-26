@@ -13,4 +13,5 @@ public class AIChatResponseDTO {
     private String reply;
     private String provider;
     private String modelUsed;
+    private String sessionId;
 }

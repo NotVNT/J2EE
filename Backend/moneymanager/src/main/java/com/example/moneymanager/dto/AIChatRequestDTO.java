@@ -14,5 +14,6 @@ import java.util.List;
 public class AIChatRequestDTO {
     private String provider;
     private String model;
+    private String sessionId;
     private List<AIChatMessageDTO> messages;
 }

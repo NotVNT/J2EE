@@ -4,6 +4,8 @@ import com.example.moneymanager.dto.*;
 import com.example.moneymanager.service.AIChatService;
 import com.example.moneymanager.service.AIOrchestrationService;
 import com.example.moneymanager.service.CategoryService;
+import com.example.moneymanager.service.ChatHistoryService;
+import com.example.moneymanager.service.ProfileService;
 import com.example.moneymanager.service.SavingGoalService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -12,16 +14,27 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/ai")
 public class AIChatController {
 
+    private static final Pattern OBJECT_ID_PATTERN = Pattern.compile("^[a-fA-F0-9]{24}$");
+
     private final AIChatService aiChatService;
     private final AIOrchestrationService aiOrchestrationService;
     private final CategoryService categoryService;
     private final SavingGoalService savingGoalService;
+    private final ChatHistoryService chatHistoryService;
+    private final ProfileService profileService;
+
+    private void validateSessionId(String sessionId) {
+        if (sessionId == null || !OBJECT_ID_PATTERN.matcher(sessionId).matches()) {
+            throw new IllegalArgumentException("sessionId không hợp lệ");
+        }
+    }
 
     @PostMapping("/chat")
     public ResponseEntity<AIChatResponseDTO> chat(@RequestBody AIChatRequestDTO dto) {
@@ -57,5 +70,34 @@ public class AIChatController {
         }
 
         return ResponseEntity.ok(context);
+    }
+
+    @GetMapping("/chat/sessions")
+    public ResponseEntity<List<ChatSessionDTO>> getSessions() {
+        Long userId = profileService.getCurrentProfile().getId();
+        return ResponseEntity.ok(chatHistoryService.getSessionsByUserId(userId));
+    }
+
+    @GetMapping("/chat/sessions/{sessionId}/messages")
+    public ResponseEntity<List<Map<String, Object>>> getMessages(@PathVariable String sessionId) {
+        validateSessionId(sessionId);
+        Long userId = profileService.getCurrentProfile().getId();
+        return ResponseEntity.ok(chatHistoryService.getMessagesBySessionId(sessionId, userId));
+    }
+
+    @PutMapping("/chat/sessions/{sessionId}/rename")
+    public ResponseEntity<Map<String, Object>> renameSession(@PathVariable String sessionId, @RequestBody Map<String, String> body) {
+        validateSessionId(sessionId);
+        Long userId = profileService.getCurrentProfile().getId();
+        chatHistoryService.renameSession(sessionId, body.get("title"), userId);
+        return ResponseEntity.ok(Map.of("message", "Đã đổi tên cuộc trò chuyện"));
+    }
+
+    @DeleteMapping("/chat/sessions/{sessionId}")
+    public ResponseEntity<Map<String, Object>> deleteSession(@PathVariable String sessionId) {
+        validateSessionId(sessionId);
+        Long userId = profileService.getCurrentProfile().getId();
+        chatHistoryService.deleteSession(sessionId, userId);
+        return ResponseEntity.ok(Map.of("message", "Đã xoá cuộc trò chuyện"));
     }
 }
