@@ -55,9 +55,7 @@ const markdownComponents = {
 
 const modelLabelMap = {
   "gpt-oss-120b": "GPT-OSS",
-  "gemma4-31B": "Nova Lite",
   "gemini-3.1-flash-lite": "Gemini Flash",
-  "project-demo": "Nova Lite",
 };
 
 const AIActionBar = ({ onRetry, disabled, currentBranch, totalBranches, onPrevBranch, onNextBranch }) => (

@@ -6,7 +6,6 @@ import ChatWindow from "../components/ChatWindow.jsx";
 import { useUser } from "../hooks/useUser.jsx";
 import axiosConfig from "../util/axiosConfig.jsx";
 import { API_ENDPOINTS } from "../util/apiEndpoints.js";
-import ExperimentalWarningModal from "../components/ExperimentalWarningModal.jsx";
 import { parseIntentResponse, isCrudIntent, isActionIntent } from "../util/aiIntentParser.js";
 
 const AGENT_MODEL_OPTIONS = [
@@ -43,8 +42,6 @@ const AIChat = () => {
   // Model / provider state
   const [selectedProvider, setProvider] = useState("gptoss");
   const [agentModel, setAgentModel] = useState("gemini");
-  const [showExperimentalWarning, setShowExperimentalWarning] = useState(false);
-  const [pendingAgentModel, setPendingAgentModel] = useState(null);
 
   // Intent handling state
   const [isProcessingCrud, setIsProcessingCrud] = useState(false);
@@ -450,16 +447,6 @@ const AIChat = () => {
     setAgentModel(newModel);
   };
 
-  const confirmExperimentalModel = () => {
-    if (pendingAgentModel) { setAgentModel(pendingAgentModel); setPendingAgentModel(null); }
-    setShowExperimentalWarning(false);
-  };
-
-  const cancelExperimentalModel = () => {
-    setShowExperimentalWarning(false);
-    setPendingAgentModel(null);
-  };
-
   return (
     <div className="flex h-screen overflow-hidden bg-white dark:bg-[#131314] text-slate-800 dark:text-slate-200 transition-colors duration-300 relative">
       <div className="pointer-events-none absolute inset-0 dark:block hidden">
@@ -514,11 +501,6 @@ const AIChat = () => {
         isProcessingCrud={isProcessingCrud}
       />
 
-      <ExperimentalWarningModal
-        isOpen={showExperimentalWarning}
-        onConfirm={confirmExperimentalModel}
-        onCancel={cancelExperimentalModel}
-      />
     </div>
   );
 };

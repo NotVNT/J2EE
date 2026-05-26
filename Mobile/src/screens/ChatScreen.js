@@ -125,8 +125,8 @@ export default function ChatScreen() {
 
   // Mode and Provider state
   const [activeMode, setActiveMode] = useState("chat"); // "chat" | "agent"
-  const [chatModel, setChatModel] = useState("ninerouter"); // "ninerouter" | "gptoss"
-  const [agentModel, setAgentModel] = useState("ninerouter"); // "ninerouter" | "gemini"
+  const [chatModel, setChatModel] = useState("gptoss"); // "gptoss"
+  const [agentModel, setAgentModel] = useState("gemini"); // "gemini"
 
   const [messages, setMessages] = useState([
     {
@@ -142,32 +142,16 @@ export default function ChatScreen() {
   const [pendingIntent, setPendingIntent] = useState(null);
   const flatListRef = useRef(null);
 
-  // Sync state model defaults when user tier changes
   useEffect(() => {
-    if (isPremiumPlan) {
-      if (chatModel === "ninerouter" && agentModel === "ninerouter") {
-        setChatModel("gptoss");
-        setAgentModel("gemini");
-      }
-    } else {
-      setChatModel("ninerouter");
-      setAgentModel("ninerouter");
+    if (!isPremiumPlan) {
       setActiveMode("chat"); // Free/Basic default to chat
     }
   }, [user?.subscriptionPlan]);
 
   const getActiveParams = () => {
-    const activeProvider = activeMode === "agent"
-      ? (agentModel === "ninerouter" ? "ninerouter" : "gemini")
-      : (chatModel === "ninerouter" ? "ninerouter" : "gptoss");
-      
-    const activeModel = activeMode === "agent"
-      ? (agentModel === "ninerouter" ? "gemma4-31B" : "gemini-3.1-flash-lite")
-      : (chatModel === "ninerouter" ? "project-demo" : "gpt-oss-120b");
-
-    const activeModelLabel = activeMode === "agent"
-      ? (agentModel === "ninerouter" ? "Nova Lite" : "Gemini 3.1 Flash Lite")
-      : (chatModel === "ninerouter" ? "Nova Lite" : "GPT-OSS 120B");
+    const activeProvider = activeMode === "agent" ? "gemini" : "gptoss";
+    const activeModel = activeMode === "agent" ? "gemini-3.1-flash-lite" : "gpt-oss-120b";
+    const activeModelLabel = activeMode === "agent" ? "Gemini 3.1 Flash" : "GPT-OSS 120B";
 
     return { activeProvider, activeModel, activeModelLabel };
   };
@@ -433,36 +417,9 @@ export default function ChatScreen() {
   const handleModelChange = (model) => {
     if (activeMode === "chat") {
       if (model === chatModel) return;
-      if (!isPremiumPlan && model !== "ninerouter") return;
-
-      if (model === "ninerouter" && isPremiumPlan) {
-        Alert.alert(
-          "Kích hoạt mô hình thử nghiệm",
-          "Mô hình Nova Lite (Gemma 4) là phiên bản thử nghiệm có thể phản hồi không ổn định. Bạn có muốn sử dụng?",
-          [
-            { text: "Hủy", style: "cancel" },
-            { text: "Đồng ý", onPress: () => setChatModel(model) }
-          ]
-        );
-        return;
-      }
       setChatModel(model);
     } else {
-      // Agent mode
       if (model === agentModel) return;
-      if (!isPremiumPlan && model !== "ninerouter") return;
-
-      if (model === "ninerouter" && isPremiumPlan) {
-        Alert.alert(
-          "Kích hoạt mô hình thử nghiệm",
-          "Mô hình Nova Lite (Gemma 4) là phiên bản thử nghiệm cho Agent. Bạn có muốn tiếp tục?",
-          [
-            { text: "Hủy", style: "cancel" },
-            { text: "Đồng ý", onPress: () => setAgentModel(model) }
-          ]
-        );
-        return;
-      }
       setAgentModel(model);
     }
   };
@@ -506,52 +463,22 @@ export default function ChatScreen() {
         {activeMode === "chat" ? (
           <>
             <Pressable
-              style={[styles.selectorButton, chatModel === "ninerouter" && styles.selectorActive]}
-              onPress={() => handleModelChange("ninerouter")}
-            >
-              <Text style={[styles.selectorText, chatModel === "ninerouter" && styles.selectorActiveText]}>
-                ✨ Nova Lite
-              </Text>
-            </Pressable>
-            <Pressable
               style={[styles.selectorButton, chatModel === "gptoss" && styles.selectorActive]}
               onPress={() => handleModelChange("gptoss")}
-              disabled={!isPremiumPlan}
             >
-              <Text
-                style={[
-                  styles.selectorText,
-                  chatModel === "gptoss" && styles.selectorActiveText,
-                  !isPremiumPlan && styles.disabledText
-                ]}
-              >
-                {isPremiumPlan ? "🤖 GPT-OSS 120B" : "🔒 GPT-OSS 120B"}
+              <Text style={[styles.selectorText, chatModel === "gptoss" && styles.selectorActiveText]}>
+                🤖 GPT-OSS 120B
               </Text>
             </Pressable>
           </>
         ) : (
           <>
             <Pressable
-              style={[styles.selectorButton, agentModel === "ninerouter" && styles.selectorActive]}
-              onPress={() => handleModelChange("ninerouter")}
-            >
-              <Text style={[styles.selectorText, agentModel === "ninerouter" && styles.selectorActiveText]}>
-                ✨ Nova Lite
-              </Text>
-            </Pressable>
-            <Pressable
               style={[styles.selectorButton, agentModel === "gemini" && styles.selectorActive]}
               onPress={() => handleModelChange("gemini")}
-              disabled={!isPremiumPlan}
             >
-              <Text
-                style={[
-                  styles.selectorText,
-                  agentModel === "gemini" && styles.selectorActiveText,
-                  !isPremiumPlan && styles.disabledText
-                ]}
-              >
-                {isPremiumPlan ? "🤖 Gemini 3.1 Flash" : "🔒 Gemini 3.1 Flash"}
+              <Text style={[styles.selectorText, agentModel === "gemini" && styles.selectorActiveText]}>
+                🤖 Gemini 3.1 Flash
               </Text>
             </Pressable>
           </>

@@ -123,9 +123,9 @@ Nova Money là trợ lý AI tích hợp sẵn, có hai chế độ hoạt độn
 
 | Gói | Chat Model | Agent Model |
 |---|---|---|
-| FREE | ✨ Nova Lite (NineRouter) | ❌ Không có |
-| BASIC | ✨ Nova Lite (NineRouter) | ✨ Nova Lite (NineRouter) |
-| PREMIUM | GPT-OSS 120B, Nova Lite, Gemini | Gemini, Nova Lite |
+| FREE | Gemini | ❌ Không có |
+| BASIC | Gemini | Gemini |
+| PREMIUM | GPT-OSS 120B, Gemini | Gemini |
 
 ### AI Infrastructure
 
@@ -133,10 +133,9 @@ Nova Money là trợ lý AI tích hợp sẵn, có hai chế độ hoạt độn
 |---|---|---|---|
 | Google Gemini | gemini-3.1-flash-lite | Agent mode (intent parsing + execution) | PREMIUM |
 | OpenRouter | GPT-OSS 120B | Chat mode | PREMIUM |
-| NineRouter | Nova Lite (Gemma 4 31B) | Chat và Agent mặc định cho tất cả gói | Tất cả gói |
 
 **API Key Rotation (Redis cho Gemini)**  
-Google Gemini có một pool API key lưu trong Redis. Hệ thống theo dõi quota và trạng thái cooldown từng key. Khi một key vượt quota hoặc lỗi, tự động failover sang key tiếp theo. Các key tự phục hồi sau cooldown. Các provider khác (OpenRouter, NineRouter) sử dụng single key.
+Google Gemini có một pool API key lưu trong Redis. Hệ thống theo dõi quota và trạng thái cooldown từng key. Khi một key vượt quota hoặc lỗi, tự động failover sang key tiếp theo. Các key tự phục hồi sau cooldown. Provider khác (OpenRouter) sử dụng single key.
 
 ---
 
@@ -176,7 +175,7 @@ Conversation history: 20 tin nhắn cuối được gửi kèm làm context mỗ
 - **Floating Widget**: Nút góc phải dưới màn hình trên các trang khác. Có **Greeting bubble** hiện lên thông điệp hài hước sau 5 giây.
 - **Markdown rendering**: Hỗ trợ table, code block, list, blockquote.
 - **Pending Intent Guard**: Khi form xác nhận CRUD đang mở, block nhắn tin tiếp cho đến khi xử lý xong.
-- **Model Selector**: Cho phép người dùng PREMIUM linh hoạt chọn model (GPT-OSS, Nova Lite, Gemini).
+- **Model Selector**: Cho phép người dùng PREMIUM linh hoạt chọn model (GPT-OSS, Gemini).
 
 ---
 
