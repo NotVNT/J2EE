@@ -27,6 +27,7 @@ export default function AiInsightSheet({
   isPremium,
   onAnalyze,
   onRetry,
+  onConfirm,
 }) {
   const monthLabel = useMemo(() => {
     const selected = (availableMonths || []).find(
@@ -163,9 +164,14 @@ export default function AiInsightSheet({
                   </View>
                 ) : null}
 
-                <Pressable style={styles.reBtn} onPress={onRetry}>
-                  <Text style={styles.reBtnText}>🔄 Phân tích lại</Text>
-                </Pressable>
+                <View style={styles.actionRow}>
+                  <Pressable style={[styles.actionBtn, styles.reBtn]} onPress={onRetry}>
+                    <Text style={styles.reBtnText}>Phân tích lại</Text>
+                  </Pressable>
+                  <Pressable style={[styles.actionBtn, styles.confirmBtn]} onPress={onConfirm || onClose}>
+                    <Text style={styles.confirmBtnText}>Xác nhận</Text>
+                  </Pressable>
+                </View>
               </View>
             )}
           </ScrollView>
@@ -258,6 +264,10 @@ const styles = StyleSheet.create({
   narrativeTitle: { fontSize: 13, fontWeight: "700", color: COLORS.TEXT, marginBottom: 6 },
   narrativeText: { fontSize: 13, color: COLORS.TEXT_SECONDARY, lineHeight: 20 },
 
-  reBtn: { alignItems: "center", paddingVertical: 10, backgroundColor: COLORS.BG, borderRadius: 10, borderWidth: 1, borderColor: COLORS.CARD_BORDER },
+  actionRow: { flexDirection: "row", gap: 10 },
+  actionBtn: { flex: 1, alignItems: "center", justifyContent: "center", minHeight: 44, paddingVertical: 10, borderRadius: 10, borderWidth: 1 },
+  reBtn: { backgroundColor: COLORS.BG, borderColor: COLORS.CARD_BORDER },
   reBtnText: { fontSize: 13, color: COLORS.PRIMARY, fontWeight: "700" },
+  confirmBtn: { backgroundColor: COLORS.ROSE_MIST, borderColor: COLORS.CARD_BORDER },
+  confirmBtnText: { fontSize: 13, color: COLORS.PRIMARY, fontWeight: "700" },
 });

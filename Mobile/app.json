@@ -7,9 +7,9 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "jsEngine": "hermes",
-    "icon": "./src/assets/devbot_logo_app.png",
+    "icon": "./src/assets/applogo.png",
     "splash": {
-      "image": "./src/assets/devbot_logo_app.png",
+      "image": "./src/assets/loadingscreen.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -19,7 +19,7 @@
     "android": {
       "package": "com.money.manager.mobile",
       "adaptiveIcon": {
-        "foregroundImage": "./src/assets/devbot_logo_app.png",
+        "foregroundImage": "./src/assets/applogo.png",
         "backgroundColor": "#ffffff"
       },
       "permissions": [
@@ -28,7 +28,7 @@
     },
     "ios": {
       "bundleIdentifier": "com.money.manager.mobile",
-      "icon": "./src/assets/devbot_logo_app.png",
+      "icon": "./src/assets/applogo.png",
       "infoPlist": {
         "CFBundleURLTypes": [
           {

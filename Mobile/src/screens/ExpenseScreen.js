@@ -14,6 +14,7 @@ import { downloadAndShareFile } from "../utils/fileDownload";
 import { AuthContext } from "../components/AuthContext";
 import { analyzeReceipt } from "../services/receiptImportService";
 import ShowMoreButton, { useVisibleItems } from "../components/ShowMoreButton";
+import QuickExpenseTemplates from "../components/QuickExpenseTemplates";
 
 const FILTER_TYPES = {
   current: "current",
@@ -374,6 +375,8 @@ export default function ExpenseScreen() {
           </Text>
         </Pressable>
       </View>
+
+      <QuickExpenseTemplates onRefreshList={fetchExpenses} />
 
       {/* Search bar */}
       <View style={styles.searchBar}>

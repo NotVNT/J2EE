@@ -1,5 +1,3 @@
-// 🎨 Piggy Bank App — Rose Gold / Warm Pink Color Palette
-// Inspired by: https://dribbble.com/shots/20337752-Piggy-Bank-App-UI-Free-Figma-File
 
 export const COLORS = {
   // ─── Primary — Rose Gold / Pink ──────────────────────────
@@ -33,10 +31,12 @@ export const COLORS = {
   TEXT_MUTED: '#B8A6AC',
 
   // ─── Tab Bar ────────────────────────────────────────────
-  TAB_BG: '#1A0F14',
-  TAB_ACTIVE: '#E8597A',
-  TAB_INACTIVE: '#8B7B80',
-  TAB_BORDER: '#3D2430',
+  TAB_BG: '#F7F6F6',
+  TAB_ACTIVE: '#9C6B4E',
+  TAB_ACTIVE_BG: '#F2F1F1',
+  TAB_INACTIVE: '#B8A6AC',
+  TAB_BORDER: 'rgba(255, 255, 255, 0.8)',
+  TAB_SHADOW: 'rgba(0, 0, 0, 0.06)',
 
   // ─── Status Colors ──────────────────────────────────────
   INCOME: '#2A9D8F',
@@ -47,6 +47,19 @@ export const COLORS = {
   WARNING_LIGHT: '#FFF3E0',
   INFO: '#6B9BD2',
   INFO_LIGHT: '#E8F0FE',
+
+  // ─── Chat Bot UI ────────────────────────────────────────
+  CHAT_BG: '#FFF7FC',
+  CHAT_PURPLE: '#8B3DFF',
+  CHAT_PURPLE_DARK: '#6D22E8',
+  CHAT_PURPLE_LIGHT: '#F1E5FF',
+  CHAT_PURPLE_SOFT: '#F3E9FF',
+  CHAT_PINK: '#FF8BDD',
+  CHAT_BORDER: 'rgba(139, 61, 255, 0.16)',
+  CHAT_SHADOW: 'rgba(139, 61, 255, 0.18)',
+  CHAT_TEXT: '#14071F',
+  CHAT_MUTED: '#91859D',
+  CHAT_BUBBLE: '#FFFFFF',
 
   // ─── Utility ────────────────────────────────────────────
   WHITE: '#FFFFFF',

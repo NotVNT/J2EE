@@ -220,11 +220,6 @@ export default function IncomeScreen() {
             <Text style={styles.emptyText}>
               Hãy thêm khoản thu đầu tiên để theo dõi tài chính rõ ràng hơn.
             </Text>
-            <View style={styles.actionRowMain}>
-              <Pressable style={[styles.emptyAction, { flex: 1 }]} onPress={() => navigation.navigate("AddIncome")}>
-                <Text style={styles.emptyActionText}>+ Thêm thu nhập</Text>
-              </Pressable>
-            </View>
           </View>
         }
       />

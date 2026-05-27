@@ -1,6 +1,7 @@
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Dimensions,
   Modal,
   Pressable,
@@ -10,10 +11,11 @@ import {
   View,
 } from "react-native";
 import { BarChart, LineChart } from "react-native-chart-kit";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import { AuthContext } from "../components/AuthContext";
 import { COLORS } from "../constants/colors";
 import { formatMoney, formatDate } from "../utils/format";
+import { getAiForecastDraft } from "../features/ai-insight/services/forecastDraftCache";
 import {
   fetchMonthlyForecast,
   fetchAnomalies,
@@ -47,6 +49,33 @@ const CATEGORY_COLORS = [
 ];
 
 // ─── Chart Config ────────────────────────────────────────────
+function getRouteForecastMonth(params) {
+  const year = Number(params?.year);
+  const month = Number(params?.month);
+  if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) {
+    return null;
+  }
+  return { year, month };
+}
+
+function buildForecastFromDraft(draft) {
+  return {
+    year: draft.year,
+    month: draft.month,
+    categories: Array.isArray(draft.categories) ? draft.categories : [],
+  };
+}
+
+function buildInsightFromDraft(draft) {
+  if (!draft?.narrative) return null;
+  return {
+    narrative: draft.narrative,
+    generatedAt: draft.generatedAt,
+    year: draft.year,
+    month: draft.month,
+  };
+}
+
 const barChartConfig = {
   backgroundColor: COLORS.CARD,
   backgroundGradientFrom: COLORS.CARD,
@@ -162,14 +191,19 @@ function EmptyState({ message }) {
 // ─── Main Screen ─────────────────────────────────────────────
 
 export default function ForecastScreen() {
+  const route = useRoute();
   const { user } = useContext(AuthContext);
   const isPremium = String(user?.subscriptionPlan || "").toUpperCase() === "PREMIUM";
 
   const now = new Date();
   const currentMonth = now.getMonth() + 1; // 1-12
   const currentYear = now.getFullYear();
-  const [selectedMonth, setSelectedMonth] = useState(currentMonth);
-  const [selectedYear, setSelectedYear] = useState(currentYear);
+  const initialRouteForecast = getRouteForecastMonth(route.params);
+  const initialRouteForecastKey = initialRouteForecast
+    ? `${initialRouteForecast.year}-${initialRouteForecast.month}-${route.params?.draftSavedAt || ""}`
+    : "";
+  const [selectedMonth, setSelectedMonth] = useState(initialRouteForecast?.month || currentMonth);
+  const [selectedYear, setSelectedYear] = useState(initialRouteForecast?.year || currentYear);
   const [isMonthPickerVisible, setIsMonthPickerVisible] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState(null);
 
@@ -185,8 +219,26 @@ export default function ForecastScreen() {
   const anomalyRequestKeyRef = useRef("");
   const categoryTrendRequestKeyRef = useRef("");
   const insightRequestKeyRef = useRef("");
+  const appliedRouteForecastKeyRef = useRef(initialRouteForecastKey);
   const isCurrentMonthSelected =
     selectedMonth === currentMonth && selectedYear === currentYear;
+  const routeForecast = useMemo(
+    () => getRouteForecastMonth(route.params),
+    [route.params?.month, route.params?.year]
+  );
+  const routeForecastKey = routeForecast
+    ? `${routeForecast.year}-${routeForecast.month}-${route.params?.draftSavedAt || ""}`
+    : "";
+
+  useEffect(() => {
+    if (!routeForecast) return;
+    if (appliedRouteForecastKeyRef.current === routeForecastKey) return;
+
+    appliedRouteForecastKeyRef.current = routeForecastKey;
+    setSelectedMonth(routeForecast.month);
+    setSelectedYear(routeForecast.year);
+    setIsMonthPickerVisible(false);
+  }, [routeForecast, routeForecastKey]);
 
   // ── Fetch Monthly Forecast ──────────────────────────────────
   const loadMonthlyForecast = useCallback(async () => {
@@ -200,6 +252,17 @@ export default function ForecastScreen() {
     setCategoryTrend(null);
     setInsights(null);
     setInsightError(false);
+
+    const draft = getAiForecastDraft(selectedYear, selectedMonth);
+    if (draft) {
+      const forecast = buildForecastFromDraft(draft);
+      setMonthlyForecast(forecast);
+      setSelectedCategoryId(forecast.categories.length > 0 ? forecast.categories[0].categoryId : null);
+      setInsights(buildInsightFromDraft(draft));
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const data = await fetchMonthlyForecast(selectedYear, selectedMonth);
       if (forecastRequestKeyRef.current !== requestKey) return;
@@ -224,6 +287,13 @@ export default function ForecastScreen() {
     const requestKey = `${selectedYear}-${selectedMonth}`;
     anomalyRequestKeyRef.current = requestKey;
     setAnomalies([]);
+
+    const draft = getAiForecastDraft(selectedYear, selectedMonth);
+    if (draft) {
+      setAnomalies(Array.isArray(draft.anomalies) ? draft.anomalies : []);
+      return;
+    }
+
     try {
       const data = await fetchAnomalies(selectedYear, selectedMonth);
       if (anomalyRequestKeyRef.current !== requestKey) return;
@@ -282,6 +352,13 @@ export default function ForecastScreen() {
   }, [loadMonthlyForecast, loadAnomalies]);
 
   useEffect(() => {
+    const draft = getAiForecastDraft(selectedYear, selectedMonth);
+    if (draft) {
+      setInsights(buildInsightFromDraft(draft));
+      setInsightError(false);
+      return;
+    }
+
     if (
       monthlyForecast?.year === selectedYear &&
       monthlyForecast?.month === selectedMonth &&
@@ -343,7 +420,7 @@ export default function ForecastScreen() {
 
   const monthOptions = useMemo(() => {
     const options = [];
-    for (let offset = -6; offset <= 6; offset += 1) {
+    for (let offset = 0; offset <= 6; offset += 1) {
       const d = new Date(currentYear, currentMonth - 1 + offset, 1);
       options.push({
         month: d.getMonth() + 1,
@@ -403,11 +480,6 @@ export default function ForecastScreen() {
     setIsMonthPickerVisible(false);
   }, []);
 
-  const reloadSelectedForecastData = useCallback(() => {
-    loadMonthlyForecast();
-    loadAnomalies();
-  }, [loadMonthlyForecast, loadAnomalies]);
-
   // ── Paywall ────────────────────────────────────────────────
   if (!isPremium) {
     return <ForecastPaywall />;
@@ -424,20 +496,6 @@ export default function ForecastScreen() {
         {/* Header with month/year selector */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>🔮 Dự báo chi tiêu</Text>
-          <Pressable
-            style={({ pressed }) => [
-              styles.reloadButton,
-              pressed && styles.reloadButtonPressed,
-              isLoading && styles.reloadButtonDisabled,
-            ]}
-            onPress={reloadSelectedForecastData}
-            disabled={isLoading}
-            hitSlop={8}
-            accessibilityRole="button"
-            accessibilityLabel="Tai lai du lieu du bao"
-          >
-            <Text style={styles.reloadIcon}>{"\u27F3"}</Text>
-          </Pressable>
         </View>
 
         <View style={styles.monthPickerRow}>
@@ -573,7 +631,7 @@ export default function ForecastScreen() {
                     yAxisSuffix="đ"
                   />
                   <Text style={styles.trendNote}>
-                    📍 Đường biểu diễn: chi tiêu thực tế 6 tháng gần nhất
+                    Đường biểu diễn: chi tiêu thực tế 6 tháng gần nhất
                   </Text>
                 </View>
               ) : (
@@ -680,30 +738,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "800",
     color: COLORS.TEXT,
-  },
-  reloadButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "transparent",
-  },
-  reloadButtonPressed: {
-    opacity: 0.7,
-    transform: [{ scale: 0.96 }],
-  },
-  reloadButtonDisabled: {
-    opacity: 0.45,
-  },
-  reloadIcon: {
-    color: COLORS.PRIMARY,
-    fontSize: 24,
-    fontWeight: "800",
-    lineHeight: 24,
-    includeFontPadding: false,
-    textAlign: "center",
-    textAlignVertical: "center",
   },
   monthPickerRow: {
     alignItems: "center",
