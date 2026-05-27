@@ -1,7 +1,7 @@
 package com.example.moneymanager.service;
 
-import com.example.moneymanager.config.GeminiKeyRotator;
-import com.example.moneymanager.config.GeminiProperties;
+import com.example.moneymanager.config.GptOssProperties;
+import com.example.moneymanager.config.GptOssKeyRotator;
 import com.example.moneymanager.dto.ExpenseDTO;
 import com.example.moneymanager.dto.ExpenseResponseDTO;
 import com.example.moneymanager.dto.ReceiptImportAnalyzeResponseDTO;
@@ -12,12 +12,14 @@ import com.example.moneymanager.entity.CategoryEntity;
 import com.example.moneymanager.entity.ProfileEntity;
 import com.example.moneymanager.exception.ReceiptImportException;
 import com.example.moneymanager.repository.CategoryRepository;
+import com.example.moneymanager.util.OpenRouterResponseParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -39,9 +41,9 @@ public class ReceiptImportService {
     private static final String OTHER_CATEGORY_NAME = "Khác";
     private static final String OTHER_CATEGORY_ICON = "CircleHelp";
 
-    private final RestClient geminiRestClient;
-    private final GeminiProperties geminiProperties;
-    private final GeminiKeyRotator geminiKeyRotator;
+    private final RestClient gptOssRestClient;
+    private final GptOssProperties gptOssProperties;
+    private final GptOssKeyRotator gptOssKeyRotator;
     private final ObjectMapper objectMapper;
     private final ProfileService profileService;
     private final CategoryRepository categoryRepository;
@@ -80,10 +82,11 @@ public class ReceiptImportService {
         );
         CategoryEntity otherCategory = ensureOtherExpenseCategory(profile, expenseCategories);
 
-        JsonNode aiResult = analyzeReceiptWithGemini(file, fileBytes);
+        JsonNode aiResult = analyzeReceiptWithGptOss(file, fileBytes);
         return buildPreviewFromAiResult(aiResult, expenseCategories, otherCategory);
     }
 
+    @Transactional
     public ReceiptImportResponseDTO confirmImport(ReceiptImportConfirmRequestDTO requestDTO) {
         ProfileEntity profile = profileService.getCurrentProfile();
         subscriptionService.ensureCanImportReceipt(profile);
@@ -101,6 +104,11 @@ public class ReceiptImportService {
         );
         CategoryEntity otherCategory = ensureOtherExpenseCategory(profile, expenseCategories);
 
+        // Check subscription quota once upfront for the entire batch.
+        // Using addExpense() in a loop would re-check quota after each saved item,
+        // causing the 2nd+ items to fail when approaching the monthly limit.
+        subscriptionService.ensureCanCreateTransaction(profile, defaultDate);
+
         List<ExpenseDTO> importedExpenses = new ArrayList<>();
         for (ReceiptImportItemDTO item : requestDTO.getItems()) {
             if (item == null) {
@@ -113,13 +121,14 @@ public class ReceiptImportService {
                 continue;
             }
 
-                CategoryEntity matchedCategory = item.getCategoryId() != null
+            CategoryEntity matchedCategory = item.getCategoryId() != null
                     ? categoryRepository.findByIdAndProfileId(item.getCategoryId(), profile.getId())
                     .orElse(otherCategory)
                     : otherCategory;
 
             LocalDate transactionDate = item.getDate() != null ? item.getDate() : defaultDate;
-            ExpenseResponseDTO created = expenseService.addExpense(
+            // Use addExpenseInternal to bypass per-item subscription checks already done above
+            ExpenseResponseDTO created = expenseService.addExpenseInternal(
                     ExpenseDTO.builder()
                             .name(itemName)
                             .icon(item.getIcon() != null && !item.getIcon().isBlank() ? item.getIcon() : matchedCategory.getIcon())
@@ -128,7 +137,8 @@ public class ReceiptImportService {
                             .amount(amount)
                             .date(transactionDate)
                             .jarId(requestDTO.getJarId())
-                            .build()
+                            .build(),
+                    profile
             );
 
             importedExpenses.add(ExpenseDTO.builder()
@@ -260,49 +270,172 @@ public class ReceiptImportService {
         return true;
     }
 
-    private JsonNode analyzeReceiptWithGemini(MultipartFile file, byte[] fileBytes) {
+    private JsonNode analyzeReceiptWithGptOss(MultipartFile file, byte[] fileBytes) {
         try {
             String base64Image = Base64.getEncoder().encodeToString(fileBytes);
-            ObjectNode requestBody = buildGeminiImageRequest(base64Image, canonicalMimeType(fileBytes));
+            String apiKey = gptOssKeyRotator.nextKey();
+            String model = gptOssProperties.model();
+            String baseUrl = gptOssProperties.baseUrl();
 
-            String apiKey = geminiKeyRotator.nextKey();
-            String requestJson = objectMapper.writeValueAsString(requestBody);
-            String responseJson = geminiRestClient.post()
-                    .uri(uriBuilder -> uriBuilder
-                            .path("/v1beta/models/{model}:generateContent")
-                            .queryParam("key", apiKey)
-                            .build(geminiProperties.model()))
-                    .body(requestJson)
-                    .retrieve()
-                    .body(String.class);
+            boolean isGeminiDirect = baseUrl != null && baseUrl.contains("generativelanguage.googleapis.com");
 
-            if (responseJson == null || responseJson.isBlank()) {
-                throw new ReceiptImportException("Gemini không trả về dữ liệu để phân tích hóa đơn.");
+            if (isGeminiDirect) {
+                // 1. Build Gemini native body
+                ObjectNode requestBody = objectMapper.createObjectNode();
+                
+                // systemInstruction
+                ObjectNode sysInstructionNode = objectMapper.createObjectNode();
+                ArrayNode sysParts = objectMapper.createArrayNode();
+                ObjectNode sysPart = objectMapper.createObjectNode();
+                sysPart.put("text", "Bạn là hệ thống OCR tài chính cho ứng dụng Money Manager. Hãy đọc ảnh hóa đơn và chỉ trả về JSON hợp lệ theo đúng schema.");
+                sysParts.add(sysPart);
+                sysInstructionNode.set("parts", sysParts);
+                requestBody.set("systemInstruction", sysInstructionNode);
+
+                // contents
+                ArrayNode contents = objectMapper.createArrayNode();
+                ObjectNode contentNode = objectMapper.createObjectNode();
+                contentNode.put("role", "user");
+                ArrayNode parts = objectMapper.createArrayNode();
+
+                // text part
+                ObjectNode textPart = objectMapper.createObjectNode();
+                textPart.put("text", """
+                        Hãy đọc ảnh hóa đơn và chỉ trả về JSON hợp lệ theo đúng schema:
+                        {
+                          "merchant": "string",
+                          "location": "string" hoặc null,
+                          "receiptDate": "YYYY-MM-DD" hoặc null,
+                          "items": [
+                            {
+                              "name": "string",
+                              "amount": number,
+                              "categoryHint": "food|transport|shopping|utilities|health|education|entertainment|other"
+                            }
+                          ]
+                        }
+                        Quy tắc:
+                        - Không thêm markdown, không thêm ký tự thừa ngoài JSON.
+                        - BẮT BUỘC trích xuất tối đa số dòng sản phẩm có thể đọc được trong hóa đơn, không chỉ 1 dòng.
+                        - Với hóa đơn nhiều sản phẩm, trả về đầy đủ tất cả sản phẩm trong mảng items theo thứ tự xuất hiện.
+                        - Nếu có số lượng x đơn giá, hãy tính amount = số lượng * đơn giá cho từng sản phẩm.
+                        - Bỏ qua dòng tổng kết như tổng tiền, VAT, giảm giá nếu không phải mặt hàng mua cụ thể.
+                        - location là địa điểm/cửa hàng trên hóa đơn (địa chỉ hoặc tên chi nhánh). Nếu không rõ thì null.
+                        - Nếu thiếu ngày hóa đơn thì dùng null cho receiptDate.
+                        - Chỉ lấy item có amount > 0.
+                        """);
+                parts.add(textPart);
+
+                // inlineData part
+                ObjectNode inlineDataPart = objectMapper.createObjectNode();
+                ObjectNode inlineData = objectMapper.createObjectNode();
+                inlineData.put("mimeType", canonicalMimeType(fileBytes));
+                inlineData.put("data", base64Image);
+                inlineDataPart.set("inlineData", inlineData);
+                parts.add(inlineDataPart);
+
+                contentNode.set("parts", parts);
+                contents.add(contentNode);
+                requestBody.set("contents", contents);
+
+                // generationConfig
+                ObjectNode genConfig = objectMapper.createObjectNode();
+                genConfig.put("responseMimeType", "application/json");
+                requestBody.set("generationConfig", genConfig);
+
+                String requestJson = objectMapper.writeValueAsString(requestBody);
+                
+                String finalModel = model;
+                if (finalModel == null || finalModel.contains("gemma")) {
+                    finalModel = "gemini-3.1-flash-lite"; // Gemma models on Google Gemini API are text-only; fall back to multimodal gemini-3.1-flash-lite
+                }
+
+                String finalModelParam = finalModel;
+                String responseJson = gptOssRestClient.post()
+                        .uri(uriBuilder -> uriBuilder
+                                .path("/v1beta/models/{model}:generateContent")
+                                .queryParam("key", apiKey)
+                                .build(finalModelParam))
+                        .body(requestJson)
+                        .retrieve()
+                        .body(String.class);
+
+                if (responseJson == null || responseJson.isBlank()) {
+                    throw new ReceiptImportException("Gemini OCR không trả về dữ liệu.");
+                }
+
+                JsonNode root = objectMapper.readTree(responseJson);
+                String text = extractGeminiText(root);
+                if (text == null || text.isBlank()) {
+                    throw new ReceiptImportException("Gemini OCR không trả về kết quả phân tích hóa đơn.");
+                }
+
+                String cleanJson = sanitizeJsonResponse(text);
+                return objectMapper.readTree(cleanJson);
+
+            } else {
+                ObjectNode requestBody = buildGptOssOcrRequest(base64Image, canonicalMimeType(fileBytes));
+                String requestJson = objectMapper.writeValueAsString(requestBody);
+                String responseJson = gptOssRestClient.post()
+                        .uri("/chat/completions")
+                        .header("Authorization", "Bearer " + apiKey)
+                        .body(requestJson)
+                        .retrieve()
+                        .body(String.class);
+
+                if (responseJson == null || responseJson.isBlank()) {
+                    throw new ReceiptImportException("GPT-OSS OCR không trả về dữ liệu để phân tích hóa đơn.");
+                }
+
+                JsonNode root = objectMapper.readTree(responseJson);
+                String text = OpenRouterResponseParser.extractAssistantText(root);
+                if (text == null || text.isBlank()) {
+                    throw new ReceiptImportException("GPT-OSS OCR không trả về kết quả phân tích hóa đơn hợp lệ.");
+                }
+
+                String cleanJson = sanitizeJsonResponse(text);
+                return objectMapper.readTree(cleanJson);
             }
-
-            JsonNode root = objectMapper.readTree(responseJson);
-            String text = extractOutputText(root);
-            if (text == null || text.isBlank()) {
-                throw new ReceiptImportException("Gemini không trả về kết quả phân tích hóa đơn hợp lệ.");
-            }
-
-            String cleanJson = sanitizeJsonResponse(text);
-            return objectMapper.readTree(cleanJson);
         } catch (Exception exception) {
-            throw new ReceiptImportException("Không thể kết nối với Gemini để phân tích hóa đơn.", exception);
+            throw new ReceiptImportException("Không thể kết nối với OCR API để phân tích hóa đơn: " + exception.getMessage(), exception);
         }
     }
 
-    private ObjectNode buildGeminiImageRequest(String base64Image, String mimeType) {
-        ObjectNode requestBody = objectMapper.createObjectNode();
+    private String extractGeminiText(JsonNode responseBody) {
+        if (responseBody == null) return null;
+        JsonNode candidates = responseBody.get("candidates");
+        if (candidates == null || !candidates.isArray() || candidates.isEmpty()) return null;
+        StringBuilder builder = new StringBuilder();
+        for (JsonNode candidate : candidates) {
+            JsonNode content = candidate.get("content");
+            if (content == null) continue;
+            JsonNode parts = content.get("parts");
+            if (parts == null || !parts.isArray()) continue;
+            for (JsonNode part : parts) {
+                JsonNode textNode = part.get("text");
+                if (textNode != null && !textNode.isNull()) {
+                    if (!builder.isEmpty()) builder.append('\n');
+                    builder.append(textNode.asText());
+                }
+            }
+        }
+        return builder.toString().trim();
+    }
 
-        ArrayNode contents = objectMapper.createArrayNode();
+    private ObjectNode buildGptOssOcrRequest(String base64Image, String mimeType) {
+        ObjectNode requestBody = objectMapper.createObjectNode();
+        requestBody.put("model", gptOssProperties.model());
+        requestBody.put("stream", false);
+
+        ArrayNode messages = objectMapper.createArrayNode();
         ObjectNode userMessage = objectMapper.createObjectNode();
         userMessage.put("role", "user");
 
-        ArrayNode parts = objectMapper.createArrayNode();
-        ObjectNode promptPart = objectMapper.createObjectNode();
-        promptPart.put("text", """
+        ArrayNode content = objectMapper.createArrayNode();
+
+        ObjectNode textPart = objectMapper.createObjectNode();
+        textPart.put("type", "text");
+        textPart.put("text", """
                 Bạn là hệ thống OCR tài chính cho ứng dụng Money Manager.
                 Hãy đọc ảnh hóa đơn và chỉ trả về JSON hợp lệ theo đúng schema:
                 {
@@ -327,55 +460,21 @@ public class ReceiptImportService {
                 - Nếu thiếu ngày hóa đơn thì dùng null cho receiptDate.
                 - Chỉ lấy item có amount > 0.
                 """);
-        parts.add(promptPart);
+        content.add(textPart);
 
         ObjectNode imagePart = objectMapper.createObjectNode();
-        ObjectNode inlineData = objectMapper.createObjectNode();
-        inlineData.put("mime_type", mimeType != null ? mimeType : "image/jpeg");
-        inlineData.put("data", base64Image);
-        imagePart.set("inline_data", inlineData);
-        parts.add(imagePart);
+        imagePart.put("type", "image_url");
 
-        userMessage.set("parts", parts);
-        contents.add(userMessage);
-        requestBody.set("contents", contents);
+        ObjectNode imageUrl = objectMapper.createObjectNode();
+        imageUrl.put("url", "data:" + mimeType + ";base64," + base64Image);
+        imagePart.set("image_url", imageUrl);
+        content.add(imagePart);
 
-        ObjectNode generationConfig = objectMapper.createObjectNode();
-        generationConfig.put("temperature", 0.1);
-        generationConfig.put("maxOutputTokens", 2200);
-        requestBody.set("generationConfig", generationConfig);
+        userMessage.set("content", content);
+        messages.add(userMessage);
+        requestBody.set("messages", messages);
+
         return requestBody;
-    }
-
-    private String extractOutputText(JsonNode responseBody) {
-        if (responseBody == null) {
-            return null;
-        }
-
-        JsonNode candidates = responseBody.path("candidates");
-        if (!candidates.isArray() || candidates.isEmpty()) {
-            return null;
-        }
-
-        StringBuilder builder = new StringBuilder();
-        for (JsonNode candidate : candidates) {
-            JsonNode parts = candidate.path("content").path("parts");
-            if (!parts.isArray()) {
-                continue;
-            }
-
-            for (JsonNode part : parts) {
-                JsonNode text = part.get("text");
-                if (text != null && !text.isNull()) {
-                    if (!builder.isEmpty()) {
-                        builder.append('\n');
-                    }
-                    builder.append(text.asText());
-                }
-            }
-        }
-
-        return builder.toString().trim();
     }
 
     private String sanitizeJsonResponse(String rawText) {

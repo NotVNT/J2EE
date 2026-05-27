@@ -6,6 +6,7 @@ import { useState } from "react";
 const IncomeList = ({
     transactions,
     onDelete,
+    onEdit,
     onDownload,
     onEmail,
     disableExportActions = false,
@@ -103,6 +104,7 @@ const IncomeList = ({
                         amount={income.amount}
                         type="income"
                         onDelete={() => onDelete(income.id)}
+                        onEdit={() => onEdit(income)}
                     />
                 ))}
             </div>

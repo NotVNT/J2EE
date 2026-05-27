@@ -3,6 +3,7 @@ import { BASE_URL } from "./apiEndpoints.js";
 
 const axiosConfig = axios.create({
   baseURL: BASE_URL,
+  timeout: 30000,
   headers: {
     "Content-Type": "application/json;charset=UTF-8",
     Accept: "application/json"

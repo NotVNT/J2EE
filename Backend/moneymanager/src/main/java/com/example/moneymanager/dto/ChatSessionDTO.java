@@ -5,14 +5,13 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Map;
-
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class AIConfirmActionRequestDTO {
-    private String intent;
-    private String sessionId;
-    private Map<String, Object> extractedData;
+public class ChatSessionDTO {
+    private String id;
+    private String title;
+    private String createdAt;
+    private String updatedAt;
 }

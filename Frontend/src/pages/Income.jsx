@@ -8,6 +8,7 @@ import CustomSelect from "../components/CustomSelect.jsx";
 import IncomeList from "../components/IncomeList.jsx";
 import Modal from "../components/Modal.jsx";
 import AddIncomeForm from "../components/AddIncomeForm.jsx";
+import EditIncomeForm from "../components/EditIncomeForm.jsx";
 import DeleteAlert from "../components/DeleteAlert.jsx";
 import IncomeOverview from "../components/IncomeOverview.jsx";
 import { AppContext } from "../context/AppContext.jsx";
@@ -23,6 +24,8 @@ const Income = () => {
   const [filterType, setFilterType] = useState("current");
   const [selectedMonth, setSelectedMonth] = useState("");
   const [openAddIncomeModal, setOpenAddIncomeModal] = useState(false);
+  const [openEditIncomeModal, setOpenEditIncomeModal] = useState(false);
+  const [selectedIncome, setSelectedIncome] = useState(null);
   const [openDeleteAlert, setOpenDeleteAlert] = useState({ show: false, data: null });
 
   const exportUpgradeMessage = "Tính năng xuất báo cáo chỉ có từ gói Cơ Bản. Vui lòng nâng cấp để tiếp tục.";
@@ -79,6 +82,32 @@ const Income = () => {
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Thêm thu nhập thất bại");
+    }
+  };
+
+  const handleUpdateIncome = async (id, updatedData) => {
+    const { name, amount, date, icon, categoryId } = updatedData;
+    if (!name.trim()) { toast.error("Vui lòng nhập tên"); return; }
+    if (!amount || isNaN(amount) || Number(amount) <= 0) { toast.error("Số tiền phải lớn hơn 0"); return; }
+    if (!date) { toast.error("Vui lòng chọn ngày"); return; }
+    const today = new Date().toISOString().split("T")[0];
+    if (date > today) { toast.error("Ngày không được chọn ở tương lai."); return; }
+    if (!categoryId) { toast.error("Vui lòng chọn danh mục"); return; }
+    try {
+      const payload = { name, amount: Number(amount), date, icon, categoryId };
+      if (updatedData.allocations && updatedData.allocations.length > 0) {
+        payload.allocations = updatedData.allocations;
+      }
+      const response = await axiosConfig.put(API_ENDPOINTS.UPDATE_INCOME(id), payload);
+      if (response.status === 200) {
+        setOpenEditIncomeModal(false);
+        setSelectedIncome(null);
+        toast.success("Cập nhật thu nhập thành công");
+        fetchIncomeDetails();
+        fetchIncomeCategories();
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Cập nhật thu nhập thất bại");
     }
   };
 
@@ -181,6 +210,7 @@ const Income = () => {
         <IncomeList
           transactions={incomeData}
           onDelete={(id) => setOpenDeleteAlert({ show: true, data: id })}
+          onEdit={(income) => { setSelectedIncome(income); setOpenEditIncomeModal(true); }}
           onDownload={handleDownloadIncomeDetails}
           onEmail={handleEmailIncomeDetails}
           disableExportActions={exportLocked}
@@ -189,6 +219,16 @@ const Income = () => {
 
         <Modal isOpen={openAddIncomeModal} onClose={() => setOpenAddIncomeModal(false)} title="Thêm thu nhập">
           <AddIncomeForm onAddIncome={(income) => handleAddIncome(income)} categories={categories} />
+        </Modal>
+
+        <Modal isOpen={openEditIncomeModal} onClose={() => { setOpenEditIncomeModal(false); setSelectedIncome(null); }} title="Chỉnh sửa thu nhập">
+          {selectedIncome && (
+            <EditIncomeForm
+              onUpdateIncome={handleUpdateIncome}
+              categories={categories}
+              incomeData={selectedIncome}
+            />
+          )}
         </Modal>
 
         <Modal isOpen={openDeleteAlert.show} onClose={() => setOpenDeleteAlert({ show: false, data: null })} title="Xóa thu nhập">

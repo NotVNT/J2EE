@@ -294,6 +294,7 @@ public class ProfileService {
                 .subscriptionExpiresAt(profileEntity.getSubscriptionExpiresAt())
                 .autoRenew(profileEntity.getAutoRenew())
                 .categoryLimit(planFeatures.getCategoryLimit())
+                .jarLimit(planFeatures.getJarLimit())
                 .monthlyTransactionLimit(planFeatures.getMonthlyTransactionLimit())
                 .historyMonths(planFeatures.getHistoryMonths())
                 .canExportReports(planFeatures.isCanExportReports())

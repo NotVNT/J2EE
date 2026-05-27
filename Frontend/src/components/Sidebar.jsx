@@ -17,7 +17,9 @@ const Sidebar = ({ activeMenu, mobileOverlay = false }) => {
         onClick={() => navigate("/dashboard")}
         className="flex items-center gap-2.5 mb-7 px-1 cursor-pointer"
       >
-        <img src="/favicon.png" alt="Money Manager Logo" className="w-8 h-8 drop-shadow-md" />
+        <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center shrink-0 shadow-md">
+          <img src="/favicon.png" alt="Money Manager Logo" className="w-12 h-12 max-w-none object-cover scale-110" />
+        </div>
         <span className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">
           Money<span className="text-amber-500">Manager</span>
         </span>
@@ -39,8 +41,8 @@ const Sidebar = ({ activeMenu, mobileOverlay = false }) => {
             </div>
           )}
           {user?.subscriptionPlan === "PREMIUM" && (
-            <span className="absolute -bottom-1 -right-1 bg-amber-500 text-[8px] text-white px-1 py-0.5 rounded-full font-bold uppercase">
-              PRO
+            <span className="absolute -bottom-1 -right-1 bg-amber-500 text-[8px] text-white px-1 py-0.5 rounded-full font-extrabold uppercase tracking-wider shadow-sm">
+              PRE
             </span>
           )}
         </div>

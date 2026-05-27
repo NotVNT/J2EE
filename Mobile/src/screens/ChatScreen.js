@@ -37,8 +37,8 @@ export default function ChatScreen() {
 
   // Mode and Provider state
   const [activeMode, setActiveMode] = useState("chat"); // "chat" | "agent"
-  const [chatModel, setChatModel] = useState("ninerouter"); // "ninerouter" | "gptoss"
-  const [agentModel, setAgentModel] = useState("ninerouter"); // "ninerouter" | "gemini"
+  const [chatModel, setChatModel] = useState("gptoss"); // "gptoss"
+  const [agentModel, setAgentModel] = useState("gemini"); // "gemini"
 
   const [messages, setMessages] = useState([
     {
@@ -54,16 +54,8 @@ export default function ChatScreen() {
   const [pendingIntent, setPendingIntent] = useState(null);
   const flatListRef = useRef(null);
 
-  // Sync state model defaults when user tier changes
   useEffect(() => {
-    if (isPremiumPlan) {
-      if (chatModel === "ninerouter" && agentModel === "ninerouter") {
-        setChatModel("gptoss");
-        setAgentModel("gemini");
-      }
-    } else {
-      setChatModel("ninerouter");
-      setAgentModel("ninerouter");
+    if (!isPremiumPlan) {
       setActiveMode("chat"); // Free/Basic default to chat
     }
   }, [user?.subscriptionPlan]);
@@ -349,7 +341,6 @@ export default function ChatScreen() {
 
       setChatModel(model);
     } else {
-      // Agent mode
       if (model === agentModel) return;
       if (!isPremiumPlan && model !== "ninerouter") return;
 
@@ -443,6 +434,52 @@ export default function ChatScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Mode switcher tabs */}
+      <View style={styles.modeContainer}>
+        <Pressable
+          style={[styles.modeTab, activeMode === "chat" && styles.modeTabActive]}
+          onPress={() => handleModeSwitch("chat")}
+        >
+          <Text style={[styles.modeText, activeMode === "chat" && styles.modeTextActive]}>
+            💬 Chat
+          </Text>
+        </Pressable>
+        <Pressable
+          style={[styles.modeTab, activeMode === "agent" && styles.modeTabActive]}
+          onPress={() => handleModeSwitch("agent")}
+        >
+          <Text style={[styles.modeText, activeMode === "agent" && styles.modeTextActive]}>
+            🤖 Agent {isFreePlan && "🔒"}
+          </Text>
+        </Pressable>
+      </View>
+
+      {/* Model Selector Bar */}
+      <View style={styles.selectorContainer}>
+        {activeMode === "chat" ? (
+          <>
+            <Pressable
+              style={[styles.selectorButton, chatModel === "gptoss" && styles.selectorActive]}
+              onPress={() => handleModelChange("gptoss")}
+            >
+              <Text style={[styles.selectorText, chatModel === "gptoss" && styles.selectorActiveText]}>
+                🤖 GPT-OSS 120B
+              </Text>
+            </Pressable>
+          </>
+        ) : (
+          <>
+            <Pressable
+              style={[styles.selectorButton, agentModel === "gemini" && styles.selectorActive]}
+              onPress={() => handleModelChange("gemini")}
+            >
+              <Text style={[styles.selectorText, agentModel === "gemini" && styles.selectorActiveText]}>
+                🤖 Gemini 3.1 Flash
+              </Text>
+            </Pressable>
+          </>
+        )}
+      </View>
       <ModeSegmentedControl
         activeMode={activeMode}
         isFreePlan={isFreePlan}

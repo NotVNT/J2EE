@@ -1,4 +1,4 @@
-import { useMemo, useState, useContext } from "react";
+import { useMemo, useState, useContext, useEffect } from "react";
 import InfoCard from "./InfoCard";
 import CustomPieChart from "./CustomPieChart";
 import ReactMarkdown from "react-markdown";
@@ -80,7 +80,7 @@ const MonthlyReportCard = ({ report }) => {
 
     try {
       const response = await axiosConfig.post(API_ENDPOINTS.AI_CHAT, {
-        provider: "ninerouter",
+        provider: "gptoss",
         messages: [{ role: "user", content: prompt }],
       });
       setAiAnalysis(response.data?.reply || "Không thể tạo phân tích.");
@@ -92,6 +92,13 @@ const MonthlyReportCard = ({ report }) => {
       setIsAnalyzing(false);
     }
   };
+
+  useEffect(() => {
+    if (isPremium) {
+      analyzeWithAI();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [report.month, report.year, isPremium]);
 
   const spendingChangeInfo = useMemo(() => {
     if (report.spendingChangePercent === 0) return { icon: Minus, color: "text-slate-500", text: "Không đổi" };
@@ -361,7 +368,7 @@ const MonthlyReportCard = ({ report }) => {
           <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20">
             <Lock size={16} className="text-amber-500 shrink-0 mt-0.5" />
             <p className="text-sm text-amber-700 dark:text-amber-300">
-              Tính năng phân tích hành vi AI sử dụng model EXPERIMENTAL, chỉ khả dụng cho gói PREMIUM.
+              Tính năng phân tích hành vi AI chỉ khả dụng cho gói PREMIUM.
             </p>
           </div>
         ) : isAnalyzing ? (

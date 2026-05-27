@@ -49,7 +49,9 @@ const LandingPage = () => {
                     <div className="h-16 flex items-center justify-between">
                         {/* Logo */}
                         <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => scrollTo('hero')}>
-                            <img src="/favicon.png" alt="Money Manager Logo" className="w-8 h-8 drop-shadow-md" />
+                            <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center shrink-0 shadow-md">
+                                <img src="/favicon.png" alt="Money Manager Logo" className="w-12 h-12 max-w-none object-cover scale-110" />
+                            </div>
                             <span className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
                                 Money<span className="text-amber-500">Manager</span>
                             </span>
@@ -211,7 +213,7 @@ const LandingPage = () => {
                                     </div>
                                     <div>
                                         <p className="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest mb-1">Thu Nhập Tháng</p>
-                                        <p className="text-2xl font-black text-slate-900 dark:text-white">+85,5Mđ</p>
+                                        <p className="text-2xl font-black text-slate-900 dark:text-white">+85.500.000 VND</p>
                                     </div>
                                 </div>
                             </div>
@@ -227,7 +229,7 @@ const LandingPage = () => {
                                             <p className="font-bold text-slate-900 dark:text-white">Siêu thị Lotte</p>
                                             <p className="text-xs text-slate-500">Hôm qua</p>
                                         </div>
-                                        <span className="font-black text-slate-900 dark:text-white">-1.200K</span>
+                                        <span className="font-black text-slate-900 dark:text-white">-1.200.000 VND</span>
                                     </div>
                                     <div className="flex items-center gap-4 text-sm">
                                         <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-500/20 flex items-center justify-center text-xl">💼</div>
@@ -235,7 +237,7 @@ const LandingPage = () => {
                                             <p className="font-bold text-slate-900 dark:text-white">Lương Tháng</p>
                                             <p className="text-xs text-slate-500">25 Thg 5</p>
                                         </div>
-                                        <span className="font-black text-emerald-600 dark:text-emerald-400">+45.000K</span>
+                                        <span className="font-black text-emerald-600 dark:text-emerald-400">+45.000.000 VND</span>
                                     </div>
                                 </div>
                             </div>
@@ -371,65 +373,90 @@ const LandingPage = () => {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto items-center">
                         
-                        {/* Free */}
-                        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[2.5rem] p-8 lg:p-10 hover:border-slate-300 dark:hover:border-white/20 transition">
-                            <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Cơ Bản</h3>
-                            <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-6">Trải nghiệm ban đầu</p>
-                            <div className="flex items-baseline gap-1 mb-8 pb-8 border-b border-slate-100 dark:border-white/10">
-                                <span className="text-5xl font-black text-slate-900 dark:text-white">0đ</span>
-                                <span className="text-slate-500 font-medium">/tháng</span>
+                        {/* Gói Free */}
+                        <div className="bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-[2.5rem] p-8 lg:p-10 shadow-xl transition transform hover:-translate-y-1">
+                            <div className="flex justify-between items-start mb-6">
+                                <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
+                                    <Wallet size={24} className="text-slate-600 dark:text-slate-300" />
+                                </div>
+                            </div>
+                            <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Gói Miễn Phí</h3>
+                            <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-6">Trải nghiệm các tính năng cốt lõi</p>
+                            <div className="flex items-baseline gap-2 mb-8 pb-8 border-b border-slate-100 dark:border-slate-700/50">
+                                <span className="text-5xl font-black text-slate-900 dark:text-white">0</span>
+                                <span className="text-slate-500 font-bold text-xl">VND</span>
                             </div>
                             <ul className="space-y-4 mb-10">
-                                {['Tối đa 2 Ví điện tử', 'Quản lý thu chi cơ bản', 'Báo cáo hàng tháng'].map((f, i) => (
-                                    <li key={i} className="flex items-center gap-3 text-slate-700 dark:text-slate-300 font-medium">
-                                        <Check size={20} className="text-emerald-500" /> {f}
+                                {['10 Danh mục & 1 Hũ chi tiêu', 'Tối đa 100 giao dịch/tháng', 'Lịch sử giao dịch 3 tháng', 'Trò chuyện AI (Nova Chat)'].map((f, i) => (
+                                    <li key={i} className="flex items-start gap-3 text-slate-700 dark:text-slate-300 font-medium">
+                                        <div className="w-5 h-5 rounded-full border-2 border-slate-300 dark:border-slate-500 flex items-center justify-center shrink-0 mt-0.5">
+                                            <Check size={12} className="text-slate-400 dark:text-slate-300" strokeWidth={3} />
+                                        </div>
+                                        <span>{f}</span>
                                     </li>
                                 ))}
                             </ul>
-                            <button onClick={() => navigate('/signup')} className="w-full py-4 rounded-2xl font-bold bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-900 dark:text-white transition-colors">
+                            <button onClick={() => navigate('/signup')} className="w-full py-4 rounded-2xl font-bold bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-900 dark:text-white transition-colors">
                                 Dùng Miễn Phí
                             </button>
                         </div>
 
-                        {/* Basic (Highlighted) */}
-                        <div className="relative bg-gradient-to-b from-slate-900 to-slate-800 dark:from-violet-900/40 dark:to-[#0F172A] rounded-[2.5rem] p-8 lg:p-10 border border-slate-700 dark:border-violet-500/30 shadow-2xl shadow-slate-900/50 dark:shadow-violet-900/50 scale-[1.05] z-10">
-                            <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-6 py-1.5 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 text-white text-xs font-black uppercase tracking-widest shadow-lg">
-                                Phổ Biến Nhất
+                        {/* Gói Cơ Bản */}
+                        <div className="bg-[#8b5cf6] rounded-[2.5rem] p-8 lg:p-10 shadow-2xl shadow-violet-900/30 transition transform hover:-translate-y-1 scale-105 z-10 relative">
+                            <div className="flex justify-between items-start mb-6">
+                                <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
+                                    <ShieldCheck size={24} className="text-white" />
+                                </div>
+                                <span className="px-4 py-1.5 rounded-full bg-white/20 text-white text-xs font-bold">Phổ biến</span>
                             </div>
-                            <h3 className="text-2xl font-bold text-white mb-2 mt-4">Basic</h3>
-                            <p className="text-slate-400 text-sm font-medium mb-6">Mở khóa sức mạnh quản lý</p>
-                            <div className="flex items-baseline gap-1 mb-8 pb-8 border-b border-slate-700 dark:border-white/10">
-                                <span className="text-5xl font-black text-white">50k</span>
-                                <span className="text-slate-400 font-medium">/tháng</span>
+                            <h3 className="text-2xl font-bold text-white mb-2">Gói Cơ Bản</h3>
+                            <p className="text-white/90 text-sm font-medium mb-6">Theo dõi giao dịch hằng ngày</p>
+                            <div className="flex items-baseline gap-2 mb-8 pb-8 border-b border-white/20">
+                                <span className="text-5xl font-black text-white">2.000</span>
+                                <span className="text-white font-bold text-xl">VND</span>
                             </div>
                             <ul className="space-y-4 mb-10">
-                                {['Không giới hạn Ví', 'Báo cáo chi tiết nâng cao', 'Tính năng phân tích AI', 'Quản lý Nợ & Cho vay'].map((f, i) => (
-                                    <li key={i} className="flex items-center gap-3 text-slate-200 font-medium">
-                                        <Check size={20} className="text-amber-400" /> {f}
+                                {['Theo dõi giao dịch hằng ngày', 'Phân tích tài chính cơ bản bằng AI', 'Báo cáo thu chi hàng tháng', 'Nhắc nhở thanh toán định kỳ'].map((f, i) => (
+                                    <li key={i} className="flex items-start gap-3 text-white font-medium">
+                                        <div className="w-5 h-5 rounded-full border-2 border-white/50 flex items-center justify-center shrink-0 mt-0.5">
+                                            <Check size={12} className="text-white" strokeWidth={3} />
+                                        </div>
+                                        <span>{f}</span>
                                     </li>
                                 ))}
                             </ul>
-                            <button onClick={() => navigate('/signup')} className="w-full py-4 rounded-2xl font-bold bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white shadow-lg shadow-amber-500/25 transition transform-gpu hover:scale-[1.02]">
-                                Nâng Cấp Basic
+                            <button onClick={() => navigate('/signup')} className="w-full py-4 rounded-2xl font-bold bg-white text-[#8b5cf6] hover:bg-slate-50 transition-colors shadow-lg">
+                                Bắt Đầu Gói Cơ Bản
                             </button>
                         </div>
 
-                        {/* Premium */}
-                        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[2.5rem] p-8 lg:p-10 hover:border-slate-300 dark:hover:border-white/20 transition">
-                            <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Premium</h3>
-                            <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-6">Tự do tài chính tuyệt đối</p>
-                            <div className="flex items-baseline gap-1 mb-8 pb-8 border-b border-slate-100 dark:border-white/10">
-                                <span className="text-5xl font-black text-slate-900 dark:text-white">150k</span>
-                                <span className="text-slate-500 font-medium">/tháng</span>
+                        {/* Gói Premium */}
+                        <div className="bg-[#1a202c] rounded-[2.5rem] p-8 lg:p-10 border border-slate-700 hover:border-slate-600 shadow-xl transition transform hover:-translate-y-1">
+                            <div className="flex justify-between items-start mb-6">
+                                <div className="w-12 h-12 rounded-xl bg-[#8b5cf6] flex items-center justify-center">
+                                    <Sparkles size={24} className="text-white" />
+                                </div>
+                                <div className="flex gap-2">
+                                    <span className="px-4 py-1.5 rounded-full bg-amber-500/10 text-amber-500 text-xs font-bold">Nâng cao</span>
+                                </div>
+                            </div>
+                            <h3 className="text-2xl font-bold text-white mb-2">Gói Premium</h3>
+                            <p className="text-slate-400 text-sm font-medium mb-6">Không giới hạn lịch sử giao dịch</p>
+                            <div className="flex items-baseline gap-2 mb-8 pb-8 border-b border-slate-700/50">
+                                <span className="text-5xl font-black text-white">299.000</span>
+                                <span className="text-white font-bold text-xl">VND</span>
                             </div>
                             <ul className="space-y-4 mb-10">
-                                {['Tất cả tính năng Basic', 'Nhóm gia đình (5 người)', 'Tư vấn AI cá nhân hóa', 'Bảo hiểm giao dịch'].map((f, i) => (
-                                    <li key={i} className="flex items-center gap-3 text-slate-700 dark:text-slate-300 font-medium">
-                                        <Check size={20} className="text-emerald-500" /> {f}
+                                {['Không giới hạn lịch sử giao dịch', 'Phân tích tài chính chuyên sâu bằng AI', 'Import hóa đơn bằng ảnh tự động', 'Xuất báo cáo Excel & PDF', 'Ưu tiên hỗ trợ kỹ thuật'].map((f, i) => (
+                                    <li key={i} className="flex items-start gap-3 text-slate-200 font-medium">
+                                        <div className="w-5 h-5 rounded-full border-2 border-emerald-500/50 flex items-center justify-center shrink-0 mt-0.5">
+                                            <Check size={12} className="text-emerald-500" strokeWidth={3} />
+                                        </div>
+                                        <span>{f}</span>
                                     </li>
                                 ))}
                             </ul>
-                            <button onClick={() => navigate('/signup')} className="w-full py-4 rounded-2xl font-bold bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-900 dark:text-white transition-colors">
+                            <button onClick={() => navigate('/signup')} className="w-full py-4 rounded-2xl font-bold bg-slate-800 hover:bg-slate-700 text-white transition-colors border border-slate-700">
                                 Nâng Cấp Premium
                             </button>
                         </div>
@@ -474,7 +501,9 @@ const LandingPage = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
                         <div className="lg:col-span-2">
                             <div className="flex items-center gap-2 mb-6 cursor-pointer" onClick={() => scrollTo('hero')}>
-                                <img src="/favicon.png" alt="Money Manager Logo" className="w-8 h-8" />
+                                <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center shrink-0 shadow-md">
+                                    <img src="/favicon.png" alt="Money Manager Logo" className="w-12 h-12 max-w-none object-cover scale-110" />
+                                </div>
                                 <span className="text-xl font-bold text-slate-900 dark:text-white">
                                     Money<span className="text-amber-500">Manager</span>
                                 </span>

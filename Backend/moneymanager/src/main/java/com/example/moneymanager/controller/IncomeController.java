@@ -36,6 +36,16 @@ public class IncomeController {
         return ResponseEntity.ok(incomes);
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateIncome(@PathVariable Long id, @RequestBody IncomeDTO dto) {
+        try {
+            IncomeDTO updated = incomeService.updateIncome(id, dto);
+            return ResponseEntity.ok(updated);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", e.getMessage()));
+        }
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteIncome(@PathVariable Long id) {
         incomeService.deleteIncome(id);

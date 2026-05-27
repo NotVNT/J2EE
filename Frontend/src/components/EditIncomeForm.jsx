@@ -2,7 +2,7 @@ import {useEffect, useState} from "react";
 import EmojiPickerPopup from "./EmojiPickerPopup.jsx";
 import Input from "./Input.jsx";
 import {LoaderCircle, ChevronDown, ChevronUp} from "lucide-react";
-import { formatCurrency, parseCurrency } from "../util/helper.js";
+import { formatCurrency } from "../util/helper.js";
 import axiosConfig from "../util/axiosConfig.jsx";
 import { API_ENDPOINTS } from "../util/apiEndpoints.js";
 import { hasDisplayImage } from "../util/imageDisplay.js";
@@ -10,18 +10,19 @@ import { hasDisplayImage } from "../util/imageDisplay.js";
 const fmt = (n) =>
   new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(n ?? 0);
 
-const AddIncomeForm = ({onAddIncome, categories}) => {
+const EditIncomeForm = ({onUpdateIncome, categories, incomeData}) => {
     const [income, setIncome] = useState({
-        name: '',
-        amount: '',
-        date: '',
-        icon: '',
-        categoryId: ''
-    })
+        name: incomeData.name || '',
+        amount: String(incomeData.amount || ''),
+        date: incomeData.date || '',
+        icon: incomeData.icon || '',
+        categoryId: incomeData.categoryId || ''
+    });
     const [loading, setLoading] = useState(false);
     const [jars, setJars] = useState([]);
     const [allocations, setAllocations] = useState([]);
     const [showAllocations, setShowAllocations] = useState(true);
+    const [isAmountChanged, setIsAmountChanged] = useState(false);
 
     useEffect(() => {
         axiosConfig.get(API_ENDPOINTS.GET_JARS)
@@ -33,23 +34,41 @@ const AddIncomeForm = ({onAddIncome, categories}) => {
             .catch(() => {});
     }, []);
 
+    useEffect(() => {
+        if (jars.length > 0 && incomeData.allocations && incomeData.allocations.length > 0) {
+            const existingAllocations = incomeData.allocations;
+            const allocs = jars.map((jar) => {
+                const existing = existingAllocations.find(a => a.jarId === jar.id);
+                return {
+                    jarId: jar.id,
+                    jarName: jar.name,
+                    jarIcon: jar.icon,
+                    jarColor: jar.color,
+                    amount: existing ? Number(existing.amount) : 0,
+                    percentage: jar.targetPercentage ?? 0
+                };
+            });
+            setAllocations(allocs);
+        }
+    }, [jars, incomeData.allocations]);
+
     const categoryOptions = categories.map(category => ({
         value: category.id,
         label: category.name
-    }))
+    }));
 
     const handleChange = (key, value) => {
         setIncome({...income, [key]: value});
-    }
+    };
 
     const handleAmountChange = (e) => {
         const rawValue = e.target.value.replace(/\D/g, "");
         handleChange("amount", rawValue);
+        setIsAmountChanged(true);
     };
 
-    // Auto-calculate allocations when amount or jars change
     useEffect(() => {
-        if (jars.length > 0 && income.amount) {
+        if (isAmountChanged && jars.length > 0 && income.amount) {
             const total = Number(income.amount);
             if (total > 0) {
                 let remaining = total;
@@ -57,7 +76,7 @@ const AddIncomeForm = ({onAddIncome, categories}) => {
                     const pct = jar.targetPercentage ?? 0;
                     let amt;
                     if (index === jars.length - 1) {
-                        amt = remaining; // last jar gets the remainder
+                        amt = remaining;
                     } else {
                         amt = Math.round(total * pct / 100);
                         remaining -= amt;
@@ -69,7 +88,7 @@ const AddIncomeForm = ({onAddIncome, categories}) => {
                 setAllocations([]);
             }
         }
-    }, [income.amount, jars]);
+    }, [income.amount, jars, isAmountChanged]);
 
     const handleAllocationAmountChange = (index, rawValue) => {
         const newAmount = Number(rawValue) || 0;
@@ -78,19 +97,16 @@ const AddIncomeForm = ({onAddIncome, categories}) => {
         const newAllocs = [...allocations];
         newAllocs[index] = { ...newAllocs[index], amount: newAmount };
 
-        // Tự động điều chỉnh các hũ khác để tổng luôn bằng số tiền thu nhập
         if (diff !== 0 && newAllocs.length > 1) {
             for (let i = 0; i < newAllocs.length; i++) {
                 if (i !== index && diff !== 0) {
                     let currentOtherAmount = newAllocs[i].amount;
                     if (diff > 0) {
-                        // Nếu tăng số tiền hũ này -> phải trừ hũ khác (không cho âm)
                         const subtractAmount = Math.min(currentOtherAmount, diff);
                         newAllocs[i].amount -= subtractAmount;
                         diff -= subtractAmount;
                     } else {
-                        // Nếu giảm số tiền hũ này -> cộng số dư thừa vào hũ khác đầu tiên tìm thấy
-                        newAllocs[i].amount -= diff; // diff đang âm nên -= là cộng thêm
+                        newAllocs[i].amount -= diff;
                         diff = 0;
                     }
                 }
@@ -100,7 +116,7 @@ const AddIncomeForm = ({onAddIncome, categories}) => {
         setAllocations(newAllocs);
     };
 
-    const handleAddIncome = async () => {
+    const handleUpdateIncome = async () => {
         setLoading(true);
         try {
             const payload = { ...income };
@@ -109,15 +125,15 @@ const AddIncomeForm = ({onAddIncome, categories}) => {
                     .filter((a) => a.amount > 0)
                     .map((a) => ({ jarId: a.jarId, amount: a.amount }));
             }
-            await onAddIncome(payload);
+            await onUpdateIncome(incomeData.id, payload);
         } finally {
             setLoading(false);
         }
-    }
+    };
 
     useEffect(() => {
         if (categories.length > 0 && !income.categoryId) {
-            setIncome((prev) => ({...prev, categoryId: categories[0].id}))
+            setIncome((prev) => ({...prev, categoryId: categories[0].id}));
         }
     }, [categories, income.categoryId]);
 
@@ -165,7 +181,6 @@ const AddIncomeForm = ({onAddIncome, categories}) => {
                 type="date"
             />
 
-            {/* Jar Allocation Section */}
             {jars.length > 0 && incomeAmount > 0 && (
                 <div className="mt-4">
                     <button
@@ -233,19 +248,19 @@ const AddIncomeForm = ({onAddIncome, categories}) => {
 
             <div className="flex justify-end mt-6">
                 <button
-                    onClick={handleAddIncome}
+                    onClick={handleUpdateIncome}
                     disabled={loading}
                     className="add-btn add-btn-fill">
                     {loading ? (
                         <>
-                            <LoaderCircle className="w-4 h-4 animate-spin"/>Đang thêm...</>
+                            <LoaderCircle className="w-4 h-4 animate-spin"/>Đang cập nhật...</>
                     ): (
-                        <>Thêm thu nhập</>
+                        <>Cập nhật thu nhập</>
                     )}
                 </button>
             </div>
         </div>
-    )
-}
+    );
+};
 
-export default AddIncomeForm;
+export default EditIncomeForm;

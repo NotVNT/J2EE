@@ -4,9 +4,11 @@ import com.example.moneymanager.dto.SubscriptionPlanConfigDTO;
 import com.example.moneymanager.entity.ProfileEntity;
 import com.example.moneymanager.entity.SubscriptionPlan;
 import com.example.moneymanager.entity.SubscriptionStatus;
+import com.example.moneymanager.exception.ForbiddenException;
 import com.example.moneymanager.repository.CategoryRepository;
 import com.example.moneymanager.repository.ExpenseRepository;
 import com.example.moneymanager.repository.IncomeRepository;
+import com.example.moneymanager.repository.JarRepository;
 import com.example.moneymanager.repository.ProfileRepository;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +25,7 @@ public class SubscriptionService {
     private final CategoryRepository categoryRepository;
     private final IncomeRepository incomeRepository;
     private final ExpenseRepository expenseRepository;
+    private final JarRepository jarRepository;
     private final SubscriptionPlanConfigService planConfigService;
 
     public SubscriptionService(
@@ -30,14 +33,23 @@ public class SubscriptionService {
             CategoryRepository categoryRepository,
             IncomeRepository incomeRepository,
             ExpenseRepository expenseRepository,
+            JarRepository jarRepository,
             @Lazy SubscriptionPlanConfigService planConfigService) {
         this.profileRepository = profileRepository;
         this.categoryRepository = categoryRepository;
         this.incomeRepository = incomeRepository;
         this.expenseRepository = expenseRepository;
+        this.jarRepository = jarRepository;
         this.planConfigService = planConfigService;
     }
 
+    // TODO(refactor): getPlanFeatures() calls refreshSubscriptionIfExpired() which may invoke
+    // profileRepository.save() — a DB write — inside a method that callers treat as read-only.
+    // Every ensureCanCreate* call and every GET /profile currently triggers this implicit write.
+    // The proper fix is to separate expiry refresh into an explicit step called only before
+    // write operations or on login/token refresh, then mark getPlanFeatures @Transactional(readOnly=true).
+    // Deferred because all existing callers rely on the implicit refresh; separating them requires
+    // auditing each call site to ensure expiry is still checked at the right moment.
     public PlanFeatures getPlanFeatures(ProfileEntity profile) {
         refreshSubscriptionIfExpired(profile);
 
@@ -46,9 +58,9 @@ public class SubscriptionService {
                 : SubscriptionPlan.FREE;
 
         return switch (effectivePlan) {
-            case BASIC -> new PlanFeatures(SubscriptionPlan.BASIC, 30, 1000, 12, true, true, true, false, true);
-            case PREMIUM -> new PlanFeatures(SubscriptionPlan.PREMIUM, -1, -1, -1, true, true, true, true, true);
-            case FREE -> new PlanFeatures(SubscriptionPlan.FREE, 10, 100, 3, false, false, false, false, false);
+            case BASIC    -> new PlanFeatures(SubscriptionPlan.BASIC,    30, 20, 1000, 12, true,  true,  true,  false, true);
+            case PREMIUM  -> new PlanFeatures(SubscriptionPlan.PREMIUM,  -1, -1,   -1, -1, true,  true,  true,  true,  true);
+            case FREE     -> new PlanFeatures(SubscriptionPlan.FREE,     10, 10,  100,  3, false, false, false, false, false);
         };
     }
 
@@ -102,6 +114,23 @@ public class SubscriptionService {
         long currentCategories = categoryRepository.countByProfileId(profile.getId());
         if (currentCategories >= features.categoryLimit) {
             throw new RuntimeException("Bạn đã đạt đến giới hạn danh mục của gói hiện tại. Vui lòng nâng cấp để thêm nhiều danh mục hơn.");
+        }
+    }
+
+    @Transactional
+    public void ensureCanCreateJar(ProfileEntity profile) {
+        PlanFeatures features = getPlanFeatures(profile);
+        if (features.jarLimit < 0) {
+            return;
+        }
+        // Lock the profile row first to serialize all concurrent jar-creation attempts
+        // for the same user, even when the jar table has no rows yet to lock directly.
+        // Then count user-owned jars (excluding "Ví tổng" system jar) under that lock.
+        profileRepository.findByIdForUpdate(profile.getId())
+                .orElseThrow(() -> new RuntimeException("Profile not found"));
+        long currentJarCount = jarRepository.countByProfileIdExcludingNameForUpdate(profile.getId(), "Ví tổng");
+        if (currentJarCount >= features.jarLimit) {
+            throw new ForbiddenException("Bạn đã đạt đến giới hạn " + features.jarLimit + " hũ của gói hiện tại. Vui lòng nâng cấp để thêm nhiều hũ hơn.");
         }
     }
 
@@ -200,6 +229,7 @@ public class SubscriptionService {
     public static class PlanFeatures {
         private final SubscriptionPlan plan;
         private final int categoryLimit;
+        private final int jarLimit;
         private final int monthlyTransactionLimit;
         private final int historyMonths;
         private final boolean canExportReports;
@@ -211,6 +241,7 @@ public class SubscriptionService {
         public PlanFeatures(
                 SubscriptionPlan plan,
                 int categoryLimit,
+                int jarLimit,
                 int monthlyTransactionLimit,
                 int historyMonths,
                 boolean canExportReports,
@@ -221,6 +252,7 @@ public class SubscriptionService {
         ) {
             this.plan = plan;
             this.categoryLimit = categoryLimit;
+            this.jarLimit = jarLimit;
             this.monthlyTransactionLimit = monthlyTransactionLimit;
             this.historyMonths = historyMonths;
             this.canExportReports = canExportReports;

@@ -42,8 +42,12 @@ public class RedisConfig {
                         .build())
                 .build();
 
-        log.info("Redis configured: {}:{} (connect timeout: 2s)", redisHost, redisPort);
-        return new LettuceConnectionFactory(serverConfig, clientConfig);
+        LettuceConnectionFactory factory = new LettuceConnectionFactory(serverConfig, clientConfig);
+        // Không validate connection lúc startup — tránh crash khi Redis không available
+        factory.setValidateConnection(false);
+        factory.setEagerInitialization(false);
+        log.info("Redis configured: {}:{} (connect timeout: 2s, lazy connection)", redisHost, redisPort);
+        return factory;
     }
 
     @Bean
