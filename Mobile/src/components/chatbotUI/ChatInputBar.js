@@ -2,7 +2,9 @@ import React from "react";
 import { StyleSheet, Text, View, TextInput, Pressable, Platform } from "react-native";
 import { COLORS } from "../../constants/colors";
 
-export default function ChatInputBar({ value, onChangeText, onSend, placeholder, loading }) {
+export default function ChatInputBar({ value = "", onChangeText, onSend, placeholder, loading }) {
+  const isSendDisabled = !value || !value.trim() || loading;
+
   return (
     <View style={styles.inputShell}>
       <View style={styles.inputInner}>
@@ -13,7 +15,7 @@ export default function ChatInputBar({ value, onChangeText, onSend, placeholder,
         <TextInput
           style={styles.input}
           placeholder={placeholder}
-          placeholderTextColor={COLORS.CHAT_MUTED}
+          placeholderTextColor={COLORS.TEXT_SECONDARY}
           value={value}
           onChangeText={onChangeText}
           editable={!loading}
@@ -21,14 +23,15 @@ export default function ChatInputBar({ value, onChangeText, onSend, placeholder,
         />
 
         <Pressable
-          style={[
+          style={({ pressed }) => [
             styles.sendCircle,
-            (!value.trim() || loading) && styles.sendCircleDisabled,
+            isSendDisabled && styles.sendCircleDisabled,
+            pressed && !isSendDisabled && styles.sendCirclePressed,
           ]}
           onPress={onSend}
-          disabled={!value.trim() || loading}
+          disabled={isSendDisabled}
         >
-          <Text style={styles.sendIcon}>➤</Text>
+          <Text style={[styles.sendIcon, isSendDisabled && styles.sendIconDisabled]}>➤</Text>
         </Pressable>
       </View>
     </View>
@@ -37,58 +40,67 @@ export default function ChatInputBar({ value, onChangeText, onSend, placeholder,
 
 const styles = StyleSheet.create({
   inputShell: {
-    paddingHorizontal: 24,
+    paddingHorizontal: 16,
     paddingTop: 8,
-    paddingBottom: 20,
+    paddingBottom: 24
   },
   inputInner: {
-    minHeight: 76,
-    padding: 10,
+    minHeight: 64,
+    padding: 6,
     flexDirection: "row",
     alignItems: "center",
-    borderRadius: 38,
-    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderRadius: 32,
+    backgroundColor: COLORS.CARD,
     borderWidth: 1,
-    borderColor: COLORS.CHAT_BORDER,
-    shadowColor: COLORS.CHAT_PURPLE,
-    shadowOpacity: 0.2,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 6,
+    borderColor: COLORS.CARD_BORDER,
+    shadowColor: COLORS.PRIMARY,
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2
   },
   inputSparkle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  inputSparkleText: {
+    fontSize: 18,
+    color: "#ffb2bf", // active brand pink accent sparkles
+    fontWeight: "bold"
+  },
+  input: {
+    flex: 1,
+    fontSize: 14,
+    color: COLORS.TEXT,
+    paddingHorizontal: 8,
+    paddingVertical: Platform.OS === "ios" ? 8 : 4,
+    maxHeight: 76
+  },
+  sendCircle: {
     width: 48,
     height: 48,
     borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: COLORS.PRIMARY // brand primary pink
   },
-  inputSparkleText: {
-    fontSize: 18,
-    color: COLORS.CHAT_PURPLE,
-  },
-  input: {
-    flex: 1,
-    fontSize: 14,
-    color: COLORS.CHAT_TEXT,
-    paddingHorizontal: 8,
-    paddingVertical: Platform.OS === "ios" ? 10 : 6,
-    maxHeight: 80,
-  },
-  sendCircle: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: COLORS.CHAT_PURPLE,
+  sendCirclePressed: {
+    backgroundColor: "rgba(232, 89, 126, 0.85)", 
+    transform: [{ scale: 0.96 }]
   },
   sendCircleDisabled: {
-    backgroundColor: COLORS.CHAT_MUTED,
+    backgroundColor: COLORS.CARD_BORDER
   },
   sendIcon: {
-    fontSize: 18,
-    color: COLORS.WHITE,
-    fontWeight: "700",
+    fontSize: 14,
+    color: COLORS.WHITE, // active send arrow is white
+    fontWeight: "bold",
+    marginLeft: 2
   },
+  sendIconDisabled: {
+    color: COLORS.TEXT_MUTED
+  }
 });
