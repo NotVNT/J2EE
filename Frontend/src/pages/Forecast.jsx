@@ -1,7 +1,7 @@
 import { useState, useEffect, useContext, useMemo, useRef } from "react";
 import axiosConfig from "../util/axiosConfig";
 import toast from "react-hot-toast";
-import { AlertTriangle, Lightbulb, Activity, Crown } from "lucide-react";
+import { AlertTriangle, Lightbulb, Activity, Crown, Sparkles, CheckCircle2 } from "lucide-react";
 import { API_ENDPOINTS } from "../util/apiEndpoints";
 import { AppContext } from "../context/AppContext";
 import Dashboard from "../components/Dashboard";
@@ -103,21 +103,94 @@ const Forecast = () => {
     if (user?.subscriptionPlan !== "PREMIUM") {
         return (
             <Dashboard activeMenu="Dự báo">
-                <div className="flex items-center justify-center min-h-[60vh]">
-                    <div className="bg-white dark:bg-white/5 p-8 rounded-2xl shadow-sm text-center max-w-md w-full border border-slate-200 dark:border-white/10">
-                        <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <Crown size={32} />
+                <div className="flex items-center justify-center min-h-[75vh] px-4 relative overflow-hidden">
+                    {/* Glowing background orbs */}
+                    <div className="absolute top-1/4 left-1/4 -translate-x-1/2 w-72 h-72 rounded-full bg-purple-600/15 blur-3xl pointer-events-none" />
+                    <div className="absolute bottom-1/4 right-1/4 translate-x-1/2 w-80 h-80 rounded-full bg-indigo-600/10 blur-3xl pointer-events-none" />
+                    
+                    <div className="relative w-full max-w-lg bg-slate-900 border border-purple-500/30 text-white rounded-3xl p-6 md:p-8 shadow-2xl overflow-hidden animate-fade-in-up">
+                        {/* Top Accent Gradient Border */}
+                        <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-purple-500 via-pink-500 to-amber-500" />
+                        
+                        <div className="text-center">
+                            {/* Crown Glow Icon */}
+                            <div className="relative w-16 h-16 mx-auto mb-5 flex items-center justify-center rounded-2xl
+                                bg-gradient-to-tr from-purple-600 to-pink-500 shadow-xl shadow-purple-500/20">
+                                <Crown className="w-8 h-8 text-white animate-pulse" />
+                                <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-amber-400 animate-ping" />
+                            </div>
+
+                            {/* Badge */}
+                            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold
+                                bg-purple-500/10 border border-purple-500/30 text-purple-300 mb-4 uppercase tracking-wider">
+                                <Sparkles size={12} className="text-amber-400" />
+                                Tính Năng Premium
+                            </div>
+
+                            <h2 className="text-2xl font-extrabold text-white leading-tight">
+                                Dự báo tài chính & Cảnh báo chi tiêu thông minh (AI)
+                            </h2>
+                            
+                            <p className="text-sm text-slate-300 mt-2 mb-6 leading-relaxed max-w-sm mx-auto">
+                                Tận dụng sức mạnh của trí tuệ nhân tạo để làm chủ ngân sách và dự toán tương lai.
+                            </p>
+
+                            {/* Features list */}
+                            <div className="bg-slate-800/40 rounded-2xl border border-white/5 p-4 md:p-5 text-left space-y-3.5 mb-7">
+                                <div className="flex items-start gap-3">
+                                    <div className="w-5 h-5 rounded-full bg-purple-500/20 flex items-center justify-center mt-0.5 text-purple-400 flex-shrink-0">
+                                        <CheckCircle2 size={13} className="stroke-[3]" />
+                                    </div>
+                                    <div>
+                                        <h4 className="text-sm font-semibold text-white">Dự báo dòng tiền tương lai</h4>
+                                        <p className="text-xs text-slate-400 mt-0.5">AI tự động phân tích dữ liệu lịch sử để dự phóng chi tiêu 6 tháng tới.</p>
+                                    </div>
+                                </div>
+                                
+                                <div className="flex items-start gap-3">
+                                    <div className="w-5 h-5 rounded-full bg-purple-500/20 flex items-center justify-center mt-0.5 text-purple-400 flex-shrink-0">
+                                        <CheckCircle2 size={13} className="stroke-[3]" />
+                                    </div>
+                                    <div>
+                                        <h4 className="text-sm font-semibold text-white">Cảnh báo bất thường (Anomalies)</h4>
+                                        <p className="text-xs text-slate-400 mt-0.5">Phát hiện ngay lập tức các khoản chi tăng vọt, sai lệch so với quỹ đạo chi tiêu.</p>
+                                    </div>
+                                </div>
+                                
+                                <div className="flex items-start gap-3">
+                                    <div className="w-5 h-5 rounded-full bg-purple-500/20 flex items-center justify-center mt-0.5 text-purple-400 flex-shrink-0">
+                                        <CheckCircle2 size={13} className="stroke-[3]" />
+                                    </div>
+                                    <div>
+                                        <h4 className="text-sm font-semibold text-white">Lời khuyên chiến lược tối ưu chi tiêu</h4>
+                                        <p className="text-xs text-slate-400 mt-0.5">Lời khuyên hành động cụ thể từ Nova Money giúp bạn tiết kiệm thông minh hơn.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Actions */}
+                            <div className="flex flex-col sm:flex-row gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => navigate("/dashboard")}
+                                    className="w-full sm:order-1 px-5 py-3 rounded-2xl text-sm font-medium
+                                        bg-slate-800 hover:bg-slate-700 active:scale-98 transition duration-150 text-slate-300 hover:text-white"
+                                >
+                                    Quay về trang chủ
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => navigate("/payment")}
+                                    className="w-full sm:order-2 px-5 py-3 rounded-2xl text-sm font-bold text-white
+                                        bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 hover:from-purple-500 hover:via-pink-500 hover:to-amber-400
+                                        shadow-lg shadow-purple-600/30 hover:shadow-purple-600/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-150
+                                        flex items-center justify-center gap-1.5"
+                                >
+                                    <Sparkles size={16} />
+                                    Nâng cấp Premium ngay
+                                </button>
+                            </div>
                         </div>
-                        <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-2">Tính năng Premium</h2>
-                        <p className="text-slate-600 dark:text-slate-400 mb-6">
-                            Tính năng dự báo thông minh và cảnh báo chi tiêu bất thường bằng AI chỉ dành cho gói Premium.
-                        </p>
-                        <button
-                            onClick={() => navigate("/payment")}
-                            className="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white py-3 rounded-xl font-medium shadow-md shadow-amber-500/20 hover:shadow-lg hover:shadow-amber-500/30 transition"
-                        >
-                            Nâng cấp ngay
-                        </button>
                     </div>
                 </div>
             </Dashboard>
@@ -148,8 +221,43 @@ const Forecast = () => {
                 </div>
 
                 {isLoading ? (
-                    <div className="flex justify-center py-20">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-pulse">
+                        {/* Main Chart Area Skeleton */}
+                        <div className="lg:col-span-2 space-y-6">
+                            <div className="bg-white dark:bg-white/5 p-6 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm h-96 flex flex-col gap-6">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-5 h-5 rounded bg-slate-200 dark:bg-white/10" />
+                                    <div className="h-5 w-44 bg-slate-200 dark:bg-white/10 rounded-lg" />
+                                </div>
+                                <div className="flex-1 w-full bg-slate-100/50 dark:bg-white/[0.02] border border-slate-200/50 dark:border-white/5 rounded-xl flex items-end justify-between p-6">
+                                    {[1, 2, 3, 4, 5, 6].map((i) => (
+                                        <div key={i} className="w-12 flex flex-col items-center gap-2">
+                                            <div className="w-4 bg-slate-200 dark:bg-white/10 rounded-t" style={{ height: `${30 + i * 15}px` }} />
+                                            <div className="h-3 w-10 bg-slate-200 dark:bg-white/10 rounded" />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Sidebar AI Insight Skeleton */}
+                        <div className="space-y-6">
+                            <div className="bg-white dark:bg-white/5 p-6 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm h-96 flex flex-col gap-5">
+                                <div className="flex items-center gap-2.5">
+                                    <div className="w-9 h-9 rounded-xl bg-slate-200 dark:bg-white/10" />
+                                    <div className="space-y-2 flex-1">
+                                        <div className="h-4 w-32 bg-slate-200 dark:bg-white/10 rounded-lg" />
+                                        <div className="h-3 w-16 bg-slate-200 dark:bg-white/10 rounded" />
+                                    </div>
+                                </div>
+                                <div className="space-y-3.5 flex-1 pt-4">
+                                    <div className="h-4 w-full bg-slate-200 dark:bg-white/10 rounded animate-pulse" />
+                                    <div className="h-4 w-5/6 bg-slate-200 dark:bg-white/10 rounded animate-pulse" />
+                                    <div className="h-4 w-4/5 bg-slate-200 dark:bg-white/10 rounded animate-pulse" />
+                                    <div className="h-4 w-full bg-slate-200 dark:bg-white/10 rounded animate-pulse" />
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -165,22 +273,36 @@ const Forecast = () => {
                                     <div className="h-80">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
-                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? '#1e293b' : '#f1f5f9'} />
+                                                <defs>
+                                                    <linearGradient id="colorAverage" x1="0" y1="0" x2="0" y2="1">
+                                                        <stop offset="5%" stopColor={isDark ? '#475569' : '#94a3b8'} stopOpacity={0.8}/>
+                                                        <stop offset="95%" stopColor={isDark ? '#1e293b' : '#cbd5e1'} stopOpacity={0.2}/>
+                                                    </linearGradient>
+                                                    <linearGradient id="colorPredicted" x1="0" y1="0" x2="0" y2="1">
+                                                        <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.9}/>
+                                                        <stop offset="95%" stopColor="#6366f1" stopOpacity={0.4}/>
+                                                    </linearGradient>
+                                                </defs>
+                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? 'rgba(255,255,255,0.05)' : '#f1f5f9'} />
                                                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: isDark ? '#94a3b8' : '#64748b' }} dy={10} />
                                                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: isDark ? '#94a3b8' : '#64748b' }} tickFormatter={(val) => `${val/1000}k`} />
                                                 <Tooltip
-                                                    cursor={{ fill: isDark ? 'rgba(255,255,255,0.04)' : '#f8fafc' }}
+                                                    cursor={{ fill: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' }}
                                                     contentStyle={{
-                                                        borderRadius: '12px',
-                                                        border: 'none',
-                                                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.3)',
-                                                        backgroundColor: isDark ? '#1e293b' : '#ffffff',
-                                                        color: isDark ? '#f1f5f9' : '#1e293b'
+                                                        borderRadius: '16px',
+                                                        border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid #e2e8f0',
+                                                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                                                        backgroundColor: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+                                                        backdropFilter: 'blur(12px)',
+                                                        color: isDark ? '#f8fafc' : '#0f172a',
+                                                        padding: '12px 16px',
                                                     }}
-                                                    formatter={(value) => new Intl.NumberFormat('vi-VN').format(value) + ' đ'}
+                                                    itemStyle={{ padding: '2px 0', fontSize: '12px' }}
+                                                    labelStyle={{ fontWeight: 'bold', marginBottom: '6px', fontSize: '12px', color: isDark ? '#94a3b8' : '#64748b' }}
+                                                    formatter={(value, name) => [new Intl.NumberFormat('vi-VN').format(value) + ' đ', name]}
                                                 />
-                                                <Bar dataKey="average" name="Trung bình" fill={isDark ? '#334155' : '#cbd5e1'} radius={[4, 4, 0, 0]} barSize={20} />
-                                                <Bar dataKey="predicted" name="Dự báo" fill="#6366f1" radius={[4, 4, 0, 0]} barSize={20} />
+                                                <Bar dataKey="average" name="Trung bình" fill="url(#colorAverage)" radius={[6, 6, 0, 0]} barSize={16} />
+                                                <Bar dataKey="predicted" name="Dự báo" fill="url(#colorPredicted)" radius={[6, 6, 0, 0]} barSize={16} />
                                             </BarChart>
                                         </ResponsiveContainer>
                                     </div>

@@ -1,6 +1,6 @@
 import { useCallback, useContext, useEffect, useState, useRef } from "react";
 import { LoaderCircle, Zap } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { AppContext } from "../context/AppContext.jsx";
 import { useTheme } from "../context/ThemeContext.jsx";
 import Header from "../components/Header.jsx";
@@ -10,6 +10,8 @@ import { API_ENDPOINTS } from "../util/apiEndpoints.js";
 import { validateEmail } from "../util/validation.js";
 import { usePageTitle } from "../hooks/usePageTitle.js";
 import Footer from "../components/Footer.jsx";
+import favicon from "../assets/logo/favicon.png";
+import toast from "react-hot-toast";
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
@@ -28,6 +30,8 @@ const Login = () => {
   const googleBtnLightRef = useRef(null);
   const googleBtnDarkRef = useRef(null);
 
+  const [searchParams, setSearchParams] = useSearchParams();
+
   useEffect(() => {
     const rememberedEmail = localStorage.getItem("rememberedEmail");
     if (rememberedEmail) {
@@ -36,6 +40,17 @@ const Login = () => {
     }
   }, []);
 
+  useEffect(() => {
+    if (searchParams.get("expired") === "true") {
+      toast.error("Phiên đăng nhập đã hết hạn hoặc bạn đã đăng xuất ở một tab khác. Vui lòng đăng nhập lại.", {
+        id: "session-expired-toast"
+      });
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete("expired");
+      setSearchParams(newParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
+
   const handleGoogleCredential = useCallback(async (response) => {
     setIsGoogleLoading(true);
     setError("");
@@ -43,17 +58,8 @@ const Login = () => {
       const { data } = await axiosConfig.post(API_ENDPOINTS.GOOGLE_AUTH, {
         idToken: response.credential,
       });
-      const { token, user } = data;
-      if (token) {
-        // Google login không có "remember me" → dùng sessionStorage mặc định
-        // Nếu rememberMe đang bật → lưu localStorage
-        if (rememberMe) {
-          localStorage.setItem("token", token);
-          sessionStorage.removeItem("token");
-        } else {
-          sessionStorage.setItem("token", token);
-          localStorage.removeItem("token");
-        }
+      const { user } = data;
+      if (user) {
         setUser(user);
         if (user.role === "admin") {
           navigate("/admin");
@@ -66,7 +72,7 @@ const Login = () => {
     } finally {
       setIsGoogleLoading(false);
     }
-  }, [navigate, setUser, rememberMe]);
+  }, [navigate, setUser]);
 
   // Load Google Identity Services script và khởi tạo
   useEffect(() => {
@@ -166,15 +172,11 @@ const Login = () => {
 
     try {
       const response = await axiosConfig.post(API_ENDPOINTS.LOGIN, { email, password });
-      const { token, user } = response.data;
-      if (token) {
+      const { user } = response.data;
+      if (user) {
         if (rememberMe) {
-          localStorage.setItem("token", token);
-          sessionStorage.removeItem("token");
           localStorage.setItem("rememberedEmail", email.trim());
         } else {
-          sessionStorage.setItem("token", token);
-          localStorage.removeItem("token");
           localStorage.removeItem("rememberedEmail");
         }
         setUser(user);
@@ -204,7 +206,7 @@ const Login = () => {
             <div className="relative">
               <div className="flex items-center gap-2 mb-10">
                 <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center shrink-0 shadow-md">
-                  <img src="/favicon.png" alt="Money Manager Logo" className="w-12 h-12 max-w-none object-cover scale-110" />
+                  <img src={favicon} alt="Money Manager Logo" className="w-12 h-12 max-w-none object-cover scale-110" />
                 </div>
                 <span className="text-white font-bold text-lg">Money<span className="text-amber-400">Manager</span></span>
               </div>

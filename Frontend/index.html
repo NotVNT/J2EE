@@ -4,6 +4,23 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- CSP: report-only in dev; enforced via vercel.json headers in prod -->
+    <meta
+      http-equiv="Content-Security-Policy-Report-Only"
+      content="
+        default-src 'self';
+        script-src 'self' https://accounts.google.com https://apis.google.com;
+        style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+        font-src 'self' https://fonts.gstatic.com data:;
+        img-src 'self' data: blob: https:;
+        connect-src 'self' http://localhost:* https://*.render.com https://accounts.google.com https://www.googleapis.com;
+        frame-src 'self' https://accounts.google.com https://*.google.com;
+        object-src 'none';
+        base-uri 'self';
+        form-action 'self' https://accounts.google.com;
+        frame-ancestors 'none';
+      "
+    />
     <title>Money Manager</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

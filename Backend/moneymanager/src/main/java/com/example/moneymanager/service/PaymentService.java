@@ -93,6 +93,18 @@ public class PaymentService {
         return toDTO(paymentEntity);
     }
 
+    public java.util.List<CreatePaymentResponseDTO> getPaymentsForCurrentUser() {
+        ProfileEntity currentProfile = profileService.getCurrentProfile();
+        java.util.List<PaymentEntity> payments = paymentRepository.findByProfileIdOrderByCreatedAtDesc(currentProfile.getId());
+        return payments.stream().map(this::toDTO).toList();
+    }
+
+    @Transactional
+    public void deletePayment(Long orderCode) {
+        PaymentEntity payment = findOwnedPayment(orderCode);
+        paymentRepository.delete(payment);
+    }
+
     @Transactional
     public CreatePaymentResponseDTO syncPaymentStatus(Long orderCode) {
         PaymentEntity paymentEntity = findOwnedPayment(orderCode);
@@ -170,11 +182,22 @@ public class PaymentService {
         }
     }
 
+    private static final int ORDERCODE_MAX_ATTEMPTS = 5;
+    private static final java.security.SecureRandom ORDERCODE_SECURE_RANDOM = new java.security.SecureRandom();
+
     private long generateOrderCode() {
-        // Use current second * 1000 + random(0-999) — unique within JVM per second slot
-        long base = (System.currentTimeMillis() / 1000L) * 1000L;
-        long suffix = java.util.concurrent.ThreadLocalRandom.current().nextLong(1000L);
-        return base + suffix;
+        for (int attempt = 1; attempt <= ORDERCODE_MAX_ATTEMPTS; attempt++) {
+            long base = java.lang.System.nanoTime() & 0x7FFFFFFFFFFFL;
+            long suffix = ORDERCODE_SECURE_RANDOM.nextLong() & 0x7FFFFFFFL;
+            long candidate = (base << 16) ^ suffix;
+            if (candidate < 0) candidate = -candidate;
+            if (candidate == 0) candidate = ORDERCODE_SECURE_RANDOM.nextLong() & 0x7FFFFFFFFFFFFFFFL;
+            if (!paymentRepository.existsByOrderCode(candidate)) {
+                return candidate;
+            }
+            log.warn("orderCode collision on attempt {}/{}", attempt, ORDERCODE_MAX_ATTEMPTS);
+        }
+        throw new PaymentException("Không thể sinh mã giao dịch duy nhất sau nhiều lần thử. Vui lòng thử lại sau.");
     }
 
     private PaymentEntity findOwnedPayment(Long orderCode) {
@@ -186,6 +209,14 @@ public class PaymentService {
             throw new RuntimeException("Bạn không có quyền truy cập giao dịch thanh toán này.");
         }
 
+        return paymentEntity;
+    }
+
+    public PaymentEntity findOwnedPaidPayment(Long orderCode) {
+        PaymentEntity paymentEntity = findOwnedPayment(orderCode);
+        if (!STATUS_PAID.equalsIgnoreCase(paymentEntity.getStatus())) {
+            throw new RuntimeException("Giao dịch thanh toán chưa được hoàn tất.");
+        }
         return paymentEntity;
     }
 

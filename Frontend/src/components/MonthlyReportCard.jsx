@@ -7,6 +7,7 @@ import rehypeSanitize from "rehype-sanitize";
 import axiosConfig from "../util/axiosConfig";
 import { API_ENDPOINTS } from "../util/apiEndpoints";
 import { AppContext } from "../context/AppContext.jsx";
+import { useNavigate } from "react-router-dom";
 import {
   TrendingUp,
   TrendingDown,
@@ -25,7 +26,8 @@ import {
   Sparkles,
   Loader2,
   Lock,
-  RefreshCw
+  RefreshCw,
+  Crown
 } from "lucide-react";
 
 const GRADE_COLORS = {
@@ -43,6 +45,7 @@ const formatCurrency = (value) => {
 
 const MonthlyReportCard = ({ report }) => {
   const { user } = useContext(AppContext);
+  const navigate = useNavigate();
   const isPremium = user?.subscriptionPlan === "PREMIUM";
   const gradeColor = GRADE_COLORS[report.grade] || GRADE_COLORS.F;
 
@@ -365,11 +368,38 @@ const MonthlyReportCard = ({ report }) => {
         </div>
 
         {!isPremium ? (
-          <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20">
-            <Lock size={16} className="text-amber-500 shrink-0 mt-0.5" />
-            <p className="text-sm text-amber-700 dark:text-amber-300">
-              Tính năng phân tích hành vi AI chỉ khả dụng cho gói PREMIUM.
-            </p>
+          <div className="relative overflow-hidden rounded-2xl p-6 border border-purple-500/30 text-white bg-slate-900 shadow-xl animate-fade-in-up">
+            {/* Background glows */}
+            <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-purple-600/20 blur-2xl pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-32 h-32 rounded-full bg-indigo-600/15 blur-2xl pointer-events-none" />
+            
+            <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="flex-1 flex flex-col md:flex-row items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-purple-600 to-pink-500 flex items-center justify-center shrink-0 shadow-lg shadow-purple-500/20 text-white">
+                  <Crown className="w-6 h-6 animate-pulse" />
+                </div>
+                <div>
+                  <h4 className="text-base font-bold text-white flex items-center gap-2">
+                    Mở khóa Phân tích hành vi tài chính AI
+                    <span className="text-[9px] bg-gradient-to-r from-purple-600 to-pink-600 px-1.5 py-0.5 rounded-full font-extrabold uppercase">
+                      Premium
+                    </span>
+                  </h4>
+                  <p className="text-sm text-slate-300 mt-1 leading-relaxed">
+                    Nova Money sẽ phân tích sâu toàn bộ dòng tiền hàng tháng của bạn, tìm ra các thói quen tiêu dùng lãng phí ẩn giấu và đưa ra các đề xuất điều chỉnh cá nhân hóa cực kỳ chi tiết.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => navigate("/payment")}
+                className="w-full md:w-auto px-5 py-2.5 rounded-xl text-sm font-bold text-white whitespace-nowrap
+                  bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-500 hover:to-pink-400
+                  shadow-lg shadow-purple-600/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-150 flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Sparkles size={14} />
+                Nâng cấp ngay
+              </button>
+            </div>
           </div>
         ) : isAnalyzing ? (
           <div className="flex items-center gap-3 py-4 text-sm text-slate-500 dark:text-slate-400">

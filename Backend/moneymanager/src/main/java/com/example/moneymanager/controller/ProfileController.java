@@ -3,9 +3,12 @@ package com.example.moneymanager.controller;
 import com.example.moneymanager.dto.*;
 import com.example.moneymanager.service.EmailNotificationPreferenceService;
 import com.example.moneymanager.service.ProfileService;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,6 +22,18 @@ public class ProfileController {
     private final ProfileService profileService;
     private final EmailNotificationPreferenceService emailNotificationPreferenceService;
 
+    @Value("${jwt.cookie.name:mm_token}")
+    private String cookieName;
+
+    @Value("${jwt.cookie.max-age:36000}")
+    private int cookieMaxAge;
+
+    @Value("${jwt.cookie.secure:true}")
+    private boolean cookieSecure;
+
+    @Value("${jwt.cookie.same-site:None}")
+    private String cookieSameSite;
+
     // ─── Registration ─────────────────────────────────────────────────
 
     @PostMapping("/register")
@@ -30,11 +45,17 @@ public class ProfileController {
         ));
     }
 
+    @GetMapping("/complete-profile")
+    public ResponseEntity<Map<String, String>> completeProfileDeprecated() {
+        return ResponseEntity.status(HttpStatus.GONE).body(Map.of(
+                "message", "Endpoint này không còn được hỗ trợ. Vui lòng sử dụng flow đăng ký và kích hoạt OTP."
+        ));
+    }
+
     @PutMapping("/complete-profile")
-    public ResponseEntity<?> completeProfile(@Valid @RequestBody CompleteProfileDTO completeDTO) {
-        profileService.completeProfile(completeDTO);
-        return ResponseEntity.ok(Map.of(
-                "message", "Thiết lập tài khoản thành công."
+    public ResponseEntity<Map<String, String>> completeProfileDeprecatedPut() {
+        return ResponseEntity.status(HttpStatus.GONE).body(Map.of(
+                "message", "Endpoint này không còn được hỗ trợ. Vui lòng sử dụng flow đăng ký và kích hoạt OTP."
         ));
     }
 
@@ -69,14 +90,43 @@ public class ProfileController {
     // ─── Login ───────────────────────────────────────────────────────
 
     @PostMapping("/login")
-    public ResponseEntity<Map<String, Object>> login(@RequestBody AuthDTO authDTO) {
+    public ResponseEntity<Map<String, Object>> login(@RequestBody AuthDTO authDTO, HttpServletResponse response) {
         if (!profileService.isAccountActive(authDTO.getEmail())) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
                     "message", "Tài khoản chưa được kích hoạt. Vui lòng nhập mã OTP trong email."
             ));
         }
-        Map<String, Object> response = profileService.authenticateAndGenerateToken(authDTO);
-        return ResponseEntity.ok(response);
+        Map<String, Object> result = profileService.authenticateAndGenerateToken(authDTO);
+        String token = (String) result.get("token");
+        
+        ResponseCookie cookie = ResponseCookie.from(cookieName, token)
+                .httpOnly(true)
+                .secure(cookieSecure)
+                .sameSite(cookieSameSite)
+                .path("/")
+                .maxAge(cookieMaxAge)
+                .build();
+        response.addHeader("Set-Cookie", cookie.toString());
+        
+        return ResponseEntity.ok(Map.of(
+                "message", "Đăng nhập thành công.",
+                "user", result.get("user")
+        ));
+    }
+
+    // ─── Logout ──────────────────────────────────────────────────────
+
+    @PostMapping("/logout")
+    public ResponseEntity<Map<String, String>> logout(HttpServletResponse response) {
+        ResponseCookie cookie = ResponseCookie.from(cookieName, "")
+                .httpOnly(true)
+                .secure(cookieSecure)
+                .sameSite(cookieSameSite)
+                .path("/")
+                .maxAge(0)
+                .build();
+        response.addHeader("Set-Cookie", cookie.toString());
+        return ResponseEntity.ok(Map.of("message", "Đăng xuất thành công."));
     }
 
     // ─── Forgot Password / Reset Password via OTP ────────────────────
@@ -119,8 +169,22 @@ public class ProfileController {
     }
 
     @PutMapping("/profile")
-    public ResponseEntity<Map<String, Object>> updateProfile(@RequestBody ProfileUpdateDTO requestDTO) {
-        return ResponseEntity.ok(profileService.updateProfile(requestDTO));
+    public ResponseEntity<Map<String, Object>> updateProfile(@RequestBody ProfileUpdateDTO requestDTO, HttpServletResponse response) {
+        Map<String, Object> result = profileService.updateProfile(requestDTO);
+        String token = (String) result.get("token");
+        
+        if (token != null) {
+            ResponseCookie cookie = ResponseCookie.from(cookieName, token)
+                    .httpOnly(true)
+                    .secure(cookieSecure)
+                    .sameSite(cookieSameSite)
+                    .path("/")
+                    .maxAge(cookieMaxAge)
+                    .build();
+            response.addHeader("Set-Cookie", cookie.toString());
+        }
+        
+        return ResponseEntity.ok(Map.of("user", result.get("user")));
     }
 
     @PutMapping("/profile/subscription/auto-renew")

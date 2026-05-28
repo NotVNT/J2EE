@@ -4,7 +4,7 @@ import InfoCard from "../components/InfoCard.jsx";
 import {
   Coins, PiggyBank, Target, Wallet, WalletCards, Sparkles,
   ChevronDown, ChevronUp, TrendingUp, AlertTriangle, PieChart,
-  Settings2, Lightbulb,
+  Settings2, Lightbulb, X, Crown, CheckCircle2,
 } from "lucide-react";
 import { addThousandsSeparator } from "../util/util.js";
 import { useNavigate } from "react-router-dom";
@@ -48,8 +48,10 @@ const Home = () => {
   const [showDetailedInsight, setShowDetailedInsight] = useState(false);
   const [detailedInsight, setDetailedInsight] = useState(null);
   const [detailedLoading, setDetailedLoading] = useState(false);
+  const [showPremiumModal, setShowPremiumModal] = useState(false);
 
   const { user } = useContext(AppContext);
+  const [activeChartIndex, setActiveChartIndex] = useState(null);
 
   // Widget customization
   const { widgetConfig, sortedWidgetIds, toggleWidget, reorderWidgets, resetConfig } = useWidgetConfig(user?.id);
@@ -73,8 +75,6 @@ const Home = () => {
 
   const AI_INSIGHT_ENDPOINT = "/dashboard/ai-insight";
   const AI_DETAILED_INSIGHT_ENDPOINT = "/dashboard/ai-insight/detailed";
-
-  const getToken = () => localStorage.getItem("token") || sessionStorage.getItem("token");
 
   const fetchDashboardData = async () => {
     if (loading) return;
@@ -158,7 +158,7 @@ const Home = () => {
   const toggleDetailedInsight = () => {
     if (!showDetailedInsight) {
       if (user?.canUseDetailedAi === false) {
-        toast.error("Tính năng phân tích chuyên sâu chỉ dành cho hội viên. Vui lòng nâng cấp tài khoản!");
+        setShowPremiumModal(true);
         return;
       }
       if (!detailedInsight && !detailedLoading) fetchDetailedInsight();
@@ -167,13 +167,8 @@ const Home = () => {
   };
 
   useEffect(() => {
-    const token = getToken();
-    if (!token) {
-      setAiInsight("Vui lòng đăng nhập để sử dụng tính năng AI!");
-    } else {
-      fetchDashboardData();
-      fetchAiInsight();
-    }
+    fetchDashboardData();
+    fetchAiInsight();
   }, []);
 
   const formatCurrency = (amount) => {
@@ -224,7 +219,7 @@ const Home = () => {
         </section>
       ),
       monthly_history: () => (
-        <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-6 h-95 flex flex-col">
+        <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-6 h-95 flex flex-col" onClick={() => setActiveChartIndex(null)}>
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-base font-bold text-slate-900 dark:text-white">Tổng quan thu chi</h3>
             <div className="flex gap-4 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
@@ -236,20 +231,43 @@ const Home = () => {
               </span>
             </div>
           </div>
-          <div className="flex-1 overflow-x-auto">
-            <div className="flex items-end justify-between px-4 pb-2 min-w-[340px] h-full">
+          <div className="flex-1 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] relative">
+            {/* Grid Background Lines */}
+            <div className="absolute inset-0 flex flex-col justify-between pointer-events-none pb-8 pt-4">
+              <div className="border-b border-slate-100 dark:border-white/5 w-full h-0" />
+              <div className="border-b border-slate-100 dark:border-white/5 w-full h-0" />
+              <div className="border-b border-slate-100 dark:border-white/5 w-full h-0" />
+              <div className="border-b border-slate-100 dark:border-white/5 w-full h-0" />
+            </div>
+
+            <div className="relative flex items-end justify-between px-4 pt-12 pb-8 min-w-[450px] h-full z-10">
               {dashboardData?.monthlyHistory?.map((h, i) => {
                 const maxVal = Math.max(...dashboardData.monthlyHistory.map((m) => Math.max(Number(m.income), Number(m.expense))), 1);
-                const incomeH = (Number(h.income) / maxVal) * 100;
-                const expenseH = (Number(h.expense) / maxVal) * 100;
+                const incomeH = (Number(h.income) / maxVal) * 85;
+                const expenseH = (Number(h.expense) / maxVal) * 85;
                 return (
-                  <div key={i} className="w-16 h-full flex items-end gap-1.5 justify-center relative group">
-                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-900 dark:bg-white/90 dark:text-slate-900 text-white text-[10px] px-2 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity z-20 whitespace-nowrap text-center shadow-lg">
-                      Thu: {formatCurrency(h.income)}<br />Chi: {formatCurrency(h.expense)}
+                  <div
+                    key={i}
+                    className="h-full flex-1 flex flex-col justify-end items-center relative group max-w-[64px] cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveChartIndex(activeChartIndex === i ? null : i);
+                    }}
+                  >
+                    <div className={`absolute -top-12 left-1/2 -translate-x-1/2 bg-slate-900/95 dark:bg-slate-900/95 text-white dark:text-white text-[11px] px-3 py-2 rounded-xl transition-all duration-300 z-30 whitespace-nowrap text-left shadow-xl border border-white/10 dark:border-white/10 pointer-events-none ${
+                      activeChartIndex === i
+                        ? "opacity-100 -translate-y-1"
+                        : "opacity-0 group-hover:opacity-100 group-hover:-translate-y-1"
+                    }`}>
+                      <div className="font-bold text-slate-400 dark:text-slate-500 mb-1 border-b border-white/10 dark:border-white/10 pb-0.5">{h.month}</div>
+                      <div className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />Thu: <span className="font-bold">{formatCurrency(h.income)}</span></div>
+                      <div className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-red-400" />Chi: <span className="font-bold">{formatCurrency(h.expense)}</span></div>
                     </div>
-                    <div className="w-5 bg-emerald-400/30 dark:bg-emerald-400/20 rounded-t-md hover:bg-emerald-400 transition" style={{ height: `${Math.max(incomeH, 2)}%` }} />
-                    <div className="w-5 bg-red-400/30 dark:bg-red-400/20 rounded-t-md hover:bg-red-400 transition" style={{ height: `${Math.max(expenseH, 2)}%` }} />
-                    <span className="absolute -bottom-6 text-[10px] text-slate-400 font-semibold">{h.month}</span>
+                    <div className="flex items-end gap-1.5 h-full w-full justify-center pb-8 pt-4">
+                      <div className="w-5 bg-gradient-to-t from-emerald-500 to-teal-400 dark:from-emerald-600/40 dark:to-teal-500/50 rounded-t-lg transition-all duration-300 hover:brightness-110 hover:shadow-[0_0_12px_rgba(52,211,153,0.3)] active:scale-95 cursor-pointer" style={{ height: `${Math.max(incomeH, 3)}%` }} />
+                      <div className="w-5 bg-gradient-to-t from-red-500 to-rose-400 dark:from-red-600/40 dark:to-rose-500/50 rounded-t-lg transition-all duration-300 hover:brightness-110 hover:shadow-[0_0_12px_rgba(244,63,94,0.3)] active:scale-95 cursor-pointer" style={{ height: `${Math.max(expenseH, 3)}%` }} />
+                    </div>
+                    <span className="absolute bottom-1 text-[11px] text-slate-400 dark:text-slate-500 font-bold group-hover:text-slate-900 dark:group-hover:text-white transition-colors">{h.month}</span>
                   </div>
                 );
               })}
@@ -586,6 +604,122 @@ const Home = () => {
         onToggle={toggleWidget}
         onReset={resetConfig}
       />
+
+      {/* Paywall Modal Premium */}
+      {showPremiumModal && (
+        <div 
+          onClick={() => setShowPremiumModal(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md transition-all duration-300"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="relative p-6 w-full max-w-lg mx-4 rounded-3xl shadow-2xl overflow-hidden
+              bg-slate-900 border border-purple-500/30 text-white animate-fade-in-up"
+          >
+            {/* Ambient Background Glows */}
+            <div className="absolute -top-24 -left-24 w-48 h-48 rounded-full bg-purple-600/25 blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-24 -right-24 w-48 h-48 rounded-full bg-indigo-600/20 blur-3xl pointer-events-none" />
+            
+            {/* Elegant Top Border Line */}
+            <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-purple-500 via-pink-500 to-amber-500" />
+            
+            {/* Close Button */}
+            <button
+              type="button"
+              onClick={() => setShowPremiumModal(false)}
+              className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-xl transition-all cursor-pointer
+                text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 hover:scale-105 active:scale-95"
+            >
+              <X size={18} />
+            </button>
+            
+            {/* Content */}
+            <div className="text-center mt-4">
+              {/* Icon Container with beautiful animations */}
+              <div className="relative w-16 h-16 mx-auto mb-5 flex items-center justify-center rounded-2xl
+                bg-gradient-to-tr from-purple-600 to-pink-500 shadow-xl shadow-purple-500/20">
+                <Crown className="w-8 h-8 text-white animate-pulse" />
+                <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-amber-400 animate-ping" />
+              </div>
+              
+              {/* Badges */}
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold
+                bg-purple-500/10 border border-purple-500/30 text-purple-300 mb-3 uppercase tracking-wider">
+                <Sparkles size={12} className="text-amber-400" />
+                Tính Năng Premium
+              </div>
+              
+              <h3 className="text-2xl font-extrabold text-white leading-tight">
+                Mở khóa Phân tích Chuyên sâu (AI)
+              </h3>
+              
+              <p className="text-sm text-slate-300 mt-2 mb-6 leading-relaxed max-w-sm mx-auto">
+                Nhận các nhận định tài chính chuyên nghiệp, cá nhân hóa dòng tiền của bạn từ Trợ lý AI nâng cao.
+              </p>
+              
+              {/* Premium Features Checklist */}
+              <div className="bg-slate-800/40 rounded-2xl border border-white/5 p-4 text-left space-y-3.5 mb-7">
+                <div className="flex items-start gap-3">
+                  <div className="w-5 h-5 rounded-full bg-purple-500/20 flex items-center justify-center mt-0.5 text-purple-400 flex-shrink-0">
+                    <CheckCircle2 size={13} className="stroke-[3]" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-white">Phân tích xu hướng chi tiêu</h4>
+                    <p className="text-xs text-slate-400 mt-0.5">AI tự động bóc tách các thói quen tiêu dùng và đề xuất tối ưu thông minh.</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <div className="w-5 h-5 rounded-full bg-purple-500/20 flex items-center justify-center mt-0.5 text-purple-400 flex-shrink-0">
+                    <CheckCircle2 size={13} className="stroke-[3]" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-white">Dự toán dòng tiền thông minh</h4>
+                    <p className="text-xs text-slate-400 mt-0.5">Dự báo ngân sách tháng tới giúp bạn luôn chủ động trước mọi chi phí phát sinh.</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <div className="w-5 h-5 rounded-full bg-purple-500/20 flex items-center justify-center mt-0.5 text-purple-400 flex-shrink-0">
+                    <CheckCircle2 size={13} className="stroke-[3]" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-white">Cảnh báo rủi ro & Lời khuyên chiến lược</h4>
+                    <p className="text-xs text-slate-400 mt-0.5">Nhận biết thâm hụt sớm và nhận lời khuyên tài chính từ chuyên gia ảo.</p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowPremiumModal(false)}
+                  className="w-full sm:order-1 px-5 py-3 rounded-2xl text-sm font-medium
+                    bg-slate-800 hover:bg-slate-750 active:scale-98 transition duration-150 text-slate-300 hover:text-white"
+                >
+                  Trải nghiệm sau
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPremiumModal(false);
+                    navigate("/payment");
+                  }}
+                  className="w-full sm:order-2 px-5 py-3 rounded-2xl text-sm font-bold text-white
+                    bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 hover:from-purple-500 hover:via-pink-500 hover:to-amber-400
+                    shadow-lg shadow-purple-600/30 hover:shadow-purple-600/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-150
+                    flex items-center justify-center gap-1.5"
+                >
+                  <Sparkles size={16} />
+                  Nâng cấp Premium ngay
+                </button>
+              </div>
+            </div>
+            
+          </div>
+        </div>
+      )}
     </Dashboard>
   );
 };

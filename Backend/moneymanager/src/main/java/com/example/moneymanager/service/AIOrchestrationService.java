@@ -655,6 +655,39 @@ public class AIOrchestrationService {
     private Map<String, Object> loadPageData(String pageContext, ProfileEntity profile) {
         Map<String, Object> result = new HashMap<>();
         try {
+            // Always load jars for all contexts to ensure AI has context of user's spending jars
+            try {
+                List<JarDTO> jars = jarService.getAllJars();
+                result.put("jars", jars.stream().map(j -> {
+                    Map<String, Object> m = new HashMap<>();
+                    m.put("id", j.getId());
+                    m.put("name", j.getName());
+                    m.put("icon", j.getIcon() != null ? j.getIcon() : "");
+                    m.put("color", j.getColor());
+                    m.put("targetPercentage", j.getTargetPercentage());
+                    m.put("currentBalance", j.getCurrentBalance());
+
+                    try {
+                        List<ExpenseEntity> jarExpenses = expenseRepository.findTop5ByJarIdOrderByDateDesc(j.getId());
+                        m.put("recentExpenses", jarExpenses.stream().map(e -> {
+                            Map<String, Object> em = new HashMap<>();
+                            em.put("id", e.getId());
+                            em.put("amount", e.getAmount());
+                            em.put("categoryName", e.getCategory() != null ? e.getCategory().getName() : "");
+                            em.put("date", e.getDate() != null ? e.getDate().toString() : "");
+                            em.put("name", e.getName() != null ? e.getName() : "");
+                            return em;
+                        }).toList());
+                    } catch (Exception ex) {
+                        m.put("recentExpenses", List.of());
+                    }
+
+                    return m;
+                }).toList());
+            } catch (Exception e) {
+                log.warn("Could not load jars for AI context: {}", e.getMessage());
+            }
+
             switch (pageContext.trim().toLowerCase()) {
                 case "category" -> {
                     List<CategoryDTO> categories = categoryService.getCategoriesForCurrentUser();

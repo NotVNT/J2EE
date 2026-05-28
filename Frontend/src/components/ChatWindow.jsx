@@ -6,6 +6,7 @@ import remarkGfm from "remark-gfm";
 import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import AIConfirmationForm from "./AIConfirmationForm.jsx";
 import { INTENT_ICONS, INTENT_LABELS } from "../util/aiIntentParser.js";
+import aiIcon from "../assets/logo/AI_favicon.png";
 
 const sanitizeSchema = {
   ...defaultSchema,
@@ -18,12 +19,12 @@ const fixMarkdown = (content) => {
 };
 
 const markdownComponents = {
-  p: ({ children }) => <p className="mb-1 last:mb-0 leading-[1.7]">{children}</p>,
-  ul: ({ children }) => <ul className="list-disc list-inside space-y-0.5 my-1 pl-1">{children}</ul>,
-  ol: ({ children }) => <ol className="list-decimal list-inside space-y-0.5 my-1 pl-1">{children}</ol>,
-  li: ({ children }) => <li className="leading-[1.7]">{children}</li>,
-  strong: ({ children }) => <strong className="font-semibold text-slate-800 dark:text-white">{children}</strong>,
-  em: ({ children }) => <em className="italic">{children}</em>,
+  p: ({ children }) => <p className="mb-2 last:mb-0 leading-relaxed text-slate-700 dark:text-slate-200">{children}</p>,
+  ul: ({ children }) => <ul className="list-disc list-outside pl-5 space-y-1 my-2 text-slate-700 dark:text-slate-200 marker:text-violet-500 dark:marker:text-amber-500">{children}</ul>,
+  ol: ({ children }) => <ol className="list-decimal list-outside pl-5 space-y-1 my-2 text-slate-700 dark:text-slate-200 marker:text-violet-500 dark:marker:text-amber-500">{children}</ol>,
+  li: ({ children }) => <li className="pl-0.5 leading-relaxed">{children}</li>,
+  strong: ({ children }) => <strong className="font-semibold text-violet-700 dark:text-amber-400 bg-violet-50 dark:bg-amber-400/5 px-1 py-0.5 rounded transition-all">{children}</strong>,
+  em: ({ children }) => <em className="italic text-slate-800 dark:text-slate-300">{children}</em>,
   code: ({ children, className }) =>
     className ? (
       <code className="font-mono text-xs text-slate-700 dark:text-slate-200">{children}</code>
@@ -31,25 +32,25 @@ const markdownComponents = {
       <code className="rounded bg-slate-100 dark:bg-white/10 px-1.5 py-0.5 font-mono text-xs text-violet-600 dark:text-amber-300">{children}</code>
     ),
   pre: ({ children }) => (
-    <pre className="rounded-xl bg-slate-100 dark:bg-white/10 p-3 my-2 overflow-x-auto">{children}</pre>
+    <pre className="rounded-xl bg-slate-100 dark:bg-white/10 p-3 my-2 overflow-x-auto border border-slate-200/50 dark:border-white/5">{children}</pre>
   ),
-  h1: ({ children }) => <h1 className="text-base font-bold mt-2 mb-1 text-slate-800 dark:text-white">{children}</h1>,
-  h2: ({ children }) => <h2 className="text-sm font-bold mt-2 mb-1 text-slate-800 dark:text-white">{children}</h2>,
-  h3: ({ children }) => <h3 className="text-sm font-semibold mt-1.5 mb-0.5 text-slate-700 dark:text-slate-100">{children}</h3>,
+  h1: ({ children }) => <h1 className="text-base font-bold mt-3 mb-1.5 text-violet-700 dark:text-amber-400 border-b border-slate-100 dark:border-white/[0.06] pb-1">{children}</h1>,
+  h2: ({ children }) => <h2 className="text-sm font-bold mt-3 mb-1.5 text-slate-800 dark:text-white">{children}</h2>,
+  h3: ({ children }) => <h3 className="text-sm font-semibold mt-2 mb-1 text-slate-700 dark:text-slate-100">{children}</h3>,
   blockquote: ({ children }) => (
-    <blockquote className="border-l-2 border-amber-400 pl-3 my-1 text-slate-500 dark:text-slate-400 italic">{children}</blockquote>
+    <blockquote className="border-l-4 border-violet-500 dark:border-amber-400 pl-3.5 pr-2 py-1 my-2 bg-violet-50/30 dark:bg-amber-500/[0.02] rounded-r-lg text-slate-600 dark:text-slate-400 italic leading-relaxed">{children}</blockquote>
   ),
   table: ({ children }) => (
-    <div className="overflow-x-auto my-2">
-      <table className="min-w-full text-xs border-collapse border border-slate-200 dark:border-white/10">{children}</table>
+    <div className="overflow-x-auto my-3 rounded-lg border border-slate-100 dark:border-white/[0.06] shadow-sm">
+      <table className="min-w-full text-xs border-collapse">{children}</table>
     </div>
   ),
-  thead: ({ children }) => <thead className="bg-slate-50 dark:bg-amber-500/10">{children}</thead>,
+  thead: ({ children }) => <thead className="bg-slate-50 dark:bg-white/[0.02] border-b border-slate-100 dark:border-white/[0.06]">{children}</thead>,
   th: ({ children }) => (
-    <th className="border border-slate-200 dark:border-white/10 px-2 py-1.5 text-left font-semibold text-slate-700 dark:text-slate-200">{children}</th>
+    <th className="px-3 py-2 text-left font-semibold text-slate-700 dark:text-slate-200 tracking-wider">{children}</th>
   ),
   td: ({ children }) => (
-    <td className="border border-slate-200 dark:border-white/10 px-2 py-1.5 text-slate-600 dark:text-slate-300">{children}</td>
+    <td className="border-t border-slate-100 dark:border-white/[0.04] px-3 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-50/30 dark:hover:bg-white/[0.01] transition-colors">{children}</td>
   ),
 };
 
@@ -237,6 +238,11 @@ const ChatWindow = ({
                 key={i}
                 className={`flex gap-3 ${msg.role === "user" ? "justify-end" : ""}`}
               >
+                {msg.role !== "user" && (
+                  <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-slate-100 dark:bg-white/10 flex items-center justify-center border border-slate-200 dark:border-white/10 mt-1">
+                    <img src={aiIcon} alt="Nova Money" className="w-full h-full object-cover" />
+                  </div>
+                )}
                 <div
                   className={`max-w-[80%] text-sm leading-relaxed
                     ${msg.role === "user"
@@ -294,7 +300,7 @@ const ChatWindow = ({
                       </ReactMarkdown>
                       {!msg.isError && !msg.isSystem && msg.modelUsed && (
                         <span className="block text-[10px] text-slate-400 dark:text-slate-500 mt-1.5">
-                          Nova · {modelLabelMap[msg.modelUsed] || msg.modelLabel || msg.modelUsed}
+                          Nova Money · {modelLabelMap[msg.modelUsed] || msg.modelLabel || msg.modelUsed}
                         </span>
                       )}
                     </>
@@ -335,6 +341,9 @@ const ChatWindow = ({
             ))}
             {isSending && (
               <div className="flex gap-3 max-w-3xl mx-auto">
+                <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-slate-100 dark:bg-white/10 flex items-center justify-center border border-slate-200 dark:border-white/10 mt-1">
+                  <img src={aiIcon} alt="Nova Money" className="w-full h-full object-cover" />
+                </div>
                 <div className="flex items-center gap-1.5 px-4 py-3">
                   <span className="w-2 h-2 rounded-full bg-violet-400 dark:bg-amber-400 animate-bounce" style={{ animationDelay: "0ms" }} />
                   <span className="w-2 h-2 rounded-full bg-violet-400 dark:bg-amber-400 animate-bounce" style={{ animationDelay: "150ms" }} />
@@ -362,8 +371,8 @@ const ChatWindow = ({
               onKeyDown={handleKeyDown}
               placeholder={
                 selectedProvider === "gemini"
-                  ? "Hỏi Nova..."
-                  : "Hỏi Nova..."
+                  ? "Hỏi Nova Money..."
+                  : "Hỏi Nova Money..."
               }
               rows={1}
               className="flex-1 bg-transparent text-[15px] text-slate-800 dark:text-[#e3e3e3] placeholder-slate-500 dark:placeholder-[#c4c7c5]
@@ -396,7 +405,7 @@ const ChatWindow = ({
           )}
 
           <p className="text-[10px] text-slate-400 dark:text-slate-600 text-center mt-2">
-            Nova có thể mắc lỗi. Hãy kiểm tra lại thông tin quan trọng.
+            Nova Money có thể mắc lỗi. Hãy kiểm tra lại thông tin quan trọng.
           </p>
         </form>
       </div>

@@ -8,6 +8,7 @@ import com.example.moneymanager.dto.AIChatRequestDTO;
 import com.example.moneymanager.dto.AIChatResponseDTO;
 import com.example.moneymanager.entity.SubscriptionPlan;
 import com.example.moneymanager.exception.ForbiddenException;
+import com.example.moneymanager.service.SubscriptionService;
 import com.example.moneymanager.util.OpenRouterResponseParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -35,9 +36,9 @@ public class AIChatService {
             "- KH\u00D4NG bao gi\u1EDD tr\u1EA3 l\u1EDDi c\u1ED9c l\u1ED1c, l\u1EA1nh l\u00F9ng hay thi\u1EBFu ki\u00EAn nh\u1EABn.\n" +
             "- D\u00F9ng ng\u00F4n ng\u1EEF g\u1EA7n g\u0169i (b\u1EA1n/m\u00ECnh), khuy\u1EBFn kh\u00EDch v\u00E0 \u0111\u1ED9ng vi\u00EAn thay v\u00EC ch\u1EC9 tr\u00EDch.\n" +
             "T\u1ED1i \u0111a 200 ch\u1EEF tr\u1EEB khi ng\u01B0\u1EDDi d\u00F9ng y\u00EAu c\u1EA7u gi\u1EA3i th\u00EDch d\u00E0i h\u01A1n.";
-
+ 
     private static final int MAX_HISTORY_TURNS = 20;
-
+ 
     private final GeminiService geminiService;
     private final GeminiProperties geminiProperties;
     private final RestClient gptOssRestClient;
@@ -45,12 +46,14 @@ public class AIChatService {
     private final GptOssKeyRotator gptOssKeyRotator;
     private final ProfileService profileService;
     private final ChatHistoryService chatHistoryService;
+    private final SubscriptionService subscriptionService;
     private final ObjectMapper objectMapper;
-
+ 
     public AIChatResponseDTO chat(AIChatRequestDTO request) {
         validateRequest(request);
+        subscriptionService.ensureCanUseDetailedAi(profileService.getCurrentProfile());
         List<AIChatMessageDTO> trimmedMessages = trimHistory(request.getMessages());
-
+ 
         String provider = request.getProvider();
         SubscriptionPlan plan = profileService.getCurrentProfile().getSubscriptionPlan();
 
@@ -129,6 +132,7 @@ public class AIChatService {
 
     public String chatWithSystemPrompt(String systemPrompt, AIChatRequestDTO request) {
         validateRequest(request);
+        subscriptionService.ensureCanUseDetailedAi(profileService.getCurrentProfile());
         List<AIChatMessageDTO> trimmedMessages = trimHistory(request.getMessages());
 
         String provider = request.getProvider() != null ? request.getProvider() : "gemini";

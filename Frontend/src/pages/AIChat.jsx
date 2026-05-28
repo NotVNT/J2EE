@@ -5,8 +5,11 @@ import ChatSidebar from "../components/ChatSidebar.jsx";
 import ChatWindow from "../components/ChatWindow.jsx";
 import { useUser } from "../hooks/useUser.jsx";
 import axiosConfig from "../util/axiosConfig.jsx";
+import Dashboard from "../components/Dashboard.jsx";
 import { API_ENDPOINTS } from "../util/apiEndpoints.js";
 import { parseIntentResponse, isCrudIntent, isActionIntent } from "../util/aiIntentParser.js";
+import { useNavigate } from "react-router-dom";
+import { Bot, Sparkles, TrendingUp, Zap, ArrowLeft, MessageSquare } from "lucide-react";
 
 const AGENT_MODEL_OPTIONS = [
   { value: "gemini", label: "Gemini Flash", description: "Phản hồi nhanh, tiết kiệm", icon: "🤖" },
@@ -23,6 +26,7 @@ const AIChat = () => {
   useUser();
   const { user } = useContext(AppContext);
   const { currentPage } = useRouteContext();
+  const navigate = useNavigate();
 
   // Plan-based flags
   const isFreePlan  = !user?.subscriptionPlan || user?.subscriptionPlan === "FREE";
@@ -446,6 +450,101 @@ const AIChat = () => {
     if (!isPremiumPlan) return;
     setAgentModel(newModel);
   };
+
+  if (isFreePlan) {
+    return (
+      <Dashboard activeMenu="Trợ lý AI">
+        <div className="flex items-center justify-center min-h-[75vh] px-4 relative overflow-hidden">
+          {/* Glow orb background */}
+          <div className="absolute top-1/4 left-1/4 -translate-x-1/2 w-72 h-72 rounded-full bg-purple-600/15 blur-3xl pointer-events-none" />
+          <div className="absolute bottom-1/4 right-1/4 translate-x-1/2 w-80 h-80 rounded-full bg-indigo-600/10 blur-3xl pointer-events-none" />
+
+          <div className="relative w-full max-w-lg bg-slate-900 border border-purple-500/30 text-white rounded-3xl p-6 md:p-8 shadow-2xl overflow-hidden animate-fade-in-up">
+            {/* Top Accent Gradient Border */}
+            <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-purple-500 via-pink-500 to-amber-500" />
+            
+            <div className="text-center">
+              {/* AI Bot Icon with beautiful animation and glow */}
+              <div className="relative w-16 h-16 mx-auto mb-5 flex items-center justify-center rounded-2xl
+                bg-gradient-to-tr from-purple-600 to-indigo-500 shadow-xl shadow-purple-500/20">
+                <Bot size={32} className="text-white animate-bounce-slow" />
+                <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-amber-400 animate-ping" />
+              </div>
+
+              {/* Badges */}
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold
+                bg-purple-500/10 border border-purple-500/30 text-purple-300 mb-4 uppercase tracking-wider">
+                <Sparkles size={12} className="text-amber-400" />
+                Trợ lý Đặc quyền
+              </div>
+
+              <h2 className="text-2xl font-extrabold text-white leading-tight">
+                Nova Money — Trợ lý AI
+              </h2>
+              
+              <p className="text-sm text-slate-300 mt-2 mb-6 leading-relaxed max-w-sm mx-auto">
+                Tính năng Trợ lý AI đặc quyền chỉ khả dụng từ gói hội viên <span className="font-semibold text-purple-400">BASIC</span> và <span className="font-semibold text-purple-400">PREMIUM</span>.
+              </p>
+
+              {/* AI Features Grid */}
+              <div className="bg-slate-800/40 rounded-2xl border border-white/5 p-4 md:p-5 text-left space-y-3.5 mb-7">
+                <div className="flex items-start gap-3">
+                  <div className="p-1.5 rounded-lg bg-purple-500/20 text-purple-400 shrink-0 mt-0.5">
+                    <MessageSquare size={14} />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-white">Trò chuyện & Tư vấn Tài chính</h4>
+                    <p className="text-xs text-slate-400 mt-0.5">Tâm sự chi tiêu, nhận lời khuyên thông minh cho cuộc sống cá nhân.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <div className="p-1.5 rounded-lg bg-purple-500/20 text-purple-400 shrink-0 mt-0.5">
+                    <Sparkles size={14} />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-white">Chế độ Agent đắc lực (Premium)</h4>
+                    <p className="text-xs text-slate-400 mt-0.5">Tự động thêm, sửa, xoá giao dịch, quản lý hũ chi tiêu bằng ngôn ngữ tự nhiên.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <div className="p-1.5 rounded-lg bg-purple-500/20 text-purple-400 shrink-0 mt-0.5">
+                    <TrendingUp size={14} />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-white">Báo cáo & Phân tích thông minh</h4>
+                    <p className="text-xs text-slate-400 mt-0.5">Nhận gợi ý tiết kiệm thông minh cá nhân hóa giúp bạn tối ưu hóa dòng tiền.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action buttons */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={() => navigate("/dashboard")}
+                  className="w-full sm:order-1 px-5 py-3 rounded-2xl text-sm font-medium
+                    bg-slate-800 hover:bg-slate-700 active:scale-98 transition duration-150 text-slate-300 hover:text-white"
+                >
+                  Quay lại Trang chủ
+                </button>
+                <button
+                  onClick={() => navigate("/payment")}
+                  className="w-full sm:order-2 px-5 py-3 rounded-2xl text-sm font-bold text-white
+                    bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 hover:from-purple-500 hover:via-pink-500 hover:to-amber-400
+                    shadow-lg shadow-purple-600/30 hover:shadow-purple-600/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-150
+                    flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <Zap size={16} />
+                  Nâng cấp ngay
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Dashboard>
+    );
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-white dark:bg-[#131314] text-slate-800 dark:text-slate-200 transition-colors duration-300 relative">

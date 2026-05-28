@@ -3,6 +3,7 @@ import { useUser } from "../hooks/useUser.jsx";
 import { useContext, useEffect, useState } from "react";
 import axiosConfig from "../util/axiosConfig.jsx";
 import { API_ENDPOINTS } from "../util/apiEndpoints.js";
+import { safeOpenExternal } from "../util/safeNavigation.js";
 import toast from "react-hot-toast";
 import CustomSelect from "../components/CustomSelect.jsx";
 import IncomeList from "../components/IncomeList.jsx";
@@ -135,8 +136,7 @@ const Income = () => {
 
       const response = await axiosConfig.post(API_ENDPOINTS.GENERATE_INCOME_REPORT, payload);
       
-      if (response.data && response.data.presignedUrl) {
-        window.open(response.data.presignedUrl, "_blank");
+      if (response.data && response.data.presignedUrl && safeOpenExternal(response.data.presignedUrl)) {
         toast.success("Đã mở link tải báo cáo Excel!");
       } else {
         throw new Error("Không lấy được link tải báo cáo");

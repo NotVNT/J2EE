@@ -22,6 +22,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -95,6 +96,7 @@ public class ExpenseService {
     }
 
     // Retrieves all expenses for current month/based on the start date and end date
+    @Transactional(readOnly = true)
     public List<ExpenseDTO> getCurrentMonthExpensesForCurrentUser() {
         ProfileEntity profile = profileService.getCurrentProfile();
         LocalDate now = LocalDate.now();
@@ -105,10 +107,28 @@ public class ExpenseService {
     }
 
     // Retrieves all expenses for current user
+    @Transactional(readOnly = true)
     public List<ExpenseDTO> getAllExpensesForCurrentUser() {
         ProfileEntity profile = profileService.getCurrentProfile();
         List<ExpenseEntity> list = expenseRepository.findByProfileIdOrderByDateDesc(profile.getId());
         return list.stream().map(this::toDTO).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<ExpenseDTO> getExpensesForCurrentUser(Boolean all, int page, int size) {
+        ProfileEntity profile = profileService.getCurrentProfile();
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        
+        org.springframework.data.domain.Page<ExpenseEntity> expensePage;
+        if (Boolean.TRUE.equals(all)) {
+            expensePage = expenseRepository.findByProfileIdOrderByDateDesc(profile.getId(), pageable);
+        } else {
+            LocalDate now = LocalDate.now();
+            LocalDate startDate = now.withDayOfMonth(1);
+            LocalDate endDate = now.withDayOfMonth(now.lengthOfMonth());
+            expensePage = expenseRepository.findByProfileIdAndDateBetween(profile.getId(), startDate, endDate, pageable);
+        }
+        return expensePage.getContent().stream().map(this::toDTO).toList();
     }
 
     // Delete expense by id for current user
@@ -228,6 +248,7 @@ public class ExpenseService {
     }
 
     // Filter expenses
+    @Transactional(readOnly = true)
     public List<ExpenseDTO> filterExpenses(LocalDate startDate, LocalDate endDate, String keyword, Sort sort) {
         ProfileEntity profile = profileService.getCurrentProfile();
         List<ExpenseEntity> list = expenseRepository.findByProfileIdAndDateBetweenAndNameContainingIgnoreCase(
@@ -235,7 +256,17 @@ public class ExpenseService {
         return list.stream().map(this::toDTO).toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<ExpenseDTO> filterExpenses(LocalDate startDate, LocalDate endDate, String keyword, Sort sort, int page, int size) {
+        ProfileEntity profile = profileService.getCurrentProfile();
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size, sort);
+        org.springframework.data.domain.Page<ExpenseEntity> expensePage = expenseRepository.findByProfileIdAndDateBetweenAndNameContainingIgnoreCase(
+                profile.getId(), startDate, endDate, keyword, pageable);
+        return expensePage.getContent().stream().map(this::toDTO).toList();
+    }
+
     // Notifications
+    @Transactional(readOnly = true)
     public List<ExpenseDTO> getExpensesForUserOnDate(Long profileId, LocalDate date) {
         List<ExpenseEntity> list = expenseRepository.findByProfileIdAndDate(profileId, date);
         return list.stream().map(this::toDTO).toList();
@@ -342,5 +373,20 @@ public class ExpenseService {
         return expenses.stream()
                 .map(this::toDTO)
                 .collect(java.util.stream.Collectors.toList());
+    }
+
+    public Map<String, BigDecimal> getMonthlyTotalsForCurrentUser(LocalDate startDate, LocalDate endDate) {
+        ProfileEntity profile = profileService.getCurrentProfile();
+        List<Object[]> results = expenseRepository.findMonthlyExpenseTotals(profile.getId(), startDate, endDate);
+        
+        Map<String, BigDecimal> totals = new java.util.HashMap<>();
+        for (Object[] row : results) {
+            Integer month = (Integer) row[0];
+            Integer year = (Integer) row[1];
+            BigDecimal amount = (BigDecimal) row[2];
+            String key = year + "-" + String.format("%02d", month);
+            totals.put(key, amount);
+        }
+        return totals;
     }
 }

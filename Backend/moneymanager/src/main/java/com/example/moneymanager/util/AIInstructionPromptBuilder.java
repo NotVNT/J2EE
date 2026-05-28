@@ -17,7 +17,7 @@ public class AIInstructionPromptBuilder {
                     "- Danh m\u1EE5c: CREATE_CATEGORY, UPDATE_CATEGORY, DELETE_CATEGORY\n" +
                     "- Ng\u00E2n s\u00E1ch: CREATE_BUDGET, UPDATE_BUDGET, DELETE_BUDGET\n" +
                     "- M\u1EE5c ti\u00EAu ti\u1EBFt ki\u1EC7m: CREATE_SAVING_GOAL, UPDATE_SAVING_GOAL, DELETE_SAVING_GOAL\n" +
-                    "- H\u0169 chi ti\u00EAu: CREATE_JAR, UPDATE_JAR, DELETE_JAR, TRANSFER_JAR\n" +
+                    "- H\u0169/H\u1EE7 chi ti\u00EAu: CREATE_JAR, UPDATE_JAR, DELETE_JAR, TRANSFER_JAR\n" +
                     "- Xu\u1EA5t file Excel: EXPORT_EXCEL_INCOME (thu nh\u1EADp), EXPORT_EXCEL_EXPENSE (chi ti\u00EAu)\n" +
                     "- G\u1EEDi email b\u00E1o c\u00E1o: EMAIL_INCOME_REPORT (thu nh\u1EADp), EMAIL_EXPENSE_REPORT (chi ti\u00EAu)\n" +
                     "- C\u00E2u h\u1ECFi th\u00F4ng th\u01B0\u1EDDng: ANSWER_QUESTION\n\n" +
@@ -50,7 +50,7 @@ public class AIInstructionPromptBuilder {
                     "Xu\u1EA5t Excel chi ti\u00EAu: {\"intent\": \"EXPORT_EXCEL_EXPENSE\", \"confirmationPrompt\": \"Xu\u1EA5t b\u00E1o c\u00E1o Excel chi ti\u00EAu th\u00E1ng n\u00E0y v\u1EC1 m\u00E1y b\u1EA1n?\"}\n" +
                     "G\u1EEDi email thu nh\u1EADp: {\"intent\": \"EMAIL_INCOME_REPORT\", \"confirmationPrompt\": \"G\u1EEDi b\u00E1o c\u00E1o thu nh\u1EADp th\u00E1ng n\u00E0y \u0111\u1EBFn email c\u1EE7a b\u1EA1n?\"}\n" +
                     "G\u1EEDi email chi ti\u00EAu: {\"intent\": \"EMAIL_EXPENSE_REPORT\", \"confirmationPrompt\": \"G\u1EEDi b\u00E1o c\u00E1o chi ti\u00EAu th\u00E1ng n\u00E0y \u0111\u1EBFn email c\u1EE7a b\u1EA1n?\"}\n" +
-                    "C\u00E2u h\u1ECFi: {\"intent\": \"ANSWER_QUESTION\", \"answer\": \"...\"}\n" +
+                    "C\u00E2u h\u1ECFi: {\"intent\": \"ANSWER_QUESTION\", \"answer\": \"Trong h\u0169 **Thi\u1EBFt y\u1EBFu** c\u1EE7a b\u1EA1n hi\u1EC7n c\u00F3 c\u00E1c giao d\u1ECBch g\u1EA7n nh\u1EA5t sau:\\n\\n| Ng\u00E0y | Danh m\u1EE5c | N\u1ED9i dung | S\u1ED1 ti\u1EC1n |\\n| :--- | :--- | :--- | :---: |\\n| 2026-05-26 | Chi ti\u00EAu | \u0102n u\u1ED1ng | **50.000\u0111** |\\n| 2026-05-26 | Chi ti\u00EAu | Mua s\u1EAFm | **35.000\u0111** |\\n| 2026-04-01 | Chi ti\u00EAu | \u0110i l\u1EA1i | **48.400\u0111** |\\n| 2026-04-01 | Chi ti\u00EAu | \u0110i\u1EC7n n\u01B0\u1EDBc | **236.600\u0111** |\\n\\nB\u1EA1n c\u00F3 c\u1EA7n m\u00ECnh h\u1ED7 tr\u1EE3 th\u00EAm th\u00F4ng tin g\u00EC v\u1EC1 c\u00E1c giao d\u1ECBch n\u00E0y kh\u00F4ng?\"}\n" +
                     "Ngo\u00E0i ph\u1EA1m vi: {\"intent\": \"INVALID_REQUEST\", \"validationErrors\": [\"l\u00FD do\"]}\n\n" +
                     "PH\u00C2N BI\u1EC6T QUAN TR\u1ECCNG:\n" +
                     "- 's\u1EEDa/ch\u1EC9nh/\u0111\u1ED5i/c\u1EADp nh\u1EADt chi ti\u00EAu/giao d\u1ECBch' \u2192 UPDATE_EXPENSE (PH\u1EA2I c\u00F3 expenseId t\u1EEB recentExpenses)\n" +
@@ -59,17 +59,23 @@ public class AIInstructionPromptBuilder {
                     "- 'x\u00F3a thu nh\u1EADp' \u2192 DELETE_INCOME (PH\u1EA2I c\u00F3 incomeId t\u1EEB recentIncomes)\n" +
                     "- 'thu nh\u1EADp/l\u01B0\u01A1ng/income' \u2192 CREATE_INCOME (KH\u00D4NG PH\u1EA2I CREATE_EXPENSE)\n" +
                     "- 'chi ti\u00EAu/mua/ti\u00EAu/expense' \u2192 CREATE_EXPENSE\n" +
-                    "- 't\u1EA1o h\u0169/th\u00EAm h\u0169/jar' \u2192 CREATE_JAR (ph\u1EA3i c\u00F3 name, c\u00F3 th\u1EC3 c\u00F3 targetPercentage, icon)\n" +
-                    "- 's\u1EEDa h\u0169/\u0111\u1ED5i t\u00EAn h\u0169' \u2192 UPDATE_JAR (ph\u1EA3i c\u00F3 jarName l\u00E0 t\u00EAn hi\u1EC7n t\u1EA1i c\u1EE7a h\u0169)\n" +
-                    "- 'x\u00F3a h\u0169' \u2192 DELETE_JAR (ph\u1EA3i c\u00F3 jarName l\u00E0 t\u00EAn h\u0169 mu\u1ED1n x\u00F3a)\n" +
-                    "- 'chuy\u1EC3n ti\u1EC1n/d\u1EDDi ti\u1EC1n/transfer t\u1EEB h\u0169...sang...' \u2192 TRANSFER_JAR (ph\u1EA3i c\u00F3 fromJarName, toJarName, amount)\n" +
+                    "- 't\u1EA1o h\u0169/t\u1EA1o h\u1EE7/th\u00EAm h\u0169/th\u00EAm h\u1EE7/jar' \u2192 CREATE_JAR (ph\u1EA3i c\u00F3 name, c\u00F3 th\u1EC3 c\u00F3 targetPercentage, icon)\n" +
+                    "- 's\u1EEDa h\u0169/s\u1EEDa h\u1EE7/\u0111\u1ED5i t\u00EAn h\u0169/\u0111\u1ED5i t\u00EAn h\u1EE7' \u2192 UPDATE_JAR (ph\u1EA3i c\u00F3 jarName l\u00E0 t\u00EAn hi\u1EC7n t\u1EA1i c\u1EE7a h\u0169/h\u1EE7)\n" +
+                    "- 'x\u00F3a h\u0169/x\u00F3a h\u1EE7' \u2192 DELETE_JAR (ph\u1EA3i c\u00F3 jarName l\u00E0 t\u00EAn h\u0169/h\u1EE7 mu\u1ED1n x\u00F3a)\n" +
+                    "- 'chuy\u1EC3n ti\u1EC1n/d\u1EDDi ti\u1EC1n/transfer t\u1EEB h\u0169/h\u1EE7...sang...' \u2192 TRANSFER_JAR (ph\u1EA3i c\u00F3 fromJarName, toJarName, amount)\n" +
                     "- 'g\u1EEDi email b\u00E1o c\u00E1o chi ti\u00EAu/t\u00E0i ch\u00EDnh/expense' \u2192 EMAIL_EXPENSE_REPORT\n" +
                     "- 'g\u1EEDi email b\u00E1o c\u00E1o thu nh\u1EADp/income' \u2192 EMAIL_INCOME_REPORT\n" +
                     "- 'xu\u1EA5t excel chi ti\u00EAu/t\u00E0i ch\u00EDnh' \u2192 EXPORT_EXCEL_EXPENSE\n" +
                     "- 'xu\u1EA5t excel thu nh\u1EADp' \u2192 EXPORT_EXCEL_INCOME\n" +
                     "\u0110\u1ECBnh d\u1EA1ng: date=YYYY-MM-DD, amount=s\u1ED1 kh\u00F4ng c\u00F3 k\u00FD hi\u1EC7u (50000 kh\u00F4ng ph\u1EA3i '50,000\u0111'), targetAmount=s\u1ED1 nguy\u00EAn.\n\n" +
-                    "TONE CHO NG\u01AF\u1EDCI D\u00D9NG: C\u00E1c field confirmationPrompt, answer (trong ANSWER_QUESTION) v\u00E0 validationErrors ph\u1EA3i th\u00E2n thi\u1EC7n, l\u1ECBch s\u1EF1, g\u1EA7n g\u0169i. D\u00F9ng 'b\u1EA1n'. Kh\u00F4ng \u0111\u01B0\u1EE3c c\u1ED9c l\u1ED1c hay l\u1EA1nh l\u00F9ng. V\u00ED d\u1EE5 t\u1ED1t: 'B\u1EA1n c\u00F3 mu\u1ED1n th\u00EAm chi ti\u00EAu \u0102n u\u1ED1ng 50.000\u0111 h\u00F4m nay kh\u00F4ng?' \u2014 V\u00ED d\u1EE5 x\u1EA5u: 'Th\u00EAm chi ti\u00EAu.'.\n\n" +
-                    "\uD83D\uDD34 NH\u1EAEC L\u1EA0I: Ch\u1EC9 tr\u1EA3 v\u1EC1 JSON. Kh\u00F4ng c\u00F3 l\u1EDDi gi\u1EA3i th\u00EDch, kh\u00F4ng c\u00F3 text ngo\u00E0i JSON. B\u1EAFt \u0111\u1EA7u { k\u1EBFt th\u00FAc }.";
+                    "TONE CHO NG\u01AF\u1EDCI D\u00D9NG: C\u00E1c field confirmationPrompt, answer (trong ANSWER_QUESTION) v\u00E0 validationErrors ph\u1EA3i th\u00E2n thi\u1EBFt, l\u1ECBch s\u1EF1, g\u1EA7n g\u0169i. D\u00F9ng 'b\u1EA1n'. Kh\u00F4ng \u0111\u01B0\u1EE3c c\u1ED9c l\u1ED1c hay l\u1EA1nh l\u00F9ng. V\u00ED d\u1EE5 t\u1ED1t: 'B\u1EA1n c\u00F3 mu\u1ED1n th\u00EAm chi ti\u00EAu \u0102n u\u1ED1ng 50.000\u0111 h\u00F4m nay kh\u00F4ng?' \u2014 V\u00ED d\u1EE5 x\u1EA5u: 'Th\u00EAm chi ti\u00EAu.'.\n\n" +
+                    "QUY \u0110\u1ECANH \u0110\u1ECANH D\u1EA0NG MARKDOWN (\u0110\u1EC2 HI\u1EC2N TH\u1ECA \u0110\u1EB8P M\u1EB0T):\n" +
+                    "- B\u1EAET BU\u1ED8C ph\u1EA3i s\u1EED d\u1EE5ng k\u00FD t\u1EF1 xu\u1ED1ng d\u00F2ng `\\n` (xu\u1ED1ng d\u00F2ng trong chu\u1ED7i JSON) \u0111\u1EC3 ph\u00E2n t\u00E1ch c\u00E1c ph\u1EA7n kh\u00E1c nhau (l\u1EDDi m\u1EDF \u0111\u1EA7u, b\u1EA3ng giao d\u1ECBch, l\u1EDDi ch\u00EDt). TUY\u1EC6T \u0110\u1ED0I KH\u00D4NG vi\u1EBFt li\u1EC1n m\u1ED9t kh\u1ED1i ch\u1EEF kh\u00F4ng c\u00F3 xu\u1ED1ng d\u00F2ng.\n" +
+                    "- Lu\u00F4n IN \u0110\u1EACM t\u00EAn c\u00E1c h\u0169 (v\u00ED d\u1EE5: h\u0169 **Thi\u1EBFt y\u1EBFu**, h\u0169 **Ti\u1EBFt ki\u1EC7m**), s\u1ED1 ti\u1EC1n/s\u1ED1 d\u01B0/ph\u1EA7n tr\u0103m (v\u00ED d\u1EE5: **50.000\u0111**, **11.000.000\u0111**, **10%**).\n" +
+                    "- Khi li\u1EC7t k\u00EA danh s\u00E1ch c\u00E1c h\u0169 ho\u1EB7c th\u00F4ng tin li\u1EC7t k\u00EA n\u00E0o kh\u00E1c, b\u1EAAFt bu\u1ED9c s\u1EED d\u1EE5ng danh s\u00E1ch g\u1EA1ch \u0111\u1EA7u d\u00F2ng (*) v\u00E0 th\u00EAm icon emoji \u0111\u1EA7u d\u00F2ng ph\u00F9 h\u1EE3p (v\u00ED d\u1EE5: * \uD83D\uDECD\uFE0F **Thi\u1EBFt y\u1EBFu**: **60.130.000\u0111**).\n" +
+                    "- Khi li\u1EC7t k\u00EA giao d\u1ECBch g\u1EA7n nh\u1EA5t ho\u1EB7c b\u1EA3ng so s\u00E1nh, B\u1EAAFT BU\u1ED8C s\u1EED d\u1EE5ng b\u1EA3ng Markdown (Table) v\u1EDBi c\u00E1c c\u1ED9t r\u00F5 r\u00E0ng (v\u00ED d\u1EE5: | Ng\u00E0y | Danh m\u1EE5c | N\u1ED9i dung | S\u1ED1 ti\u1EC1n |) \u0111\u1EC3 ng\u01B0\u1EDDi d\u00F9ng xem cho d\u1EC5 v\u00E0 chuy\u00EAn nghi\u1EC7p.\n" +
+                    "- S\u1EED d\u1EE5ng blockquote (>) cho c\u00E1c g\u1EE3i \u00FD ho\u1EB7c l\u01B0u \u00FD \u0111\u1EB7c bi\u1EC7t.\n\n" +
+                    "\uD83D\uDD34 NH\u1EAEC L\u1EA0I: Ch\u1EC9 tr\u1EA3 v\u1EC1 JSON. Kh\u00F4ng c\u00D3 l\u1EDDi gi\u1EA3i th\u00EDch, kh\u00F4ng c\u00D3 text ngo\u00E0i JSON. B\u1EAFt \u0111\u1EA7u { k\u1EBFt th\u00FAc }.";
 
     private static final String PAGE_LABELS_VI =
             "dashboard: T\u1ED5ng quan, income: Thu nh\u1EADp, expense: Chi ti\u00EAu, " +
@@ -127,21 +133,7 @@ public class AIInstructionPromptBuilder {
             case "jars" -> {
                 if (pageData.containsKey("jars")) {
                     List<Map<String, Object>> jars = (List<Map<String, Object>>) pageData.get("jars");
-                    sb.append(jars.size()).append(" h\u0169: ");
-                    for (int i = 0; i < Math.min(jars.size(), 10); i++) {
-                        Map<String, Object> j = jars.get(i);
-                        sb.append(j.get("name"));
-                        sb.append(" [jarId=").append(j.get("id")).append("]");
-                        Object balance = j.get("currentBalance");
-                        Object pct = j.get("targetPercentage");
-                        sb.append("(s\u1ED1 d\u01B0=").append(balance != null ? balance : 0).append("\u0111");
-                        sb.append(", ph\u00E2n b\u1ED5=").append(pct != null ? pct : 0).append("%");
-                        if (j.get("icon") != null && !j.get("icon").toString().isBlank()) {
-                            sb.append(", icon=").append(j.get("icon"));
-                        }
-                        sb.append(")");
-                        if (i < Math.min(jars.size(), 10) - 1) sb.append(", ");
-                    }
+                    formatJarsSummary(jars, sb);
                 }
             }
             case "expense" -> {
@@ -273,6 +265,51 @@ public class AIInstructionPromptBuilder {
                 }
             }
         }
+
+        // If not the "jars" page but jars data is loaded, append jars summary at the end
+        if (!"jars".equals(pageContext.trim().toLowerCase()) && pageData.containsKey("jars")) {
+            List<Map<String, Object>> jarsList = (List<Map<String, Object>>) pageData.get("jars");
+            if (jarsList != null && !jarsList.isEmpty()) {
+                sb.append(" | ");
+                formatJarsSummary(jarsList, sb);
+            }
+        }
+
         return sb.length() > 0 ? sb.toString() : "Ch\u01B0a c\u00F3 d\u1EEF li\u1EC7u.";
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void formatJarsSummary(List<Map<String, Object>> jarsList, StringBuilder sb) {
+        sb.append(jarsList.size()).append(" h\u0169/h\u1EE7 chi ti\u00EAu: ");
+        for (int i = 0; i < jarsList.size(); i++) {
+            Map<String, Object> j = jarsList.get(i);
+            sb.append(j.get("name"));
+            sb.append(" [jarId=").append(j.get("id")).append("]");
+            Object balance = j.get("currentBalance");
+            Object pct = j.get("targetPercentage");
+            sb.append("(s\u1ED1 d\u01B0=").append(balance != null ? balance : 0).append("\u0111");
+            sb.append(", ph\u00E2n b\u1ED5=").append(pct != null ? pct : 0).append("%");
+            if (j.get("icon") != null && !j.get("icon").toString().isBlank()) {
+                sb.append(", icon=").append(j.get("icon"));
+            }
+            sb.append(")");
+
+            if (j.containsKey("recentExpenses")) {
+                List<Map<String, Object>> jarRecent = (List<Map<String, Object>>) j.get("recentExpenses");
+                if (jarRecent != null && !jarRecent.isEmpty()) {
+                    sb.append("[giao d\u1ECBch g\u1EA7n \u0111\u00E2y: ");
+                    for (int k = 0; k < jarRecent.size(); k++) {
+                        Map<String, Object> re = jarRecent.get(k);
+                        sb.append(re.get("categoryName")).append(" ").append(re.get("amount")).append("\u0111 (").append(re.get("date")).append(")");
+                        if (k < jarRecent.size() - 1) sb.append(", ");
+                    }
+                    sb.append("]");
+                } else {
+                    sb.append("[ch\u01B0a c\u00F3 giao d\u1ECBch n\u00E0o g\u1EA7n \u0111\u00E2y]");
+                }
+            }
+
+            if (i < jarsList.size() - 1) sb.append(", ");
+        }
     }
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Bell, Check, Trash2, ArrowRight } from "lucide-react";
+import { Bell, Check, Trash2, ArrowRight, TrendingUp, TrendingDown, AlertCircle, ShieldAlert, Target, Flame, FileBarChart, ShieldCheck, Mail, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axiosConfig from "../util/axiosConfig";
 import { API_ENDPOINTS } from "../util/apiEndpoints";
@@ -12,15 +12,104 @@ const NotificationDropdown = () => {
   const [loading, setLoading] = useState(false);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
+  const seenIdsRef = useRef(new Set());
+  const isFirstLoadRef = useRef(true);
 
-  const fetchUnreadCount = async () => {
+  const getToastIcon = (type) => {
+    switch (type) {
+      case "EXPENSE":
+        return <div className="w-8 h-8 rounded-xl bg-red-50 dark:bg-red-500/10 flex items-center justify-center text-red-500 shrink-0 border border-red-500/10"><TrendingDown size={16} /></div>;
+      case "INCOME":
+        return <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-500 shrink-0 border border-emerald-500/10"><TrendingUp size={16} /></div>;
+      case "BUDGET_WARNING":
+        return <div className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center text-amber-500 shrink-0 border border-amber-500/10"><AlertCircle size={16} /></div>;
+      case "BUDGET_EXCEEDED":
+        return <div className="w-8 h-8 rounded-xl bg-red-50 dark:bg-red-500/20 flex items-center justify-center text-red-650 shrink-0 border border-red-500/20"><AlertCircle size={16} /></div>;
+      case "BUDGET_ALERT":
+        return <div className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center text-amber-600 shrink-0 border border-amber-500/10"><ShieldAlert size={16} /></div>;
+      case "SPENDING_ALERT":
+        return <div className="w-8 h-8 rounded-xl bg-red-50 dark:bg-red-500/10 flex items-center justify-center text-red-500 shrink-0 border border-red-500/10"><TrendingUp size={16} /></div>;
+      case "GOAL_PROGRESS":
+        return <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-500 shrink-0 border border-emerald-500/10"><Target size={16} /></div>;
+      case "SAVING_STREAK":
+        return <div className="w-8 h-8 rounded-xl bg-violet-50 dark:bg-violet-500/10 flex items-center justify-center text-violet-500 shrink-0 border border-violet-500/10"><Flame size={16} /></div>;
+      case "MONTHLY_REPORT":
+        return <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-500 shrink-0 border border-blue-500/10"><FileBarChart size={16} /></div>;
+      case "PAYMENT":
+        return <div className="w-8 h-8 rounded-xl bg-violet-50 dark:bg-violet-500/10 flex items-center justify-center text-violet-500 shrink-0 border border-violet-500/10"><ShieldCheck size={16} /></div>;
+      case "ADMIN":
+        return <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-500 shrink-0 border border-blue-500/10"><Mail size={16} /></div>;
+      default:
+        return <div className="w-8 h-8 rounded-xl bg-slate-50 dark:bg-white/10 flex items-center justify-center text-slate-500 shrink-0 border border-slate-500/10"><Bell size={16} /></div>;
+    }
+  };
+
+  const triggerToast = (notif) => {
+    toast.custom((t) => (
+      <div
+        className={`${
+          t.visible ? 'animate-in fade-in slide-in-from-top-4' : 'animate-out fade-out slide-out-to-top-4'
+        } max-w-sm w-full bg-white dark:bg-[#1E293B] shadow-2xl rounded-2xl pointer-events-auto flex border border-slate-100 dark:border-white/10 duration-350`}
+      >
+        <div className="flex-1 w-0 p-4">
+          <div className="flex items-start gap-3">
+            <div className="shrink-0 mt-0.5">
+              {getToastIcon(notif.type)}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-extrabold text-slate-900 dark:text-white truncate">
+                {notif.title}
+              </p>
+              <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed font-semibold">
+                {notif.message}
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="flex border-l border-slate-100 dark:border-white/5">
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="w-full px-4 flex items-center justify-center text-[10px] font-black text-violet-600 dark:text-violet-400 hover:text-violet-750 focus:outline-none cursor-pointer uppercase tracking-wider"
+          >
+            Đóng
+          </button>
+        </div>
+      </div>
+    ), { duration: 5000 });
+  };
+
+  const pollNotifications = async () => {
     try {
-      const res = await axiosConfig.get(API_ENDPOINTS.GET_UNREAD_COUNT);
+      const res = await axiosConfig.get(API_ENDPOINTS.GET_NOTIFICATIONS);
       if (res.status === 200) {
-        setUnreadCount(res.data.unreadCount);
+        const fetchedNotifs = res.data;
+        
+        if (isFirstLoadRef.current) {
+          fetchedNotifs.forEach(n => seenIdsRef.current.add(n.id));
+          isFirstLoadRef.current = false;
+        } else {
+          let hasNew = false;
+          fetchedNotifs.forEach(n => {
+            if (!seenIdsRef.current.has(n.id)) {
+              seenIdsRef.current.add(n.id);
+              if (!n.isRead) {
+                triggerToast(n);
+                hasNew = true;
+              }
+            }
+          });
+
+          if (hasNew) {
+            window.dispatchEvent(new CustomEvent("new-notifications", { detail: fetchedNotifs }));
+          }
+        }
+
+        setNotifications(fetchedNotifs.slice(0, 5));
+        const unread = fetchedNotifs.filter(n => !n.isRead).length;
+        setUnreadCount(unread);
       }
     } catch (error) {
-      console.error("Lỗi lấy số lượng thông báo chưa đọc", error);
+      console.error("Lỗi đồng bộ thông báo thời gian thực", error);
     }
   };
 
@@ -29,12 +118,10 @@ const NotificationDropdown = () => {
     try {
       const res = await axiosConfig.get(API_ENDPOINTS.GET_NOTIFICATIONS);
       if (res.status === 200) {
-        // Chỉ lấy top 5 để hiển thị trong dropdown
         setNotifications(res.data.slice(0, 5));
-        
-        // Tính lại số lượng chưa đọc dựa trên dữ liệu lấy về cho chắc
         const unread = res.data.filter(n => !n.isRead).length;
         setUnreadCount(unread);
+        res.data.forEach(n => seenIdsRef.current.add(n.id));
       }
     } catch (error) {
       console.error("Lỗi lấy danh sách thông báo", error);
@@ -85,11 +172,11 @@ const NotificationDropdown = () => {
   }, [showDropdown]);
 
   useEffect(() => {
-    fetchUnreadCount();
-    // Refresh count periodically
-    const intervalId = setInterval(fetchUnreadCount, 30000); // 30s
+    pollNotifications();
+    const intervalId = setInterval(pollNotifications, 10000); // 10s realtime poll
     return () => clearInterval(intervalId);
   }, []);
+
 
   const handleToggleDropdown = () => {
     if (!showDropdown) {

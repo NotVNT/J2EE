@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -101,11 +102,13 @@ public class IncomeService {
     }
 
     // Wrapper for Excel/Email controllers to keep backward compatibility
+    @Transactional(readOnly = true)
     public List<IncomeDTO> getCurrentMonthIncomesForCurrentUser() {
         return getIncomesForCurrentUser(null, null, false);
     }
 
     // Retrieves incomes flexibly: all, specific month/year, or defaults to current month
+    @Transactional(readOnly = true)
     public List<IncomeDTO> getIncomesForCurrentUser(Integer month, Integer year, Boolean all) {
         ProfileEntity profile = profileService.getCurrentProfile();
         if (Boolean.TRUE.equals(all)) {
@@ -119,6 +122,25 @@ public class IncomeService {
         LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
         List<IncomeEntity> list = incomeRepository.findByProfileIdAndDateBetween(profile.getId(), startDate, endDate);
         return list.stream().map(this::toDTO).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<IncomeDTO> getIncomesForCurrentUser(Integer month, Integer year, Boolean all, int page, int size) {
+        ProfileEntity profile = profileService.getCurrentProfile();
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        
+        org.springframework.data.domain.Page<IncomeEntity> incomePage;
+        if (Boolean.TRUE.equals(all)) {
+            incomePage = incomeRepository.findByProfileIdOrderByDateDesc(profile.getId(), pageable);
+        } else {
+            LocalDate now = LocalDate.now();
+            int targetMonth = (month != null && month >= 1 && month <= 12) ? month : now.getMonthValue();
+            int targetYear = (year != null && year > 1900) ? year : now.getYear();
+            LocalDate startDate = LocalDate.of(targetYear, targetMonth, 1);
+            LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
+            incomePage = incomeRepository.findByProfileIdAndDateBetween(profile.getId(), startDate, endDate, pageable);
+        }
+        return incomePage.getContent().stream().map(this::toDTO).toList();
     }
 
     @Transactional
@@ -234,6 +256,7 @@ public class IncomeService {
     }
 
     // Get latest 5 incomes for current user
+    @Transactional(readOnly = true)
     public List<IncomeDTO> getLatest5IncomesForCurrentUser() {
         ProfileEntity profile = profileService.getCurrentProfile();
         List<IncomeEntity> list = incomeRepository.findTop5ByProfileIdOrderByDateDesc(profile.getId());
@@ -241,22 +264,34 @@ public class IncomeService {
     }
 
     // Get total incomes for current user
+    @Transactional(readOnly = true)
     public BigDecimal getTotalIncomeForCurrentUser() {
         ProfileEntity profile = profileService.getCurrentProfile();
         BigDecimal total = incomeRepository.findTotalIncomeByProfileId(profile.getId());
         return total != null ? total : BigDecimal.ZERO;
     }
 
+    @Transactional(readOnly = true)
     public long getTotalIncomeCountForCurrentUser() {
         ProfileEntity profile = profileService.getCurrentProfile();
         return incomeRepository.countByProfileId(profile.getId());
     }
 
     //filter incomes
+    @Transactional(readOnly = true)
     public List<IncomeDTO> filterIncomes(LocalDate startDate, LocalDate endDate, String keyword, Sort sort) {
         ProfileEntity profile = profileService.getCurrentProfile();
         List<IncomeEntity> list = incomeRepository.findByProfileIdAndDateBetweenAndNameContainingIgnoreCase(profile.getId(), startDate, endDate, keyword, sort);
         return list.stream().map(this::toDTO).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<IncomeDTO> filterIncomes(LocalDate startDate, LocalDate endDate, String keyword, Sort sort, int page, int size) {
+        ProfileEntity profile = profileService.getCurrentProfile();
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size, sort);
+        org.springframework.data.domain.Page<IncomeEntity> incomePage = incomeRepository.findByProfileIdAndDateBetweenAndNameContainingIgnoreCase(
+                profile.getId(), startDate, endDate, keyword, pageable);
+        return incomePage.getContent().stream().map(this::toDTO).toList();
     }
 
     //helper methods
@@ -310,5 +345,20 @@ public class IncomeService {
         return incomes.stream()
                 .map(this::toDTO)
                 .collect(java.util.stream.Collectors.toList());
+    }
+
+    public Map<String, BigDecimal> getMonthlyTotalsForCurrentUser(LocalDate startDate, LocalDate endDate) {
+        ProfileEntity profile = profileService.getCurrentProfile();
+        List<Object[]> results = incomeRepository.findMonthlyIncomeTotals(profile.getId(), startDate, endDate);
+        
+        Map<String, BigDecimal> totals = new java.util.HashMap<>();
+        for (Object[] row : results) {
+            Integer month = (Integer) row[0];
+            Integer year = (Integer) row[1];
+            BigDecimal amount = (BigDecimal) row[2];
+            String key = year + "-" + String.format("%02d", month);
+            totals.put(key, amount);
+        }
+        return totals;
     }
 }
