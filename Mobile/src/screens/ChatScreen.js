@@ -7,9 +7,9 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  SafeAreaView,
   Alert
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { COLORS } from "../constants/colors";
 import { sendAiChat, parseAiIntent, confirmAiAction, undoAiAction } from "../services/aiService";
 import { AuthContext } from "../components/AuthContext";
@@ -21,6 +21,7 @@ import ModelSelectorPill from "../components/chatbotUI/ModelSelectorPill";
 import MessageBubble from "../components/chatbotUI/MessageBubble";
 import QuickPromptChips from "../components/chatbotUI/QuickPromptChips";
 import ChatInputBar from "../components/chatbotUI/ChatInputBar";
+import ChatHeader from "../components/chatbotUI/ChatHeader";
 
 // ─── Helpers ───────────────────────────────────────────────
 
@@ -29,6 +30,7 @@ const getCurrentTimeLabel = () =>
 
 export default function ChatScreen() {
   const { user } = useContext(AuthContext);
+  const insets = useSafeAreaInsets();
 
   // Subscription status checking
   const isFreePlan = !user?.subscriptionPlan || user?.subscriptionPlan === "FREE";
@@ -433,65 +435,23 @@ export default function ChatScreen() {
   // ─── Render ─────────────────────────────────────────────
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Mode switcher tabs */}
-      <View style={styles.modeContainer}>
-        <Pressable
-          style={[styles.modeTab, activeMode === "chat" && styles.modeTabActive]}
-          onPress={() => handleModeSwitch("chat")}
-        >
-          <Text style={[styles.modeText, activeMode === "chat" && styles.modeTextActive]}>
-            💬 Chat
-          </Text>
-        </Pressable>
-        <Pressable
-          style={[styles.modeTab, activeMode === "agent" && styles.modeTabActive]}
-          onPress={() => handleModeSwitch("agent")}
-        >
-          <Text style={[styles.modeText, activeMode === "agent" && styles.modeTextActive]}>
-            🤖 Agent {isFreePlan && "🔒"}
-          </Text>
-        </Pressable>
-      </View>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      {/* Header with Model Selector in top-right */}
+      <ChatHeader>
+        <ModelSelectorPill
+          label={getModelLabel()}
+          value={getModelValue()}
+          options={getModelOptions()}
+          title={getModelSelectorTitle()}
+          onSelect={handleModelChange}
+        />
+      </ChatHeader>
 
-      {/* Model Selector Bar */}
-      <View style={styles.selectorContainer}>
-        {activeMode === "chat" ? (
-          <>
-            <Pressable
-              style={[styles.selectorButton, chatModel === "gptoss" && styles.selectorActive]}
-              onPress={() => handleModelChange("gptoss")}
-            >
-              <Text style={[styles.selectorText, chatModel === "gptoss" && styles.selectorActiveText]}>
-                🤖 GPT-OSS 120B
-              </Text>
-            </Pressable>
-          </>
-        ) : (
-          <>
-            <Pressable
-              style={[styles.selectorButton, agentModel === "gemini" && styles.selectorActive]}
-              onPress={() => handleModelChange("gemini")}
-            >
-              <Text style={[styles.selectorText, agentModel === "gemini" && styles.selectorActiveText]}>
-                🤖 Gemini 3.1 Flash
-              </Text>
-            </Pressable>
-          </>
-        )}
-      </View>
+      {/* Mode switcher tabs */}
       <ModeSegmentedControl
         activeMode={activeMode}
         isFreePlan={isFreePlan}
         onChangeMode={handleModeSwitch}
-      />
-
-      <ModelSelectorPill
-        label={getModelLabel()}
-        value={getModelValue()}
-        options={getModelOptions()}
-        title={getModelSelectorTitle()}
-        onSelect={handleModelChange}
       />
 
       <KeyboardAvoidingView
@@ -508,7 +468,7 @@ export default function ChatScreen() {
           ListFooterComponent={
             loading ? (
               <View style={styles.loadingContainer}>
-                <ActivityIndicator color={COLORS.CHAT_PURPLE} size="small" />
+                <ActivityIndicator color={COLORS.PRIMARY} size="small" />
                 <Text style={styles.loadingText}>
                   {getModelLabel()} đang suy nghĩ...
                 </Text>
@@ -529,38 +489,40 @@ export default function ChatScreen() {
           loading={loading}
         />
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.CHAT_BG,
+    backgroundColor: COLORS.BG
   },
   keyboardView: {
-    flex: 1,
+    flex: 1
   },
   listContent: {
-    paddingHorizontal: 24,
-    paddingTop: 28,
-    paddingBottom: 20,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 24
   },
   loadingContainer: {
     flexDirection: "row",
     alignItems: "center",
     alignSelf: "flex-start",
-    backgroundColor: COLORS.CHAT_BUBBLE,
+    backgroundColor: COLORS.CARD,
     borderWidth: 1,
-    borderColor: COLORS.CHAT_BORDER,
-    borderRadius: 22,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    borderColor: COLORS.CARD_BORDER,
+    borderRadius: 18,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
     gap: 8,
-    marginTop: 6,
+    marginTop: 8,
+    marginLeft: 14
   },
   loadingText: {
-    color: COLORS.CHAT_MUTED,
+    color: COLORS.TEXT_SECONDARY,
     fontSize: 12,
-  },
+    fontWeight: "500"
+  }
 });
