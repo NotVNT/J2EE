@@ -50,15 +50,24 @@ export default function ChatScreen() {
   ]);
   const [inputText, setInputText] = useState("");
   const [loading, setLoading] = useState(false);
+  const [inputLocked, setInputLocked] = useState(false);
   const [isProcessingCrud, setIsProcessingCrud] = useState(false);
   const [pendingIntent, setPendingIntent] = useState(null);
   const flatListRef = useRef(null);
+  const messagesRef = useRef(messages);
+  const isSendingRef = useRef(false);
+  const messageIdRef = useRef(0);
+  const chatBusy = loading || inputLocked || isProcessingCrud;
 
   useEffect(() => {
     if (!isPremiumPlan) {
       setActiveMode("chat"); // Free/Basic default to chat
     }
   }, [user?.subscriptionPlan]);
+
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
 
   const getActiveParams = () => {
     const activeProvider = activeMode === "agent"
@@ -86,34 +95,48 @@ export default function ChatScreen() {
       }));
   };
 
+  const appendMessage = (message) => {
+    setMessages((prev) => {
+      const next = [...prev, message];
+      messagesRef.current = next;
+      return next;
+    });
+  };
+
+  const createMessageId = (prefix = "message") => {
+    messageIdRef.current += 1;
+    return `${prefix}-${Date.now()}-${messageIdRef.current}`;
+  };
+
   const sendMessage = async (textToSend) => {
-    const trimmedText = textToSend.trim();
-    if (!trimmedText || loading) return;
+    const trimmedText = String(textToSend || "").trim();
+    if (!trimmedText || chatBusy || isSendingRef.current) return;
 
     if (pendingIntent) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `system-warn-${Date.now()}`,
-          text: "⚠️ Vui lòng xác nhận hoặc hủy thao tác hiện tại trước khi gửi lệnh mới.",
-          sender: "bot",
-          isSystem: true,
-          time: getCurrentTimeLabel()
-        }
-      ]);
+      appendMessage({
+        id: createMessageId("system-warn"),
+        text: "⚠️ Vui lòng xác nhận hoặc hủy thao tác hiện tại trước khi gửi lệnh mới.",
+        sender: "bot",
+        isSystem: true,
+        time: getCurrentTimeLabel()
+      });
       return;
     }
+
+    isSendingRef.current = true;
+    setInputLocked(true);
 
     const { activeProvider, activeModel, activeModelLabel } = getActiveParams();
 
     const userMessage = {
-      id: String(Date.now()),
+      id: createMessageId("user"),
       text: trimmedText,
       sender: "user",
       time: getCurrentTimeLabel()
     };
 
-    const updatedMessages = [...messages, userMessage];
+    const updatedMessages = [...messagesRef.current, userMessage];
+    messagesRef.current = updatedMessages;
     setMessages(updatedMessages);
     setInputText("");
     setLoading(true);
@@ -124,13 +147,13 @@ export default function ChatScreen() {
       if (activeMode === "chat") {
         const response = await sendAiChat(history, activeProvider, activeModel);
         const botMessage = {
-          id: String(Date.now() + 1),
+          id: createMessageId("bot"),
           text: response?.reply || "Tôi đã nhận câu hỏi nhưng hiện chưa tạo được câu trả lời phù hợp.",
           sender: "bot",
           modelLabel: activeModelLabel,
           time: getCurrentTimeLabel()
         };
-        setMessages((prev) => [...prev, botMessage]);
+        appendMessage(botMessage);
       } else {
         // Agent Mode: Parse intent first
         const intentResponse = await parseAiIntent(
@@ -146,7 +169,7 @@ export default function ChatScreen() {
         if (isCrudIntent(parsed.intent) || isActionIntent(parsed.intent)) {
           setPendingIntent(parsed);
           const intentMessage = {
-            id: String(Date.now() + 1),
+            id: createMessageId("intent"),
             sender: "bot",
             isIntent: true,
             intent: parsed.intent,
@@ -155,50 +178,52 @@ export default function ChatScreen() {
             confirmationPrompt: parsed.confirmationPrompt,
             time: getCurrentTimeLabel()
           };
-          setMessages((prev) => [...prev, intentMessage]);
+          appendMessage(intentMessage);
         } else if (parsed.intent === "ANSWER_QUESTION") {
           const botMessage = {
-            id: String(Date.now() + 1),
+            id: createMessageId("bot"),
             text: parsed.answer || intentResponse?.reply || "Tôi đã nhận câu hỏi nhưng chưa tạo được câu trả lời phù hợp.",
             sender: "bot",
             modelLabel: activeModelLabel,
             time: getCurrentTimeLabel()
           };
-          setMessages((prev) => [...prev, botMessage]);
+          appendMessage(botMessage);
         } else if (parsed.intent === "INVALID_REQUEST") {
           const botMessage = {
-            id: String(Date.now() + 1),
+            id: createMessageId("bot-error"),
             text: parsed.validationErrors?.[0] || "Yêu cầu không hợp lệ hoặc ngoài phạm vi hỗ trợ.",
             sender: "bot",
             isError: true,
             time: getCurrentTimeLabel()
           };
-          setMessages((prev) => [...prev, botMessage]);
+          appendMessage(botMessage);
         } else {
           // Fallback to chat API
           const response = await sendAiChat(history, activeProvider, activeModel);
           const botMessage = {
-            id: String(Date.now() + 1),
+            id: createMessageId("bot"),
             text: response?.reply || "Tôi đã nhận câu hỏi nhưng hiện chưa tạo được câu trả lời phù hợp.",
             sender: "bot",
             modelLabel: activeModelLabel,
             time: getCurrentTimeLabel()
           };
-          setMessages((prev) => [...prev, botMessage]);
+          appendMessage(botMessage);
         }
       }
     } catch (error) {
       const errorMsg = error.response?.data?.message || "Không thể xử lý yêu cầu. Vui lòng thử lại sau.";
       const errorMessage = {
-        id: String(Date.now() + 1),
+        id: createMessageId("bot-error"),
         text: errorMsg,
         sender: "bot",
         isError: true,
         time: getCurrentTimeLabel()
       };
-      setMessages((prev) => [...prev, errorMessage]);
+      appendMessage(errorMessage);
     } finally {
+      isSendingRef.current = false;
       setLoading(false);
+      setInputLocked(false);
     }
   };
 
@@ -247,7 +272,7 @@ export default function ChatScreen() {
       setMessages((prev) => [
         ...prev,
         {
-          id: `result-${Date.now()}`,
+          id: createMessageId("result"),
           text: resultContent,
           sender: "bot",
           isSystem: true,
@@ -259,7 +284,7 @@ export default function ChatScreen() {
         setMessages((prev) => [
           ...prev,
           {
-            id: `undo-${Date.now()}`,
+            id: createMessageId("undo"),
             sender: "bot",
             isUndoAction: true,
             operationId: undoData.operationId,
@@ -273,7 +298,7 @@ export default function ChatScreen() {
       setMessages((prev) => [
         ...prev,
         {
-          id: `result-error-${Date.now()}`,
+          id: createMessageId("result-error"),
           text: `❌ Lỗi: ${errorMsg}`,
           sender: "bot",
           isError: true,
@@ -292,7 +317,7 @@ export default function ChatScreen() {
     setMessages((prev) => [
       ...prev,
       {
-        id: `cancel-${Date.now()}`,
+        id: createMessageId("cancel"),
         text: "Đã hủy thao tác.",
         sender: "bot",
         isSystem: true,
@@ -307,7 +332,7 @@ export default function ChatScreen() {
       setMessages((prev) => [
         ...prev,
         {
-          id: `undo-result-${Date.now()}`,
+          id: createMessageId("undo-result"),
           text: "↩️ Đã hoàn tác thao tác thành công.",
           sender: "bot",
           isSystem: true,
@@ -353,7 +378,7 @@ export default function ChatScreen() {
     setTimeout(() => {
       flatListRef.current?.scrollToEnd({ animated: true });
     }, 100);
-  }, [messages, loading]);
+  }, [messages, chatBusy]);
 
   // ─── Derived helpers ────────────────────────────────────
 
@@ -414,6 +439,11 @@ export default function ChatScreen() {
     sendMessage(prompt.text);
   };
 
+  const handleInputChange = (text) => {
+    if (chatBusy || isSendingRef.current) return;
+    setInputText(text);
+  };
+
   const openSettings = () => {
     Alert.alert("Cài đặt", "Tính năng cài đặt chat đang được phát triển.", [
       { text: "Đóng", style: "cancel" },
@@ -434,52 +464,6 @@ export default function ChatScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Mode switcher tabs */}
-      <View style={styles.modeContainer}>
-        <Pressable
-          style={[styles.modeTab, activeMode === "chat" && styles.modeTabActive]}
-          onPress={() => handleModeSwitch("chat")}
-        >
-          <Text style={[styles.modeText, activeMode === "chat" && styles.modeTextActive]}>
-            💬 Chat
-          </Text>
-        </Pressable>
-        <Pressable
-          style={[styles.modeTab, activeMode === "agent" && styles.modeTabActive]}
-          onPress={() => handleModeSwitch("agent")}
-        >
-          <Text style={[styles.modeText, activeMode === "agent" && styles.modeTextActive]}>
-            🤖 Agent {isFreePlan && "🔒"}
-          </Text>
-        </Pressable>
-      </View>
-
-      {/* Model Selector Bar */}
-      <View style={styles.selectorContainer}>
-        {activeMode === "chat" ? (
-          <>
-            <Pressable
-              style={[styles.selectorButton, chatModel === "gptoss" && styles.selectorActive]}
-              onPress={() => handleModelChange("gptoss")}
-            >
-              <Text style={[styles.selectorText, chatModel === "gptoss" && styles.selectorActiveText]}>
-                🤖 GPT-OSS 120B
-              </Text>
-            </Pressable>
-          </>
-        ) : (
-          <>
-            <Pressable
-              style={[styles.selectorButton, agentModel === "gemini" && styles.selectorActive]}
-              onPress={() => handleModelChange("gemini")}
-            >
-              <Text style={[styles.selectorText, agentModel === "gemini" && styles.selectorActiveText]}>
-                🤖 Gemini 3.1 Flash
-              </Text>
-            </Pressable>
-          </>
-        )}
-      </View>
       <ModeSegmentedControl
         activeMode={activeMode}
         isFreePlan={isFreePlan}
@@ -517,16 +501,17 @@ export default function ChatScreen() {
           }
         />
 
-        {!hasUserStartedChat && !loading && (
+        {!hasUserStartedChat && !chatBusy && (
           <QuickPromptChips onSelect={handleQuickPrompt} />
         )}
 
         <ChatInputBar
           value={inputText}
-          onChangeText={setInputText}
+          onChangeText={handleInputChange}
           onSend={() => sendMessage(inputText)}
           placeholder={getInputPlaceholder()}
           loading={loading}
+          disabled={chatBusy}
         />
       </KeyboardAvoidingView>
     </SafeAreaView>
