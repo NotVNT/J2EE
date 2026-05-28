@@ -59,7 +59,7 @@ public class PaymentService {
         CreatePaymentLinkRequest paymentRequest = CreatePaymentLinkRequest.builder()
                 .orderCode(orderCode)
                 .amount(plan.amount())
-                .description(plan.paymentDescription())
+                .description(sanitizeDescription(plan.paymentDescription()))
                 .returnUrl(returnUrl)
                 .cancelUrl(cancelUrl)
                 .build();
@@ -187,11 +187,10 @@ public class PaymentService {
 
     private long generateOrderCode() {
         for (int attempt = 1; attempt <= ORDERCODE_MAX_ATTEMPTS; attempt++) {
-            long base = java.lang.System.nanoTime() & 0x7FFFFFFFFFFFL;
-            long suffix = ORDERCODE_SECURE_RANDOM.nextLong() & 0x7FFFFFFFL;
-            long candidate = (base << 16) ^ suffix;
-            if (candidate < 0) candidate = -candidate;
-            if (candidate == 0) candidate = ORDERCODE_SECURE_RANDOM.nextLong() & 0x7FFFFFFFFFFFFFFFL;
+            // PayOS requires orderCode <= 9007199254740991 (Number.MAX_SAFE_INTEGER in JS)
+            // System.currentTimeMillis() is 13 digits (approx 1.7 * 10^12)
+            // Multiplying by 1000L gives 16 digits (approx 1.7 * 10^15), which is safely below 9.0 * 10^15
+            long candidate = System.currentTimeMillis() * 1000L + ORDERCODE_SECURE_RANDOM.nextInt(1000);
             if (!paymentRepository.existsByOrderCode(candidate)) {
                 return candidate;
             }
@@ -282,6 +281,22 @@ public class PaymentService {
             case STATUS_PROCESSING -> STATUS_PROCESSING;
             default -> STATUS_PENDING;
         };
+    }
+
+    private String sanitizeDescription(String input) {
+        if (input == null) return "Thanh toan";
+        String decomposed = java.text.Normalizer.normalize(input, java.text.Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "");
+        String result = decomposed
+                .replace("đ", "d")
+                .replace("Đ", "D")
+                .replaceAll("[^a-zA-Z0-9 ]", " ")
+                .replaceAll("\\s+", " ")
+                .trim();
+        if (result.length() > 25) {
+            result = result.substring(0, 25).trim();
+        }
+        return result.isEmpty() ? "Thanh toan" : result;
     }
 
     private CreatePaymentResponseDTO toDTO(PaymentEntity entity) {

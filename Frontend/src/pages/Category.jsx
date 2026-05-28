@@ -30,7 +30,7 @@ const Category = () => {
       if (response.status === 200) setCategoryData(response.data);
     } catch (error) {
       console.error("Something went wrong. Please try again.", error);
-      toast.error(error.message);
+      toast.error(error.response?.data?.message || "Không thể tải danh mục. Vui lòng thử lại.");
     } finally {
       setLoading(false);
     }

@@ -139,16 +139,20 @@ public class ProfileService {
     // ─── Forgot Password ─────────────────────────────────────────────
 
     public void forgotPassword(ForgotPasswordRequestDTO requestDTO) {
-        Optional<ProfileEntity> profileOpt = profileRepository.findByEmail(requestDTO.getEmail());
+        Optional<ProfileEntity> profileOpt = profileRepository.findByEmail(requestDTO.getEmail().trim());
 
-        // Silent success if email not found (prevents enumeration)
-        if (profileOpt.isEmpty()) return;
+        if (profileOpt.isEmpty()) {
+            throw new RuntimeException("Email này chưa được đăng ký trong hệ thống.");
+        }
 
         ProfileEntity profile = profileOpt.get();
 
-        // Skip inactive accounts and Google-only accounts silently
-        if (!Boolean.TRUE.equals(profile.getIsActive())) return;
-        if (profile.getPassword() == null && profile.getGoogleId() != null) return;
+        if (!Boolean.TRUE.equals(profile.getIsActive())) {
+            throw new RuntimeException("Tài khoản này chưa được kích hoạt.");
+        }
+        if (profile.getPassword() == null && profile.getGoogleId() != null) {
+            throw new RuntimeException("Tài khoản này đăng nhập bằng Google.");
+        }
 
         if (!otpService.canResend(profile)) {
             long waitSeconds = otpService.getResendWaitSeconds(profile);

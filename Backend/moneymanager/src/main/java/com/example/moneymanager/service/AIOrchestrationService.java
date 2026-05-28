@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -50,6 +51,7 @@ public class AIOrchestrationService {
     private final JarRepository jarRepository;
     private final ObjectMapper objectMapper;
 
+    @Transactional(readOnly = true)
     public AIIntentResponseDTO parseIntentFromChat(AIIntentRequestDTO request) {
         String userMessage = request.getUserMessage();
         if (userMessage == null || userMessage.isBlank()) {
@@ -69,11 +71,7 @@ public class AIOrchestrationService {
 
             // FREE users cannot use Agent at all
             if (plan == SubscriptionPlan.FREE) {
-                throw new ForbiddenException("Nova Money Agent y\u00EAu c\u1EA7u g\u00F3i BASIC tr\u1EDF l\u00EAn.");
-            }
-            // Agent luôn yêu cầu PREMIUM (dùng Gemini); chat GPT-OSS không cần PREMIUM
-            if (plan != SubscriptionPlan.PREMIUM) {
-                throw new ForbiddenException("Nova Money Agent yêu cầu gói PREMIUM. Vui lòng nâng cấp để sử dụng.");
+                throw new ForbiddenException("Nova Money Agent yêu cầu gói BASIC trở lên.");
             }
 
             String pageContext = request.getPageContext() != null ? request.getPageContext() : "dashboard";
@@ -318,7 +316,11 @@ public class AIOrchestrationService {
                     yield "\u26A0\uFE0F Kh\u00F4ng t\u00ECm th\u1EA5y danh m\u1EE5c \"" + catNameExp + "\". Danh m\u1EE5c chi ti\u00EAu hi\u1EC7n c\u00F3: " + (available.isBlank() ? "(ch\u01B0a c\u00F3)" : available);
                 }
                 ExpenseDTO dto = mapToExpenseDTO(data, catIdExp);
-                dto.setJarId(extractJarId(data, profile));
+                Long jarId = extractJarId(data, profile);
+                if (jarId != null) {
+                    dto.setJarId(jarId);
+                    jarRepository.findById(jarId).ifPresent(j -> dto.setJarName(j.getName()));
+                }
                 expenseService.addExpense(dto);
                 String jarInfo = dto.getJarId() != null ? " v\u00E0o h\u0169 " + dto.getJarName() : "";
                 yield "\u2705 \u0110\u00E3 t\u1EA1o chi ti\u00EAu " + formatCurrency(dto.getAmount()) + "\u0111 cho " + dto.getCategoryName() + jarInfo;
@@ -633,7 +635,13 @@ public class AIOrchestrationService {
 
     private String callProviderForIntent(String provider, String systemPrompt, String userMessage, List<AIChatMessageDTO> history) {
         List<AIChatMessageDTO> messages = new ArrayList<>();
-        if (history != null) messages.addAll(history);
+        if (history != null) {
+            messages.addAll(history);
+            // Tránh lỗi trùng lặp consecutive user role trong API Gemini
+            if (!messages.isEmpty() && "user".equals(messages.get(messages.size() - 1).getRole())) {
+                messages.remove(messages.size() - 1);
+            }
+        }
         messages.add(AIChatMessageDTO.builder().role("user").content(userMessage).build());
 
         AIChatRequestDTO chatRequest = AIChatRequestDTO.builder()
@@ -647,7 +655,13 @@ public class AIOrchestrationService {
 
     private List<AIChatMessageDTO> buildMessages(AIIntentRequestDTO request) {
         List<AIChatMessageDTO> messages = new ArrayList<>();
-        if (request.getConversationHistory() != null) messages.addAll(request.getConversationHistory());
+        if (request.getConversationHistory() != null) {
+            messages.addAll(request.getConversationHistory());
+            // Tránh lỗi trùng lặp consecutive user role trong API Gemini
+            if (!messages.isEmpty() && "user".equals(messages.get(messages.size() - 1).getRole())) {
+                messages.remove(messages.size() - 1);
+            }
+        }
         messages.add(AIChatMessageDTO.builder().role("user").content(request.getUserMessage()).build());
         return messages;
     }
@@ -880,22 +894,46 @@ public class AIOrchestrationService {
                 .build();
     }
 
+    private String normalizeUnicode(String str) {
+        if (str == null) return "";
+        return java.text.Normalizer.normalize(str, java.text.Normalizer.Form.NFC).trim();
+    }
+
     private Long findCategoryId(String categoryName, Long profileId, String type) {
         if (categoryName == null || categoryName.isBlank()) return null;
-        return categoryRepository.findByNameIgnoreCaseAndTypeAndProfileId(categoryName, type, profileId)
+        Long directId = categoryRepository.findByNameIgnoreCaseAndTypeAndProfileId(categoryName, type, profileId)
                 .map(CategoryEntity::getId).orElse(null);
+        if (directId != null) return directId;
+
+        // Fallback: Stream-based unicode-normalized lookup
+        String normalizedInput = normalizeUnicode(categoryName);
+        return categoryRepository.findByTypeAndProfileId(type, profileId).stream()
+                .filter(c -> normalizeUnicode(c.getName()).equalsIgnoreCase(normalizedInput))
+                .findFirst()
+                .map(CategoryEntity::getId)
+                .orElse(null);
     }
 
     private Long findCategoryId(String categoryName, Long profileId) {
         if (categoryName == null || categoryName.isBlank()) return null;
-        return categoryRepository.findByNameIgnoreCaseAndProfileId(categoryName, profileId)
+        Long directId = categoryRepository.findByNameIgnoreCaseAndProfileId(categoryName, profileId)
                 .map(CategoryEntity::getId).orElse(null);
+        if (directId != null) return directId;
+
+        // Fallback: Stream-based unicode-normalized lookup
+        String normalizedInput = normalizeUnicode(categoryName);
+        return categoryRepository.findByProfileId(profileId).stream()
+                .filter(c -> normalizeUnicode(c.getName()).equalsIgnoreCase(normalizedInput))
+                .findFirst()
+                .map(CategoryEntity::getId)
+                .orElse(null);
     }
 
     private Long findJarId(String jarName, Long profileId) {
         if (jarName == null || jarName.isBlank()) return null;
+        String normalizedInput = normalizeUnicode(jarName);
         return jarRepository.findByProfileId(profileId).stream()
-                .filter(j -> j.getName().equalsIgnoreCase(jarName))
+                .filter(j -> normalizeUnicode(j.getName()).equalsIgnoreCase(normalizedInput))
                 .findFirst()
                 .map(JarEntity::getId)
                 .orElse(null);

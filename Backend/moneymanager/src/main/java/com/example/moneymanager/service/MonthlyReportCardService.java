@@ -84,8 +84,17 @@ public class MonthlyReportCardService {
                 profile.getId(), month, year);
         Map<Long, BigDecimal> spentMap = new java.util.HashMap<>();
         for (Object[] row : spentByCategory) {
+            if (row[0] == null) continue;
             Long categoryId = ((Number) row[0]).longValue();
-            BigDecimal amount = (BigDecimal) row[1];
+            Object val = row[1];
+            BigDecimal amount;
+            if (val instanceof BigDecimal) {
+                amount = (BigDecimal) val;
+            } else if (val instanceof Number) {
+                amount = new BigDecimal(val.toString());
+            } else {
+                amount = BigDecimal.ZERO;
+            }
             spentMap.put(categoryId, amount);
         }
         
@@ -189,7 +198,15 @@ public class MonthlyReportCardService {
         for (Object[] row : rows) {
             String categoryName = (String) row[0];
             String categoryIcon = (String) row[1];
-            BigDecimal amount = (BigDecimal) row[2];
+            Object val = row[2];
+            BigDecimal amount;
+            if (val instanceof BigDecimal) {
+                amount = (BigDecimal) val;
+            } else if (val instanceof Number) {
+                amount = new BigDecimal(val.toString());
+            } else {
+                amount = BigDecimal.ZERO;
+            }
             double percent = 0.0;
             if (totalExpense.compareTo(BigDecimal.ZERO) > 0) {
                 percent = amount.multiply(BigDecimal.valueOf(100))

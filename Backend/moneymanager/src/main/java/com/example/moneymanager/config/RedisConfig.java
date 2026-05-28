@@ -18,6 +18,9 @@ import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSeriali
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
+import org.springframework.cache.Cache;
+import org.springframework.cache.annotation.CachingConfigurer;
+import org.springframework.cache.interceptor.CacheErrorHandler;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,7 +31,7 @@ import io.lettuce.core.SocketOptions;
 @Slf4j
 @Configuration
 @EnableCaching
-public class RedisConfig {
+public class RedisConfig implements CachingConfigurer {
 
     @Value("${spring.data.redis.host:localhost}")
     private String redisHost;
@@ -106,5 +109,30 @@ public class RedisConfig {
                 .withInitialCacheConfigurations(cacheConfigurations)
                 .transactionAware()
                 .build();
+    }
+
+    @Override
+    public CacheErrorHandler errorHandler() {
+        return new CacheErrorHandler() {
+            @Override
+            public void handleCacheGetError(RuntimeException exception, Cache cache, Object key) {
+                log.warn("Redis cache GET failed for key: {}. Error: {}. Falling back to database.", key, exception.getMessage());
+            }
+
+            @Override
+            public void handleCachePutError(RuntimeException exception, Cache cache, Object key, Object value) {
+                log.warn("Redis cache PUT failed for key: {}. Error: {}.", key, exception.getMessage());
+            }
+
+            @Override
+            public void handleCacheEvictError(RuntimeException exception, Cache cache, Object key) {
+                log.warn("Redis cache EVICT failed for key: {}. Error: {}.", key, exception.getMessage());
+            }
+
+            @Override
+            public void handleCacheClearError(RuntimeException exception, Cache cache) {
+                log.warn("Redis cache CLEAR failed. Error: {}.", exception.getMessage());
+            }
+        };
     }
 }

@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.text.NumberFormat;
+import java.util.Locale;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -25,6 +27,7 @@ public class ForecastService {
 
     private final ExpenseRepository expenseRepository;
     private final ProfileService profileService;
+    private final GptOssService gptOssService;
 
     public MonthlyForecastDTO getMonthlyForecast(int year, int month) {
         ProfileEntity profile = profileService.getCurrentProfile();
@@ -233,9 +236,44 @@ public class ForecastService {
     }
 
     public ForecastInsightDTO getGeminiInsights(MonthlyForecastDTO forecast) {
-        return ForecastInsightDTO.builder()
-                .narrative("AI insights are temporarily disabled for performance optimization.")
-                .generatedAt(LocalDateTime.now())
-                .build();
+        try {
+            if (forecast == null || forecast.getCategories() == null || forecast.getCategories().isEmpty()) {
+                return ForecastInsightDTO.builder()
+                        .narrative("Chưa có đủ dữ liệu lịch sử để tạo phân tích. Hãy thêm nhiều giao dịch hơn!")
+                        .generatedAt(LocalDateTime.now())
+                        .build();
+            }
+
+            NumberFormat nf = NumberFormat.getInstance(new Locale("vi", "VN"));
+            StringBuilder sb = new StringBuilder();
+            sb.append("Dữ liệu dự báo chi tiêu tháng ").append(forecast.getMonth()).append("/").append(forecast.getYear()).append(":\n");
+            forecast.getCategories().forEach(c -> {
+                sb.append("- Danh mục ").append(c.getCategoryName())
+                  .append(": dự báo ").append(nf.format(c.getPredictedAmount())).append("đ")
+                  .append(" (trung bình ").append(nf.format(c.getHistoricalAverage())).append("đ")
+                  .append(", xu hướng: ").append(c.getTrend()).append(")\n");
+            });
+
+            String systemPrompt = "Bạn là chuyên gia tài chính cá nhân của ứng dụng Money Manager. "
+                    + "Phân tích dữ liệu dự báo chi tiêu sau và đưa ra nhận xét ngắn gọn, thực tế bằng tiếng Việt. "
+                    + "Tập trung vào: 1) Danh mục nào đang có xu hướng tăng đáng lo ngại? 2) Lời khuyên cụ thể để kiểm soát chi tiêu tháng tới. "
+                    + "Trả lời tối đa 120 từ. Không dùng markdown. Viết thân thiện, súc tích.";
+
+            String narrative = gptOssService.callWithPrompt(systemPrompt, sb.toString(), 512);
+            if (narrative == null || narrative.isBlank()) {
+                narrative = "Chưa thể tạo phân tích AI lúc này. Vui lòng thử lại sau.";
+            }
+
+            return ForecastInsightDTO.builder()
+                    .narrative(narrative)
+                    .generatedAt(LocalDateTime.now())
+                    .build();
+        } catch (Exception e) {
+            log.error("Error generating GPT-OSS forecast insight: {}", e.getMessage(), e);
+            return ForecastInsightDTO.builder()
+                    .narrative("AI đang bảo trì, vui lòng thử lại sau.")
+                    .generatedAt(LocalDateTime.now())
+                    .build();
+        }
     }
 }

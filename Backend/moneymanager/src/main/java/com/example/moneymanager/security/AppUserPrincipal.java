@@ -15,14 +15,15 @@ public class AppUserPrincipal extends User {
     private final String roleName;
 
     public AppUserPrincipal(Long profileId, String username, String password, String fullName,
+                             Boolean isActive, String roleName, String subscriptionPlan, String subscriptionStatus,
                              Collection<? extends GrantedAuthority> authorities) {
-        super(username, password, authorities);
+        super(username, password != null ? password : "", Boolean.TRUE.equals(isActive), true, true, true, authorities);
         this.profileId = profileId;
         this.fullName = fullName;
-        this.subscriptionPlan = null;
-        this.subscriptionStatus = null;
-        this.isActive = true;
-        this.roleName = "USER";
+        this.subscriptionPlan = subscriptionPlan;
+        this.subscriptionStatus = subscriptionStatus;
+        this.isActive = isActive;
+        this.roleName = roleName;
     }
 
     public Long getProfileId() { return profileId; }

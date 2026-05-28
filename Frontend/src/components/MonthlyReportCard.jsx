@@ -83,7 +83,7 @@ const MonthlyReportCard = ({ report }) => {
 
     try {
       const response = await axiosConfig.post(API_ENDPOINTS.AI_CHAT, {
-        provider: "gptoss",
+        provider: "gemini",
         messages: [{ role: "user", content: prompt }],
       });
       setAiAnalysis(response.data?.reply || "Không thể tạo phân tích.");

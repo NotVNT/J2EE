@@ -42,6 +42,7 @@ public class ExpenseService {
     private final ApplicationEventPublisher eventPublisher;
 
     // Adds a new expense and checks budget status
+    @Transactional
     public ExpenseResponseDTO addExpense(ExpenseDTO dto) {
         ProfileEntity profile = profileService.getCurrentProfile();
         subscriptionService.ensureCanCreateTransaction(profile, dto.getDate());
@@ -210,6 +211,7 @@ public class ExpenseService {
     }
 
     // Get latest 5 expenses for current user
+    @Transactional(readOnly = true)
     public List<ExpenseDTO> getLatest5ExpensesForCurrentUser() {
         ProfileEntity profile = profileService.getCurrentProfile();
         List<ExpenseEntity> list = expenseRepository.findTop5ByProfileIdOrderByDateDesc(profile.getId());
@@ -217,12 +219,14 @@ public class ExpenseService {
     }
 
     // Get total expenses for current user
+    @Transactional(readOnly = true)
     public BigDecimal getTotalExpenseForCurrentUser() {
         ProfileEntity profile = profileService.getCurrentProfile();
         BigDecimal total = expenseRepository.findTotalExpenseByProfileId(profile.getId());
         return total != null ? total : BigDecimal.ZERO;
     }
 
+    @Transactional(readOnly = true)
     public long getTotalExpenseCountForCurrentUser() {
         ProfileEntity profile = profileService.getCurrentProfile();
         return expenseRepository.countByProfileId(profile.getId());

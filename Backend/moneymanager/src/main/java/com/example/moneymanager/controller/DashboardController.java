@@ -37,9 +37,7 @@ public class DashboardController {
             return ResponseEntity.ok(dashboardData);
         } catch (Exception e) {
             log.error("Error fetching dashboard data: {}", e.getMessage());
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("error", "Không thể tải dữ liệu dashboard");
-            return ResponseEntity.badRequest().body(errorResponse);
+            throw new RuntimeException("Failed to fetch dashboard data: " + e.getMessage(), e);
         }
     }
 
@@ -60,10 +58,7 @@ public class DashboardController {
             return ResponseEntity.ok(insightData);
         } catch (Exception e) {
             log.error("Error fetching AI insight: {}", e.getMessage());
-            Map<String, String> errorResponse = new HashMap<>();
-            errorResponse.put("error", e.getMessage());
-            errorResponse.put("insight", "Hệ thống AI đang bảo trì, vui lòng thử lại sau");
-            return ResponseEntity.badRequest().body(errorResponse);
+            throw new RuntimeException("Failed to fetch AI insight: " + e.getMessage(), e);
         }
     }
 
@@ -131,10 +126,7 @@ public class DashboardController {
 
         } catch (Exception e) {
             log.error("Error fetching detailed AI insight: {}", e.getMessage(), e);
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("error", e.getMessage());
-            errorResponse.put("message", "Không thể tải phân tích chi tiết: " + e.getMessage());
-            return ResponseEntity.badRequest().body(errorResponse);
+            throw new RuntimeException("Failed to fetch detailed AI insight: " + e.getMessage(), e);
         }
     }
 
@@ -221,10 +213,7 @@ public class DashboardController {
 
         } catch (Exception e) {
             log.error("Error generating AI forecast insight: {}", e.getMessage(), e);
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("error", e.getMessage());
-            errorResponse.put("message", "Không thể tạo dự báo AI: " + e.getMessage());
-            return ResponseEntity.badRequest().body(errorResponse);
+            throw new RuntimeException("Failed to generate AI forecast insight: " + e.getMessage(), e);
         }
     }
 }

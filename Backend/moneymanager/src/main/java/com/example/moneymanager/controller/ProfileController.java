@@ -37,7 +37,17 @@ public class ProfileController {
     // ─── Registration ─────────────────────────────────────────────────
 
     @PostMapping("/register")
-    public ResponseEntity<?> registerProfile(@Valid @RequestBody RegisterRequestDTO registerDTO) {
+    public ResponseEntity<?> registerProfile(@Valid @RequestBody RegisterRequestDTO registerDTO, HttpServletResponse response) {
+        // Clear any leftover mm_token cookie from prior sessions
+        ResponseCookie cookie = ResponseCookie.from(cookieName, "")
+                .httpOnly(true)
+                .secure(cookieSecure)
+                .sameSite(cookieSameSite)
+                .path("/")
+                .maxAge(0)
+                .build();
+        response.addHeader("Set-Cookie", cookie.toString());
+
         ProfileDTO registered = profileService.registerProfile(registerDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
                 "message", "Đăng ký thành công. Mã OTP đã được gửi tới email của bạn.",
@@ -135,7 +145,7 @@ public class ProfileController {
     public ResponseEntity<Map<String, String>> forgotPassword(@RequestBody ForgotPasswordRequestDTO requestDTO) {
         profileService.forgotPassword(requestDTO);
         return ResponseEntity.ok(Map.of(
-                "message", "Nếu email tồn tại và tài khoản đã kích hoạt, mã OTP sẽ được gửi."
+                "message", "Mã OTP khôi phục mật khẩu đã được gửi đến email của bạn."
         ));
     }
 

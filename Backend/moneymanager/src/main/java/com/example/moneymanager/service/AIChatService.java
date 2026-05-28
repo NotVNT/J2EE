@@ -57,19 +57,31 @@ public class AIChatService {
         String provider = request.getProvider();
         SubscriptionPlan plan = profileService.getCurrentProfile().getSubscriptionPlan();
 
-        // GPT-OSS chat (provider="gptoss") không yêu cầu PREMIUM
-        // Gemini chat yêu cầu PREMIUM
+        // GPT-OSS chat (provider="gptoss") yêu cầu PREMIUM
+        // Gemini chat hỗ trợ cả BASIC và PREMIUM
         boolean isGptOssMode = "gptoss".equalsIgnoreCase(provider);
-        if (!isGptOssMode && plan != SubscriptionPlan.PREMIUM) {
-            throw new ForbiddenException("Model này yêu cầu gói PREMIUM. Vui lòng nâng cấp để sử dụng.");
+        if (isGptOssMode && plan != SubscriptionPlan.PREMIUM) {
+            throw new ForbiddenException("Model GPT-OSS yêu cầu gói PREMIUM. Vui lòng nâng cấp để sử dụng.");
         }
 
         AIChatResponseDTO response;
         if ("gemini".equalsIgnoreCase(provider)) {
             response = chatWithGemini(trimmedMessages);
         } else {
-            // GPT-OSS với rotate key
-            response = chatWithGptOss(trimmedMessages);
+            try {
+                // GPT-OSS với rotate key
+                response = chatWithGptOss(trimmedMessages);
+                // Nếu GPT-OSS trả về thông báo lỗi hoặc bị bận, ta tự động fallback sang Gemini
+                if (response == null || response.getReply() == null 
+                        || response.getReply().contains("Xin lỗi, tôi đang gặp sự cố") 
+                        || response.getReply().contains("dịch vụ AI đang bận")) {
+                    log.warn("[gptoss] Response indicated failure or busy status, falling back to Gemini...");
+                    response = chatWithGemini(trimmedMessages);
+                }
+            } catch (Exception e) {
+                log.error("[gptoss] chat error, automatically falling back to Gemini...", e);
+                response = chatWithGemini(trimmedMessages);
+            }
         }
 
         if (Boolean.TRUE.equals(request.getSaveHistory())) {
@@ -139,13 +151,13 @@ public class AIChatService {
         SubscriptionPlan plan = profileService.getCurrentProfile().getSubscriptionPlan();
 
         // Agent intent parsing luôn dùng Gemini
-        // Agent yêu cầu gói PREMIUM
-        if (plan != SubscriptionPlan.PREMIUM) {
-            throw new ForbiddenException("Nova Money Agent yêu cầu gói PREMIUM.");
+        // Agent yêu cầu gói BASIC trở lên
+        if (plan == SubscriptionPlan.FREE) {
+            throw new ForbiddenException("Nova Money Agent yêu cầu gói BASIC trở lên.");
         }
 
         // Tất cả provider đều dùng Gemini cho Agent intent
-        return geminiService.generateMultiTurn(systemPrompt, trimmedMessages, 1024);
+        return geminiService.generateMultiTurn(systemPrompt, trimmedMessages, 1024, true);
     }
 
     private void validateRequest(AIChatRequestDTO request) {

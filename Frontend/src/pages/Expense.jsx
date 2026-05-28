@@ -49,7 +49,7 @@ const Expense = () => {
       if (response.data) setExpenseData(response.data);
     } catch (error) {
       console.error("Failed to fetch expense details:", error);
-      toast.error("Không thể tải chi tiết chi tiêu.");
+      toast.error(error.response?.data?.message || "Không thể tải chi tiết chi tiêu.");
     } finally {
       setLoading(false);
     }
@@ -71,7 +71,7 @@ const Expense = () => {
       return [];
     } catch (error) {
       console.error("Failed to fetch expense categories:", error);
-      toast.error("Không thể tải danh mục chi tiêu.");
+      toast.error(error.response?.data?.message || "Không thể tải danh mục chi tiêu.");
       return [];
     }
   };

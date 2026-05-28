@@ -32,6 +32,7 @@ public class IncomeService {
     private final ApplicationEventPublisher eventPublisher;
 
     // Adds a new income to the database
+    @Transactional
     public IncomeDTO addIncome(IncomeDTO dto) {
         ProfileEntity profile = profileService.getCurrentProfile();
         subscriptionService.ensureCanCreateTransaction(profile, dto.getDate());
@@ -39,6 +40,7 @@ public class IncomeService {
     }
 
     // Internal method bypassing plan limits (used by cron)
+    @Transactional
     public IncomeDTO addIncomeInternal(IncomeDTO dto, ProfileEntity profile) {
         CategoryEntity category = categoryRepository.findById(dto.getCategoryId())
                 .orElseThrow(() -> new RuntimeException("Category not found"));

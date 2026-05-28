@@ -38,6 +38,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
+                .logout(logout -> logout.disable())
                 .headers(h -> h
                         .frameOptions(fo -> fo.deny())
                         .contentTypeOptions(Customizer.withDefaults())

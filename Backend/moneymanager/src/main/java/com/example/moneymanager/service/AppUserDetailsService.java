@@ -25,7 +25,10 @@ public class AppUserDetailsService implements UserDetailsService {
         ProfileEntity profile = profileRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
 
-        GrantedAuthority authority = new SimpleGrantedAuthority("ROLE_USER");
+        String roleName = (profile.getRole() != null && profile.getRole().getName() != null)
+                ? profile.getRole().getName().toUpperCase()
+                : "USER";
+        GrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + roleName);
         Collection<GrantedAuthority> authorities = Collections.singletonList(authority);
 
         return new AppUserPrincipal(
@@ -33,6 +36,10 @@ public class AppUserDetailsService implements UserDetailsService {
                 profile.getEmail(),
                 profile.getPassword(),
                 profile.getFullName(),
+                profile.getIsActive(),
+                roleName,
+                profile.getSubscriptionPlan() != null ? profile.getSubscriptionPlan().name() : null,
+                profile.getSubscriptionStatus() != null ? profile.getSubscriptionStatus().name() : null,
                 authorities
         );
     }

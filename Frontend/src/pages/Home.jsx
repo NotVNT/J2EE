@@ -84,7 +84,11 @@ const Home = () => {
       if (response.status === 200) setDashboardData(response.data);
     } catch (error) {
       console.error("Something went wrong while fetching dashboard data:", error);
-      toast.error("Không thể tải dữ liệu thống kê!");
+      if (!error.response && error.request) {
+        // Network connection error is already handled by useUser
+        return;
+      }
+      toast.error("Không thể tải dữ liệu thống kê!", { id: "dashboard-data-error" });
     } finally {
       setLoading(false);
     }

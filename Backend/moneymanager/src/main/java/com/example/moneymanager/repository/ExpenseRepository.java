@@ -89,7 +89,7 @@ public interface ExpenseRepository extends JpaRepository<ExpenseEntity, Long> {
      * trong khoảng thời gian. Tránh load toàn bộ entity và group trong Java.
      */
     @Query("""
-            SELECT e.category.name, e.category.icon, COALESCE(SUM(e.amount), 0)
+            SELECT e.category.name, e.category.icon, SUM(e.amount)
             FROM ExpenseEntity e
             WHERE e.profile.id = :profileId
               AND e.date BETWEEN :startDate AND :endDate
