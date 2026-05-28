@@ -1,6 +1,7 @@
 package com.example.moneymanager.security;
 
 import com.example.moneymanager.entity.ProfileEntity;
+import com.example.moneymanager.repository.ProfileRepository;
 import com.example.moneymanager.util.JwtUtil;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
@@ -27,6 +28,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     private final UserDetailsService userDetailsService;
     private final JwtUtil jwtUtil;
     private final CurrentProfileContext currentProfileContext;
+    private final ProfileRepository profileRepository;
 
     @Value("${jwt.cookie.name:mm_token}")
     private String cookieName;
@@ -69,14 +71,12 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 );
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
-                
-                // Cache profile in request-scoped context
+
+                // Cache full ProfileEntity vào request-scope context để ProfileService
+                // không cần query DB thêm lần nữa trong cùng request này.
                 if (userDetails instanceof AppUserPrincipal principal) {
-                    ProfileEntity profile = new ProfileEntity();
-                    profile.setId(principal.getProfileId());
-                    profile.setEmail(principal.getUsername());
-                    profile.setFullName(principal.getFullName());
-                    currentProfileContext.setCachedProfile(profile);
+                    profileRepository.findByEmail(principal.getUsername())
+                            .ifPresent(currentProfileContext::setCachedProfile);
                 }
             }
         }

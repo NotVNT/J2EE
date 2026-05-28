@@ -4,9 +4,11 @@ import com.example.moneymanager.dto.IncomeDTO;
 import com.example.moneymanager.entity.CategoryEntity;
 import com.example.moneymanager.entity.IncomeEntity;
 import com.example.moneymanager.entity.ProfileEntity;
+import com.example.moneymanager.event.TransactionEvents;
 import com.example.moneymanager.repository.CategoryRepository;
 import com.example.moneymanager.repository.IncomeRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +29,7 @@ public class IncomeService {
     private final com.example.moneymanager.repository.JarRepository jarRepository;
     private final com.example.moneymanager.repository.IncomeAllocationRepository incomeAllocationRepository;
     private final JarService jarService;
+    private final ApplicationEventPublisher eventPublisher;
 
     // Adds a new income to the database
     public IncomeDTO addIncome(IncomeDTO dto) {
@@ -95,8 +98,9 @@ public class IncomeService {
             }
         }
 
-        // Notify income added
-        notificationService.notifyIncomeAdded(profile, newIncome.getName(), newIncome.getAmount());
+        // Publish event — notification chạy async sau khi transaction commit
+        eventPublisher.publishEvent(new TransactionEvents.IncomeCreated(
+                profile, newIncome.getName(), newIncome.getAmount()));
 
         return toDTO(newIncome);
     }

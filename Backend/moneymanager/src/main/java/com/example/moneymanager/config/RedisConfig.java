@@ -84,20 +84,23 @@ public class RedisConfig {
                 .disableCachingNullValues();
 
         Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();
-        
+
         // Dashboard data: cache 5 phút
         cacheConfigurations.put("dashboard", defaultConfig.entryTtl(Duration.ofMinutes(5)));
-        
+
         // Category/Jar: cache 30 phút (ít thay đổi)
         cacheConfigurations.put("categories", defaultConfig.entryTtl(Duration.ofMinutes(30)));
         cacheConfigurations.put("jars", defaultConfig.entryTtl(Duration.ofMinutes(30)));
-        
+
         // Monthly totals: cache 10 phút
         cacheConfigurations.put("monthlyTotals", defaultConfig.entryTtl(Duration.ofMinutes(10)));
-        
+
         // Profile: cache 15 phút
         cacheConfigurations.put("profiles", defaultConfig.entryTtl(Duration.ofMinutes(15)));
-        
+
+        // Gói cước subscription: cache 60 phút (rất ít thay đổi, chỉ xóa khi admin update)
+        cacheConfigurations.put("subscriptionPlans", defaultConfig.entryTtl(Duration.ofMinutes(60)));
+
         return RedisCacheManager.builder(redisConnectionFactory)
                 .cacheDefaults(defaultConfig)
                 .withInitialCacheConfigurations(cacheConfigurations)

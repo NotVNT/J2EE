@@ -201,13 +201,44 @@ public class ProfileService {
         }
     }
 
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private com.example.moneymanager.security.CurrentProfileContext currentProfileContext;
+
     // ─── Profile ─────────────────────────────────────────────────────
 
+    /**
+     * Lấy profile của user hiện tại.
+     * Ưu tiên dùng request-scope cache (CurrentProfileContext) để tránh double DB lookup:
+     * - Lần 1 đã query trong JwtRequestFilter → kết quả được đặt vào CurrentProfileContext
+     * - Lần 2+ trong service gọi getCurrentProfile() → dùng cache, KHÔNG query DB
+     * Fallback về DB nếu context chưa có (non-HTTP thread, scheduled job, test).
+     */
     public ProfileEntity getCurrentProfile() {
+        // 1. Thử lấy từ request-scope context (đã được set bởi JwtRequestFilter)
+        if (currentProfileContext != null && currentProfileContext.getCachedProfile() != null) {
+            ProfileEntity cached = currentProfileContext.getCachedProfile();
+            // Nếu chỉ có id+email (partial stub từ JwtRequestFilter), load full entity một lần
+            if (cached.getRole() == null) {
+                ProfileEntity full = profileRepository.findByEmail(cached.getEmail())
+                        .orElseThrow(() -> new UsernameNotFoundException(
+                                "Không tìm thấy tài khoản với email: " + cached.getEmail()));
+                currentProfileContext.setCachedProfile(full);
+                return full;
+            }
+            return cached;
+        }
+
+        // 2. Fallback: query DB theo SecurityContext (scheduled job, test context, v.v.)
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return profileRepository.findByEmail(authentication.getName())
+        ProfileEntity profile = profileRepository.findByEmail(authentication.getName())
                 .orElseThrow(() -> new UsernameNotFoundException(
                         "Không tìm thấy tài khoản với email: " + authentication.getName()));
+
+        // Cache lại nếu context tồn tại
+        if (currentProfileContext != null) {
+            currentProfileContext.setCachedProfile(profile);
+        }
+        return profile;
     }
 
     public ProfileDTO getPublicProfile(String email) {

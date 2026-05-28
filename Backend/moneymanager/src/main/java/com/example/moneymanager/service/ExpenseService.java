@@ -8,11 +8,13 @@ import com.example.moneymanager.entity.CategoryEntity;
 import com.example.moneymanager.entity.ExpenseEntity;
 import com.example.moneymanager.entity.ProfileEntity;
 import com.example.moneymanager.entity.JarEntity;
+import com.example.moneymanager.event.TransactionEvents;
 import com.example.moneymanager.repository.BudgetRepository;
 import com.example.moneymanager.repository.CategoryRepository;
 import com.example.moneymanager.repository.ExpenseRepository;
 import com.example.moneymanager.repository.JarRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -37,6 +39,7 @@ public class ExpenseService {
     private final NotificationService notificationService;
     private final BudgetRepository budgetRepository;
     private final JarRepository jarRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     // Adds a new expense and checks budget status
     public ExpenseResponseDTO addExpense(ExpenseDTO dto) {
@@ -68,29 +71,14 @@ public class ExpenseService {
 
         // Lấy tháng/năm của giao dịch vừa thêm
         LocalDate expenseDate = newExpense.getDate() != null ? newExpense.getDate() : LocalDate.now();
-        int month = expenseDate.getMonthValue();
-        int year  = expenseDate.getYear();
 
-        // Kiểm tra trạng thái ngân sách
+        // Publish event — side-effects chạy async sau khi transaction commit
+        eventPublisher.publishEvent(new TransactionEvents.ExpenseCreated(
+                profile, newExpense.getName(), newExpense.getAmount(), category, expenseDate));
+
+        // Vẫn trả BudgetStatus đồng bộ cho response (chỉ đọc, không write)
         BudgetStatusDTO budgetStatus = budgetService.checkBudgetStatus(
-                profile.getId(), category.getId(), month, year);
-
-        // Notify expense added
-        notificationService.notifyExpenseAdded(profile, newExpense.getName(), newExpense.getAmount());
-
-        // Notify budget warning
-        notificationService.notifyBudgetWarning(profile, budgetStatus);
-
-        // Gửi email cảnh báo bất đồng bộ nếu có cảnh báo
-        if (budgetStatus.isHasBudget() && (budgetStatus.isExceeded() || budgetStatus.isWarning())) {
-            budgetService.sendBudgetAlertEmailAsync(profile, budgetStatus);
-        }
-
-        // ─── Smart Notification: Budget Threshold (70/80/90%) ─────
-        checkBudgetThresholds(profile, category.getId(), month, year);
-
-        // ─── Smart Notification: Abnormal Spending Check ──────────
-        notificationService.checkAbnormalSpendingAsync(profile, expenseDate);
+                profile.getId(), category.getId(), expenseDate.getMonthValue(), expenseDate.getYear());
 
         return toResponseDTO(newExpense, budgetStatus);
     }
@@ -209,21 +197,14 @@ public class ExpenseService {
         expense = expenseRepository.save(expense);
 
         LocalDate expenseDate = expense.getDate() != null ? expense.getDate() : LocalDate.now();
-        int month = expenseDate.getMonthValue();
-        int year  = expenseDate.getYear();
 
+        // Vẫn check budget status đồng bộ cho response
         BudgetStatusDTO budgetStatus = budgetService.checkBudgetStatus(
-                profile.getId(), category.getId(), month, year);
+                profile.getId(), category.getId(), expenseDate.getMonthValue(), expenseDate.getYear());
 
-        notificationService.notifyExpenseAdded(profile, "Cập nhật: " + expense.getName(), expense.getAmount());
-        notificationService.notifyBudgetWarning(profile, budgetStatus);
-
-        if (budgetStatus.isHasBudget() && (budgetStatus.isExceeded() || budgetStatus.isWarning())) {
-            budgetService.sendBudgetAlertEmailAsync(profile, budgetStatus);
-        }
-
-        checkBudgetThresholds(profile, category.getId(), month, year);
-        notificationService.checkAbnormalSpendingAsync(profile, expenseDate);
+        // Publish event — side-effects chạy async sau khi transaction commit
+        eventPublisher.publishEvent(new TransactionEvents.ExpenseUpdated(
+                profile, expense.getName(), expense.getAmount(), category, expenseDate));
 
         return toResponseDTO(expense, budgetStatus);
     }
