@@ -7,6 +7,7 @@ import { AppContext } from "./context/AppContext.jsx";
 import toast from "react-hot-toast";
 import axiosConfig from "./util/axiosConfig.jsx";
 import { API_ENDPOINTS } from "./util/apiEndpoints.js";
+import { getPostAuthRedirectPath } from "./util/defaultAuthenticatedRoute.js";
 
 const AdminLayout = lazy(() => import("./pages/Admin/AdminLayout.jsx"));
 const AdminDashboard = lazy(() => import("./pages/Admin/AdminDashboard.jsx"));
@@ -171,13 +172,9 @@ const App = () => {
                 const response = await axiosConfig.get(API_ENDPOINTS.GET_USER_INFO);
                 if (!cancelled && response.data) {
                     setUser(response.data);
-                    if (response.data.role === "admin") {
-                        navigate("/admin");
-                    } else {
-                        navigate("/dashboard");
-                    }
+                    navigate(getPostAuthRedirectPath(response.data));
                 }
-            } catch (err) {
+            } catch {
                 // Fail silently for guests
             }
         };

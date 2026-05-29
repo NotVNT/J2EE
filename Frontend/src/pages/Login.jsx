@@ -12,6 +12,7 @@ import { usePageTitle } from "../hooks/usePageTitle.js";
 import Footer from "../components/Footer.jsx";
 import favicon from "../assets/logo/favicon.png";
 import toast from "react-hot-toast";
+import { getPostAuthRedirectPath } from "../util/defaultAuthenticatedRoute.js";
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
@@ -61,11 +62,7 @@ const Login = () => {
       const { user } = data;
       if (user) {
         setUser(user);
-        if (user.role === "admin") {
-          navigate("/admin");
-        } else {
-          navigate("/dashboard");
-        }
+        navigate(getPostAuthRedirectPath(user));
       }
     } catch (err) {
       setError(err.response?.data?.message || "Đăng nhập bằng Google thất bại. Vui lòng thử lại.");
@@ -180,11 +177,7 @@ const Login = () => {
           localStorage.removeItem("rememberedEmail");
         }
         setUser(user);
-        if (user.role === "admin") {
-          navigate("/admin");
-        } else {
-          navigate("/dashboard");
-        }
+        navigate(getPostAuthRedirectPath(user));
       }
     } catch (err) {
       setError(err.response?.data?.message || err.message);

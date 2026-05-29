@@ -4,10 +4,10 @@ import {useNavigate} from "react-router-dom";
 import axiosConfig from "../util/axiosConfig.jsx";
 import {API_ENDPOINTS} from "../util/apiEndpoints.js";
 import toast from "react-hot-toast";
-
-let navigatingToLogin = false;
-
-export const resetAuthRedirectFlag = () => { navigatingToLogin = false; };
+import {
+    redirectToExpiredSessionLogin,
+    resetAuthRedirectState,
+} from "../util/authRedirect.js";
 
 export const useUser = () => {
     const {user, setUser, clearUser} = useContext(AppContext);
@@ -17,7 +17,7 @@ export const useUser = () => {
     useEffect(() => {
         if (user) {
             fetching.current = false;
-            navigatingToLogin = false;
+            resetAuthRedirectState();
             return;
         }
         if (fetching.current) {
@@ -40,11 +40,11 @@ export const useUser = () => {
                 if (!cancelled) {
                     const isUnauthorized = error.response && (error.response.status === 401 || error.response.status === 403);
                     if (isUnauthorized) {
-                        if (!navigatingToLogin) {
-                            navigatingToLogin = true;
-                            clearUser();
-                            navigate("/login?expired=true");
-                        }
+                        clearUser();
+                        redirectToExpiredSessionLogin({
+                            status: error.response?.status,
+                            replace: (targetPath) => navigate(targetPath, { replace: true }),
+                        });
                     } else {
                         // Connection/network error or 5xx server error
                         console.warn("Connection to server failed. Preserving active session.");
