@@ -1,7 +1,9 @@
 package com.example.moneymanager.service;
 
-import com.example.moneymanager.config.GptOssProperties;
 import com.example.moneymanager.config.GptOssKeyRotator;
+import com.example.moneymanager.config.GptOssProperties;
+import com.example.moneymanager.config.OcrKeyRotator;
+import com.example.moneymanager.config.OcrProperties;
 import com.example.moneymanager.dto.ExpenseDTO;
 import com.example.moneymanager.dto.ExpenseResponseDTO;
 import com.example.moneymanager.dto.ReceiptImportAnalyzeResponseDTO;
@@ -40,7 +42,11 @@ public class ReceiptImportService {
     private static final String EXPENSE_TYPE = "expense";
     private static final String OTHER_CATEGORY_NAME = "Khác";
     private static final String OTHER_CATEGORY_ICON = "CircleHelp";
+    private static final String RECEIPT_OCR_MODEL = "gemini-3.1-flash-lite";
 
+    private final RestClient ocrRestClient;
+    private final OcrProperties ocrProperties;
+    private final OcrKeyRotator ocrKeyRotator;
     private final RestClient gptOssRestClient;
     private final GptOssProperties gptOssProperties;
     private final GptOssKeyRotator gptOssKeyRotator;
@@ -273,9 +279,10 @@ public class ReceiptImportService {
     private JsonNode analyzeReceiptWithGptOss(MultipartFile file, byte[] fileBytes) {
         try {
             String base64Image = Base64.getEncoder().encodeToString(fileBytes);
-            String apiKey = gptOssKeyRotator.nextKey();
-            String model = gptOssProperties.model();
-            String baseUrl = gptOssProperties.baseUrl();
+            OcrProviderConfig provider = resolveReceiptOcrProvider();
+            String apiKey = provider.apiKey();
+            String model = provider.model();
+            String baseUrl = provider.baseUrl();
 
             boolean isGeminiDirect = baseUrl != null && baseUrl.contains("generativelanguage.googleapis.com");
 
@@ -345,17 +352,11 @@ public class ReceiptImportService {
 
                 String requestJson = objectMapper.writeValueAsString(requestBody);
                 
-                String finalModel = model;
-                if (finalModel == null || finalModel.contains("gemma")) {
-                    finalModel = "gemini-3.1-flash-lite"; // Gemma models on Google Gemini API are text-only; fall back to multimodal gemini-3.1-flash-lite
-                }
-
-                String finalModelParam = finalModel;
-                String responseJson = gptOssRestClient.post()
+                String responseJson = provider.restClient().post()
                         .uri(uriBuilder -> uriBuilder
                                 .path("/v1beta/models/{model}:generateContent")
                                 .queryParam("key", apiKey)
-                                .build(finalModelParam))
+                                .build(RECEIPT_OCR_MODEL))
                         .body(requestJson)
                         .retrieve()
                         .body(String.class);
@@ -374,9 +375,9 @@ public class ReceiptImportService {
                 return objectMapper.readTree(cleanJson);
 
             } else {
-                ObjectNode requestBody = buildGptOssOcrRequest(base64Image, canonicalMimeType(fileBytes));
+                ObjectNode requestBody = buildGptOssOcrRequest(base64Image, canonicalMimeType(fileBytes), model);
                 String requestJson = objectMapper.writeValueAsString(requestBody);
-                String responseJson = gptOssRestClient.post()
+                String responseJson = provider.restClient().post()
                         .uri("/chat/completions")
                         .header("Authorization", "Bearer " + apiKey)
                         .body(requestJson)
@@ -401,6 +402,30 @@ public class ReceiptImportService {
         }
     }
 
+    private OcrProviderConfig resolveReceiptOcrProvider() {
+        if (isOcrProviderConfigured()) {
+            return new OcrProviderConfig(
+                    ocrRestClient,
+                    ocrKeyRotator.nextKey(),
+                    ocrProperties.model(),
+                    ocrProperties.baseUrl()
+            );
+        }
+
+        return new OcrProviderConfig(
+                gptOssRestClient,
+                gptOssKeyRotator.nextKey(),
+                gptOssProperties.model(),
+                gptOssProperties.baseUrl()
+        );
+    }
+
+    private boolean isOcrProviderConfigured() {
+        return ocrKeyRotator.hasKeys()
+                && ocrProperties.baseUrl() != null
+                && !ocrProperties.baseUrl().isBlank();
+    }
+
     private String extractGeminiText(JsonNode responseBody) {
         if (responseBody == null) return null;
         JsonNode candidates = responseBody.get("candidates");
@@ -422,9 +447,9 @@ public class ReceiptImportService {
         return builder.toString().trim();
     }
 
-    private ObjectNode buildGptOssOcrRequest(String base64Image, String mimeType) {
+    private ObjectNode buildGptOssOcrRequest(String base64Image, String mimeType, String model) {
         ObjectNode requestBody = objectMapper.createObjectNode();
-        requestBody.put("model", gptOssProperties.model());
+        requestBody.put("model", model);
         requestBody.put("stream", false);
 
         ArrayNode messages = objectMapper.createArrayNode();
@@ -593,5 +618,13 @@ public class ReceiptImportService {
 
     private String safeText(String value) {
         return Objects.requireNonNullElse(value, "").trim();
+    }
+
+    private record OcrProviderConfig(
+            RestClient restClient,
+            String apiKey,
+            String model,
+            String baseUrl
+    ) {
     }
 }
