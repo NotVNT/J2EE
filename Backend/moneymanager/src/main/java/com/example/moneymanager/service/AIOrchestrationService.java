@@ -51,13 +51,19 @@ public class AIOrchestrationService {
     private final JarRepository jarRepository;
     private final ObjectMapper objectMapper;
 
+    // ─── Agent verbs for heuristic reclassification ──────────────────────────
+    private static final java.util.regex.Pattern AGENT_VERB_PATTERN = java.util.regex.Pattern.compile(
+        "(?i)(thêm|tạo|ghi|nhập|xóa|bỏ|hủy|sửa|chỉnh|đổi|cập nhật|xuất|tải|chuyển|gửi mail|gửi email|them|tao|xoa|bo|sua|chinh|doi|xuat|tai)"
+    );
+
     @Transactional(readOnly = true)
     public AIIntentResponseDTO parseIntentFromChat(AIIntentRequestDTO request) {
         String userMessage = request.getUserMessage();
         if (userMessage == null || userMessage.isBlank()) {
             return AIIntentResponseDTO.builder()
                     .intent("INVALID_REQUEST")
-                    .validationErrors(List.of("Tin nh\u1EAFn kh\u00F4ng \u0111\u01B0\u1EE3c \u0111\u1EC3 tr\u1ED1ng."))
+                    .intentType("INVALID")
+                    .validationErrors(List.of("Tin nhắn không được để trống."))
                     .build();
         }
         userMessage = sanitizeUserMessage(userMessage);
@@ -78,24 +84,23 @@ public class AIOrchestrationService {
             Map<String, Object> pageData = loadPageData(pageContext, profile);
             String systemPrompt = AIInstructionPromptBuilder.buildSystemPrompt(pageContext, pageData);
 
-            String crudInstruction = "<user_request>\n" + userMessage + "\n</user_request>\n\n" +
-                    "<system_instruction>\n" +
-                    "CH\u1EC8 TR\u1EA2 V\u1EC0 JSON THU\u1EA6N. KH\u00D4NG C\u00D3 TEXT N\u00C0O KH\u00C1C. " +
-                    "Ph\u00E2n t\u00EDch y\u00EAu c\u1EA7u v\u00E0 tr\u1EA3 v\u1EC1 m\u1ED9t JSON object theo \u0111\u00FAng format. " +
-                    "B\u1EAFt \u0111\u1EA7u b\u1EB1ng { v\u00E0 k\u1EBFt th\u00FAc b\u1EB1ng }. " +
-                    "N\u1EBFu l\u00E0 CRUD, bao g\u1ED3m confirmationPrompt b\u1EB1ng ti\u1EBFng Vi\u1EC7t." +
-                    "\n</system_instruction>";
+            // Trim conversation history to last 3 turns (user+assistant pairs) to keep context sharp
+            List<AIChatMessageDTO> trimmedHistory = trimConversationHistory(request.getConversationHistory(), 6);
 
-            String rawResponse = callProviderForIntent(provider, systemPrompt, crudInstruction, request.getConversationHistory());
+            String intentInstruction = "<user_request>\n" + userMessage + "\n</user_request>\n\n" +
+                    "PHÂN LOẠI INTENT VÀ TRẢ VỀ JSON THUẦN. " +
+                    "Bắt đầu { kết thúc }. Không có text ngoài JSON.";
+
+            String rawResponse = callProviderForIntent(provider, systemPrompt, intentInstruction, trimmedHistory);
 
             String cleanedJson = extractJson(rawResponse);
             if (cleanedJson == null || cleanedJson.isBlank()) {
-                // Retry once with explicit JSON-format reminder
-                log.warn("AI returned non-JSON response, retrying with format reminder: {}", rawResponse);
-                String retryInstruction = "Y\u00EAu c\u1EA7u c\u1EE7a ng\u01B0\u1EDDi d\u00F9ng: " + userMessage + "\n\n" +
-                        "B\u1EA1n PH\u1EA2I tr\u1EA3 v\u1EC1 JSON THU\u1EA6N theo format \u0111\u00E3 ch\u1EC9 \u0111\u1ECBnh. " +
-                        "TUY\u1EC6T \u0110\u1ED0I KH\u00D4NG tr\u1EA3 l\u1EDDi b\u1EB1ng v\u0103n b\u1EA3n. Ch\u1EC9 { } JSON.";
-                String retryResponse = callProviderForIntent(provider, systemPrompt, retryInstruction, null);
+                // Retry with a targeted schema reminder (not the full prompt)
+                log.warn("AI returned non-JSON response, retrying with schema reminder: {}", rawResponse);
+                String schemaReminder = "Yêu cầu: \"" + userMessage + "\". " +
+                        "Trả về JSON với các key: intent, intentType, extractedFields, missingFields, confidence, confirmationPrompt hoặc answer. " +
+                        "Chỉ JSON, không có text khác.";
+                String retryResponse = callProviderForIntent(provider, systemPrompt, schemaReminder, null);
                 cleanedJson = extractJson(retryResponse);
                 if (cleanedJson != null && !cleanedJson.isBlank()) {
                     rawResponse = retryResponse;
@@ -103,7 +108,7 @@ public class AIOrchestrationService {
                     log.warn("Retry also returned non-JSON, treating as answer: {}", retryResponse);
                     return buildAnswerResponse(rawResponse, provider, model);
                 } else {
-                    throw new RuntimeException("AI kh\u00F4ng tr\u1EA3 v\u1EC1 n\u1ED9i dung.");
+                    throw new RuntimeException("AI không trả về nội dung.");
                 }
             }
 
@@ -118,28 +123,60 @@ public class AIOrchestrationService {
                 throw parseError;
             }
 
+            // ── Step 1: Canonicalize intent aliases and field keys ──────────────
+            parsed = canonicalizeIntentResponse(parsed);
+
             String intent = (String) parsed.getOrDefault("intent", "ANSWER_QUESTION");
-            Map<String, Object> extractedFields = (Map<String, Object>) parsed.getOrDefault("extractedFields", parsed);
+            String intentType = (String) parsed.getOrDefault("intentType", deriveIntentType(intent));
+            Map<String, Object> extractedFields = (Map<String, Object>) parsed.getOrDefault("extractedFields", new HashMap<>());
             Map<String, Object> suggestedValues = (Map<String, Object>) parsed.getOrDefault("suggestedValues", new HashMap<>());
             List<String> validationErrors = (List<String>) parsed.getOrDefault("validationErrors", new ArrayList<>());
             String confirmationPrompt = (String) parsed.get("confirmationPrompt");
             String answer = (String) parsed.get("answer");
+            Double confidence = toDouble(parsed.get("confidence"));
 
+            // ── Step 2: Heuristic reclassification ────────────────────────────
+            // If AI returns ANSWER_QUESTION but the message has a clear agent verb, do not fall back
+            final String finalUserMessage = userMessage;
+            if ("ANSWER_QUESTION".equals(intent) && AGENT_VERB_PATTERN.matcher(finalUserMessage).find()) {
+                log.warn("AI softly fell back to ANSWER_QUESTION for agent command '{}', attempting reclassification", finalUserMessage);
+                String reclassified = reclassifyByPageContext(finalUserMessage, pageContext);
+                if (reclassified != null) {
+                    intent = reclassified;
+                    intentType = "ACTION";
+                    confidence = 0.65;
+                    log.info("Reclassified to {} based on pageContext={}", intent, pageContext);
+                }
+            }
+
+            // ── Step 3: Compute missingFields for ACTION intents ───────────────
+            List<String> missingFields = (List<String>) parsed.getOrDefault("missingFields", new ArrayList<>());
+            if ("ACTION".equals(intentType) && missingFields.isEmpty()) {
+                missingFields = computeMissingFields(intent, extractedFields);
+            }
+
+            // ── Step 4: Generate confirmationPrompt if absent ─────────────────
             if (confirmationPrompt == null && isCrudIntent(intent)) {
                 confirmationPrompt = generateConfirmationPrompt(intent, extractedFields);
             }
 
+            // ── Step 5: Determine response status ─────────────────────────────
+            String status = "ANSWER_QUESTION".equals(intent) ? "SUCCESS" : "NEED_CONFIRMATION";
+
             String sessionId = persistAgentUserMessage(request.getSessionId(), profile.getId(), userMessage, intent, answer);
 
             return AIIntentResponseDTO.builder()
-                    .status("NEED_CONFIRMATION")
+                    .status(status)
                     .sessionId(sessionId)
                     .intent(intent)
+                    .intentType(intentType)
                     .extractedFields(extractedFields)
                     .suggestedValues(suggestedValues)
                     .validationErrors(validationErrors)
+                    .missingFields(missingFields)
                     .confirmationPrompt(confirmationPrompt)
                     .answer(answer)
+                    .confidence(confidence)
                     .provider(provider)
                     .modelUsed(model)
                     .build();
@@ -154,12 +191,13 @@ public class AIOrchestrationService {
                         .messages(buildMessages(request))
                         .build());
                 String reply = fallback.getReply();
-                if (reply == null || reply.contains("s\u1EF1 c\u1ED1") || reply.contains("ch\u01B0a \u0111\u01B0\u1EE3c c\u1EA5u h\u00ECnh")) {
+                if (reply == null || reply.contains("sự cố") || reply.contains("chưa được cấu hình")) {
                     log.warn("Fallback AI returned error message, using neutral response");
-                    reply = "M\u00F4 h\u00ECnh AI \u0111ang b\u1EADn. Vui l\u00F2ng th\u1EED l\u1EA1i sau v\u00E0i gi\u00E2y nh\u00E9.";
+                    reply = "Mô hình AI đang bận. Vui lòng thử lại sau vài giây nhé.";
                 }
                 return AIIntentResponseDTO.builder()
                         .intent("ANSWER_QUESTION")
+                        .intentType("QUESTION")
                         .answer(reply)
                         .provider(fallback.getProvider())
                         .modelUsed(fallback.getModelUsed())
@@ -167,7 +205,8 @@ public class AIOrchestrationService {
             } catch (Exception fallbackError) {
                 return AIIntentResponseDTO.builder()
                         .intent("ANSWER_QUESTION")
-                        .answer("Xin l\u1ED7i, t\u00F4i ch\u01B0a x\u1EED l\u00FD \u0111\u01B0\u1EE3c y\u00EAu c\u1EA7u n\u00E0y. B\u1EA1n th\u1EED l\u1EA1i nh\u00E9.")
+                        .intentType("QUESTION")
+                        .answer("Xin lỗi, tôi chưa xử lý được yêu cầu này. Bạn thử lại nhé.")
                         .build();
             }
         }
@@ -799,7 +838,208 @@ public class AIOrchestrationService {
     }
 
     private boolean isCrudIntent(String intent) {
-        return intent != null && (intent.startsWith("CREATE_") || intent.startsWith("UPDATE_") || intent.startsWith("DELETE_") || intent.startsWith("TRANSFER_"));
+        return intent != null && (intent.startsWith("CREATE_") || intent.startsWith("UPDATE_") ||
+                intent.startsWith("DELETE_") || intent.startsWith("TRANSFER_"));
+    }
+
+    /**
+     * Suy ra intentType từ tên intent nếu model không trả về intentType.
+     */
+    private String deriveIntentType(String intent) {
+        if (intent == null) return "INVALID";
+        return switch (intent) {
+            case "ANSWER_QUESTION" -> "QUESTION";
+            case "INVALID_REQUEST" -> "INVALID";
+            default -> "ACTION";
+        };
+    }
+
+    /**
+     * Chuẩn hóa intent aliases và field keys trong response AI.
+     * Ví dụ: intent "CREATE EXPENSE" → "CREATE_EXPENSE", key "expense_id" → "expenseId".
+     */
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> canonicalizeIntentResponse(Map<String, Object> parsed) {
+        if (parsed == null) return new HashMap<>();
+        Map<String, Object> result = new HashMap<>(parsed);
+
+        // Normalize intent name: spaces/dashes to underscores, uppercase
+        Object rawIntent = result.get("intent");
+        if (rawIntent instanceof String intentStr) {
+            String normalized = intentStr.trim().toUpperCase().replace(" ", "_").replace("-", "_");
+            result.put("intent", normalized);
+        }
+
+        // Normalize extractedFields keys: snake_case → camelCase aliases
+        Object fieldsObj = result.get("extractedFields");
+        if (fieldsObj instanceof Map<?, ?> fieldsRaw) {
+            Map<String, Object> fields = new HashMap<>();
+            fieldsRaw.forEach((k, v) -> {
+                String key = k.toString();
+                // Common field key aliases
+                key = switch (key) {
+                    case "expense_id", "expenseid"       -> "expenseId";
+                    case "income_id", "incomeid"         -> "incomeId";
+                    case "jar_name", "jarname"           -> "jarName";
+                    case "from_jar", "from_jar_name"     -> "fromJarName";
+                    case "to_jar", "to_jar_name"         -> "toJarName";
+                    case "category_name", "categoryname" -> "categoryName";
+                    case "target_amount", "targetamount" -> "targetAmount";
+                    case "current_amount", "currentamount" -> "currentAmount";
+                    case "target_percentage", "targetpercentage" -> "targetPercentage";
+                    case "budget_id", "budgetid"         -> "budgetId";
+                    case "saving_goal_id", "savinggoalid" -> "savingGoalId";
+                    case "category_id", "categoryid"     -> "categoryId";
+                    default -> key;
+                };
+                fields.put(key, v);
+            });
+            result.put("extractedFields", fields);
+        }
+
+        return result;
+    }
+
+    /**
+     * Tính toán danh sách field bắt buộc còn thiếu cho mỗi intent.
+     * Thay vì hạ intent xuống ANSWER_QUESTION, trả về đúng intent + missingFields.
+     */
+    private List<String> computeMissingFields(String intent, Map<String, Object> fields) {
+        if (intent == null || fields == null) return List.of();
+        List<String> missing = new ArrayList<>();
+        switch (intent) {
+            case "CREATE_EXPENSE" -> {
+                if (!hasValue(fields, "amount"))       missing.add("amount");
+                if (!hasValue(fields, "categoryName")) missing.add("categoryName");
+                if (!hasValue(fields, "date"))         missing.add("date");
+            }
+            case "UPDATE_EXPENSE" -> {
+                if (!hasValue(fields, "expenseId"))    missing.add("expenseId");
+            }
+            case "DELETE_EXPENSE" -> {
+                if (!hasValue(fields, "expenseId"))    missing.add("expenseId");
+            }
+            case "CREATE_INCOME" -> {
+                if (!hasValue(fields, "amount"))       missing.add("amount");
+                if (!hasValue(fields, "categoryName")) missing.add("categoryName");
+                if (!hasValue(fields, "date"))         missing.add("date");
+            }
+            case "UPDATE_INCOME" -> {
+                if (!hasValue(fields, "incomeId"))     missing.add("incomeId");
+            }
+            case "DELETE_INCOME" -> {
+                if (!hasValue(fields, "incomeId"))     missing.add("incomeId");
+            }
+            case "CREATE_BUDGET" -> {
+                if (!hasValue(fields, "amount"))       missing.add("amount");
+                if (!hasValue(fields, "categoryName")) missing.add("categoryName");
+            }
+            case "CREATE_SAVING_GOAL" -> {
+                if (!hasValue(fields, "name"))         missing.add("name");
+                if (!hasValue(fields, "targetAmount")) missing.add("targetAmount");
+            }
+            case "UPDATE_JAR" -> {
+                if (!hasValue(fields, "jarName"))      missing.add("jarName");
+            }
+            case "DELETE_JAR" -> {
+                if (!hasValue(fields, "jarName"))      missing.add("jarName");
+            }
+            case "TRANSFER_JAR" -> {
+                if (!hasValue(fields, "fromJarName"))  missing.add("fromJarName");
+                if (!hasValue(fields, "toJarName"))    missing.add("toJarName");
+                if (!hasValue(fields, "amount"))       missing.add("amount");
+            }
+            case "CREATE_JAR" -> {
+                if (!hasValue(fields, "name"))         missing.add("name");
+            }
+        }
+        return missing;
+    }
+
+    private boolean hasValue(Map<String, Object> fields, String key) {
+        Object val = fields.get(key);
+        return val != null && !val.toString().isBlank();
+    }
+
+    /**
+     * Nếu AI trả ANSWER_QUESTION cho câu có động từ agent rõ ràng,
+     * thử reclassify thành intent phù hợp nhất dựa trên pageContext.
+     * Trả null nếu không thể xác định intent tốt hơn.
+     */
+    private String reclassifyByPageContext(String userMessage, String pageContext) {
+        String msg = userMessage.toLowerCase();
+        String ctx = pageContext != null ? pageContext.toLowerCase() : "dashboard";
+
+        boolean hasDelete = msg.matches(".*\\b(xóa|bỏ|hủy|xoa|bo)\\b.*");
+        boolean hasUpdate = msg.matches(".*\\b(sửa|chỉnh|đổi|cập nhật|sua|chinh|doi)\\b.*");
+        boolean hasCreate = msg.matches(".*\\b(thêm|tạo|ghi|nhập|them|tao|ghi|nhap)\\b.*");
+        boolean hasExport = msg.matches(".*\\b(xuất|tải|download|export|xuat|tai)\\b.*");
+        boolean hasEmail  = msg.matches(".*\\b(gửi mail|gửi email|email|mail)\\b.*");
+        boolean hasJar    = msg.matches(".*\\b(hũ|hủ|jar)\\b.*");
+
+        if (hasEmail) {
+            return ctx.equals("income") ? "EMAIL_INCOME_REPORT" : "EMAIL_EXPENSE_REPORT";
+        }
+        if (hasExport) {
+            return ctx.equals("income") ? "EXPORT_EXCEL_INCOME" : "EXPORT_EXCEL_EXPENSE";
+        }
+        if (hasJar) {
+            if (hasDelete) return "DELETE_JAR";
+            if (hasUpdate) return "UPDATE_JAR";
+            if (hasCreate) return "CREATE_JAR";
+        }
+        return switch (ctx) {
+            case "expense" -> {
+                if (hasDelete) yield "DELETE_EXPENSE";
+                if (hasUpdate) yield "UPDATE_EXPENSE";
+                if (hasCreate) yield "CREATE_EXPENSE";
+                yield null;
+            }
+            case "income" -> {
+                if (hasDelete) yield "DELETE_INCOME";
+                if (hasUpdate) yield "UPDATE_INCOME";
+                if (hasCreate) yield "CREATE_INCOME";
+                yield null;
+            }
+            case "budget" -> {
+                if (hasDelete) yield "DELETE_BUDGET";
+                if (hasUpdate) yield "UPDATE_BUDGET";
+                if (hasCreate) yield "CREATE_BUDGET";
+                yield null;
+            }
+            case "savinggoals" -> {
+                if (hasDelete) yield "DELETE_SAVING_GOAL";
+                if (hasUpdate) yield "UPDATE_SAVING_GOAL";
+                if (hasCreate) yield "CREATE_SAVING_GOAL";
+                yield null;
+            }
+            case "jars" -> {
+                if (hasDelete) yield "DELETE_JAR";
+                if (hasUpdate) yield "UPDATE_JAR";
+                if (hasCreate) yield "CREATE_JAR";
+                yield null;
+            }
+            default -> null;
+        };
+    }
+
+    /**
+     * Trim conversation history to a maximum number of messages (most recent).
+     */
+    private List<AIChatMessageDTO> trimConversationHistory(List<AIChatMessageDTO> history, int maxMessages) {
+        if (history == null || history.isEmpty()) return new ArrayList<>();
+        int size = history.size();
+        if (size <= maxMessages) return new ArrayList<>(history);
+        return new ArrayList<>(history.subList(size - maxMessages, size));
+    }
+
+    private Double toDouble(Object value) {
+        if (value == null) return null;
+        try {
+            return Double.valueOf(value.toString());
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     private BigDecimal toBigDecimal(Object value, String fieldName) {

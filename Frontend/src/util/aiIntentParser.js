@@ -83,37 +83,112 @@ export const INTENT_ICONS = {
 };
 
 export const parseIntentResponse = (response) => {
-  if (!response) return { intent: INTENT_TYPES.INVALID_REQUEST, extractedFields: {} };
+  if (!response) return { intent: INTENT_TYPES.INVALID_REQUEST, intentType: 'INVALID', extractedFields: {}, missingFields: [], confidence: null };
 
   const intent = response.intent;
   if (!intent || !INTENT_TYPES[intent]) {
-    return { intent: INTENT_TYPES.INVALID_REQUEST, extractedFields: {} };
+    return { intent: INTENT_TYPES.INVALID_REQUEST, intentType: 'INVALID', extractedFields: {}, missingFields: [], confidence: null };
   }
+
+  // Derive intentType from the response or fall back to intent-name heuristic
+  const intentType = response.intentType ||
+    (intent === 'ANSWER_QUESTION' ? 'QUESTION' :
+     intent === 'INVALID_REQUEST' ? 'INVALID' : 'ACTION');
 
   return {
     intent,
+    intentType,
     extractedFields: response.extractedFields || {},
     suggestedValues: response.suggestedValues || {},
     validationErrors: response.validationErrors || [],
-    confirmationPrompt: response.confirmationPrompt || "",
-    answer: response.answer || ""
+    missingFields: response.missingFields || [],
+    confirmationPrompt: response.confirmationPrompt || '',
+    answer: response.answer || '',
+    confidence: response.confidence ?? null
   };
 };
 
 export const isCrudIntent = (intent) => {
   return intent && (
-    intent.startsWith("CREATE_") ||
-    intent.startsWith("UPDATE_") ||
-    intent.startsWith("DELETE_") ||
-    intent.startsWith("TRANSFER_")
+    intent.startsWith('CREATE_') ||
+    intent.startsWith('UPDATE_') ||
+    intent.startsWith('DELETE_') ||
+    intent.startsWith('TRANSFER_')
   );
 };
 
-export const isActionIntent = (intent) => {
+/**
+ * Returns true if this is an ACTION-type intent (CRUD, export, email).
+ * Prefer using intentType from parseIntentResponse if available.
+ */
+export const isActionIntent = (intent, intentType) => {
+  // Use intentType if provided (new schema)
+  if (intentType) return intentType === 'ACTION';
+  // Fallback: prefix-based check
   return intent && (
-    intent.startsWith("EXPORT_") ||
-    intent.startsWith("EMAIL_")
+    intent.startsWith('CREATE_') ||
+    intent.startsWith('UPDATE_') ||
+    intent.startsWith('DELETE_') ||
+    intent.startsWith('TRANSFER_') ||
+    intent.startsWith('EXPORT_') ||
+    intent.startsWith('EMAIL_')
   );
+};
+
+/**
+ * Returns true if backend recognized an action intent but missingFields is non-empty.
+ * Frontend should show confirmation form with missing field highlights instead of
+ * falling back to normal chat.
+ */
+export const isIncompleteActionIntent = (parsedResponse) => {
+  if (!parsedResponse) return false;
+  const { intentType, missingFields } = parsedResponse;
+  return intentType === 'ACTION' && Array.isArray(missingFields) && missingFields.length > 0;
+};
+
+/**
+ * Client-side telemetry stubs for intent parsing quality monitoring.
+ * Replace these with actual analytics calls (e.g., Mixpanel, Amplitude, or custom backend).
+ */
+export const clientTelemetry = {
+  /**
+   * Log when backend returns ANSWER_QUESTION but the message looks like an agent command.
+   * This suggests either the AI or the reclassification heuristic missed the intent.
+   */
+  logAgentCommandFallback: (userMessage, pageContext) => {
+    console.warn('[AI Telemetry] ANSWER_QUESTION fallback for probable agent command', {
+      userMessage: userMessage?.substring(0, 80),
+      pageContext,
+      timestamp: new Date().toISOString()
+    });
+  },
+
+  /**
+   * Log when user cancels a confirmation dialog, indicating a possible wrong parse.
+   * High cancellation rate for a given intent suggests misclassification.
+   */
+  logConfirmationCancelled: (intent, extractedFields) => {
+    console.warn('[AI Telemetry] User cancelled confirmation — possible wrong parse', {
+      intent,
+      fieldKeys: Object.keys(extractedFields || {}),
+      timestamp: new Date().toISOString()
+    });
+  },
+
+  /**
+   * Log when an ACTION intent has missingFields, indicating incomplete extraction.
+   * Frequent occurrences for the same fields point to prompt training gaps.
+   */
+  logMissingFields: (intent, missingFields, pageContext) => {
+    if (missingFields?.length > 0) {
+      console.info('[AI Telemetry] Agent intent has missing fields', {
+        intent,
+        missingFields,
+        pageContext,
+        timestamp: new Date().toISOString()
+      });
+    }
+  }
 };
 
 export const getFieldsForIntent = (intent) => {
