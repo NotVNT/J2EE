@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "test": "node --test src/util/defaultAuthenticatedRoute.test.js src/util/authRedirect.test.js",
     "lint": "eslint .",
     "preview": "vite preview",
     "security:check": "node scripts/security-check.js",

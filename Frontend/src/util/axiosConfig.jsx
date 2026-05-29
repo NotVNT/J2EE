@@ -1,5 +1,6 @@
 import axios from "axios";
 import { BASE_URL } from "./apiEndpoints.js";
+import { redirectToExpiredSessionLogin } from "./authRedirect.js";
 
 const axiosConfig = axios.create({
   baseURL: BASE_URL,
@@ -14,13 +15,9 @@ const axiosConfig = axios.create({
 axiosConfig.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      const publicPaths = ["/", "/home", "/login", "/signup", "/forgot-password", "/reset-password", "/activate"];
-      const isPublicPath = publicPaths.includes(window.location.pathname);
-      if (!isPublicPath) {
-        window.location.href = "/login?expired=true";
-      }
-    }
+    redirectToExpiredSessionLogin({
+      status: error.response?.status,
+    });
 
     if (error.response) {
       const status = error.response.status;
