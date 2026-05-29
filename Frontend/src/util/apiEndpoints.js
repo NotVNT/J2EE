@@ -77,6 +77,7 @@ export const API_ENDPOINTS = {
     // Monthly Report endpoints
     MONTHLY_REPORT_CURRENT: "/reports/monthly",
     MONTHLY_REPORT_BY_MONTH: (year, month) => `/reports/monthly/${year}/${month}`,
+    MONTHLY_REPORT_AI_ANALYSIS: "/reports/monthly/ai-analysis",
 
     // Admin endpoints
     ADMIN_OVERVIEW: "/admin/overview",

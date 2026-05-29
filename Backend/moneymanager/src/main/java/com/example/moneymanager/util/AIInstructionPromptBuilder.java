@@ -88,8 +88,9 @@ public class AIInstructionPromptBuilder {
             "E. EMAIL BÁO CÁO — PHÂN LOẠI THEO pageContext:\n" +
             "  pageContext='income' hoặc câu đề cập 'thu nhập' → EMAIL_INCOME_REPORT\n" +
             "  pageContext='expense' hoặc câu đề cập 'chi tiêu' → EMAIL_EXPENSE_REPORT\n" +
-            "  pageContext='dashboard' hoặc câu chung chung → EMAIL_EXPENSE_REPORT (mặc định)\n" +
-            "  'gửi mail giúp tôi', 'gửi mail báo cáo' → dùng pageContext để chọn loại\n\n" +
+            "  pageContext='dashboard' hoặc 'aiChat' hoặc câu chung chung → EMAIL_EXPENSE_REPORT (mặc định)\n" +
+            "  'gửi mail giúp tôi', 'gửi mail báo cáo', 'gửi qua email luôn', 'mail luôn cho tôi' → dùng pageContext để chọn loại\n" +
+            "  Nếu user đang follow-up ngay sau một câu export/excel/báo cáo gần nhất và câu mới chỉ nói 'gửi qua email', 'email luôn', 'mail luôn' → vẫn phải phân loại EMAIL_* , KHÔNG trả ANSWER_QUESTION\n\n" +
             "F. KHI INTENT LÀ ACTION NHƯNG THIẾU FIELD:\n" +
             "  KHÔNG hạ xuống ANSWER_QUESTION. Trả đúng intent ACTION.\n" +
             "  Điền missingFields với danh sách field bắt buộc còn thiếu.\n" +
@@ -149,7 +150,13 @@ public class AIInstructionPromptBuilder {
             "--- Ví dụ 8: Ngoài phạm vi ---\n" +
             "User: \"ai là tổng thống Mỹ?\"\n" +
             "Trả về:\n" +
-            "{\"intent\":\"INVALID_REQUEST\",\"intentType\":\"INVALID\",\"extractedFields\":{},\"missingFields\":[],\"confidence\":0.99,\"validationErrors\":[\"Câu hỏi ngoài phạm vi tài chính cá nhân của Money Manager.\"]}\n";
+            "{\"intent\":\"INVALID_REQUEST\",\"intentType\":\"INVALID\",\"extractedFields\":{},\"missingFields\":[],\"confidence\":0.99,\"validationErrors\":[\"Câu hỏi ngoài phạm vi tài chính cá nhân của Money Manager.\"]}\n\n" +
+            "--- Ví dụ 9: Follow-up gửi email sau khi vừa export Excel ---\n" +
+            "pageContext: aiChat\n" +
+            "conversationHistory: [user:'xuất báo cáo qua excel cho tôi đi', assistant:'Đã xác nhận xuất Excel chi tiêu']\n" +
+            "User: \"ok gửi qua email cho tôi luôn nhé\"\n" +
+            "Trả về:\n" +
+            "{\"intent\":\"EMAIL_EXPENSE_REPORT\",\"intentType\":\"ACTION\",\"extractedFields\":{},\"missingFields\":[],\"confidence\":0.88,\"confirmationPrompt\":\"Bạn muốn gửi báo cáo chi tiêu tháng này đến email của bạn?\"}\n";
 
     // ─── Context hiện tại ─────────────────────────────────────────────────────
 
@@ -207,6 +214,7 @@ public class AIInstructionPromptBuilder {
             case "forecast"    -> "Dự báo";
             case "reports"     -> "Báo cáo";
             case "jars"        -> "Hũ chi tiêu";
+            case "aichat"      -> "Trợ lý AI";
             default            -> "Tổng quan";
         };
     }

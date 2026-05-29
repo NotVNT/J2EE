@@ -339,7 +339,7 @@ const Forecast = () => {
                                         </div>
                                         <h3 className="text-lg font-bold mb-3 flex items-center gap-2 relative z-10">
                                             <Lightbulb size={20} className="text-amber-300" />
-                                            Phân tích từ chuyên gia AI
+                                            Phân tích từ Nova Money
                                         </h3>
                                         <div className="text-indigo-50 leading-relaxed relative z-10 text-sm space-y-2">
                                             {(insights.narrative ?? "")

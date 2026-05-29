@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.text.Normalizer;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -53,7 +54,7 @@ public class AIOrchestrationService {
 
     // ─── Agent verbs for heuristic reclassification ──────────────────────────
     private static final java.util.regex.Pattern AGENT_VERB_PATTERN = java.util.regex.Pattern.compile(
-        "(?i)(thêm|tạo|ghi|nhập|xóa|bỏ|hủy|sửa|chỉnh|đổi|cập nhật|xuất|tải|chuyển|gửi mail|gửi email|them|tao|xoa|bo|sua|chinh|doi|xuat|tai)"
+        "(?i)(thêm|tạo|ghi|nhập|xóa|bỏ|hủy|sửa|chỉnh|đổi|cập nhật|xuất|tải|chuyển|gửi mail|gửi email|gửi qua email|gửi qua mail|email báo cáo|mail báo cáo|them|tao|xoa|bo|sua|chinh|doi|xuat|tai)"
     );
 
     @Transactional(readOnly = true)
@@ -138,9 +139,8 @@ public class AIOrchestrationService {
             // ── Step 2: Heuristic reclassification ────────────────────────────
             // If AI returns ANSWER_QUESTION but the message has a clear agent verb, do not fall back
             final String finalUserMessage = userMessage;
-            if ("ANSWER_QUESTION".equals(intent) && AGENT_VERB_PATTERN.matcher(finalUserMessage).find()) {
-                log.warn("AI softly fell back to ANSWER_QUESTION for agent command '{}', attempting reclassification", finalUserMessage);
-                String reclassified = reclassifyByPageContext(finalUserMessage, pageContext);
+            if ("ANSWER_QUESTION".equals(intent)) {
+                String reclassified = reclassifyByPageContext(finalUserMessage, pageContext, trimmedHistory);
                 if (reclassified != null) {
                     intent = reclassified;
                     intentType = "ACTION";
@@ -966,18 +966,20 @@ public class AIOrchestrationService {
      * thử reclassify thành intent phù hợp nhất dựa trên pageContext.
      * Trả null nếu không thể xác định intent tốt hơn.
      */
-    private String reclassifyByPageContext(String userMessage, String pageContext) {
-        String msg = userMessage.toLowerCase();
-        String ctx = pageContext != null ? pageContext.toLowerCase() : "dashboard";
+    private String reclassifyByPageContext(String userMessage, String pageContext, List<AIChatMessageDTO> history) {
+        String msg = normalizeIntentText(userMessage);
+        String ctx = normalizeIntentText(pageContext != null ? pageContext : "dashboard");
 
-        boolean hasDelete = msg.matches(".*\\b(xóa|bỏ|hủy|xoa|bo)\\b.*");
-        boolean hasUpdate = msg.matches(".*\\b(sửa|chỉnh|đổi|cập nhật|sua|chinh|doi)\\b.*");
-        boolean hasCreate = msg.matches(".*\\b(thêm|tạo|ghi|nhập|them|tao|ghi|nhap)\\b.*");
-        boolean hasExport = msg.matches(".*\\b(xuất|tải|download|export|xuat|tai)\\b.*");
-        boolean hasEmail  = msg.matches(".*\\b(gửi mail|gửi email|email|mail)\\b.*");
-        boolean hasJar    = msg.matches(".*\\b(hũ|hủ|jar)\\b.*");
+        boolean hasDelete = msg.matches(".*\\b(xoa|bo|huy)\\b.*");
+        boolean hasUpdate = msg.matches(".*\\b(sua|chinh|doi|cap nhat)\\b.*");
+        boolean hasCreate = msg.matches(".*\\b(them|tao|ghi|nhap)\\b.*");
+        boolean hasExport = msg.matches(".*\\b(xuat|tai|download|export)\\b.*");
+        boolean hasEmailCommand = msg.matches(".*\\b(gui(?:\\s+qua)?\\s+(?:mail|email)|email\\s+bao\\s+cao|mail\\s+bao\\s+cao)\\b.*");
+        boolean mentionsEmail = msg.matches(".*\\b(email|mail)\\b.*");
+        boolean followUpToReport = mentionsEmail && recentHistorySuggestsReportAction(history);
+        boolean hasJar = msg.matches(".*\\b(hu|jar)\\b.*");
 
-        if (hasEmail) {
+        if (hasEmailCommand || followUpToReport) {
             return ctx.equals("income") ? "EMAIL_INCOME_REPORT" : "EMAIL_EXPENSE_REPORT";
         }
         if (hasExport) {
@@ -1021,6 +1023,29 @@ public class AIOrchestrationService {
             }
             default -> null;
         };
+    }
+
+    private boolean recentHistorySuggestsReportAction(List<AIChatMessageDTO> history) {
+        if (history == null || history.isEmpty()) return false;
+
+        int startIndex = Math.max(0, history.size() - 4);
+        for (int i = startIndex; i < history.size(); i++) {
+            String content = normalizeIntentText(history.get(i).getContent());
+            if (content.contains("xuat")
+                    || content.contains("excel")
+                    || content.contains("bao cao")
+                    || content.contains("report")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private String normalizeIntentText(String text) {
+        if (text == null) return "";
+        String normalized = Normalizer.normalize(text, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "");
+        return normalized.toLowerCase(Locale.ROOT).trim();
     }
 
     /**

@@ -172,7 +172,7 @@ public class DashboardController {
             List<AnomalyDTO> anomalies = forecastService.detectAnomalies(year, month);
 
             // 5. Tạo AI insight từ dữ liệu dự báo
-            ForecastInsightDTO aiInsight = forecastService.getGeminiInsights(forecast);
+            ForecastInsightDTO aiInsight = forecastService.analyzeForecastWithAi(forecast);
 
             // 6. Tổng hợp kết quả
             Map<String, Object> result = new HashMap<>();
