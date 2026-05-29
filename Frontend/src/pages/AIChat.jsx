@@ -7,7 +7,7 @@ import { useUser } from "../hooks/useUser.jsx";
 import axiosConfig from "../util/axiosConfig.jsx";
 import Dashboard from "../components/Dashboard.jsx";
 import { API_ENDPOINTS } from "../util/apiEndpoints.js";
-import { parseIntentResponse, isCrudIntent, isActionIntent } from "../util/aiIntentParser.js";
+import { parseIntentResponse, isCrudIntent, isActionIntent, isIncompleteActionIntent, clientTelemetry } from "../util/aiIntentParser.js";
 import { useNavigate } from "react-router-dom";
 import { Bot, Sparkles, TrendingUp, Zap, ArrowLeft, MessageSquare } from "lucide-react";
 
@@ -183,7 +183,14 @@ const AIChat = () => {
         setActiveSessionId(intentResponse.data.sessionId);
       }
 
-      if (isCrudIntent(parsed.intent) || isActionIntent(parsed.intent)) {
+      // Telemetry: log missing fields on ACTION intents
+      if (parsed.intentType === 'ACTION' && parsed.missingFields?.length > 0) {
+        clientTelemetry.logMissingFields(parsed.intent, parsed.missingFields, currentPage);
+      }
+
+      if (isCrudIntent(parsed.intent) || isActionIntent(parsed.intent, parsed.intentType)) {
+        // If action intent but missing required fields, still show confirmation form
+        // (backend already populated missingFields — frontend should highlight them)
         setPendingIntent(parsed);
         setMessages((prev) => [
           ...prev,
@@ -192,12 +199,19 @@ const AIChat = () => {
             role: "assistant",
             isIntent: true,
             intent: parsed.intent,
+            intentType: parsed.intentType,
             extractedFields: parsed.extractedFields,
             suggestedValues: parsed.suggestedValues,
+            missingFields: parsed.missingFields,
             confirmationPrompt: parsed.confirmationPrompt
           }
         ]);
       } else if (parsed.intent === "ANSWER_QUESTION") {
+        // Telemetry: if message looks like agent command but got ANSWER_QUESTION, log it
+        const agentVerbPattern = /\b(thêm|tạo|ghi|nhập|xóa|bỏ|hủy|sửa|chỉnh|đổi|cập nhật|xuất|tải|chuyển|gửi mail|gửi email)\b/i;
+        if (agentVerbPattern.test(trimmedMessage)) {
+          clientTelemetry.logAgentCommandFallback(trimmedMessage, currentPage);
+        }
         setMessages((prev) => [
           ...prev,
           {
@@ -221,6 +235,7 @@ const AIChat = () => {
           }
         ]);
       } else {
+        // Unrecognized intent — fall back to regular chat (only for genuine QUESTION-type intents)
         const { data } = await axiosConfig.post(API_ENDPOINTS.AI_CHAT, {
           provider: activeProvider,
           model: activeModel,
@@ -313,7 +328,7 @@ const AIChat = () => {
       let resultContent;
       let undoData = null;
 
-      if (isActionIntent(intent)) {
+      if (isActionIntent(intent, pendingIntent?.intentType)) {
         resultContent = await executeExportAction(intent);
       } else {
         const { data } = await axiosConfig.post(API_ENDPOINTS.AI_CONFIRM_ACTION, {
@@ -364,6 +379,10 @@ const AIChat = () => {
   };
 
   const handleCancelConfirmation = () => {
+    // Telemetry: log when user cancels (may indicate wrong parse)
+    if (pendingIntent) {
+      clientTelemetry.logConfirmationCancelled(pendingIntent.intent, pendingIntent.extractedFields);
+    }
     setPendingIntent(null);
     setMessages((prev) => prev.map((m) => {
       if (m.isIntent) return { ...m, isConfirmation: true };

@@ -1,6 +1,7 @@
 package com.example.moneymanager.service;
 
 import com.example.moneymanager.dto.MonthlyReportCardDTO;
+import com.example.moneymanager.dto.MonthlyReportAiAnalysisRequestDTO;
 import com.example.moneymanager.dto.MonthlyReportCardDTO.CategoryBreakdownItem;
 import com.example.moneymanager.entity.*;
 import com.example.moneymanager.repository.*;
@@ -28,6 +29,8 @@ public class MonthlyReportCardService {
     private final BudgetRepository budgetRepository;
     private final SavingGoalRepository savingGoalRepository;
     private final SavingGoalContributionRepository savingGoalContributionRepository;
+    private final SubscriptionService subscriptionService;
+    private final GptOssService gptOssService;
 
     /**
      * Get report card for the current month.
@@ -148,6 +151,25 @@ public class MonthlyReportCardService {
                 .strengths(strengths)
                 .improvements(improvements)
                 .build();
+    }
+
+    @Transactional(readOnly = true)
+    public String analyzeReportWithAi(MonthlyReportAiAnalysisRequestDTO request) {
+        ProfileEntity profile = profileService.getCurrentProfile();
+        subscriptionService.ensureCanUseDetailedAi(profile);
+
+        String prompt = request != null ? request.getPrompt() : null;
+        if (prompt == null || prompt.isBlank()) {
+            throw new RuntimeException("Nội dung phân tích AI không được để trống.");
+        }
+
+        String systemPrompt = "Bạn là chuyên gia phân tích hành vi tài chính cá nhân cho Money Manager. " +
+                "Luôn trả lời bằng tiếng Việt, chỉ dựa trên dữ liệu người dùng cung cấp, không bịa số liệu. " +
+                "Trả lời ngắn gọn kiểu executive summary, tối đa 3 bullet hoặc 3 đoạn ngắn. " +
+                "Bắt buộc chỉ gồm: 1) Nhận xét chính về mẫu chi tiêu, 2) Một điểm tốt hoặc rủi ro đáng chú ý nhất, 3) 1-2 khuyến nghị cụ thể cho tháng tới. " +
+                "Giọng điệu chuyên nghiệp, thẳng thắn, dễ đọc. Độ dài mục tiêu khoảng 90-140 từ, không viết lan man.";
+
+        return gptOssService.callWithPrompt(systemPrompt, prompt.trim(), 450);
     }
 
     // ─── Private helpers ────────────────────────────────────────

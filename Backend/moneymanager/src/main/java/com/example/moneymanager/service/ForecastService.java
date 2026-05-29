@@ -235,7 +235,7 @@ public class ForecastService {
                 .build();
     }
 
-    public ForecastInsightDTO getGeminiInsights(MonthlyForecastDTO forecast) {
+    public ForecastInsightDTO analyzeForecastWithAi(MonthlyForecastDTO forecast) {
         try {
             if (forecast == null || forecast.getCategories() == null || forecast.getCategories().isEmpty()) {
                 return ForecastInsightDTO.builder()

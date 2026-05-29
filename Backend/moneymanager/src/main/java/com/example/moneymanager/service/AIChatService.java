@@ -72,9 +72,7 @@ public class AIChatService {
                 // GPT-OSS với rotate key
                 response = chatWithGptOss(trimmedMessages);
                 // Nếu GPT-OSS trả về thông báo lỗi hoặc bị bận, ta tự động fallback sang Gemini
-                if (response == null || response.getReply() == null 
-                        || response.getReply().contains("Xin lỗi, tôi đang gặp sự cố") 
-                        || response.getReply().contains("dịch vụ AI đang bận")) {
+                if (shouldFallbackToGemini(response)) {
                     log.warn("[gptoss] Response indicated failure or busy status, falling back to Gemini...");
                     response = chatWithGemini(trimmedMessages);
                 }
@@ -213,7 +211,15 @@ public class AIChatService {
                 apiKey, "gptoss", messages);
     }
 
+    static boolean shouldFallbackToGemini(AIChatResponseDTO response) {
+        if (response == null || response.getReply() == null) {
+            return true;
+        }
 
+        String reply = response.getReply();
+        return reply.contains("Xin lỗi, tôi đang gặp sự cố")
+                || reply.contains("dịch vụ AI đang bận");
+    }
     private AIChatResponseDTO chatWithOpenAICompatible(
             RestClient restClient, String model, String apiKey,
             String provider, List<AIChatMessageDTO> messages) {
