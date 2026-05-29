@@ -1,4 +1,6 @@
-package com.example.moneymanager.controller;
+package com.example.moneymanager.security;
+
+import com.example.moneymanager.controller.ProfileController;
 
 import com.example.moneymanager.dto.CompleteProfileDTO;
 import com.example.moneymanager.dto.OtpRequestDTO;
