@@ -17,6 +17,8 @@ import { fetchCategoriesByType } from "../services/categoryService";
 import { confirmReceiptImport } from "../services/receiptImportService";
 import { PickDateField } from "../utils/pickDate";
 import { CategoryVectorIcon, getIconColor } from "../utils/VectorIcons";
+import http from "../services/http";
+import { API_ENDPOINTS } from "../constants/api";
 
 // ═══════════════════════════════════════════════════════════
 // Category Picker Modal cho từng item
@@ -191,6 +193,11 @@ export default function ReceiptPreviewScreen() {
   const [items, setItems] = useState([]);
   const [submitting, setSubmitting] = useState(false);
 
+  // States for Spending Jars
+  const [jars, setJars] = useState([]);
+  const [jarId, setJarId] = useState("");
+  const [jarsLoading, setJarsLoading] = useState(true);
+
   // Normalize initial items
   useEffect(() => {
     if (initialItems.length > 0) {
@@ -221,6 +228,33 @@ export default function ReceiptPreviewScreen() {
       }
     };
     load();
+  }, []);
+
+  // Fetch Jars on mount
+  useEffect(() => {
+    const fetchJars = async () => {
+      setJarsLoading(true);
+      try {
+        const res = await http.get(API_ENDPOINTS.GET_JARS);
+        const data = Array.isArray(res.data) ? res.data : [];
+        setJars(data);
+
+        if (data.length > 0) {
+          const parentWallet = data.find((j) => j.name === "Ví tổng");
+          if (parentWallet) {
+            setJarId(String(parentWallet.id));
+          } else {
+            setJarId(String(data[0].id));
+          }
+        }
+      } catch (error) {
+        console.error("Lỗi tải danh sách hũ:", error);
+      } finally {
+        setJarsLoading(false);
+      }
+    };
+
+    fetchJars();
   }, []);
 
   // Total
@@ -282,7 +316,7 @@ export default function ReceiptPreviewScreen() {
         merchant,
         location,
         receiptDate,
-        jarId: null,
+        jarId: jarId ? Number(jarId) : null,
         items: items.map((it) => ({
           name: it.name.trim(),
           amount: Number(it.amount),
@@ -345,6 +379,59 @@ export default function ReceiptPreviewScreen() {
         contentContainerStyle={styles.listContent}
         keyboardShouldPersistTaps="handled"
       >
+        {/* Hũ chi tiêu liên kết */}
+        <View style={styles.jarsCard}>
+          <Text style={styles.jarsLabel}>Hũ chi tiêu áp dụng</Text>
+          {jarsLoading ? (
+            <Text style={styles.mutedText}>Đang tải danh sách hũ...</Text>
+          ) : jars.length === 0 ? (
+            <Text style={styles.mutedText}>Không tìm thấy hũ chi tiêu nào.</Text>
+          ) : (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.jarsRow}
+            >
+              {jars.map((j) => {
+                const isSelected = String(j.id) === jarId;
+                return (
+                  <Pressable
+                    key={j.id}
+                    onPress={() => setJarId(isSelected ? "" : String(j.id))}
+                    style={[
+                      styles.jarItem,
+                      isSelected && {
+                        borderColor: j.color || COLORS.PRIMARY,
+                        backgroundColor: (j.color || COLORS.PRIMARY) + "12",
+                      },
+                    ]}
+                  >
+                    <View
+                      style={[
+                        styles.jarEmojiBox,
+                        { backgroundColor: (j.color || COLORS.PRIMARY) + "18" },
+                      ]}
+                    >
+                      <Text style={styles.jarEmoji}>{j.icon || "🏺"}</Text>
+                    </View>
+                    <Text
+                      style={[
+                        styles.jarName,
+                        isSelected && {
+                          color: j.color || COLORS.PRIMARY,
+                          fontWeight: "800",
+                        },
+                      ]}
+                    >
+                      {j.name}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          )}
+        </View>
+
         {items.map((item, index) => (
           <ReceiptItemRow
             key={index}
@@ -574,4 +661,55 @@ const styles = StyleSheet.create({
     borderColor: COLORS.CARD_BORDER,
   },
   cancelButtonText: { color: COLORS.TEXT_SECONDARY, fontWeight: "600", fontSize: 14 },
+
+  // Jars Selector Styles
+  jarsCard: {
+    backgroundColor: COLORS.CARD,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: COLORS.CARD_BORDER,
+    padding: 12,
+    marginBottom: 4,
+  },
+  jarsLabel: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: COLORS.TEXT_SECONDARY,
+    marginBottom: 8,
+  },
+  mutedText: {
+    fontSize: 12,
+    color: COLORS.TEXT_MUTED,
+  },
+  jarsRow: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  jarItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: COLORS.BG,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: COLORS.CARD_BORDER,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginRight: 6,
+  },
+  jarEmojiBox: {
+    width: 22,
+    height: 22,
+    borderRadius: 5,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 6,
+  },
+  jarEmoji: {
+    fontSize: 12,
+  },
+  jarName: {
+    fontSize: 12,
+    color: COLORS.TEXT,
+    fontWeight: "600",
+  },
 });
