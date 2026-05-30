@@ -122,15 +122,13 @@ export default function useChatMessages({ activeMode, activeProvider, activeMode
       time: getCurrentTimeLabel()
     };
 
-    setMessages((prev) => {
-      const next = [...prev, userMessage];
-      messagesRef.current = next;
-      return next;
-    });
+    const nextMessages = [...currentMessages, userMessage];
+    messagesRef.current = nextMessages;
+    setMessages(nextMessages);
     setLoading(true);
 
     try {
-      const history = buildHistory(messagesRef.current);
+      const history = buildHistory(nextMessages);
 
       if (activeMode === "chat") {
         const response = await sendAiChat(history, activeProvider, activeModel);
