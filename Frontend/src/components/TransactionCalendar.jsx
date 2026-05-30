@@ -170,6 +170,8 @@ const TransactionCalendar = ({
                       "min-h-[74px] border-r border-b border-slate-200 p-1.5 text-left transition-colors dark:border-white/10 sm:min-h-[92px] sm:p-2",
                       "hover:bg-slate-50 dark:hover:bg-white/[0.06]",
                       day.isCurrentMonth ? "bg-white dark:bg-transparent" : "bg-slate-50/70 dark:bg-white/[0.02]",
+                      day.isToday && !isSelected ? "bg-violet-500/[0.03] ring-1 ring-inset ring-violet-500/15 dark:bg-amber-500/[0.03] dark:ring-amber-400/10" : "",
+                      isSelected ? "bg-violet-50 ring-1 ring-inset ring-violet-400 dark:bg-amber-500/10 dark:ring-amber-400" : "",
                     ].join(" ")}
                   >
                     <div className="flex items-center justify-between gap-1 w-full">
