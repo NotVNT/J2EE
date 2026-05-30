@@ -210,10 +210,28 @@ function AppStack() {
       <Stack.Screen name="Payment" component={PaymentScreen} options={{ title: "Thanh toán" }} />
       <Stack.Screen name="PaymentCheckout" component={PaymentCheckoutScreen} options={{ title: "Cổng thanh toán" }} />
       <Stack.Screen name="PaymentResult" component={PaymentResultScreen} options={{ title: "Kết quả thanh toán" }} />
-      <Stack.Screen name="Profile" component={ProfileScreen} options={{ title: "Hồ sơ" }} />
-      <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: "Chỉnh sửa hồ sơ" }} />
+      <Stack.Screen 
+        name="Profile" 
+        component={ProfileScreen} 
+        options={{ headerShown: false }} 
+      />
+      <Stack.Screen 
+        name="EditProfile" 
+        component={EditProfileScreen} 
+        options={{ 
+          title: "Chỉnh sửa hồ sơ",
+          headerStyle: { backgroundColor: COLORS.DARK_BG },
+          headerTintColor: COLORS.PRIMARY,
+          headerTitleStyle: { fontWeight: "800", fontSize: 18 },
+          headerShadowVisible: false
+        }} 
+      />
       <Stack.Screen name="Forecast" component={ForecastScreen} options={{ title: "Dự báo & Bất thường" }} />
-      <Stack.Screen name="Chat" component={ChatScreen} options={{ title: "AI Chat" }} />
+      <Stack.Screen 
+        name="Chat" 
+        component={ChatScreen} 
+        options={{ headerShown: false }} 
+      />
       <Stack.Screen name="Reports" component={ReportsScreen} options={{ title: "Báo cáo tháng" }} />
       <Stack.Screen name="Jars" component={JarScreen} options={{ title: "Hũ chi tiêu" }} />
       <Stack.Screen name="JarDetail" component={JarDetailScreen} options={({ route }) => ({ title: route.params?.name || "Chi tiết hũ" })} />

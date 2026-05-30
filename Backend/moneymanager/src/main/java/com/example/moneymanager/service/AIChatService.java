@@ -224,7 +224,7 @@ public class AIChatService {
             log.debug("[{}] request body: {}", provider, requestJson);
 
             String rawResponse = restClient.post()
-                    .uri("/chat/completions")
+                    .uri(uriBuilder -> uriBuilder.path("/chat/completions").build())
                     .header("Authorization", "Bearer " + apiKey)
                     .body(requestJson)
                     .retrieve()
@@ -335,7 +335,7 @@ public class AIChatService {
             log.debug("[{}] agent intent request (first 200 chars): {}", provider, requestJson.length() > 200 ? requestJson.substring(0, 200) : requestJson);
 
             String rawResponse = restClient.post()
-                    .uri("/chat/completions")
+                    .uri(uriBuilder -> uriBuilder.path("/chat/completions").build())
                     .header("Authorization", "Bearer " + apiKey)
                     .body(requestJson)
                     .retrieve()

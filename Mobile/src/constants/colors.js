@@ -1,11 +1,11 @@
 
 export const COLORS = {
   // ─── Primary — Rose Gold / Pink ──────────────────────────
-  PRIMARY: '#E8597A',
-  PRIMARY_LIGHT: '#FF8FA3',
-  PRIMARY_DARK: '#C23B5B',
-  PRIMARY_GLOW: 'rgba(232, 89, 122, 0.25)',
-  PRIMARY_GLOW_STRONG: 'rgba(232, 89, 122, 0.35)',
+  PRIMARY: '#ef5e83',
+  PRIMARY_LIGHT: '#ffb2bf',
+  PRIMARY_DARK: '#660028',
+  PRIMARY_GLOW: 'rgba(255, 178, 191, 0.25)',
+  PRIMARY_GLOW_STRONG: 'rgba(255, 178, 191, 0.4)',
 
   // ─── Accent ─────────────────────────────────────────────
   GOLD: '#FFB84D',
@@ -13,14 +13,14 @@ export const COLORS = {
   ROSE_MIST: '#FFE4EA',
 
   // ─── Dark Theme (Auth screens) ──────────────────────────
-  DARK_BG: '#1A0F14',
-  DARK_CARD: 'rgba(26, 15, 20, 0.92)',
-  DARK_CARD_SOLID: '#241519',
-  DARK_INPUT_BG: '#2E1A22',
-  DARK_BORDER: '#3D2430',
-  DARK_BORDER_LIGHT: 'rgba(232, 89, 122, 0.2)',
-  DARK_TEXT: '#FDF2F5',
-  DARK_TEXT_SECONDARY: '#A89098',
+  DARK_BG: '#161311',
+  DARK_CARD: 'rgba(31, 27, 25, 0.8)',
+  DARK_CARD_SOLID: '#1f1b19',
+  DARK_INPUT_BG: '#1a1614',
+  DARK_BORDER: '#514541',
+  DARK_BORDER_LIGHT: 'rgba(232, 89, 126, 0.2)',
+  DARK_TEXT: '#f3eeeb',
+  DARK_TEXT_SECONDARY: '#d3c3bd',
 
   // ─── Light Theme (Main app screens) ─────────────────────
   BG: '#FFF5F7',

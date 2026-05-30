@@ -58,7 +58,7 @@ public class GptOssService {
 
             // Read raw string first to avoid deserialization issues
             String rawResponse = gptOssRestClient.post()
-                    .uri("/chat/completions")
+                    .uri(uriBuilder -> uriBuilder.path("/chat/completions").build())
                     .header("Authorization", "Bearer " + apiKey())
                     .body(requestJson)
                     .retrieve()

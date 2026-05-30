@@ -31,42 +31,43 @@ export default function ModeSegmentedControl({ activeMode, isFreePlan, onChangeM
 
 const styles = StyleSheet.create({
   modeContainer: {
-    marginHorizontal: 24,
-    height: 64,
+    marginHorizontal: 16,
+    marginTop: 16,
+    height: 52,
     padding: 4,
     flexDirection: "row",
-    borderRadius: 32,
+    borderRadius: 26,
     borderWidth: 1,
-    borderColor: COLORS.CHAT_BORDER,
-    backgroundColor: "rgba(255, 255, 255, 0.72)",
+    borderColor: COLORS.CARD_BORDER,
+    backgroundColor: COLORS.CARD
   },
   modeTab: {
     flex: 1,
-    borderRadius: 28,
+    borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
     flexDirection: "row",
-    gap: 6,
+    gap: 6
   },
   modeTabActive: {
-    backgroundColor: COLORS.CHAT_BUBBLE,
+    backgroundColor: COLORS.PRIMARY, // active pill background is beautiful brand pink
     borderWidth: 1,
-    borderColor: "rgba(255, 139, 221, 0.6)",
-    shadowColor: COLORS.CHAT_PINK,
-    shadowOpacity: 0.28,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 5,
+    borderColor: COLORS.PRIMARY_LIGHT,
+    shadowColor: COLORS.PRIMARY,
+    shadowOpacity: 0.22,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 3
   },
   modeIcon: {
-    fontSize: 16,
+    fontSize: 15
   },
   modeText: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "700",
-    color: COLORS.CHAT_MUTED,
+    color: COLORS.TEXT_SECONDARY
   },
   modeTextActive: {
-    color: COLORS.CHAT_PURPLE,
-  },
+    color: COLORS.WHITE // crisp white contrast on active primary pink pill
+  }
 });
