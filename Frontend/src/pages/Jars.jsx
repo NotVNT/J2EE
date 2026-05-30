@@ -490,6 +490,7 @@ const Jars = () => {
           <DeleteAlert
             content="Bạn có chắc chắn muốn xóa chi tiêu này không?"
             onDelete={() => handleDeleteExpense(openDeleteExpenseAlert.id)}
+            onCancel={() => setOpenDeleteExpenseAlert({ show: false, id: null })}
           />
         </Modal>
       </Dashboard>
@@ -684,6 +685,7 @@ const Jars = () => {
           <DeleteAlert
             content="Bạn có chắc muốn xoá hũ này không? Số dư trong hũ sẽ bị mất."
             onDelete={() => handleDeleteJar(deleteAlert.id)}
+            onCancel={() => setDeleteAlert({ show: false, id: null })}
           />
         </Modal>
 
@@ -710,6 +712,7 @@ const Jars = () => {
           <DeleteAlert
             content="Bạn có chắc chắn muốn xóa chi tiêu này không?"
             onDelete={() => handleDeleteExpense(openDeleteExpenseAlert.id)}
+            onCancel={() => setOpenDeleteExpenseAlert({ show: false, id: null })}
           />
         </Modal>
       </div>

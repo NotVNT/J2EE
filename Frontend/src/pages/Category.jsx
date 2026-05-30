@@ -139,6 +139,7 @@ const Category = () => {
           <DeleteAlert
             content={`Bạn có chắc chắn muốn xoá danh mục "${openDeleteAlert.name}"?\n\n⚠️ Toàn bộ giao dịch (thu nhập / chi tiêu) thuộc danh mục này cũng sẽ bị xoá vĩnh viễn và không thể khôi phục.`}
             onDelete={confirmDeleteCategory}
+            onCancel={() => setOpenDeleteAlert({ show: false, id: null, name: "" })}
           />
         </Modal>
       </div>

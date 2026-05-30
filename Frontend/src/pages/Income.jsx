@@ -244,7 +244,11 @@ const Income = () => {
         </Modal>
 
         <Modal isOpen={openDeleteAlert.show} onClose={() => setOpenDeleteAlert({ show: false, data: null })} title="Xóa thu nhập">
-          <DeleteAlert content="Bạn có chắc chắn muốn xóa chi tiết thu nhập này?" onDelete={() => deleteIncome(openDeleteAlert.data)} />
+          <DeleteAlert 
+            content="Bạn có chắc chắn muốn xóa chi tiết thu nhập này?" 
+            onDelete={() => deleteIncome(openDeleteAlert.data)} 
+            onCancel={() => setOpenDeleteAlert({ show: false, data: null })}
+          />
         </Modal>
       </div>
     </Dashboard>

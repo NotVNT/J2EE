@@ -321,7 +321,11 @@ const Expense = () => {
         </Modal>
 
         <Modal isOpen={openDeleteAlert.show} onClose={() => setOpenDeleteAlert({ show: false, data: null })} title="Xóa chi tiêu">
-          <DeleteAlert content="Bạn có chắc chắn muốn xóa chi tiêu này không?" onDelete={() => deleteExpense(openDeleteAlert.data)} />
+          <DeleteAlert 
+            content="Bạn có chắc chắn muốn xóa chi tiêu này không?" 
+            onDelete={() => deleteExpense(openDeleteAlert.data)} 
+            onCancel={() => setOpenDeleteAlert({ show: false, data: null })}
+          />
         </Modal>
 
         {/* Format Info Modal */}

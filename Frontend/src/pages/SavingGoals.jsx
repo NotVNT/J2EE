@@ -106,6 +106,7 @@ const SavingGoals = () => {
           <DeleteAlert
             content="Bạn có chắc muốn huỷ mục tiêu này không? Mục tiêu sẽ chuyển sang trạng thái đã huỷ."
             onDelete={() => handleDeleteGoal(deleteAlert.id)}
+            onCancel={() => setDeleteAlert({ show: false, id: null })}
           />
         </Modal>
 
