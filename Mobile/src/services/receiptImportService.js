@@ -2,8 +2,8 @@ import http from "./http";
 import { API_ENDPOINTS } from "../constants/api";
 
 /**
- * Upload ảnh hóa đơn để backend phân tích (Gemini Vision OCR).
- * Trả về dữ liệu preview: merchant, location, receiptDate, items.
+ * Upload ảnh hóa đơn hoặc file PDF để backend phân tích (Gemini Vision OCR).
+ * Dùng cho ExpenseScreen (ImagePicker — camera/thư viện ảnh).
  *
  * @param {object} imageAsset - Kết quả từ expo-image-picker (có uri, mimeType, fileName)
  * @returns {Promise<object>} ReceiptImportAnalyzeResponseDTO
@@ -13,12 +13,66 @@ export async function analyzeReceipt(imageAsset) {
     throw new Error("Không tìm thấy ảnh hóa đơn để phân tích.");
   }
 
-  const fileName = imageAsset.fileName || imageAsset.uri.split("/").pop() || "receipt.jpg";
+  const fileName =
+    imageAsset.fileName ||
+    imageAsset.uri.split("/").pop() ||
+    "receipt.jpg";
   const mimeType = imageAsset.mimeType || "image/jpeg";
 
   const formData = new FormData();
   formData.append("file", {
     uri: imageAsset.uri,
+    name: fileName,
+    type: mimeType,
+  });
+
+  const response = await http.post(API_ENDPOINTS.ANALYZE_EXPENSE_RECEIPT, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+      Accept: "application/json",
+    },
+  });
+
+  return response.data;
+}
+
+/**
+ * Upload file hóa đơn (ảnh hoặc PDF) từ bất kỳ nguồn nào.
+ * Hỗ trợ cả ImagePicker asset lẫn DocumentPicker asset (PDF).
+ *
+ * @param {{ uri: string, name?: string, fileName?: string, mimeType?: string }} fileAsset
+ * @returns {Promise<object>} ReceiptImportAnalyzeResponseDTO
+ */
+export async function analyzeReceiptFile(fileAsset) {
+  if (!fileAsset?.uri) {
+    throw new Error("Không tìm thấy file hóa đơn để phân tích.");
+  }
+
+  const fileName =
+    fileAsset.name ||
+    fileAsset.fileName ||
+    fileAsset.uri.split("/").pop() ||
+    "receipt.jpg";
+
+  const mimeType = fileAsset.mimeType || "image/jpeg";
+
+  const SUPPORTED_TYPES = [
+    "image/jpeg",
+    "image/png",
+    "image/gif",
+    "image/webp",
+    "application/pdf",
+  ];
+
+  if (!SUPPORTED_TYPES.includes(mimeType)) {
+    throw new Error(
+      "Định dạng không được hỗ trợ. Vui lòng chọn ảnh (JPEG, PNG, WebP, GIF) hoặc PDF."
+    );
+  }
+
+  const formData = new FormData();
+  formData.append("file", {
+    uri: fileAsset.uri,
     name: fileName,
     type: mimeType,
   });
