@@ -20,20 +20,20 @@ const Modal = ({ isOpen, onClose, children, title }) => {
 
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4.5 border-b border-slate-50 dark:border-white/5 bg-slate-50/50 dark:bg-slate-900/30">
-            <h3 className="text-[16px] font-bold text-slate-800 dark:text-slate-100 tracking-tight">{title}</h3>
+            <h3 className="text-[18px] font-bold text-slate-800 dark:text-slate-100 tracking-tight">{title}</h3>
             <button
               type="button"
               onClick={onClose}
-              className="w-8 h-8 flex items-center justify-center rounded-xl transition-all duration-300 cursor-pointer
+              className="w-9 h-9 flex items-center justify-center rounded-xl transition-all duration-300 cursor-pointer
                 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:rotate-90
                 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10"
             >
-              <X size={15} />
+              <X size={18} />
             </button>
           </div>
 
           {/* Body */}
-          <div className="p-6.5 text-[14px] leading-relaxed text-slate-600 dark:text-slate-350 overflow-y-auto max-h-[calc(90vh-90px)]">
+          <div className="p-6.5 text-[15.5px] leading-relaxed text-slate-600 dark:text-slate-350 overflow-y-auto max-h-[calc(90vh-90px)]">
             {children}
           </div>
         </div>
