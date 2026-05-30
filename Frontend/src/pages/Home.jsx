@@ -43,7 +43,6 @@ const Home = () => {
   const navigate = useNavigate();
 
   const [dashboardData, setDashboardData] = useState(null);
-  const [loading, setLoading] = useState(false);
   const [aiInsight, setAiInsight] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
   const [showDetailedInsight, setShowDetailedInsight] = useState(false);
@@ -52,7 +51,6 @@ const Home = () => {
   const [showPremiumModal, setShowPremiumModal] = useState(false);
 
   const { user } = useContext(AppContext);
-  const [activeChartIndex, setActiveChartIndex] = useState(null);
 
   // Widget customization
   const { widgetConfig, sortedWidgetIds, toggleWidget, reorderWidgets, resetConfig } = useWidgetConfig(user?.id);
@@ -101,9 +99,7 @@ const Home = () => {
   const AI_INSIGHT_ENDPOINT = "/dashboard/ai-insight";
   const AI_DETAILED_INSIGHT_ENDPOINT = "/dashboard/ai-insight/detailed";
 
-  const fetchDashboardData = async () => {
-    if (loading) return;
-    setLoading(true);
+  const fetchDashboardData = useCallback(async () => {
     try {
       const response = await axiosConfig.get(API_ENDPOINTS.DASHBOARD_DATA);
       if (response.status === 200) setDashboardData(response.data);
@@ -114,13 +110,10 @@ const Home = () => {
         return;
       }
       toast.error("Không thể tải dữ liệu thống kê!", { id: "dashboard-data-error" });
-    } finally {
-      setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchAiInsight = async () => {
-    if (aiLoading) return;
+  const fetchAiInsight = useCallback(async () => {
     setAiLoading(true);
     try {
       const response = await axiosConfig.get(AI_INSIGHT_ENDPOINT, { _skipGlobalLoading: true });
@@ -145,7 +138,7 @@ const Home = () => {
     } finally {
       setAiLoading(false);
     }
-  };
+  }, []);
 
   const fetchDetailedInsight = async () => {
     if (detailedLoading) return;
@@ -157,7 +150,7 @@ const Home = () => {
           toast.error(response.data.message || "Không thể tải phân tích chi tiết");
           setDetailedInsight(null);
         } else if (response.data.status === "insufficient_data") {
-          toast.custom((t) => (
+          toast.custom(() => (
             <div className="bg-amber-100 text-amber-800 p-4 rounded-xl shadow-lg max-w-md">
               <p className="font-semibold">⚠️ Chưa đủ dữ liệu</p>
               <p className="text-sm mt-1">{response.data.message || "Hãy thêm nhiều giao dịch hơn!"}</p>
@@ -198,16 +191,16 @@ const Home = () => {
   useEffect(() => {
     fetchDashboardData();
     fetchAiInsight();
-  }, []);
+  }, [fetchAiInsight, fetchDashboardData]);
 
-  const formatCurrency = (amount) => {
+  const formatCurrency = useCallback((amount) => {
     if (!amount && amount !== 0) return "0 VND";
     const num = typeof amount === "object" ? 0 : Number(amount);
     if (isNaN(num)) return "0 VND";
     return addThousandsSeparator(Math.floor(num)) + " VND";
-  };
+  }, []);
 
-  const formatCompact = (amount) => {
+  const formatCompact = useCallback((amount) => {
     if (!amount && amount !== 0) return "0 VND";
     const num = typeof amount === "object" ? 0 : Number(amount);
     if (isNaN(num)) return "0 VND";
@@ -222,17 +215,9 @@ const Home = () => {
       return `${sign}${val} tr VND`;
     }
     return `${sign}${addThousandsSeparator(Math.floor(abs))} VND`;
-  };
+  }, []);
 
-  const getRiskColor = (riskLevel) => {
-    switch (riskLevel) {
-      case "CAO": return "text-red-400 bg-red-500/10 border border-red-500/30";
-      case "TRUNG_BÌNH": return "text-amber-400 bg-amber-500/10 border border-amber-500/30";
-      default: return "text-emerald-400 bg-emerald-500/10 border border-emerald-500/30";
-    }
-  };
-
-  const safeNumber = (value) => (!value && value !== 0 ? 0 : value);
+  const safeNumber = useCallback((value) => (!value && value !== 0 ? 0 : value), []);
 
   // ─── Widget Renderers ──────────────────────────────────────
   const WIDGET_RENDERERS = useMemo(

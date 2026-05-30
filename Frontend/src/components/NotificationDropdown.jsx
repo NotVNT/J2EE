@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Bell, Check, Trash2, ArrowRight, TrendingUp, TrendingDown, AlertCircle, ShieldAlert, Target, Flame, FileBarChart, ShieldCheck, Mail, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axiosConfig from "../util/axiosConfig";
@@ -15,7 +15,7 @@ const NotificationDropdown = () => {
   const seenIdsRef = useRef(new Set());
   const isFirstLoadRef = useRef(true);
 
-  const getToastIcon = (type) => {
+  const getToastIcon = useCallback((type) => {
     switch (type) {
       case "EXPENSE":
         return <div className="w-8 h-8 rounded-xl bg-red-50 dark:bg-red-500/10 flex items-center justify-center text-red-500 shrink-0 border border-red-500/10"><TrendingDown size={16} /></div>;
@@ -42,9 +42,9 @@ const NotificationDropdown = () => {
       default:
         return <div className="w-8 h-8 rounded-xl bg-slate-50 dark:bg-white/10 flex items-center justify-center text-slate-500 shrink-0 border border-slate-500/10"><Bell size={16} /></div>;
     }
-  };
+  }, []);
 
-  const triggerToast = (notif) => {
+  const triggerToast = useCallback((notif) => {
     toast.custom((t) => (
       <div
         className={`${
@@ -76,9 +76,9 @@ const NotificationDropdown = () => {
         </div>
       </div>
     ), { duration: 5000 });
-  };
+  }, [getToastIcon]);
 
-  const pollNotifications = async () => {
+  const pollNotifications = useCallback(async () => {
     try {
       const res = await axiosConfig.get(API_ENDPOINTS.GET_NOTIFICATIONS, { _skipGlobalLoading: true });
       if (res.status === 200) {
@@ -111,7 +111,7 @@ const NotificationDropdown = () => {
     } catch (error) {
       console.error("Lỗi đồng bộ thông báo thời gian thực", error);
     }
-  };
+  }, [triggerToast]);
 
   const fetchNotifications = async () => {
     setLoading(true);
@@ -138,7 +138,7 @@ const NotificationDropdown = () => {
         setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
         setUnreadCount(prev => Math.max(0, prev - 1));
       }
-    } catch (error) {
+    } catch {
       toast.error("Lỗi cập nhật trạng thái thông báo");
     }
   };
@@ -152,7 +152,7 @@ const NotificationDropdown = () => {
         setUnreadCount(0);
         toast.success("Đã đánh dấu tất cả là đã đọc");
       }
-    } catch (error) {
+    } catch {
       toast.error("Lỗi cập nhật trạng thái thông báo");
     }
   };
@@ -175,7 +175,7 @@ const NotificationDropdown = () => {
     pollNotifications();
     const intervalId = setInterval(pollNotifications, 10000); // 10s realtime poll
     return () => clearInterval(intervalId);
-  }, []);
+  }, [pollNotifications]);
 
 
   const handleToggleDropdown = () => {

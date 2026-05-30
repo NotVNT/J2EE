@@ -9,7 +9,6 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGri
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../hooks/useUser";
 import { usePageTitle } from "../hooks/usePageTitle";
-import { useTheme } from "../context/ThemeContext";
 
 const getNearestMonths = (count) => {
     const months = [];
@@ -25,8 +24,6 @@ const Forecast = () => {
     useUser();
     usePageTitle("Dự báo thông minh");
     const { user } = useContext(AppContext);
-    const { theme } = useTheme();
-    const isDark = theme === "dark";
     const [monthlyForecast, setMonthlyForecast] = useState(null);
     const [anomalies, setAnomalies] = useState([]);
     const [insights, setInsights] = useState(null);
@@ -57,15 +54,25 @@ const Forecast = () => {
         return value.toString();
     }, []);
 
-    useEffect(() => {
-        if (user && user.subscriptionPlan === "PREMIUM") {
-            fetchData();
-        } else {
-            setIsLoading(false);
+    const fetchInsights = useCallback(async (forecastData) => {
+        const fetchId = ++insightsFetchRef.current;
+        setIsInsightsLoading(true);
+        setInsights(null);
+        try {
+            const res = await axiosConfig.post(API_ENDPOINTS.FORECAST_INSIGHTS, forecastData, { _skipGlobalLoading: true });
+            if (fetchId === insightsFetchRef.current) {
+                setInsights(res.data);
+            }
+        } catch (error) {
+            console.error("Error fetching insights:", error);
+        } finally {
+            if (fetchId === insightsFetchRef.current) {
+                setIsInsightsLoading(false);
+            }
         }
-    }, [user, selectedIdx]);
+    }, []);
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         setIsLoading(true);
         try {
             const [forecastRes, anomaliesRes] = await Promise.all([
@@ -77,7 +84,7 @@ const Forecast = () => {
             setAnomalies(anomaliesRes.data);
 
             if (forecastRes.data && !isCurrentMonth) {
-                fetchInsights(forecastRes.data);
+                void fetchInsights(forecastRes.data);
             }
         } catch (error) {
             console.error("Error fetching forecast:", error);
@@ -85,25 +92,15 @@ const Forecast = () => {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [fetchInsights, isCurrentMonth, selectedMonth, selectedYear]);
 
-    const fetchInsights = async (forecastData) => {
-        const fetchId = ++insightsFetchRef.current;
-        setIsInsightsLoading(true);
-        setInsights(null);
-        try {
-            const res = await axiosConfig.post(API_ENDPOINTS.FORECAST_INSIGHTS, forecastData);
-            if (fetchId === insightsFetchRef.current) {
-                setInsights(res.data);
-            }
-        } catch (error) {
-            console.error("Error fetching insights:", error);
-        } finally {
-            if (fetchId === insightsFetchRef.current) {
-                setIsInsightsLoading(false);
-            }
+    useEffect(() => {
+        if (user && user.subscriptionPlan === "PREMIUM") {
+            void fetchData();
+        } else {
+            setIsLoading(false);
         }
-    };
+    }, [fetchData, user]);
 
     const chartData = useMemo(() =>
         monthlyForecast?.categories?.map(c => ({

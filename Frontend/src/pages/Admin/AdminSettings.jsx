@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   RotateCcw,
   Save,
@@ -19,6 +19,15 @@ const defaultSettings = {
   defaultPaymentStatus: "ALL",
   paymentPageSize: 20,
   compactTable: false,
+};
+
+const loadAdminSettings = () => {
+  try {
+    const savedData = JSON.parse(localStorage.getItem(ADMIN_SETTINGS_KEY) || "{}");
+    return { ...defaultSettings, ...savedData };
+  } catch {
+    return defaultSettings;
+  }
 };
 
 // ─── Toggle Switch ─────────────────────────────────────────────────────────────
@@ -107,18 +116,9 @@ const PageSizeOption = ({ value, current, onChange }) => (
 // ─── Main Component ────────────────────────────────────────────────────────────
 const AdminSettings = () => {
   usePageTitle("Cài đặt hệ thống", "Money Manager Admin");
-  const [settings, setSettings] = useState(defaultSettings);
+  const [settings, setSettings] = useState(loadAdminSettings);
   const [saved, setSaved] = useState(false);
   const [reset, setReset] = useState(false);
-
-  useEffect(() => {
-    try {
-      const savedData = JSON.parse(localStorage.getItem(ADMIN_SETTINGS_KEY) || "{}");
-      setSettings({ ...defaultSettings, ...savedData });
-    } catch {
-      setSettings(defaultSettings);
-    }
-  }, []);
 
   const handleSave = () => {
     localStorage.setItem(ADMIN_SETTINGS_KEY, JSON.stringify(settings));

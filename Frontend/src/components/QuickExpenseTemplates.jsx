@@ -313,15 +313,6 @@ const QuickExpenseTemplates = ({ categories = [], onAddExpense }) => {
       .catch(() => {});
   }, []);
 
-  const handleUse = useCallback((template) => {
-    if (loadingId) return;
-    if (jars.length > 0) {
-      setPendingTemplate(template);
-    } else {
-      submitExpense(template, null);
-    }
-  }, [loadingId, jars]);
-
   const submitExpense = useCallback(async (template, selectedJarId) => {
     setLoadingId(template.id);
     const today = getTodayIsoDate();
@@ -339,6 +330,15 @@ const QuickExpenseTemplates = ({ categories = [], onAddExpense }) => {
       setLoadingId(null);
     }
   }, [categories, onAddExpense]);
+
+  const handleUse = useCallback((template) => {
+    if (loadingId) return;
+    if (jars.length > 0) {
+      setPendingTemplate(template);
+    } else {
+      submitExpense(template, null);
+    }
+  }, [jars, loadingId, submitExpense]);
 
   const handleJarPickerConfirm = useCallback((jarId) => {
     const template = pendingTemplate;

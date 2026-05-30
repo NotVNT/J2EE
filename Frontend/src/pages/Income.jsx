@@ -1,6 +1,6 @@
 import Dashboard from "../components/Dashboard.jsx";
 import { useUser } from "../hooks/useUser.jsx";
-import { useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import axiosConfig from "../util/axiosConfig.jsx";
 import { API_ENDPOINTS } from "../util/apiEndpoints.js";
 import { safeOpenExternal } from "../util/safeNavigation.js";
@@ -24,9 +24,8 @@ const Income = () => {
   const { user } = useContext(AppContext);
   const [incomeData, setIncomeData] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [filterType, setFilterType] = useState("current");
-  const [selectedMonthDate, setSelectedMonthDate] = useState("");
+  const [filterType] = useState("current");
+  const [selectedMonthDate] = useState("");
   const [openAddIncomeModal, setOpenAddIncomeModal] = useState(false);
   const [openEditIncomeModal, setOpenEditIncomeModal] = useState(false);
   const [selectedIncome, setSelectedIncome] = useState(null);
@@ -35,9 +34,7 @@ const Income = () => {
   const exportUpgradeMessage = "Tính năng xuất báo cáo chỉ có từ gói Cơ Bản. Vui lòng nâng cấp để tiếp tục.";
   const exportLocked = user?.canExportReports === false;
 
-  const fetchIncomeDetails = async () => {
-    if (loading) return;
-    setLoading(true);
+  const fetchIncomeDetails = useCallback(async () => {
     try {
       let url = API_ENDPOINTS.GET_ALL_INCOMES;
       if (filterType === "all") url += "?all=true";
@@ -50,10 +47,8 @@ const Income = () => {
     } catch (error) {
       console.error("Failed to fetch income details:", error);
       toast.error(error.response?.data?.message || "Lấy chi tiết thu nhập thất bại");
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [filterType, selectedMonthDate]);
 
   const fetchIncomeCategories = async () => {
     try {
@@ -177,7 +172,7 @@ const Income = () => {
   useEffect(() => {
     if (filterType === "specific" && !selectedMonthDate) return;
     fetchIncomeDetails();
-  }, [filterType, selectedMonthDate]);
+  }, [fetchIncomeDetails, filterType, selectedMonthDate]);
 
   return (
     <Dashboard activeMenu="Income">

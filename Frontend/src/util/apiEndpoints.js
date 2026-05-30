@@ -71,6 +71,7 @@ export const API_ENDPOINTS = {
     AI_PAGE_CONTEXT: (page) => `/ai/page-context?page=${page}`,
     AI_CHAT_SESSIONS: "/ai/chat/sessions",
     AI_CHAT_MESSAGES: (sessionId) => `/ai/chat/sessions/${sessionId}/messages`,
+    AI_CHAT_REPLACE_MESSAGES: (sessionId) => `/ai/chat/sessions/${sessionId}/messages`,
     AI_CHAT_RENAME_SESSION: (sessionId) => `/ai/chat/sessions/${sessionId}/rename`,
     AI_CHAT_DELETE_SESSION: (sessionId) => `/ai/chat/sessions/${sessionId}`,
 

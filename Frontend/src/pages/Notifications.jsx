@@ -72,7 +72,7 @@ const Notifications = () => {
       if (res.status === 200) {
         setNotifications(res.data);
       }
-    } catch (error) {
+    } catch {
       toast.error("Không thể tải thông báo");
     } finally {
       setLoading(false);
@@ -102,7 +102,7 @@ const Notifications = () => {
       if (res.status === 200) {
         setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
       }
-    } catch (error) {
+    } catch {
       toast.error("Lỗi cập nhật trạng thái");
     }
   };
@@ -114,7 +114,7 @@ const Notifications = () => {
         setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
         toast.success("Đã đánh dấu tất cả là đã đọc");
       }
-    } catch (error) {
+    } catch {
       toast.error("Lỗi cập nhật trạng thái");
     }
   };
@@ -132,7 +132,7 @@ const Notifications = () => {
         });
         toast.success("Đã xóa thông báo");
       }
-    } catch (error) {
+    } catch {
       toast.error("Không thể xóa thông báo");
     }
   };
@@ -168,7 +168,7 @@ const Notifications = () => {
         setSelectedIds(new Set());
         toast.success(`Đã xóa ${listIds.length} thông báo đã chọn`);
       }
-    } catch (error) {
+    } catch {
       toast.error("Không thể xóa các thông báo đã chọn");
     }
   };
