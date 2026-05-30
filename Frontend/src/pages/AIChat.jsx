@@ -568,7 +568,7 @@ const AIChat = () => {
 
   return (
     <div className="flex h-screen overflow-hidden bg-white dark:bg-[#131314] text-slate-800 dark:text-slate-200 transition-colors duration-300 relative">
-      <div className="pointer-events-none absolute inset-0 dark:block hidden">
+      <div className="pointer-events-none absolute inset-0 dark:block hidden overflow-hidden">
         <div
           className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-3xl opacity-[0.15]"
           style={{

@@ -175,7 +175,7 @@ const ChatWindow = ({
   const isEmpty = messages.length === 0;
 
   return (
-    <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#131314] relative">
+    <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#131314] relative overflow-hidden">
       {/* Header bar - Sticky Glassmorphic */}
       <div className="flex items-center justify-between px-4 lg:px-6 py-3.5 shrink-0 bg-white/80 dark:bg-[#131314]/80 backdrop-blur-md sticky top-0 z-20 border-b border-slate-100 dark:border-white/[0.06] gap-2">
         <div className="flex items-center gap-1 sm:gap-2">
@@ -219,7 +219,7 @@ const ChatWindow = ({
       </div>
 
       {/* Chat area */}
-      <div className="flex-1 overflow-y-auto px-3 md:px-8 relative" style={{ scrollbarWidth: "thin" }}>
+      <div className="flex-1 overflow-y-auto overflow-x-hidden px-3 md:px-8 relative" style={{ scrollbarWidth: "thin" }}>
         {isEmpty ? (
           <div className="flex flex-col items-center justify-center min-h-full py-8 md:py-12 animate-fade-in-up max-w-2xl mx-auto text-center px-4 relative">
             {/* Subtle center gradient orb - dark mode only */}
