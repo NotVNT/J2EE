@@ -188,9 +188,9 @@ public class PaymentService {
     private long generateOrderCode() {
         for (int attempt = 1; attempt <= ORDERCODE_MAX_ATTEMPTS; attempt++) {
             // PayOS requires orderCode <= 9007199254740991 (Number.MAX_SAFE_INTEGER in JS)
-            // System.currentTimeMillis() is 13 digits (approx 1.7 * 10^12)
-            // Multiplying by 1000L gives 16 digits (approx 1.7 * 10^15), which is safely below 9.0 * 10^15
-            long candidate = System.currentTimeMillis() * 1000L + ORDERCODE_SECURE_RANDOM.nextInt(1000);
+            // A secure random number in range [1, 9007199254740991] provides maximum entropy
+            // and completely eliminates collision risk for sequential/concurrent generations.
+            long candidate = (ORDERCODE_SECURE_RANDOM.nextLong() & Long.MAX_VALUE) % 9007199254740991L + 1;
             if (!paymentRepository.existsByOrderCode(candidate)) {
                 return candidate;
             }

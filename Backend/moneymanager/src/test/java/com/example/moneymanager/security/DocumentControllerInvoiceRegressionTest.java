@@ -1,4 +1,6 @@
-package com.example.moneymanager.controller;
+package com.example.moneymanager.security;
+
+import com.example.moneymanager.controller.DocumentController;
 
 import com.example.moneymanager.entity.PaymentEntity;
 import com.example.moneymanager.entity.ProfileEntity;
