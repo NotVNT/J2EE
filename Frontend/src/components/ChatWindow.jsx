@@ -230,7 +230,7 @@ const ChatWindow = ({
             <div className="relative z-10 flex flex-col items-center">
               {/* Premium Hero Icon with bounce/float effect */}
               <div className="relative mb-6 p-4 rounded-3xl bg-gradient-to-tr from-violet-600/10 to-indigo-600/10 dark:from-violet-500/25 dark:to-indigo-500/25 border border-violet-500/20 dark:border-violet-500/30 shadow-[0_0_30px_rgba(139,92,246,0.1)]">
-                <img src={aiIcon} alt="Nova Money AI" className="w-12 h-12 object-cover rounded-2xl animate-float" />
+                <img src={aiIcon} alt="Nova Money AI" className="w-12 h-12 object-cover rounded-2xl" />
                 <div className="absolute -top-1 -right-1 p-1 rounded-full bg-amber-400 dark:bg-amber-500 text-white shadow-md">
                   <Sparkles size={11} className="animate-pulse" />
                 </div>
