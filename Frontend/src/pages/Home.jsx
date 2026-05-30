@@ -512,54 +512,61 @@ const Home = () => {
                     </div>
                   </div>
                 ) : detailedInsight ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {detailedInsight.forecast && (
-                      <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.02] p-5 hover:border-violet-300 dark:hover:border-violet-500/30 transition-colors">
-                        <div className="flex items-center gap-2.5 mb-4">
-                          <div className="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-500/10 flex items-center justify-center">
-                            <TrendingUp size={18} className="text-emerald-600 dark:text-emerald-400" />
+                      <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/40 dark:bg-white/[0.02] backdrop-blur-md p-5 sm:p-6 shadow-sm hover:shadow-md hover:border-violet-500/20 dark:hover:border-violet-500/30 transition-all duration-300 flex flex-col justify-between">
+                        <div>
+                          <div className="flex items-center gap-2.5 mb-4">
+                            <div className="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-500/10 flex items-center justify-center">
+                              <TrendingUp size={18} className="text-emerald-600 dark:text-emerald-400" />
+                            </div>
+                            <div>
+                              <h4 className="font-semibold text-slate-800 dark:text-white text-sm">Dự báo dòng tiền</h4>
+                              <p className="text-xs text-slate-400">Tháng tiếp theo</p>
+                            </div>
                           </div>
-                          <div>
-                            <h4 className="font-semibold text-slate-800 dark:text-white text-sm">Dự báo dòng tiền</h4>
-                            <p className="text-xs text-slate-400">Tháng tiếp theo</p>
+                          <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold mb-4 border ${
+                            detailedInsight.forecast.riskLevel === "CAO"
+                              ? "bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 border-red-200 dark:border-red-500/20 shadow-[0_0_10px_rgba(239,68,68,0.05)]"
+                              : detailedInsight.forecast.riskLevel === "TRUNG_BÌNH"
+                                ? "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-500/20 shadow-[0_0_10px_rgba(245,158,11,0.05)]"
+                                : "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.05)]"
+                          }`}>
+                            <AlertTriangle size={11} />
+                            {detailedInsight.forecast.riskLevel === "CAO" ? "Rủi ro cao" : detailedInsight.forecast.riskLevel === "TRUNG_BÌNH" ? "Rủi ro trung bình" : "Rủi ro thấp"}
                           </div>
+                          <p className="text-[13.5px] text-slate-650 dark:text-slate-350 mb-6 leading-relaxed font-medium">{detailedInsight.forecast.riskMessage}</p>
                         </div>
-                        <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold mb-4 ${
-                          detailedInsight.forecast.riskLevel === "CAO"
-                            ? "bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/20"
-                            : detailedInsight.forecast.riskLevel === "TRUNG_BÌNH"
-                              ? "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20"
-                              : "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20"
-                        }`}>
-                          <AlertTriangle size={12} />
-                          {detailedInsight.forecast.riskLevel === "CAO" ? "Rủi ro cao" : detailedInsight.forecast.riskLevel === "TRUNG_BÌNH" ? "Rủi ro trung bình" : "Rủi ro thấp"}
-                        </div>
-                        <p className="text-sm text-slate-600 dark:text-slate-300 mb-4 leading-relaxed">{detailedInsight.forecast.riskMessage}</p>
-                        <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-200 dark:border-white/10">
-                          <div className="bg-white dark:bg-white/[0.03] rounded-xl p-3 border border-slate-200 dark:border-white/5">
-                            <p className="text-xs text-slate-400 mb-1">Thu nhập dự kiến</p>
-                            <p className="text-emerald-600 dark:text-emerald-400 font-bold text-sm">{formatCurrency(detailedInsight.forecast.predictedNextMonthIncome)}</p>
+                        <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-200 dark:border-white/10">
+                          <div className="bg-white/90 dark:bg-[#0f172a]/60 rounded-2xl p-4 border border-slate-200/60 dark:border-white/5 shadow-xs hover:translate-y-[-1px] transition-all duration-200">
+                            <p className="text-[10.5px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Thu nhập dự kiến</p>
+                            <p className="text-emerald-600 dark:text-emerald-400 font-extrabold text-[15px] sm:text-[17px] tracking-tight">{formatCurrency(detailedInsight.forecast.predictedNextMonthIncome)}</p>
                           </div>
-                          <div className="bg-white dark:bg-white/[0.03] rounded-xl p-3 border border-slate-200 dark:border-white/5">
-                            <p className="text-xs text-slate-400 mb-1">Chi tiêu dự kiến</p>
-                            <p className="text-red-500 font-bold text-sm">{formatCurrency(detailedInsight.forecast.predictedNextMonthExpense)}</p>
+                          <div className="bg-white/90 dark:bg-[#0f172a]/60 rounded-2xl p-4 border border-slate-200/60 dark:border-white/5 shadow-xs hover:translate-y-[-1px] transition-all duration-200">
+                            <p className="text-[10.5px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Chi tiêu dự kiến</p>
+                            <p className="text-red-500 font-extrabold text-[15px] sm:text-[17px] tracking-tight">{formatCurrency(detailedInsight.forecast.predictedNextMonthExpense)}</p>
                           </div>
                         </div>
                       </div>
                     )}
                     {detailedInsight.detailedAdvice && (
-                      <div className={`rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.02] p-5 hover:border-violet-300 dark:hover:border-violet-500/30 transition-colors ${detailedInsight.forecast ? "" : "md:col-span-2"}`}>
-                        <div className="flex items-center gap-2.5 mb-4">
-                          <div className="w-9 h-9 rounded-xl bg-violet-100 dark:bg-violet-500/10 flex items-center justify-center">
-                            <Sparkles size={18} className="text-violet-600 dark:text-violet-400" />
+                      <div className={`rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/40 dark:bg-white/[0.02] backdrop-blur-md p-5 sm:p-6 shadow-sm hover:shadow-md hover:border-violet-500/20 dark:hover:border-violet-500/30 transition-all duration-300 flex flex-col justify-between ${detailedInsight.forecast ? "" : "lg:col-span-2"}`}>
+                        <div>
+                          <div className="flex items-center gap-2.5 mb-4">
+                            <div className="w-9 h-9 rounded-xl bg-violet-100 dark:bg-violet-500/10 flex items-center justify-center">
+                              <Sparkles size={18} className="text-violet-600 dark:text-violet-400" />
+                            </div>
+                            <div>
+                              <h4 className="font-semibold text-slate-800 dark:text-white text-sm">Lời khuyên chiến lược</h4>
+                              <p className="text-xs text-slate-400">Từ phân tích AI</p>
+                            </div>
                           </div>
-                          <div>
-                            <h4 className="font-semibold text-slate-800 dark:text-white text-sm">Lời khuyên chiến lược</h4>
-                            <p className="text-xs text-slate-400">Từ phân tích AI</p>
+                          
+                          <div className="bg-slate-100/50 dark:bg-[#0f172a]/45 border border-slate-200/40 dark:border-white/5 rounded-2xl p-4 max-h-[220px] overflow-y-auto custom-scrollbar shadow-inner mt-2">
+                            <div className="text-[13.5px] font-medium leading-relaxed pl-3.5 border-l-2 border-violet-500 text-slate-650 dark:text-slate-350 whitespace-pre-wrap">
+                              {detailedInsight.detailedAdvice}
+                            </div>
                           </div>
-                        </div>
-                        <div className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-l-[3px] border-violet-400 pl-4 max-h-64 overflow-y-auto whitespace-pre-wrap">
-                          {detailedInsight.detailedAdvice}
                         </div>
                       </div>
                     )}
