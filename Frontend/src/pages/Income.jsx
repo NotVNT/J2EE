@@ -182,31 +182,6 @@ const Income = () => {
   return (
     <Dashboard activeMenu="Income">
       <div className="space-y-4 sm:space-y-6">
-        {/* Filter bar */}
-        <div className="flex flex-col gap-4 rounded-2xl p-4 sm:flex-row sm:items-center sm:justify-between
-          bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10">
-          <h3 className="text-base font-bold text-slate-900 dark:text-white">Khung thời gian</h3>
-          <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
-            <CustomSelect
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
-              options={[
-                { value: "current", label: "Tháng này" },
-                { value: "all", label: "Tất cả thời gian" },
-                { value: "specific", label: "Chọn tháng" },
-              ]}
-              className="form-input mt-0 w-full px-3 py-2 sm:w-auto"
-            />
-            {filterType === "specific" && (
-              <DateInput
-                value={selectedMonthDate}
-                onChange={(e) => setSelectedMonthDate(e.target.value)}
-                className="form-input mt-0 w-full px-3 py-2 sm:w-auto"
-                placeholder="dd/mm/yyyy"
-              />
-            )}
-          </div>
-        </div>
 
         <IncomeOverview onAddIncome={() => setOpenAddIncomeModal(true)} />
 
