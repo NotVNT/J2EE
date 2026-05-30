@@ -170,22 +170,30 @@ const TransactionCalendar = ({
                       "min-h-[74px] border-r border-b border-slate-200 p-1.5 text-left transition-colors dark:border-white/10 sm:min-h-[92px] sm:p-2",
                       "hover:bg-slate-50 dark:hover:bg-white/[0.06]",
                       day.isCurrentMonth ? "bg-white dark:bg-transparent" : "bg-slate-50/70 dark:bg-white/[0.02]",
-                      isSelected ? "bg-violet-50 ring-1 ring-inset ring-violet-400 dark:bg-amber-500/10 dark:ring-amber-400" : "",
                     ].join(" ")}
                   >
-                    <div className="flex items-start justify-between gap-1">
+                    <div className="flex items-center justify-between gap-1 w-full">
                       <span
                         className={[
-                          "text-xs font-semibold sm:text-sm",
-                          day.isCurrentMonth ? "text-slate-800 dark:text-slate-100" : "text-slate-300 dark:text-slate-600",
-                          day.isToday ? "font-extrabold" : "",
+                          "flex items-center justify-center text-xs font-bold sm:text-sm rounded-full transition-all duration-200 shrink-0",
+                          day.isToday
+                            ? "w-6 h-6 sm:w-7.5 sm:h-7.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-600/25 dark:from-amber-500 dark:to-orange-500 dark:text-slate-950 dark:shadow-amber-500/25"
+                            : "w-6 h-6 sm:w-7.5 sm:h-7.5",
+                          day.isToday
+                            ? ""
+                            : (day.isCurrentMonth
+                                ? "text-slate-800 dark:text-slate-100"
+                                : "text-slate-350 dark:text-slate-650"),
                         ].join(" ")}
                       >
                         {day.dayNumber}
                       </span>
-                      {day.isToday ? (
-                        <span className="mt-1 inline-block h-1.5 w-1.5 rounded-full bg-violet-500 dark:bg-amber-400 sm:h-2 sm:w-2" />
-                      ) : null}
+                      {day.isToday && (
+                        <span className="text-[9.5px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full z-10 shrink-0 scale-90 sm:scale-95
+                          text-violet-600 dark:text-amber-400 bg-violet-100/60 dark:bg-amber-400/10">
+                          Hôm nay
+                        </span>
+                      )}
                     </div>
 
                     <div className="mt-1.5 space-y-0.5 sm:mt-2 sm:space-y-1">
