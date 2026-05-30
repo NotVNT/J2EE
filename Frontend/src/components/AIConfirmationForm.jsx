@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Check, X, ChevronDown } from "lucide-react";
 import * as Lucide from "lucide-react";
 import { getFieldsForIntent, INTENT_ICONS, INTENT_LABELS } from "../util/aiIntentParser.js";
@@ -176,27 +176,29 @@ const JarSelect = ({ value, onChange, options, required, disabled, placeholder =
   );
 };
 
+const buildInitialFormData = (fields, extractedFields, suggestedValues) => {
+  const merged = { ...suggestedValues, ...extractedFields };
+  const initialData = {};
+
+  fields.forEach((field) => {
+    const rawValue = merged[field.key] !== undefined ? merged[field.key] : "";
+    initialData[field.key] = field.type === "date" ? (normalizeToIsoDate(rawValue) || rawValue) : rawValue;
+  });
+
+  return initialData;
+};
+
 const AIConfirmationForm = ({ intent, extractedFields, suggestedValues, confirmationPrompt, onConfirm, onCancel, isProcessing }) => {
-  const [fields, setFields] = useState([]);
-  const [formData, setFormData] = useState({});
   const [categoriesByType, setCategoriesByType] = useState({});
   const [jars, setJars] = useState([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
   const [loadingJars, setLoadingJars] = useState(false);
+  const fields = useMemo(() => getFieldsForIntent(intent), [intent]);
+  const [formData, setFormData] = useState(() => buildInitialFormData(fields, extractedFields, suggestedValues));
 
   useEffect(() => {
-    const fieldDefs = getFieldsForIntent(intent);
-    const merged = { ...suggestedValues, ...extractedFields };
-    setFields(fieldDefs);
-    const initialData = {};
-    fieldDefs.forEach((f) => {
-      const rawValue = merged[f.key] !== undefined ? merged[f.key] : "";
-      initialData[f.key] = f.type === "date" ? (normalizeToIsoDate(rawValue) || rawValue) : rawValue;
-    });
-    setFormData(initialData);
-
     const categoryTypes = [...new Set(
-      fieldDefs
+      fields
         .filter((f) => f.type === "category_select" && f.categoryType)
         .map((f) => f.categoryType)
     )];
@@ -212,7 +214,7 @@ const AIConfirmationForm = ({ intent, extractedFields, suggestedValues, confirma
       ).finally(() => setLoadingCategories(false));
     }
 
-    const hasJarSelect = fieldDefs.some((f) => f.type === "jar_select");
+    const hasJarSelect = fields.some((f) => f.type === "jar_select");
     if (hasJarSelect) {
       setLoadingJars(true);
       axiosConfig.get(API_ENDPOINTS.GET_JARS)
@@ -220,7 +222,7 @@ const AIConfirmationForm = ({ intent, extractedFields, suggestedValues, confirma
         .catch(() => {})
         .finally(() => setLoadingJars(false));
     }
-  }, [intent, extractedFields, suggestedValues]);
+  }, [fields]);
 
   const handleFieldChange = (key, value) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
@@ -235,7 +237,7 @@ const AIConfirmationForm = ({ intent, extractedFields, suggestedValues, confirma
   const intentLabel = INTENT_LABELS[intent] || intent;
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/75 dark:bg-slate-900/60 backdrop-blur-md p-5 my-2 shadow-[0_8px_32px_rgba(139,92,246,0.05)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.25)] transition-all duration-300">
+    <div className="relative overflow-visible rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/75 dark:bg-slate-900/60 backdrop-blur-md p-5 my-2 shadow-[0_8px_32px_rgba(139,92,246,0.05)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.25)] transition-all duration-300">
       {/* Subtle premium violet border strip */}
       <div className="absolute top-0 left-0 right-0 h-[2.5px] bg-gradient-to-r from-violet-500 to-indigo-500 dark:from-violet-600 dark:to-indigo-600 opacity-60" />
 

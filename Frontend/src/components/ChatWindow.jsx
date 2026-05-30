@@ -291,7 +291,7 @@ const ChatWindow = ({
           <div className="max-w-3xl mx-auto py-6 space-y-6">
             {visibleMessages.map((msg, i) => (
               <div
-                key={i}
+                key={msg.id || `${msg.turnId || "msg"}-${i}`}
                 className={`flex gap-3 md:gap-4 items-start ${msg.role === "user" ? "justify-end" : ""} animate-msg-appear`}
               >
                 {msg.role !== "user" && (

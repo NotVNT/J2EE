@@ -136,14 +136,14 @@ export const isActionIntent = (intent, intentType) => {
 };
 
 /**
- * Returns true if backend recognized an action intent but missingFields is non-empty.
- * Frontend should show confirmation form with missing field highlights instead of
- * falling back to normal chat.
+ * Returns true only for export/email action intents.
+ * These are handled client-side without calling the confirm-action backend.
  */
-export const isIncompleteActionIntent = (parsedResponse) => {
-  if (!parsedResponse) return false;
-  const { intentType, missingFields } = parsedResponse;
-  return intentType === 'ACTION' && Array.isArray(missingFields) && missingFields.length > 0;
+export const isExportEmailIntent = (intent) => {
+  return Boolean(intent && (
+    intent.startsWith('EXPORT_') ||
+    intent.startsWith('EMAIL_')
+  ));
 };
 
 /**

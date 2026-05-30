@@ -7,7 +7,7 @@ import { useUser } from "../hooks/useUser.jsx";
 import axiosConfig from "../util/axiosConfig.jsx";
 import Dashboard from "../components/Dashboard.jsx";
 import { API_ENDPOINTS } from "../util/apiEndpoints.js";
-import { parseIntentResponse, isCrudIntent, isActionIntent, isIncompleteActionIntent, clientTelemetry } from "../util/aiIntentParser.js";
+import { parseIntentResponse, isCrudIntent, isActionIntent, clientTelemetry, isExportEmailIntent } from "../util/aiIntentParser.js";
 import { useNavigate } from "react-router-dom";
 import { Sparkles, TrendingUp, Zap, ArrowLeft, MessageSquare } from "lucide-react";
 import aiIcon from "../assets/logo/AI_favicon.png";
@@ -293,6 +293,10 @@ const AIChat = () => {
   };
 
   const executeExportAction = async (intent) => {
+    if (!isExportEmailIntent(intent)) {
+      throw new Error(`executeExportAction khong ho tro intent: ${intent}`);
+    }
+
     if (intent === "EXPORT_EXCEL_INCOME" || intent === "EXPORT_EXCEL_EXPENSE") {
       const endpoint = intent === "EXPORT_EXCEL_INCOME"
         ? API_ENDPOINTS.INCOME_EXCEL_DOWNLOAD
@@ -329,7 +333,7 @@ const AIChat = () => {
       let resultContent;
       let undoData = null;
 
-      if (isActionIntent(intent, pendingIntent?.intentType)) {
+      if (isExportEmailIntent(intent)) {
         resultContent = await executeExportAction(intent);
       } else {
         const { data } = await axiosConfig.post(API_ENDPOINTS.AI_CONFIRM_ACTION, {
@@ -445,14 +449,18 @@ const AIChat = () => {
       await axiosConfig.delete(API_ENDPOINTS.AI_CHAT_DELETE_SESSION(sessionId));
       if (activeSessionId === sessionId) handleNewChat();
       fetchSessions();
-    } catch {}
+    } catch {
+      // Non-blocking: keep the current session list if delete fails.
+    }
   };
 
   const handleRenameSession = async (sessionId, newTitle) => {
     try {
       await axiosConfig.put(API_ENDPOINTS.AI_CHAT_RENAME_SESSION(sessionId), { title: newTitle });
       fetchSessions();
-    } catch {}
+    } catch {
+      // Non-blocking: keep the existing title if rename fails.
+    }
   };
 
   // Model change handlers

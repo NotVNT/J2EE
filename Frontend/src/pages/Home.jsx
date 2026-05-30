@@ -123,7 +123,7 @@ const Home = () => {
     if (aiLoading) return;
     setAiLoading(true);
     try {
-      const response = await axiosConfig.get(AI_INSIGHT_ENDPOINT);
+      const response = await axiosConfig.get(AI_INSIGHT_ENDPOINT, { _skipGlobalLoading: true });
       if (response.status === 200) {
         if (response.data.error) {
           setAiInsight(response.data.insight || "Đang cập nhật dữ liệu...");
@@ -151,7 +151,7 @@ const Home = () => {
     if (detailedLoading) return;
     setDetailedLoading(true);
     try {
-      const response = await axiosConfig.get(AI_DETAILED_INSIGHT_ENDPOINT);
+      const response = await axiosConfig.get(AI_DETAILED_INSIGHT_ENDPOINT, { _skipGlobalLoading: true });
       if (response.status === 200) {
         if (response.data.error) {
           toast.error(response.data.message || "Không thể tải phân tích chi tiết");
