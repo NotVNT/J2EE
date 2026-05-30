@@ -92,7 +92,7 @@ const MonthlyReportCard = ({ report }) => {
       const response = await axiosConfig.post(
         API_ENDPOINTS.MONTHLY_REPORT_AI_ANALYSIS,
         buildMonthlyReportAiChatRequest(prompt),
-        { timeout: 90000 }
+        { timeout: 90000, _skipGlobalLoading: true }
       );
 
       if (analysisRequestIdRef.current === requestId) {

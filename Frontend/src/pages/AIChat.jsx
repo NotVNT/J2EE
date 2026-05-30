@@ -9,7 +9,8 @@ import Dashboard from "../components/Dashboard.jsx";
 import { API_ENDPOINTS } from "../util/apiEndpoints.js";
 import { parseIntentResponse, isCrudIntent, isActionIntent, isIncompleteActionIntent, clientTelemetry } from "../util/aiIntentParser.js";
 import { useNavigate } from "react-router-dom";
-import { Bot, Sparkles, TrendingUp, Zap, ArrowLeft, MessageSquare } from "lucide-react";
+import { Sparkles, TrendingUp, Zap, ArrowLeft, MessageSquare } from "lucide-react";
+import aiIcon from "../assets/logo/AI_favicon.png";
 
 const AGENT_MODEL_OPTIONS = [
   { value: "gemini", label: "Gemini Flash", description: "Phản hồi nhanh, tiết kiệm", icon: "🤖" },
@@ -147,7 +148,7 @@ const AIChat = () => {
           sessionId: activeSessionId,
           saveHistory: true,
           messages: conversationHistory,
-        }, { signal });
+        }, { signal, _skipGlobalLoading: true });
 
         setMessages(prev => [...prev, {
           id: `assistant-${Date.now()}`,
@@ -175,7 +176,7 @@ const AIChat = () => {
         userMessage: trimmedMessage,
         pageContext: currentPage || "dashboard",
         conversationHistory
-      }, { signal });
+      }, { signal, _skipGlobalLoading: true });
 
       const parsed = parseIntentResponse(intentResponse.data);
 
@@ -242,7 +243,7 @@ const AIChat = () => {
           sessionId: activeSessionId,
           saveHistory: true,
           messages: conversationHistory,
-        }, { signal });
+        }, { signal, _skipGlobalLoading: true });
         
         setMessages((prev) => [
           ...prev,
@@ -483,10 +484,10 @@ const AIChat = () => {
             <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-purple-500 via-pink-500 to-amber-500" />
             
             <div className="text-center">
-              {/* AI Bot Icon with beautiful animation and glow */}
+              {/* AI icon with animation */}
               <div className="relative w-16 h-16 mx-auto mb-5 flex items-center justify-center rounded-2xl
-                bg-gradient-to-tr from-purple-600 to-indigo-500 shadow-xl shadow-purple-500/20">
-                <Bot size={32} className="text-white animate-bounce-slow" />
+                bg-gradient-to-tr from-purple-600 to-indigo-500 shadow-xl shadow-purple-500/20 overflow-hidden">
+                <img src={aiIcon} alt="Nova Money AI" className="w-full h-full object-cover" />
                 <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-amber-400 animate-ping" />
               </div>
 

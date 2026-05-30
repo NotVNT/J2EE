@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { lazy, Suspense, useContext, useEffect } from "react";
 import { LoaderCircle } from "lucide-react";
+import appLogo from "./assets/logo/favicon.png";
 import AdminRoute from "./components/AdminRoute.jsx";
 import { RouteContextProvider } from "./context/RouteContext.jsx";
 import { AppContext } from "./context/AppContext.jsx";
@@ -43,9 +44,11 @@ const LoadingFallback = () => (
     <div className="min-h-screen bg-slate-50 dark:bg-[#0A0E1A] text-slate-900 dark:text-slate-100 flex antialiased">
         {/* Sidebar Skeleton (hidden on mobile, visible on desktop) */}
         <aside className="h-screen w-64 fixed left-0 top-0 flex-col p-5 gap-6 border-r border-slate-200 dark:border-white/10 bg-white dark:bg-[#0F172A] hidden lg:flex z-50">
-            {/* Logo area placeholder */}
+            {/* Logo area */}
             <div className="flex items-center gap-2.5 px-1">
-                <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-white/10 animate-pulse" />
+                <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center bg-transparent">
+                    <img src={appLogo} alt="Nova Money" className="w-8 h-8 object-cover" />
+                </div>
                 <div className="h-5 w-28 bg-slate-200 dark:bg-white/10 rounded-lg animate-pulse" />
             </div>
             {/* Profile area placeholder */}

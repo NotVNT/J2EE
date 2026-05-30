@@ -19,7 +19,7 @@ import {
   ArrowLeft
 } from "lucide-react";
 import { useTheme } from "../context/ThemeContext.jsx";
-import favicon from "../assets/logo/favicon.png";
+import favicon from "../assets/logo/AI_favicon.png";
 
 const groupSessions = (sessions) => {
   const now = new Date();
