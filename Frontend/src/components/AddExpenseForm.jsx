@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import EmojiPickerPopup from "./EmojiPickerPopup.jsx";
 import Input from "./Input.jsx";
 import { formatCurrency } from "../util/helper.js";
@@ -13,12 +13,6 @@ const AddExpenseForm = ({ onAddExpense, categories, defaultJarId, jars = [] }) =
         icon: "",
         jarId: defaultJarId || (jars.length > 0 ? jars[0].id : ""),
     });
-
-    useEffect(() => {
-        if (categories && categories.length > 0 && !expense.categoryId) {
-            setExpense((prev) => ({ ...prev, categoryId: categories[0].id }));
-        }
-    }, [categories, expense.categoryId]);
 
     const handleChange = (key, value) => setExpense({ ...expense, [key]: value });
 
@@ -38,6 +32,7 @@ const AddExpenseForm = ({ onAddExpense, categories, defaultJarId, jars = [] }) =
     ];
 
     const selectedJar = jars.find((j) => String(j.id) === String(expense.jarId));
+    const selectedCategoryId = expense.categoryId || categories[0]?.id || "";
     const parsedAmount = Number(expense.amount) || 0;
     const insufficientBalance = selectedJar && parsedAmount > (selectedJar.currentBalance ?? 0);
 
@@ -59,7 +54,7 @@ const AddExpenseForm = ({ onAddExpense, categories, defaultJarId, jars = [] }) =
             <Input
                 label="Danh mục"
                 placeholder={categories.length === 0 ? "Vui lòng tạo danh mục chi tiêu trước" : "Chọn danh mục"}
-                value={expense.categoryId}
+                value={selectedCategoryId}
                 onChange={({ target }) => handleChange("categoryId", target.value)}
                 isSelect={true}
                 options={categoryOptions}
@@ -106,7 +101,7 @@ const AddExpenseForm = ({ onAddExpense, categories, defaultJarId, jars = [] }) =
                 <button
                     type="button"
                     className="add-btn add-btn-fill"
-                    onClick={() => onAddExpense(expense)}
+                    onClick={() => onAddExpense({ ...expense, categoryId: selectedCategoryId })}
                 >Thêm chi tiêu</button>
             </div>
         </div>

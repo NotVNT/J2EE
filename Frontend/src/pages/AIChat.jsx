@@ -9,11 +9,11 @@ import Dashboard from "../components/Dashboard.jsx";
 import { API_ENDPOINTS } from "../util/apiEndpoints.js";
 import { parseIntentResponse, isCrudIntent, isActionIntent, clientTelemetry, isExportEmailIntent } from "../util/aiIntentParser.js";
 import { useNavigate } from "react-router-dom";
-import { Sparkles, TrendingUp, Zap, ArrowLeft, MessageSquare } from "lucide-react";
+import { Sparkles, TrendingUp, Zap, MessageSquare } from "lucide-react";
 import aiIcon from "../assets/logo/AI_favicon.png";
 
 const AGENT_MODEL_OPTIONS = [
-  { value: "gemini", label: "Gemini Flash", description: "Phản hồi nhanh, tiết kiệm", icon: "🤖" },
+  { value: "gemini", label: "Gemini 3.1 Flash-Lite", description: "Phản hồi nhanh, tiết kiệm", icon: "🤖" },
 ];
 
 const buildHistory = (msgs) =>
@@ -22,6 +22,12 @@ const buildHistory = (msgs) =>
     .filter((m) => m.role === "user" || m.role === "assistant")
     .map((m) => ({ role: m.role, content: m.content }))
     .slice(-20);
+
+const buildPersistedMessages = (msgs) =>
+  msgs
+    .filter((m) => !m.isSystem && !m.isIntent && !m.isConfirmation && !m.isUndoAction && !m.isError)
+    .filter((m) => m.role === "user" || m.role === "assistant")
+    .map((m) => ({ role: m.role, content: m.content }));
 
 const AIChat = () => {
   useUser();
@@ -92,7 +98,7 @@ const AIChat = () => {
       return {
         activeProvider: "gemini",
         activeModel: "gemini-3.1-flash-lite",
-        activeModelLabel: "Gemini 3.1 Flash Lite",
+        activeModelLabel: "Gemini 3.1 Flash-Lite",
       };
     }
     // Chat mode — luôn dùng GPT-OSS
@@ -103,11 +109,17 @@ const AIChat = () => {
     };
   };
 
-  const handleSendMessage = async (text) => {
+  const handleSendMessage = async (text, options = {}) => {
     const trimmedMessage = text.trim();
+    const editMessageId = options?.editMessageId ?? null;
     if (!trimmedMessage || isSending) return;
 
-    if (pendingIntent) {
+    const editingMessageIndex = editMessageId
+      ? messages.findIndex((message) => message.id === editMessageId)
+      : -1;
+    const isEditingExistingMessage = editingMessageIndex >= 0;
+
+    if (pendingIntent && !isEditingExistingMessage) {
       setMessages((prev) => [
         ...prev,
         {
@@ -123,6 +135,7 @@ const AIChat = () => {
     setIsSending(true);
 
     const { activeProvider, activeModel, activeModelLabel } = resolveModel();
+    const baseMessages = isEditingExistingMessage ? messages.slice(0, editingMessageIndex) : messages;
 
     const userMsg = { 
       id: `user-${Date.now()}`, 
@@ -133,13 +146,34 @@ const AIChat = () => {
       modelLabel: activeModelLabel,
       timestamp: new Date().toISOString() 
     };
-    const updatedMessages = [...messages, userMsg];
+    const updatedMessages = [...baseMessages, userMsg];
+    setPendingIntent(null);
     setMessages(updatedMessages);
 
     try {
       abortControllerRef.current = new AbortController();
       const signal = abortControllerRef.current.signal;
       const conversationHistory = buildHistory(updatedMessages);
+      const replaceEditedSessionHistory = async (sessionId, nextMessages) => {
+        if (!isEditingExistingMessage || !sessionId) return;
+        try {
+          await axiosConfig.put(
+            API_ENDPOINTS.AI_CHAT_REPLACE_MESSAGES(sessionId),
+            { messages: buildPersistedMessages(nextMessages) },
+            { _skipGlobalLoading: true }
+          );
+        } catch {
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: `system-rewrite-failed-${Date.now()}`,
+              role: "assistant",
+              content: "Đã gửi lại nhưng chưa đồng bộ hoàn toàn lịch sử chat. Bạn tải lại phiên nếu thấy nội dung cũ.",
+              isSystem: true
+            }
+          ]);
+        }
+      };
 
       if (selectedProvider === "gptoss") {
         const { data } = await axiosConfig.post(API_ENDPOINTS.AI_CHAT, {
@@ -150,7 +184,7 @@ const AIChat = () => {
           messages: conversationHistory,
         }, { signal, _skipGlobalLoading: true });
 
-        setMessages(prev => [...prev, {
+        const nextMessages = [...updatedMessages, {
           id: `assistant-${Date.now()}`,
           role: "assistant",
           content: data.reply || "Tôi đã nhận câu hỏi nhưng hiện chưa tạo được câu trả lời phù hợp.",
@@ -158,11 +192,14 @@ const AIChat = () => {
           modelUsed: data.modelUsed,
           modelLabel: activeModelLabel,
           timestamp: new Date().toISOString(),
-        }]);
+        }];
+        setMessages(nextMessages);
 
+        const resolvedSessionId = data.sessionId || activeSessionId;
         if (data.sessionId && !activeSessionId) {
           setActiveSessionId(data.sessionId);
         }
+        await replaceEditedSessionHistory(resolvedSessionId, nextMessages);
         debouncedFetchSessions();
         setIsSending(false);
         return;
@@ -179,6 +216,7 @@ const AIChat = () => {
       }, { signal, _skipGlobalLoading: true });
 
       const parsed = parseIntentResponse(intentResponse.data);
+      const resolvedSessionId = intentResponse.data?.sessionId || activeSessionId;
 
       if (intentResponse.data?.sessionId && !activeSessionId) {
         setActiveSessionId(intentResponse.data.sessionId);
@@ -193,8 +231,8 @@ const AIChat = () => {
         // If action intent but missing required fields, still show confirmation form
         // (backend already populated missingFields — frontend should highlight them)
         setPendingIntent(parsed);
-        setMessages((prev) => [
-          ...prev,
+        const nextMessages = [
+          ...updatedMessages,
           {
             id: `intent-${Date.now()}`,
             role: "assistant",
@@ -206,15 +244,17 @@ const AIChat = () => {
             missingFields: parsed.missingFields,
             confirmationPrompt: parsed.confirmationPrompt
           }
-        ]);
+        ];
+        setMessages(nextMessages);
+        await replaceEditedSessionHistory(resolvedSessionId, updatedMessages);
       } else if (parsed.intent === "ANSWER_QUESTION") {
         // Telemetry: if message looks like agent command but got ANSWER_QUESTION, log it
-        const agentVerbPattern = /\b(thêm|tạo|ghi|nhập|xóa|bỏ|hủy|sửa|chỉnh|đổi|cập nhật|xuất|tải|chuyển|gửi mail|gửi email)\b/i;
+        const agentVerbPattern = /\b(thêm|tạo|ghi|nhập|xóa|bỏ|hủy|sửa|chỉnh|đổi|cập nhật|xuất|tải|chuyển|gửi mail|gửi email|gửi qua email|gửi qua mail|add|delete|remove|update|export|transfer)\b/i;
         if (agentVerbPattern.test(trimmedMessage)) {
           clientTelemetry.logAgentCommandFallback(trimmedMessage, currentPage);
         }
-        setMessages((prev) => [
-          ...prev,
+        const nextMessages = [
+          ...updatedMessages,
           {
             id: `assistant-${Date.now()}`,
             role: "assistant",
@@ -223,10 +263,12 @@ const AIChat = () => {
             modelUsed: intentResponse.data?.modelUsed,
             modelLabel: activeModelLabel
           }
-        ]);
+        ];
+        setMessages(nextMessages);
+        await replaceEditedSessionHistory(resolvedSessionId, nextMessages);
       } else if (parsed.intent === "INVALID_REQUEST") {
-        setMessages((prev) => [
-          ...prev,
+        const nextMessages = [
+          ...updatedMessages,
           {
             id: `assistant-error-${Date.now()}`,
             role: "assistant",
@@ -234,7 +276,9 @@ const AIChat = () => {
             isError: true,
             provider: activeProvider
           }
-        ]);
+        ];
+        setMessages(nextMessages);
+        await replaceEditedSessionHistory(resolvedSessionId, updatedMessages);
       } else {
         // Unrecognized intent — fall back to regular chat (only for genuine QUESTION-type intents)
         const { data } = await axiosConfig.post(API_ENDPOINTS.AI_CHAT, {
@@ -245,8 +289,8 @@ const AIChat = () => {
           messages: conversationHistory,
         }, { signal, _skipGlobalLoading: true });
         
-        setMessages((prev) => [
-          ...prev,
+        const nextMessages = [
+          ...updatedMessages,
           {
             id: `assistant-${Date.now()}`,
             role: "assistant",
@@ -255,11 +299,14 @@ const AIChat = () => {
             modelUsed: data.modelUsed,
             modelLabel: activeModelLabel
           }
-        ]);
+        ];
+        setMessages(nextMessages);
         
+        const fallbackSessionId = data.sessionId || activeSessionId;
         if (data.sessionId && !activeSessionId) {
           setActiveSessionId(data.sessionId);
         }
+        await replaceEditedSessionHistory(fallbackSessionId, nextMessages);
       }
       
       debouncedFetchSessions();
@@ -606,6 +653,7 @@ const AIChat = () => {
       />
 
       <ChatWindow
+        key={activeSessionId || "new-chat"}
         messages={messages}
         isSending={isSending}
         onSendMessage={handleSendMessage}

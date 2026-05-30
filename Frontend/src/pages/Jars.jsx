@@ -791,11 +791,11 @@ const Jars = () => {
 
         {/* ── Modals ── */}
         <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title="Tạo hũ chi tiêu mới">
-          <JarForm onSave={handleCreateJar} onCancel={() => setShowAddModal(false)} />
+          <JarForm key="create-jar" onSave={handleCreateJar} onCancel={() => setShowAddModal(false)} />
         </Modal>
 
         <Modal isOpen={!!editJar} onClose={() => setEditJar(null)} title="Cập nhật hũ chi tiêu">
-          <JarForm initialData={editJar} isEditing jars={jars} onSave={handleUpdateJar} onCancel={() => setEditJar(null)} />
+          <JarForm key={editJar?.id || "edit-jar"} initialData={editJar} isEditing jars={jars} onSave={handleUpdateJar} onCancel={() => setEditJar(null)} />
         </Modal>
 
         <Modal isOpen={deleteAlert.show} onClose={() => setDeleteAlert({ show: false, id: null })} title="Xoá hũ chi tiêu">

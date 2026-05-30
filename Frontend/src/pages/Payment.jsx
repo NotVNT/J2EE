@@ -9,6 +9,8 @@ import axiosConfig from "../util/axiosConfig.jsx";
 import { API_ENDPOINTS } from "../util/apiEndpoints.js";
 import { safeRedirect, safeOpenExternal } from "../util/safeNavigation.js";
 import { usePageTitle } from "../hooks/usePageTitle.js";
+import Modal from "../components/Modal.jsx";
+import DeleteAlert from "../components/DeleteAlert.jsx";
 
 const PAYMENT_STORAGE_KEY = "latestPayment";
 const ICON_MAP = { ShieldCheck, Sparkles, Star, Zap };
@@ -26,7 +28,7 @@ const STATUS_DETAILS = {
 const Payment = () => {
   useUser();
   usePageTitle("Thanh toán nâng cấp");
-  const { user, setUser } = useContext(AppContext);
+  const { user } = useContext(AppContext);
   const [rawPlans, setRawPlans] = useState([]);
   const [plansLoading, setPlansLoading] = useState(true);
 
@@ -50,13 +52,14 @@ const Payment = () => {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [selectedDetailPayment, setSelectedDetailPayment] = useState(null);
   const [generatingInvoiceCode, setGeneratingInvoiceCode] = useState(null);
+  const [openDeleteAlert, setOpenDeleteAlert] = useState({ show: false, orderCode: null });
 
   // Set default selected plan after plans load
   useEffect(() => {
     if (PAYMENT_PLANS.length > 0 && !selectedPlanId) {
       setSelectedPlanId(PAYMENT_PLANS[0].planId);
     }
-  }, [PAYMENT_PLANS]);
+  }, [PAYMENT_PLANS, selectedPlanId]);
 
   useEffect(() => {
     const savedPayment = localStorage.getItem(PAYMENT_STORAGE_KEY);
@@ -88,7 +91,6 @@ const Payment = () => {
   }, []);
 
   const handleDeletePayment = async (orderCode) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa hóa đơn này khỏi lịch sử giao dịch không?")) return;
     try {
       await axiosConfig.delete(API_ENDPOINTS.USER_PAYMENT_DELETE(orderCode));
       toast.success("Xóa hóa đơn thành công!");
@@ -96,7 +98,8 @@ const Payment = () => {
       if (selectedDetailPayment?.orderCode === orderCode) {
         setSelectedDetailPayment(null);
       }
-    } catch (err) {
+      setOpenDeleteAlert({ show: false, orderCode: null });
+    } catch {
       toast.error("Không thể xóa hóa đơn này.");
     }
   };
@@ -111,7 +114,7 @@ const Payment = () => {
       if (selectedDetailPayment?.orderCode === orderCode) {
         setSelectedDetailPayment((prev) => ({ ...prev, status: res.data.status }));
       }
-    } catch (err) {
+    } catch {
       toast.error("Không thể đồng bộ trạng thái.");
     }
   };
@@ -446,7 +449,7 @@ const Payment = () => {
                               </button>
                             )}
                             <button
-                              onClick={() => handleDeletePayment(p.orderCode)}
+                              onClick={() => setOpenDeleteAlert({ show: true, orderCode: p.orderCode })}
                               className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-655 dark:text-red-400 transition cursor-pointer"
                               title="Xóa hóa đơn"
                             >
@@ -538,7 +541,10 @@ const Payment = () => {
                   </button>
                 )}
                 <button
-                  onClick={() => handleDeletePayment(selectedDetailPayment.orderCode)}
+                  onClick={() => {
+                    setSelectedDetailPayment(null);
+                    setOpenDeleteAlert({ show: true, orderCode: selectedDetailPayment.orderCode });
+                  }}
                   className="inline-flex items-center gap-1.5 py-2 px-4 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold transition text-xs shadow-md cursor-pointer"
                 >
                   <Trash2 size={13} /> Xóa hóa đơn
@@ -553,6 +559,19 @@ const Payment = () => {
             </div>
           </div>
         )}
+
+        {/* ─── Delete Confirmation Modal ─── */}
+        <Modal
+          isOpen={openDeleteAlert.show}
+          onClose={() => setOpenDeleteAlert({ show: false, orderCode: null })}
+          title="Xóa hóa đơn"
+        >
+          <DeleteAlert
+            content="Bạn có chắc chắn muốn xóa hóa đơn này khỏi lịch sử giao dịch không?"
+            onDelete={() => handleDeletePayment(openDeleteAlert.orderCode)}
+            onCancel={() => setOpenDeleteAlert({ show: false, orderCode: null })}
+          />
+        </Modal>
       </div>
     </Dashboard>
   );

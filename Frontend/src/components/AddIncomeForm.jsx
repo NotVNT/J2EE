@@ -2,7 +2,7 @@ import {useEffect, useState} from "react";
 import EmojiPickerPopup from "./EmojiPickerPopup.jsx";
 import Input from "./Input.jsx";
 import {LoaderCircle, ChevronDown, ChevronUp} from "lucide-react";
-import { formatCurrency, parseCurrency } from "../util/helper.js";
+import { formatCurrency } from "../util/helper.js";
 import axiosConfig from "../util/axiosConfig.jsx";
 import { API_ENDPOINTS } from "../util/apiEndpoints.js";
 import { hasDisplayImage } from "../util/imageDisplay.js";

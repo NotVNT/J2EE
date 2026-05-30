@@ -18,8 +18,6 @@ const TransactionInfoCard = ({
     category,
     receiptLocation,
 }) => {
-    const shouldShowImage = hasDisplayImage(icon) && !receiptLocation;
-
     const amountClass = type === "income"
         ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
         : "bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400";

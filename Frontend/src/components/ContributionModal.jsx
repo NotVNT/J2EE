@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axiosConfig from "../util/axiosConfig.jsx";
 import { API_ENDPOINTS } from "../util/apiEndpoints.js";
 import Modal from "./Modal.jsx";
@@ -26,7 +26,7 @@ const ContributionModal = ({ goal, onClose, onContribute }) => {
         note: "",
     });
 
-    const fetchHistory = async () => {
+    const fetchHistory = useCallback(async () => {
         setLoadingHistory(true);
         try {
             const res = await axiosConfig.get(API_ENDPOINTS.SAVING_GOAL_CONTRIBUTIONS(goal.id));
@@ -36,11 +36,11 @@ const ContributionModal = ({ goal, onClose, onContribute }) => {
         } finally {
             setLoadingHistory(false);
         }
-    };
+    }, [goal.id]);
 
     useEffect(() => {
         if (tab === "history") fetchHistory();
-    }, [tab]);
+    }, [fetchHistory, tab]);
 
     const handleSubmit = async () => {
         if (!form.amount || Number(form.amount) <= 0) { alert("Số tiền phải lớn hơn 0"); return; }

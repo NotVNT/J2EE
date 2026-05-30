@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import EmojiPickerPopup from "./EmojiPickerPopup.jsx";
 import Input from "./Input.jsx";
 import { formatCurrency } from "../util/helper.js";
@@ -15,12 +15,6 @@ const EditExpenseForm = ({ onUpdateExpense, expenseToEdit, categories, jars = []
         icon: expenseToEdit?.icon || "",
         jarId: expenseToEdit?.jarId || "",
     });
-
-    useEffect(() => {
-        if (categories && categories.length > 0 && !expense.categoryId) {
-            setExpense((prev) => ({ ...prev, categoryId: categories[0].id }));
-        }
-    }, [categories, expense.categoryId]);
 
     const handleChange = (key, value) => setExpense({ ...expense, [key]: value });
 
@@ -40,6 +34,7 @@ const EditExpenseForm = ({ onUpdateExpense, expenseToEdit, categories, jars = []
     ];
 
     const selectedJar = jars.find((j) => String(j.id) === String(expense.jarId));
+    const selectedCategoryId = expense.categoryId || categories[0]?.id || "";
     const parsedAmount = Number(expense.amount) || 0;
 
     const originalAmount = expenseToEdit?.jarId === expense.jarId ? (expenseToEdit?.amount || 0) : 0;
@@ -64,7 +59,7 @@ const EditExpenseForm = ({ onUpdateExpense, expenseToEdit, categories, jars = []
             <Input
                 label="Danh mục"
                 placeholder={categories.length === 0 ? "Vui lòng tạo danh mục chi tiêu trước" : "Chọn danh mục"}
-                value={expense.categoryId}
+                value={selectedCategoryId}
                 onChange={({ target }) => handleChange("categoryId", target.value)}
                 isSelect={true}
                 options={categoryOptions}
@@ -111,7 +106,7 @@ const EditExpenseForm = ({ onUpdateExpense, expenseToEdit, categories, jars = []
                 <button
                     type="button"
                     className="add-btn add-btn-fill"
-                    onClick={() => onUpdateExpense(expense)}
+                    onClick={() => onUpdateExpense({ ...expense, categoryId: selectedCategoryId })}
                 >Cập nhật chi tiêu</button>
             </div>
         </div>

@@ -2,7 +2,6 @@ import { useCallback, useContext, useEffect, useState, useRef } from "react";
 import { LoaderCircle, Zap } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { AppContext } from "../context/AppContext.jsx";
-import { useTheme } from "../context/ThemeContext.jsx";
 import Header from "../components/Header.jsx";
 import Input from "../components/Input.jsx";
 import axiosConfig from "../util/axiosConfig.jsx";
@@ -20,12 +19,10 @@ const Login = () => {
   const navigate = useNavigate();
   usePageTitle("Đăng nhập");
   const { setUser } = useContext(AppContext);
-  const { theme } = useTheme();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const googleBtnContainerRef = useRef(null);
   const googleBtnLightRef = useRef(null);
@@ -53,7 +50,6 @@ const Login = () => {
   }, [searchParams, setSearchParams]);
 
   const handleGoogleCredential = useCallback(async (response) => {
-    setIsGoogleLoading(true);
     setError("");
     try {
       const { data } = await axiosConfig.post(API_ENDPOINTS.GOOGLE_AUTH, {
@@ -66,8 +62,6 @@ const Login = () => {
       }
     } catch (err) {
       setError(err.response?.data?.message || "Đăng nhập bằng Google thất bại. Vui lòng thử lại.");
-    } finally {
-      setIsGoogleLoading(false);
     }
   }, [navigate, setUser]);
 
@@ -131,23 +125,6 @@ const Login = () => {
       }
     };
   }, [handleGoogleCredential]);
-
-  const handleGoogleLogin = () => {
-    if (!GOOGLE_CLIENT_ID) {
-      setError("Google Client ID chưa được cấu hình.");
-      return;
-    }
-    if (!window.google?.accounts?.id) {
-      setError("Đang tải Google Sign-In, vui lòng thử lại sau giây lát.");
-      return;
-    }
-    window.google.accounts.id.prompt((notification) => {
-      if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-        // Fallback: dùng renderButton nếu popup bị chặn
-        setError("Google popup bị chặn bởi trình duyệt. Vui lòng cho phép popup và thử lại.");
-      }
-    });
-  };
 
   const handleForgotPassword = () => navigate("/forgot-password");
 

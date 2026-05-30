@@ -7,6 +7,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
@@ -82,7 +83,8 @@ public class RedisConfig implements CachingConfigurer {
                 BasicPolymorphicTypeValidator.builder()
                         .allowIfBaseType(Object.class)
                         .build(),
-                ObjectMapper.DefaultTyping.NON_FINAL
+                ObjectMapper.DefaultTyping.EVERYTHING,
+                com.fasterxml.jackson.annotation.JsonTypeInfo.As.PROPERTY
         );
         return new GenericJackson2JsonRedisSerializer(redisMapper);
     }
@@ -130,6 +132,24 @@ public class RedisConfig implements CachingConfigurer {
                 .withInitialCacheConfigurations(cacheConfigurations)
                 .transactionAware()
                 .build();
+    }
+
+    /**
+     * Xóa toàn bộ cache khi app khởi động để tránh lỗi deserialize
+     * do thay đổi format serializer (WRAPPER_ARRAY → PROPERTY).
+     */
+    @Bean
+    public CommandLineRunner cacheCleaner(CacheManager cacheManager) {
+        return args -> {
+            log.info("Clearing all Redis caches on startup to ensure serializer format consistency...");
+            cacheManager.getCacheNames().forEach(name -> {
+                var cache = cacheManager.getCache(name);
+                if (cache != null) {
+                    cache.clear();
+                    log.info("Cleared cache: {}", name);
+                }
+            });
+        };
     }
 
     @Override

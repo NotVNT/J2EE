@@ -97,6 +97,18 @@ public class AIChatController {
         return ResponseEntity.ok(chatHistoryService.getMessagesBySessionId(sessionId, userId));
     }
 
+    @PutMapping("/chat/sessions/{sessionId}/messages")
+    public ResponseEntity<Map<String, Object>> replaceMessages(
+            @PathVariable String sessionId,
+            @RequestBody AIChatSessionMessagesRequestDTO body
+    ) {
+        validateSessionId(sessionId);
+        checkAiAccess();
+        Long userId = profileService.getCurrentProfile().getId();
+        chatHistoryService.replaceSessionMessages(sessionId, userId, body.getMessages());
+        return ResponseEntity.ok(Map.of("message", "Da cap nhat lich su cuoc tro chuyen"));
+    }
+
     @PutMapping("/chat/sessions/{sessionId}/rename")
     public ResponseEntity<Map<String, Object>> renameSession(@PathVariable String sessionId, @RequestBody Map<String, String> body) {
         validateSessionId(sessionId);

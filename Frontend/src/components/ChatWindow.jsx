@@ -1,6 +1,5 @@
-import { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
-import { ArrowUp, MessageSquare, Sparkles, RotateCcw, ArrowLeft, Menu, Square, ChevronLeft, ChevronRight } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { ArrowUp, MessageSquare, Sparkles, RotateCcw, Menu, Square, ChevronLeft, ChevronRight, Pencil, X } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
@@ -56,8 +55,54 @@ const markdownComponents = {
 
 const modelLabelMap = {
   "gpt-oss-120b": "GPT-OSS",
-  "gemini-3.1-flash-lite": "Gemini Flash",
+  "gemini-3.1-flash-lite": "Gemini 3.1 Flash-Lite",
 };
+
+const CHAT_MODE_CARDS = [
+  {
+    title: "📊 Phân tích tài chính",
+    desc: "Phân tích và gợi ý cải thiện chi tiêu tháng này.",
+    prompt: "Hãy phân tích tình hình tài chính tháng này của tôi và đưa ra lời khuyên cải thiện.",
+  },
+  {
+    title: "💡 Gợi ý tiết kiệm",
+    desc: "Tư vấn kế hoạch tiết kiệm chi tiêu hiệu quả.",
+    prompt: "Làm thế nào để tôi có thể tiết kiệm chi tiêu hiệu quả hơn trong tháng này?",
+  },
+  {
+    title: "📈 Báo cáo tuần qua",
+    desc: "Tóm tắt nhanh dòng tiền tuần vừa rồi.",
+    prompt: "Tóm tắt báo cáo chi tiêu và thu nhập của tôi trong tuần qua.",
+  },
+  {
+    title: "🎯 Kế hoạch tài chính",
+    desc: "Lập kế hoạch mục tiêu tài chính cá nhân.",
+    prompt: "Giúp tôi lập kế hoạch tài chính để tiết kiệm được 50 triệu trong 6 tháng.",
+  },
+];
+
+const AGENT_MODE_CARDS = [
+  {
+    title: "📝 Thêm nhanh chi tiêu",
+    desc: "Nhập giao dịch bằng ngôn ngữ tự nhiên.",
+    prompt: "Thêm chi tiêu ăn trưa cùng đồng nghiệp 75k danh mục Ăn uống hôm nay",
+  },
+  {
+    title: "💰 Ghi thu nhập",
+    desc: "Ghi nhanh khoản thu nhập vừa nhận.",
+    prompt: "Thêm thu nhập lương tháng 15 triệu hôm nay",
+  },
+  {
+    title: "📤 Xuất Excel chi tiêu",
+    desc: "Tải xuống báo cáo chi tiêu tháng này.",
+    prompt: "Xuất báo cáo chi tiêu tháng này ra file Excel",
+  },
+  {
+    title: "📧 Gửi báo cáo qua email",
+    desc: "Gửi báo cáo tháng này đến email của bạn.",
+    prompt: "Gửi báo cáo chi tiêu tháng này qua email cho tôi",
+  },
+];
 
 const AIActionBar = ({ onRetry, disabled, currentBranch, totalBranches, onPrevBranch, onNextBranch }) => (
   <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-200 dark:border-white/[0.06]">
@@ -102,9 +147,10 @@ const ChatWindow = ({
   onUndo,
   onStopGenerating,
 }) => {
-  const navigate = useNavigate();
   const [input, setInput] = useState("");
   const [activeBranches, setActiveBranches] = useState({});
+  const [editingTarget, setEditingTarget] = useState(null);
+  const composerRef = useRef(null);
 
   const { visibleMessages } = useMemo(() => {
     const turns = [];
@@ -115,7 +161,7 @@ const ChatWindow = ({
           lastTurn.branches.push({ userMsg: msg, responses: [] });
         } else {
           turns.push({
-            id: msg.id || Math.random().toString(),
+            id: msg.id || `turn-${turns.length}`,
             userMsg: msg,
             branches: [{ userMsg: msg, responses: [] }]
           });
@@ -127,7 +173,7 @@ const ChatWindow = ({
           lastBranch.responses.push(msg);
         } else {
           turns.push({
-            id: msg.id || Math.random().toString(),
+            id: msg.id || `assistant-turn-${turns.length}`,
             userMsg: null,
             branches: [{ userMsg: null, responses: [msg] }]
           });
@@ -157,12 +203,27 @@ const ChatWindow = ({
   }, [messages, activeBranches]);
 
   const hasModelControls = !!onProviderSwitch;
+  const suggestionCards = selectedProvider === "gemini" ? AGENT_MODE_CARDS : CHAT_MODE_CARDS;
+
+  const cancelEditing = () => {
+    setEditingTarget(null);
+    setInput("");
+    composerRef.current?.focus();
+  };
+
+  const startEditing = (message) => {
+    if (isSending || !message?.id) return;
+    setEditingTarget({ id: message.id, content: message.content });
+    setInput(message.content);
+    composerRef.current?.focus();
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!input.trim() || isSending) return;
-    onSendMessage(input);
+    onSendMessage(input, { editMessageId: editingTarget?.id ?? null });
     setInput("");
+    setEditingTarget(null);
   };
 
   const handleKeyDown = (e) => {
@@ -244,34 +305,22 @@ const ChatWindow = ({
                 Tôi là Trợ lý Tài chính Nova AI. Bạn cần tôi hỗ trợ phân tích chi tiêu hay cập nhật giao dịch gì hôm nay không?
               </p>
               
+              <p className="text-xs text-slate-400 dark:text-slate-500 mb-3 font-medium">
+                {selectedProvider === "gemini"
+                  ? "⚡ Gợi ý Agent - ra lệnh trực tiếp"
+                  : "💬 Gợi ý Chat - hỏi & tư vấn"}
+              </p>
+
               {/* Grid of Suggestion Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 w-full mt-10 text-left">
-                {[
-                  {
-                    title: "📊 Phân tích tài chính",
-                    desc: "Phân tích và gợi ý cải thiện chi tiêu tháng này của tôi.",
-                    prompt: "Hãy phân tích tình hình tài chính tháng này của tôi và đưa ra lời khuyên cải thiện."
-                  },
-                  {
-                    title: "💡 Gợi ý tiết kiệm",
-                    desc: "Đưa ra kế hoạch tiết kiệm tiền hiệu quả nhất.",
-                    prompt: "Làm thế nào để tôi có thể tiết kiệm chi tiêu hiệu quả hơn trong tháng này?"
-                  },
-                  {
-                    title: "📝 Thêm nhanh chi tiêu",
-                    desc: "Nhập giao dịch bằng ngôn ngữ tự nhiên cực nhanh.",
-                    prompt: "Thêm chi tiêu: Ăn trưa cùng đồng nghiệp 75k từ hũ Ăn uống"
-                  },
-                  {
-                    title: "📈 Báo cáo tuần qua",
-                    desc: "Tóm tắt nhanh báo cáo dòng tiền tuần vừa rồi.",
-                    prompt: "Tóm tắt báo cáo chi tiêu và thu nhập của tôi trong tuần qua."
-                  }
-                ].map((card, idx) => (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 w-full mt-6 text-left">
+                {suggestionCards.map((card, idx) => (
                   <button
                     key={idx}
                     type="button"
-                    onClick={() => setInput(card.prompt)}
+                    onClick={() => {
+                      setEditingTarget(null);
+                      setInput(card.prompt);
+                    }}
                     className="p-4 rounded-2xl text-left bg-slate-50/50 hover:bg-slate-100/80 dark:bg-white/[0.02] dark:hover:bg-white/[0.06]
                       border border-slate-200/50 hover:border-violet-500/30 dark:border-white/[0.04] dark:hover:border-amber-500/30
                       transition-all duration-300 group shadow-sm hover:shadow-[0_4px_20px_rgba(139,92,246,0.06)] dark:hover:shadow-[0_4px_20px_rgba(245,158,11,0.06)] hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
@@ -378,7 +427,22 @@ const ChatWindow = ({
                     />
                   )}
 
-                  {msg.role === "user" && <p className="font-normal">{msg.content}</p>}
+                  {msg.role === "user" && (
+                    <>
+                      <p className="font-normal">{msg.content}</p>
+                      <div className="mt-2 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={() => startEditing(msg)}
+                          disabled={isSending}
+                          className="inline-flex items-center gap-1 rounded-lg bg-white/10 px-2.5 py-1 text-[11px] font-medium text-white/90 transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          <Pencil size={11} />
+                          Sửa & gửi lại
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
 
               </div>
@@ -403,6 +467,20 @@ const ChatWindow = ({
       {/* Input area - Sticky Blur with Dynamic glow button */}
       <div className="px-3 md:px-6 pb-5 pt-3 border-t border-slate-100 dark:border-white/[0.04] bg-white/80 dark:bg-[#131314]/80 backdrop-blur-md sticky bottom-0">
         <form onSubmit={handleSubmit} className="max-w-3xl mx-auto">
+          {editingTarget && (
+            <div className="mb-2 flex items-center justify-between gap-3 rounded-2xl border border-violet-200/70 bg-violet-50/80 px-4 py-2 text-xs text-violet-700 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300">
+              <span>Đang sửa một tin nhắn cũ. Gửi đi sẽ tạo lại cuộc hội thoại từ đoạn này.</span>
+              <button
+                type="button"
+                onClick={cancelEditing}
+                className="inline-flex items-center gap-1 rounded-lg px-2 py-1 font-semibold transition hover:bg-violet-100 dark:hover:bg-amber-500/10"
+              >
+                <X size={12} />
+                Hủy
+              </button>
+            </div>
+          )}
+
           {/* Main input box - pill shape with gorgeous focus glows */}
           <div className="relative flex items-end gap-2 bg-slate-100/80 hover:bg-slate-100 dark:bg-[#1e1f20]/90 dark:hover:bg-[#1e1f20] rounded-[28px]
             focus-within:bg-white dark:focus-within:bg-[#202124]
@@ -412,10 +490,11 @@ const ChatWindow = ({
             transition-all duration-300 pl-5 md:pl-6 pr-3.5 py-2.5 min-h-[54px] shadow-sm">
 
             <textarea
+              ref={composerRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Nhập câu hỏi hoặc yêu cầu Nova Money..."
+              placeholder={editingTarget ? "Sửa nội dung rồi gửi lại..." : "Nhập câu hỏi hoặc yêu cầu Nova Money..."}
               rows={1}
               className="flex-1 bg-transparent text-[14px] md:text-[15px] text-slate-800 dark:text-[#e3e3e3] placeholder-slate-400 dark:placeholder-[#c4c7c5]
                 resize-none outline-none py-2 max-h-[160px] leading-relaxed font-normal"

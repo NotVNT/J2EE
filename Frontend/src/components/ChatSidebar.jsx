@@ -64,7 +64,6 @@ const ChatSidebar = ({
   const [editingId, setEditingId] = useState(null);
   const [editTitle, setEditTitle] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(null);
-  const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef(null);
@@ -194,7 +193,7 @@ const ChatSidebar = ({
             )}
           </div>
         ) : (
-          grouped.map((group, gi) => (
+          grouped.map((group) => (
             <div key={group.label} className="mb-4">
               <div className="sticky top-0 bg-slate-50/90 dark:bg-[#1e1f20]/90 backdrop-blur-sm z-10 py-1">
                 <h3 className="text-[13px] font-medium text-slate-500 dark:text-[#c4c7c5] px-4">

@@ -146,6 +146,48 @@ export const isExportEmailIntent = (intent) => {
   ));
 };
 
+export const normalizeAmountInput = (value) => {
+  if (value === null || value === undefined || value === "") {
+    return value;
+  }
+
+  const rawValue = String(value).trim();
+  if (!rawValue) {
+    return value;
+  }
+
+  const normalizedValue = rawValue
+    .replace(/đ/giu, "")
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase();
+
+  const compactValue = normalizedValue.replace(/\s+/g, "");
+  const parseShorthandNumber = (numericPart) => Number.parseFloat(numericPart.replace(",", "."));
+
+  const thousandMatch = compactValue.match(/^(\d+(?:[.,]\d+)?)k$/i);
+  if (thousandMatch) {
+    return Math.round(parseShorthandNumber(thousandMatch[1]) * 1000);
+  }
+
+  const millionMatch = compactValue.match(/^(\d+(?:[.,]\d+)?)(tr|trieu|m)$/i);
+  if (millionMatch) {
+    return Math.round(parseShorthandNumber(millionMatch[1]) * 1000000);
+  }
+
+  const nghinMatch = compactValue.match(/^(\d+(?:[.,]\d+)?)(nghin|ngan)$/i);
+  if (nghinMatch) {
+    return Math.round(parseShorthandNumber(nghinMatch[1]) * 1000);
+  }
+
+  const digitsOnlyValue = normalizedValue.replace(/[.,\s]/g, "");
+  if (/^\d+$/.test(digitsOnlyValue)) {
+    return Math.round(Number.parseFloat(digitsOnlyValue));
+  }
+
+  return value;
+};
+
 /**
  * Client-side telemetry stubs for intent parsing quality monitoring.
  * Replace these with actual analytics calls (e.g., Mixpanel, Amplitude, or custom backend).

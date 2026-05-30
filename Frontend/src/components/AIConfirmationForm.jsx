@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { Check, X, ChevronDown } from "lucide-react";
 import * as Lucide from "lucide-react";
-import { getFieldsForIntent, INTENT_ICONS, INTENT_LABELS } from "../util/aiIntentParser.js";
+import { getFieldsForIntent, INTENT_ICONS, INTENT_LABELS, normalizeAmountInput } from "../util/aiIntentParser.js";
 import axiosConfig from "../util/axiosConfig.jsx";
 import { API_ENDPOINTS } from "../util/apiEndpoints.js";
 import DateInput from "./DateInput.jsx";
@@ -182,7 +182,17 @@ const buildInitialFormData = (fields, extractedFields, suggestedValues) => {
 
   fields.forEach((field) => {
     const rawValue = merged[field.key] !== undefined ? merged[field.key] : "";
-    initialData[field.key] = field.type === "date" ? (normalizeToIsoDate(rawValue) || rawValue) : rawValue;
+    if (field.type === "date") {
+      initialData[field.key] = normalizeToIsoDate(rawValue) || rawValue;
+      return;
+    }
+
+    if (field.type === "number") {
+      initialData[field.key] = rawValue !== "" ? normalizeAmountInput(rawValue) : "";
+      return;
+    }
+
+    initialData[field.key] = rawValue;
   });
 
   return initialData;
@@ -204,23 +214,43 @@ const AIConfirmationForm = ({ intent, extractedFields, suggestedValues, confirma
     )];
 
     if (categoryTypes.length > 0) {
-      setLoadingCategories(true);
-      Promise.all(
-        categoryTypes.map((catType) =>
-          axiosConfig.get(API_ENDPOINTS.CATEGORY_BY_TYPE(catType))
-            .then((res) => setCategoriesByType((prev) => ({ ...prev, [catType]: res.data })))
-            .catch(() => {})
-        )
-      ).finally(() => setLoadingCategories(false));
+      const loadCategories = async () => {
+        setLoadingCategories(true);
+        try {
+          const responses = await Promise.all(
+            categoryTypes.map((catType) =>
+              axiosConfig.get(API_ENDPOINTS.CATEGORY_BY_TYPE(catType))
+                .then((res) => [catType, res.data])
+                .catch(() => [catType, []])
+            )
+          );
+          setCategoriesByType((prev) => ({
+            ...prev,
+            ...Object.fromEntries(responses),
+          }));
+        } finally {
+          setLoadingCategories(false);
+        }
+      };
+
+      void loadCategories();
     }
 
     const hasJarSelect = fields.some((f) => f.type === "jar_select");
     if (hasJarSelect) {
-      setLoadingJars(true);
-      axiosConfig.get(API_ENDPOINTS.GET_JARS)
-        .then((res) => setJars(res.data || []))
-        .catch(() => {})
-        .finally(() => setLoadingJars(false));
+      const loadJars = async () => {
+        setLoadingJars(true);
+        try {
+          const res = await axiosConfig.get(API_ENDPOINTS.GET_JARS);
+          setJars(res.data || []);
+        } catch {
+          setJars([]);
+        } finally {
+          setLoadingJars(false);
+        }
+      };
+
+      void loadJars();
     }
   }, [fields]);
 
@@ -230,7 +260,17 @@ const AIConfirmationForm = ({ intent, extractedFields, suggestedValues, confirma
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onConfirm(intent, { ...suggestedValues, ...extractedFields, ...formData });
+    const mergedData = { ...suggestedValues, ...extractedFields, ...formData };
+    const normalizedData = {};
+
+    for (const [key, value] of Object.entries(mergedData)) {
+      const fieldDefinition = fields.find((field) => field.key === key);
+      normalizedData[key] = fieldDefinition?.type === "number"
+        ? normalizeAmountInput(value)
+        : value;
+    }
+
+    onConfirm(intent, normalizedData);
   };
 
   const intentIcon = INTENT_ICONS[intent] || "🤖";
@@ -312,13 +352,12 @@ const AIConfirmationForm = ({ intent, extractedFields, suggestedValues, confirma
                   />
                 ) : (
                   <input
-                    type={field.type === "number" ? "number" : "text"}
+                    type="text"
+                    inputMode={field.type === "number" ? "decimal" : undefined}
                     value={formData[field.key] || ""}
                     onChange={(e) => handleFieldChange(field.key, e.target.value)}
                     placeholder={field.label}
                     required={field.required}
-                    min={field.type === "number" ? "0" : undefined}
-                    step={field.type === "number" ? "any" : undefined}
                     className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-100/50 dark:hover:bg-slate-800/80 px-3.5 py-2.5 text-sm text-slate-800 dark:text-slate-200 outline-none transition-all duration-200 focus:border-violet-500 dark:focus:border-violet-400 focus:ring-1 focus:ring-violet-500/20 dark:focus:ring-violet-500/20"
                   />
                 )}

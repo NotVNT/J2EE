@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTheme } from '../context/ThemeContext';
 import { 
     Sun, Moon, TrendingUp, Shield, BarChart3, Wallet, Target, Sparkles, 
     Star, ArrowRight, Check, ChevronRight, Menu, X, ArrowUpRight, ShieldCheck, Zap
@@ -12,7 +11,6 @@ import favicon from '../assets/logo/favicon.png';
 const LandingPage = () => {
     const navigate = useNavigate();
     usePageTitle("Trang chủ");
-    const { theme } = useTheme();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
 

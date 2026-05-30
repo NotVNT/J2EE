@@ -24,7 +24,7 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 public class AIOrchestrationService {
 
-    private static final int MAX_USER_MESSAGE_LENGTH = 500;
+    private static final int MAX_USER_MESSAGE_LENGTH = 800;
 
     private static final Pattern INJECTION_PATTERN = Pattern.compile(
         "(?i)(ignore|forget|disregard).{0,20}(instruction|above|previous|system|prompt)|" +
@@ -51,11 +51,6 @@ public class AIOrchestrationService {
     private final ProfileRepository profileRepository;
     private final JarRepository jarRepository;
     private final ObjectMapper objectMapper;
-
-    // ─── Agent verbs for heuristic reclassification ──────────────────────────
-    private static final java.util.regex.Pattern AGENT_VERB_PATTERN = java.util.regex.Pattern.compile(
-        "(?i)(thêm|tạo|ghi|nhập|xóa|bỏ|hủy|sửa|chỉnh|đổi|cập nhật|xuất|tải|chuyển|gửi mail|gửi email|gửi qua email|gửi qua mail|email báo cáo|mail báo cáo|them|tao|xoa|bo|sua|chinh|doi|xuat|tai)"
-    );
 
     @Transactional(readOnly = true)
     public AIIntentResponseDTO parseIntentFromChat(AIIntentRequestDTO request) {
@@ -85,13 +80,14 @@ public class AIOrchestrationService {
             Map<String, Object> pageData = loadPageData(pageContext, profile);
             String systemPrompt = AIInstructionPromptBuilder.buildSystemPrompt(pageContext, pageData);
 
-            // Trim conversation history to last 3 turns (user+assistant pairs) to keep context sharp
-            List<AIChatMessageDTO> trimmedHistory = trimConversationHistory(request.getConversationHistory(), 6);
+            // Trim conversation history to last 5 turns (user+assistant pairs) to keep context sharp
+            List<AIChatMessageDTO> trimmedHistory = trimConversationHistory(request.getConversationHistory(), 10);
 
             String intentInstruction = "<user_request>\n" + userMessage + "\n</user_request>\n\n" +
                     "PHÂN LOẠI INTENT VÀ TRẢ VỀ JSON THUẦN. " +
                     "Bắt đầu { kết thúc }. Không có text ngoài JSON.";
 
+            intentInstruction += " LUU Y: amount/targetAmount/currentAmount phai la so nguyen (vd: 75000, khong phai '75k').";
             String rawResponse = callProviderForIntent(provider, systemPrompt, intentInstruction, trimmedHistory);
 
             String cleanedJson = extractJson(rawResponse);
@@ -799,6 +795,20 @@ public class AIOrchestrationService {
                         return m;
                     }).toList());
                 }
+                case "aichat" -> {
+                    result.put("totalExpenseCount", expenseService.getTotalExpenseCountForCurrentUser());
+                    result.put("totalIncomeCount", incomeService.getTotalIncomeCountForCurrentUser());
+                    result.put("totalExpenseAmount", expenseService.getTotalExpenseForCurrentUser());
+                    result.put("totalIncomeAmount", incomeService.getTotalIncomeForCurrentUser());
+                    List<ExpenseDTO> recentExp = expenseService.getLatest5ExpensesForCurrentUser();
+                    result.put("recentExpenses", recentExp.stream().map(this::buildExpenseMap).toList());
+                    List<IncomeDTO> recentInc = incomeService.getLatest5IncomesForCurrentUser();
+                    result.put("recentIncomes", recentInc.stream().map(this::buildIncomeMap).toList());
+                    List<CategoryDTO> categories = categoryService.getCategoriesForCurrentUser();
+                    result.put("categories", categories.stream()
+                            .map(c -> Map.of("id", c.getId(), "name", c.getName(), "type", c.getType()))
+                            .toList());
+                }
                 default -> {
                     result.put("totalExpenseCount", expenseService.getTotalExpenseCountForCurrentUser());
                     result.put("totalIncomeCount", incomeService.getTotalIncomeCountForCurrentUser());
@@ -978,12 +988,17 @@ public class AIOrchestrationService {
         boolean mentionsEmail = msg.matches(".*\\b(email|mail)\\b.*");
         boolean followUpToReport = mentionsEmail && recentHistorySuggestsReportAction(history);
         boolean hasJar = msg.matches(".*\\b(hu|jar)\\b.*");
+        boolean isAnalysisQuery = msg.matches(".*\\b(phan tich|goi y|tu van|tom tat|tinh hinh tai chinh|dong tien)\\b.*")
+                || msg.matches(".*\\b(lam the nao de|cach .* tiet kiem|goi y tiet kiem|tiet kiem hon)\\b.*");
 
         if (hasEmailCommand || followUpToReport) {
             return ctx.equals("income") ? "EMAIL_INCOME_REPORT" : "EMAIL_EXPENSE_REPORT";
         }
         if (hasExport) {
             return ctx.equals("income") ? "EXPORT_EXCEL_INCOME" : "EXPORT_EXCEL_EXPENSE";
+        }
+        if (isAnalysisQuery) {
+            return null;
         }
         if (hasJar) {
             if (hasDelete) return "DELETE_JAR";
@@ -1070,7 +1085,7 @@ public class AIOrchestrationService {
     private BigDecimal toBigDecimal(Object value, String fieldName) {
         if (value == null) return BigDecimal.ZERO;
         try {
-            return new BigDecimal(value.toString().trim());
+            return new BigDecimal(normalizeAmountLiteral(value.toString().trim()));
         } catch (NumberFormatException e) {
             log.warn("Invalid BigDecimal for field '{}': '{}'. Defaulting to ZERO.", fieldName, value);
             return BigDecimal.ZERO;
@@ -1088,6 +1103,63 @@ public class AIOrchestrationService {
         } catch (NumberFormatException e) {
             return null;
         }
+    }
+
+    private String normalizeAmountLiteral(String rawValue) {
+        if (rawValue == null || rawValue.isBlank()) {
+            return "0";
+        }
+
+        String normalized = Normalizer.normalize(rawValue, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "")
+                .replace("đ", "")
+                .replace("Đ", "")
+                .trim()
+                .toLowerCase(Locale.ROOT);
+
+        String compactValue = normalized.replaceAll("\\s+", "");
+        if (compactValue.matches("^\\d+(?:[.,]\\d+)?k$")) {
+            String numericPart = compactValue.substring(0, compactValue.length() - 1).replace(',', '.');
+            return BigDecimal.valueOf(Double.parseDouble(numericPart))
+                    .multiply(BigDecimal.valueOf(1_000))
+                    .setScale(0, java.math.RoundingMode.HALF_UP)
+                    .toPlainString();
+        }
+
+        if (compactValue.matches("^\\d+(?:[.,]\\d+)?(tr|trieu|m)$")) {
+            String numericPart = compactValue.replaceAll("(tr|trieu|m)$", "").replace(',', '.');
+            return BigDecimal.valueOf(Double.parseDouble(numericPart))
+                    .multiply(BigDecimal.valueOf(1_000_000))
+                    .setScale(0, java.math.RoundingMode.HALF_UP)
+                    .toPlainString();
+        }
+
+        if (compactValue.matches("^\\d+(?:[.,]\\d+)?(nghin|ngan)$")) {
+            String numericPart = compactValue.replaceAll("(nghin|ngan)$", "").replace(',', '.');
+            return BigDecimal.valueOf(Double.parseDouble(numericPart))
+                    .multiply(BigDecimal.valueOf(1_000))
+                    .setScale(0, java.math.RoundingMode.HALF_UP)
+                    .toPlainString();
+        }
+
+        if (compactValue.matches("^\\d{1,3}([.,]\\d{3})+$")) {
+            return compactValue.replaceAll("[.,]", "");
+        }
+
+        if (compactValue.matches("^\\d+[.,]\\d+$")) {
+            int separatorIndex = Math.max(compactValue.lastIndexOf('.'), compactValue.lastIndexOf(','));
+            int digitsAfterSeparator = compactValue.length() - separatorIndex - 1;
+            if (digitsAfterSeparator == 3) {
+                return compactValue.replaceAll("[.,]", "");
+            }
+            return compactValue.replace(',', '.');
+        }
+
+        if (normalized.matches("^[\\d\\s]+$")) {
+            return normalized.replaceAll("\\s+", "");
+        }
+
+        return rawValue;
     }
 
     private String formatCurrency(BigDecimal amount) {

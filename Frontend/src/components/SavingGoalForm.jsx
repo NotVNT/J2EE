@@ -1,27 +1,29 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import DateInput from "./DateInput.jsx";
 import { getTodayIsoDate, isIsoDateAfter, normalizeToIsoDate } from "../util/dateInput.js";
 
-const SavingGoalForm = ({ initialData, isEditing, onSave, onCancel }) => {
-    const [form, setForm] = useState({
+const buildInitialGoalForm = (initialData, isEditing) => {
+    if (initialData && isEditing) {
+        return {
+            name: initialData.name || "",
+            targetAmount: initialData.targetAmount || "",
+            currentAmount: initialData.currentAmount || "",
+            startDate: normalizeToIsoDate(initialData.startDate),
+            targetDate: normalizeToIsoDate(initialData.targetDate),
+        };
+    }
+
+    return {
         name: "",
         targetAmount: "",
         currentAmount: "",
         startDate: getTodayIsoDate(),
         targetDate: "",
-    });
+    };
+};
 
-    useEffect(() => {
-        if (initialData && isEditing) {
-            setForm({
-                name: initialData.name || "",
-                targetAmount: initialData.targetAmount || "",
-                currentAmount: initialData.currentAmount || "",
-                startDate: normalizeToIsoDate(initialData.startDate),
-                targetDate: normalizeToIsoDate(initialData.targetDate),
-            });
-        }
-    }, [initialData, isEditing]);
+const SavingGoalForm = ({ initialData, isEditing, onSave, onCancel }) => {
+    const [form, setForm] = useState(() => buildInitialGoalForm(initialData, isEditing));
 
     const handleChange = (key, value) => setForm({ ...form, [key]: value });
 

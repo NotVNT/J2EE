@@ -117,17 +117,6 @@ const TransactionCalendar = ({
     );
   };
 
-  const detailFields = activeTransaction ? [
-    { label: "Tên giao dịch", value: activeTransaction.name || "Không có" },
-    { label: "Loại", value: activeTransaction.type === "income" ? "Thu nhập" : "Chi tiêu" },
-    { label: "Ngày", value: normalizeTransactionMoment(activeTransaction.date)?.format("DD/MM/YYYY") || "Không có" },
-    { label: "Số tiền", value: `${activeTransaction.type === "income" ? "+" : "-"} ${addThousandsSeparator(activeTransaction.amount)}đ` },
-    { label: "Danh mục", value: activeTransaction.categoryName || "Chưa phân loại" },
-    { label: "Mã giao dịch", value: activeTransaction.id != null ? `#${activeTransaction.id}` : "Không có" },
-    { label: "Biểu tượng", value: activeTransaction.icon || "Không có" },
-    { label: "Thông tin hóa đơn", value: activeTransaction.receiptLocation || "Không có" },
-  ] : [];
-
   return (
     <div className="card">
       <div className="flex flex-col gap-4 sm:gap-5">
