@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import CustomSelect from "./CustomSelect.jsx";
+import DateInput from "./DateInput.jsx";
 
 const Input = ({ label, value, onChange, placeholder, type = "text", isSelect = false, options = [] }) => {
   const [showPassword, setShowPassword] = useState(false);
@@ -29,13 +30,22 @@ const Input = ({ label, value, onChange, placeholder, type = "text", isSelect = 
           />
         ) : (
           <>
-            <input
-              className={`${baseClass} ${type === "password" ? "pr-11" : ""}`}
-              type={type === "password" ? (showPassword ? "text" : "password") : type}
-              placeholder={placeholder}
-              value={value}
-              onChange={onChange}
-            />
+            {type === "date" ? (
+              <DateInput
+                className={baseClass}
+                placeholder={placeholder || "dd/mm/yyyy"}
+                value={value}
+                onChange={onChange}
+              />
+            ) : (
+              <input
+                className={`${baseClass} ${type === "password" ? "pr-11" : ""}`}
+                type={type === "password" ? (showPassword ? "text" : "password") : type}
+                placeholder={placeholder}
+                value={value}
+                onChange={onChange}
+              />
+            )}
             {type === "password" && (
               <button
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"

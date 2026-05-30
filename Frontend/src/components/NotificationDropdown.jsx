@@ -80,7 +80,7 @@ const NotificationDropdown = () => {
 
   const pollNotifications = async () => {
     try {
-      const res = await axiosConfig.get(API_ENDPOINTS.GET_NOTIFICATIONS);
+      const res = await axiosConfig.get(API_ENDPOINTS.GET_NOTIFICATIONS, { _skipGlobalLoading: true });
       if (res.status === 200) {
         const fetchedNotifs = res.data;
         
@@ -116,7 +116,7 @@ const NotificationDropdown = () => {
   const fetchNotifications = async () => {
     setLoading(true);
     try {
-      const res = await axiosConfig.get(API_ENDPOINTS.GET_NOTIFICATIONS);
+      const res = await axiosConfig.get(API_ENDPOINTS.GET_NOTIFICATIONS, { _skipGlobalLoading: true });
       if (res.status === 200) {
         setNotifications(res.data.slice(0, 5));
         const unread = res.data.filter(n => !n.isRead).length;
@@ -234,7 +234,7 @@ const NotificationDropdown = () => {
       </button>
 
       {showDropdown && (
-        <div className="absolute right-0 mt-2 w-80 rounded-2xl shadow-2xl z-50 overflow-hidden
+        <div className="fixed top-16 right-4 left-4 sm:absolute sm:top-auto sm:right-0 sm:left-auto sm:mt-2 sm:w-80 rounded-2xl shadow-2xl z-50 overflow-hidden
           bg-white dark:bg-[#1E293B] border border-slate-200 dark:border-white/10 flex flex-col max-h-[500px]">
           
           <div className="px-4 py-3 border-b border-slate-100 dark:border-white/10 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">

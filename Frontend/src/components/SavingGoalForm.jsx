@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
+import DateInput from "./DateInput.jsx";
+import { getTodayIsoDate, isIsoDateAfter, normalizeToIsoDate } from "../util/dateInput.js";
 
 const SavingGoalForm = ({ initialData, isEditing, onSave, onCancel }) => {
     const [form, setForm] = useState({
         name: "",
         targetAmount: "",
         currentAmount: "",
-        startDate: new Date().toISOString().split("T")[0],
+        startDate: getTodayIsoDate(),
         targetDate: "",
     });
 
@@ -15,8 +17,8 @@ const SavingGoalForm = ({ initialData, isEditing, onSave, onCancel }) => {
                 name: initialData.name || "",
                 targetAmount: initialData.targetAmount || "",
                 currentAmount: initialData.currentAmount || "",
-                startDate: initialData.startDate || "",
-                targetDate: initialData.targetDate || "",
+                startDate: normalizeToIsoDate(initialData.startDate),
+                targetDate: normalizeToIsoDate(initialData.targetDate),
             });
         }
     }, [initialData, isEditing]);
@@ -28,7 +30,7 @@ const SavingGoalForm = ({ initialData, isEditing, onSave, onCancel }) => {
         if (!form.targetAmount || Number(form.targetAmount) <= 0) { alert("Số tiền mục tiêu phải lớn hơn 0"); return; }
         if (!isEditing && Number(form.currentAmount) > Number(form.targetAmount)) { alert("Số tiền hiện có không được lớn hơn số tiền mục tiêu"); return; }
         if (!form.targetDate) { alert("Hãy chọn hạn chót"); return; }
-        if (form.targetDate < form.startDate) { alert("Hạn chót phải lớn hơn hoặc bằng ngày bắt đầu"); return; }
+        if (isIsoDateAfter(form.startDate, form.targetDate)) { alert("Hạn chót phải lớn hơn hoặc bằng ngày bắt đầu"); return; }
 
         const dto = {
             name: form.name.trim(),
@@ -40,9 +42,9 @@ const SavingGoalForm = ({ initialData, isEditing, onSave, onCancel }) => {
         onSave(dto);
     };
 
-    const fmt = (v) => {
-        if (!v && v !== 0) return "";
-        return Number(v).toLocaleString("vi-VN");
+    const fmt = (value) => {
+        if (!value && value !== 0) return "";
+        return Number(value).toLocaleString("vi-VN");
     };
 
     const labelClass = "text-xs font-medium text-slate-700 dark:text-slate-300";
@@ -87,8 +89,7 @@ const SavingGoalForm = ({ initialData, isEditing, onSave, onCancel }) => {
             {!isEditing && (
                 <div>
                     <label className={labelClass}>Ngày bắt đầu</label>
-                    <input
-                        type="date"
+                    <DateInput
                         value={form.startDate}
                         onChange={(e) => handleChange("startDate", e.target.value)}
                         className="form-input"
@@ -98,8 +99,7 @@ const SavingGoalForm = ({ initialData, isEditing, onSave, onCancel }) => {
 
             <div>
                 <label className={labelClass}>Hạn chót</label>
-                <input
-                    type="date"
+                <DateInput
                     value={form.targetDate}
                     onChange={(e) => handleChange("targetDate", e.target.value)}
                     className="form-input"
@@ -117,7 +117,7 @@ const SavingGoalForm = ({ initialData, isEditing, onSave, onCancel }) => {
                     onClick={onCancel}
                     className="flex-1 bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/15 text-slate-700 dark:text-slate-300 py-2.5 rounded-xl text-sm font-medium transition-colors"
                 >
-                    Huỷ
+                    Hủy
                 </button>
             </div>
         </div>

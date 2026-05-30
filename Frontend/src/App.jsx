@@ -169,7 +169,7 @@ const App = () => {
         let cancelled = false;
         const checkSession = async () => {
             try {
-                const response = await axiosConfig.get(API_ENDPOINTS.GET_USER_INFO);
+                const response = await axiosConfig.get(API_ENDPOINTS.GET_USER_INFO, { _skipGlobalLoading: true });
                 if (!cancelled && response.data) {
                     setUser(response.data);
                     navigate(getPostAuthRedirectPath(response.data));

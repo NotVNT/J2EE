@@ -3,6 +3,8 @@ import { Check, X, ChevronDown } from "lucide-react";
 import { getFieldsForIntent, INTENT_ICONS, INTENT_LABELS } from "../util/aiIntentParser.js";
 import axiosConfig from "../util/axiosConfig.jsx";
 import { API_ENDPOINTS } from "../util/apiEndpoints.js";
+import DateInput from "./DateInput.jsx";
+import { normalizeToIsoDate } from "../util/dateInput.js";
 
 const CategorySelect = ({ value, onChange, options, required, disabled, placeholder = "-- Chọn danh mục --" }) => {
   const [open, setOpen] = useState(false);
@@ -145,7 +147,8 @@ const AIConfirmationForm = ({ intent, extractedFields, suggestedValues, confirma
     setFields(fieldDefs);
     const initialData = {};
     fieldDefs.forEach((f) => {
-      initialData[f.key] = merged[f.key] !== undefined ? merged[f.key] : "";
+      const rawValue = merged[f.key] !== undefined ? merged[f.key] : "";
+      initialData[f.key] = f.type === "date" ? (normalizeToIsoDate(rawValue) || rawValue) : rawValue;
     });
     setFormData(initialData);
 
@@ -231,12 +234,11 @@ const AIConfirmationForm = ({ intent, extractedFields, suggestedValues, confirma
                 placeholder={loadingJars ? "Đang tải hũ..." : undefined}
               />
             ) : field.type === "date" ? (
-              <input
-                type="date"
+              <DateInput
                 value={formData[field.key] || ""}
                 onChange={(e) => handleFieldChange(field.key, e.target.value)}
-                required={field.required}
                 className="w-full rounded-xl border border-amber-200 dark:border-amber-500/30 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-800 dark:text-slate-200 outline-none focus:border-amber-400 dark:focus:border-amber-500"
+                required={field.required}
               />
             ) : (
               <input

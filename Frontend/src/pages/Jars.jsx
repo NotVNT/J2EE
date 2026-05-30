@@ -18,6 +18,7 @@ import TransactionInfoCard from "../components/TransactionInfoCard.jsx";
 import AddExpenseForm from "../components/AddExpenseForm.jsx";
 import EditExpenseForm from "../components/EditExpenseForm.jsx";
 import { hasDisplayImage } from "../util/imageDisplay.js";
+import { getTodayIsoDate, isIsoDateAfter } from "../util/dateInput.js";
 
 const fmt = (n) =>
   new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(n ?? 0);
@@ -83,8 +84,8 @@ const Jars = () => {
     if (!categoryId) { toast.error("Vui lòng chọn danh mục."); return; }
     if (!amount || isNaN(amount) || Number(amount) <= 0) { toast.error("Số tiền phải lớn hơn 0."); return; }
     if (!date) { toast.error("Vui lòng chọn ngày."); return; }
-    const today = new Date().toISOString().split("T")[0];
-    if (date > today) { toast.error("Ngày không được chọn ở tương lai."); return; }
+    const today = getTodayIsoDate();
+    if (isIsoDateAfter(date, today)) { toast.error("Ngày không được chọn ở tương lai."); return; }
 
     try {
       const response = await axiosConfig.post(API_ENDPOINTS.ADD_EXPENSE, {
@@ -121,8 +122,8 @@ const Jars = () => {
     if (!categoryId) { toast.error("Vui lòng chọn danh mục."); return; }
     if (!amount || isNaN(amount) || Number(amount) <= 0) { toast.error("Số tiền phải lớn hơn 0."); return; }
     if (!date) { toast.error("Vui lòng chọn ngày."); return; }
-    const today = new Date().toISOString().split("T")[0];
-    if (date > today) { toast.error("Ngày không được chọn ở tương lai."); return; }
+    const today = getTodayIsoDate();
+    if (isIsoDateAfter(date, today)) { toast.error("Ngày không được chọn ở tương lai."); return; }
 
     try {
       const response = await axiosConfig.put(API_ENDPOINTS.UPDATE_EXPENSE(id), {

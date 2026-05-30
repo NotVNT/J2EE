@@ -9,6 +9,7 @@ import toast from "react-hot-toast";
 import TransactionInfoCard from "../components/TransactionInfoCard.jsx";
 import moment from "moment";
 import { usePageTitle } from "../hooks/usePageTitle.js";
+import DateInput from "../components/DateInput.jsx";
 
 const Filter = () => {
     useUser();
@@ -82,10 +83,9 @@ const Filter = () => {
                             <label htmlFor="startdate" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">
                                 Từ ngày
                             </label>
-                            <input
+                            <DateInput
                                 value={startDate}
                                 id="startdate"
-                                type="date"
                                 className="w-full rounded-xl px-3.5 py-2.5 text-sm outline-none transition-colors
                                     bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10
                                     text-slate-900 dark:text-white
@@ -98,10 +98,9 @@ const Filter = () => {
                             <label htmlFor="enddate" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">
                                 Đến ngày
                             </label>
-                            <input
+                            <DateInput
                                 value={endDate}
                                 id="enddate"
-                                type="date"
                                 className="w-full rounded-xl px-3.5 py-2.5 text-sm outline-none transition-colors
                                     bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10
                                     text-slate-900 dark:text-white

@@ -3,6 +3,8 @@ import axiosConfig from "../util/axiosConfig.jsx";
 import { API_ENDPOINTS } from "../util/apiEndpoints.js";
 import Modal from "./Modal.jsx";
 import { HandCoins, History } from "lucide-react";
+import DateInput from "./DateInput.jsx";
+import { getTodayIsoDate } from "../util/dateInput.js";
 
 const fmt = (n) =>
     new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(n);
@@ -20,7 +22,7 @@ const ContributionModal = ({ goal, onClose, onContribute }) => {
 
     const [form, setForm] = useState({
         amount: "",
-        contributionDate: new Date().toISOString().split("T")[0],
+        contributionDate: getTodayIsoDate(),
         note: "",
     });
 
@@ -49,7 +51,7 @@ const ContributionModal = ({ goal, onClose, onContribute }) => {
         };
         const ok = await onContribute(goal.id, dto);
         if (ok) {
-            setForm({ amount: "", contributionDate: new Date().toISOString().split("T")[0], note: "" });
+            setForm({ amount: "", contributionDate: getTodayIsoDate(), note: "" });
             fetchHistory();
         }
     };
@@ -112,8 +114,7 @@ const ContributionModal = ({ goal, onClose, onContribute }) => {
                     </div>
                     <div>
                         <label className={labelClass}>Ngày đóng góp</label>
-                        <input
-                            type="date"
+                        <DateInput
                             value={form.contributionDate}
                             onChange={(e) => setForm({ ...form, contributionDate: e.target.value })}
                             className="form-input"

@@ -3,6 +3,7 @@ import EmojiPickerPopup from "./EmojiPickerPopup.jsx";
 import Input from "./Input.jsx";
 import { formatCurrency } from "../util/helper.js";
 import { AlertTriangle } from "lucide-react";
+import { normalizeToIsoDate } from "../util/dateInput.js";
 
 const EditExpenseForm = ({ onUpdateExpense, expenseToEdit, categories, jars = [] }) => {
     const [expense, setExpense] = useState({
@@ -10,7 +11,7 @@ const EditExpenseForm = ({ onUpdateExpense, expenseToEdit, categories, jars = []
         name: expenseToEdit?.name || "",
         categoryId: expenseToEdit?.categoryId || "",
         amount: expenseToEdit?.amount ? String(expenseToEdit.amount) : "",
-        date: expenseToEdit?.date ? expenseToEdit.date.split("T")[0] : "",
+        date: normalizeToIsoDate(expenseToEdit?.date),
         icon: expenseToEdit?.icon || "",
         jarId: expenseToEdit?.jarId || "",
     });

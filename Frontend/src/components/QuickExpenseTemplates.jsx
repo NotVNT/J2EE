@@ -4,6 +4,7 @@ import CustomSelect from "./CustomSelect.jsx";
 import toast from "react-hot-toast";
 import axiosConfig from "../util/axiosConfig.jsx";
 import { API_ENDPOINTS } from "../util/apiEndpoints.js";
+import { getTodayIsoDate } from "../util/dateInput.js";
 
 const STORAGE_KEY = "quick_expense_templates";
 
@@ -323,7 +324,7 @@ const QuickExpenseTemplates = ({ categories = [], onAddExpense }) => {
 
   const submitExpense = useCallback(async (template, selectedJarId) => {
     setLoadingId(template.id);
-    const today = new Date().toISOString().split("T")[0];
+    const today = getTodayIsoDate();
     const categoryId = template.categoryId || (categories[0]?.id ?? null);
     try {
       await onAddExpense({

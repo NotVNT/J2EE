@@ -1,6 +1,7 @@
 import axios from "axios";
 import { BASE_URL } from "./apiEndpoints.js";
 import { redirectToExpiredSessionLogin } from "./authRedirect.js";
+import { axiosShowLoading, axiosHideLoading } from "./axiosLoadingBridge.js";
 
 const axiosConfig = axios.create({
   baseURL: BASE_URL,
@@ -12,9 +13,30 @@ const axiosConfig = axios.create({
   }
 });
 
-axiosConfig.interceptors.response.use(
-  (response) => response,
+axiosConfig.interceptors.request.use(
+  (config) => {
+    if (config._skipGlobalLoading !== true) {
+      axiosShowLoading(config._loadingMessage || null);
+    }
+    return config;
+  },
   (error) => {
+    return Promise.reject(error);
+  }
+);
+
+axiosConfig.interceptors.response.use(
+  (response) => {
+    if (response.config?._skipGlobalLoading !== true) {
+      axiosHideLoading();
+    }
+    return response;
+  },
+  (error) => {
+    if (error.config?._skipGlobalLoading !== true) {
+      axiosHideLoading();
+    }
+
     redirectToExpiredSessionLogin({
       status: error.response?.status,
     });
