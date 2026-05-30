@@ -222,7 +222,7 @@ Báo cáo tổng hợp từng tháng bằng **MonthlyReportCard**:
 ### Dự Báo Tài Chính (`/forecast`) — PREMIUM Only
 - Dự đoán chi tiêu 6 tháng tới (hiện tại + 5 tháng tiếp theo) dựa trên 6 tháng lịch sử
 - **Anomaly Detection**: Phát hiện khoản chi bất thường
-- **AI Insights**: Phân tích dự báo chi tiết bằng **Gemini** (`POST /forecast/insights`)
+- **AI Insights**: Phân tích dự báo chi tiết bằng **Gemini** (`POST /forecast/insights`) — tối ưu trải nghiệm tải bất đồng bộ không gây khóa màn hình toàn cục
 - Biểu đồ BarChart tương tác (Recharts)
 
 ### Quản Lý Ngân Sách (`/budget`)
@@ -265,6 +265,7 @@ Trung tâm thông báo hệ thống (ngân sách vượt mức, đăng ký sắp
 
 - **Xuất Excel** (`BASIC+`): Báo cáo thu/chi đa sheet, màu sắc phân loại (Apache POI)
 - **Xuất PDF Invoice** (PREMIUM): Hóa đơn thanh toán qua AWS Lambda
+- **Hóa đơn & Thanh toán** (`/payment`): Quản lý lịch sử hóa đơn an toàn, đồng bộ trạng thái, tích hợp hộp thoại xác nhận (Custom Modal Confirmation) đồng bộ toàn hệ thống thay thế cho `confirm` của trình duyệt
 - **Báo cáo Email** (`BASIC+`): Gửi qua Brevo SMTP, template HTML
 - **Low Performance Mode**: Tắt animation trên thiết bị yếu
 - **Admin Dashboard** (`/admin`): Quản lý người dùng, thống kê doanh thu, broadcast thông báo
