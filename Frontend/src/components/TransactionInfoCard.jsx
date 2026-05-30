@@ -1,4 +1,5 @@
 import { Trash2, TrendingDown, TrendingUp, Pencil } from "lucide-react";
+import * as Lucide from "lucide-react";
 import { addThousandsSeparator } from "../util/util.js";
 import { hasDisplayImage, hideBrokenImageWrapper } from "../util/imageDisplay.js";
 import { formatDateForDisplay } from "../util/dateInput.js";
@@ -42,6 +43,27 @@ const TransactionInfoCard = ({
 
     const resolvedDate = formatDateForDisplay(date) || date;
 
+    const renderCardIcon = () => {
+        if (!icon) {
+            return <span className="text-sm sm:text-base leading-none">💰</span>;
+        }
+        if (hasDisplayImage(icon) && !receiptLocation) {
+            return (
+                <img
+                    src={icon}
+                    alt={title}
+                    className="h-6 w-6 object-contain rounded-md"
+                    onError={hideBrokenImageWrapper}
+                />
+            );
+        }
+        const LucideIcon = Lucide[icon];
+        if (LucideIcon) {
+            return <LucideIcon className="h-5 w-5 text-slate-500 dark:text-slate-400" />;
+        }
+        return <span className="text-sm sm:text-base leading-none shrink-0">{icon}</span>;
+    };
+
     return (
         <div
             className={containerClassName}
@@ -57,19 +79,12 @@ const TransactionInfoCard = ({
         >
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
                 <div className="flex items-start gap-3 sm:flex-1">
-                    {shouldShowImage ? (
-                        <div
-                            data-image-wrapper="true"
-                            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xl text-slate-700 dark:bg-white/10 dark:text-slate-300 sm:h-12 sm:w-12"
-                        >
-                            <img
-                                src={icon}
-                                alt={title}
-                                className="h-6 w-6 object-contain"
-                                onError={hideBrokenImageWrapper}
-                            />
-                        </div>
-                    ) : null}
+                    <div
+                        data-image-wrapper="true"
+                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-slate-100 dark:bg-white/10 border border-slate-200/50 dark:border-white/5 text-slate-700 dark:text-slate-350 sm:h-12 sm:w-12 shadow-sm"
+                    >
+                        {renderCardIcon()}
+                    </div>
 
                     <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-200">{title}</p>

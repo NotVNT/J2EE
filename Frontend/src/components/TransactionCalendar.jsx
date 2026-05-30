@@ -1,6 +1,8 @@
 import { useState } from "react";
 import moment from "moment";
 import { ChevronLeft, ChevronRight, Calendar, Tag, Hash, FileText } from "lucide-react";
+import * as Lucide from "lucide-react";
+import { hasDisplayImage } from "../util/imageDisplay.js";
 import TransactionInfoCard from "./TransactionInfoCard.jsx";
 import { addThousandsSeparator } from "../util/util.js";
 import {
@@ -13,6 +15,24 @@ import {
 } from "../util/transactionCalendar.js";
 
 const dayLabels = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
+
+const renderTransactionIcon = (iconVal) => {
+  if (!iconVal) return "💰";
+  if (hasDisplayImage(iconVal)) {
+    return (
+      <img
+        src={iconVal}
+        alt="icon"
+        className="w-7 h-7 object-contain rounded-lg"
+      />
+    );
+  }
+  const LucideIcon = Lucide[iconVal];
+  if (LucideIcon) {
+    return <LucideIcon className="w-5 h-5 text-slate-500 dark:text-slate-400" />;
+  }
+  return <span className="inline-block text-lg shrink-0 leading-none">{iconVal}</span>;
+};
 
 const TransactionCalendar = ({
   transactions = [],
@@ -308,7 +328,7 @@ const TransactionCalendar = ({
                       
                       <div className="flex items-center gap-3.5 mt-2">
                         <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-white/5 text-xl flex items-center justify-center shrink-0 border border-slate-200/50 dark:border-white/10 shadow-sm">
-                          {activeTransaction?.icon || "💰"}
+                          {renderTransactionIcon(activeTransaction?.icon)}
                         </div>
                         <div className="min-w-0 flex-1">
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide border mb-1 ${
