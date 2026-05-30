@@ -251,8 +251,21 @@ const NotificationDropdown = () => {
 
           <div className="flex-1 overflow-y-auto">
             {loading ? (
-              <div className="py-8 flex justify-center items-center">
-                <div className="w-6 h-6 rounded-full border-2 border-slate-200 border-t-violet-600 animate-spin"></div>
+              <div className="divide-y divide-slate-100 dark:divide-white/5 animate-pulse">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="p-4 flex gap-3">
+                    {/* Mini Icon placeholder */}
+                    <div className="w-8 h-8 rounded-xl bg-slate-200 dark:bg-slate-700/50 shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      {/* Mini Title skeleton */}
+                      <div className="h-3.5 w-2/3 bg-slate-200 dark:bg-slate-700/50 rounded mb-1.5" />
+                      {/* Mini Message skeleton */}
+                      <div className="h-3 w-5/6 bg-slate-200 dark:bg-slate-700/50 rounded mb-2" />
+                      {/* Mini Time skeleton */}
+                      <div className="h-2.5 w-1/4 bg-slate-200 dark:bg-slate-700/50 rounded" />
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : notifications.length > 0 ? (
               <div className="divide-y divide-slate-100 dark:divide-white/5">

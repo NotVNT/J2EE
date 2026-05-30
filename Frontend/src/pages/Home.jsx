@@ -35,6 +35,7 @@ import { useWidgetConfig } from "../hooks/useWidgetConfig.js";
 import WidgetWrapper from "../components/dashboard/WidgetWrapper.jsx";
 import WidgetSettingsPanel from "../components/dashboard/WidgetSettingsPanel.jsx";
 import { usePageTitle } from "../hooks/usePageTitle.js";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 const Home = () => {
   useUser();
@@ -56,6 +57,30 @@ const Home = () => {
   // Widget customization
   const { widgetConfig, sortedWidgetIds, toggleWidget, reorderWidgets, resetConfig } = useWidgetConfig(user?.id);
   const [settingsOpen, setSettingsOpen] = useState(false);
+
+  const chartData = useMemo(() => {
+    if (!dashboardData?.monthlyHistory) return [];
+    return dashboardData.monthlyHistory.map((item) => ({
+      name: item.month,
+      income: Number(item.income || 0),
+      expense: Number(item.expense || 0),
+    }));
+  }, [dashboardData?.monthlyHistory]);
+
+  const formatYAxis = useCallback((value) => {
+    if (value === 0) return "0";
+    const abs = Math.abs(value);
+    if (abs >= 1_000_000_000) {
+      return `${(value / 1_000_000_000).toFixed(1)}B`;
+    }
+    if (abs >= 1_000_000) {
+      return `${(value / 1_000_000).toFixed(1)}M`;
+    }
+    if (abs >= 1_000) {
+      return `${(value / 1_000).toFixed(1)}K`;
+    }
+    return value.toString();
+  }, []);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -223,62 +248,131 @@ const Home = () => {
         </section>
       ),
       monthly_history: () => (
-        <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-6 h-95 flex flex-col" onClick={() => setActiveChartIndex(null)}>
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-base font-bold text-slate-900 dark:text-white">Tổng quan thu chi</h3>
-            <div className="flex gap-4 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
-              <span className="flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-full bg-emerald-400" />Thu nhập
-              </span>
-              <span className="flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-full bg-red-400" />Chi tiêu
-              </span>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+          {/* Card 1: Expenses */}
+          <div className="rounded-3xl border border-slate-200 dark:border-white/10 bg-slate-950 dark:bg-[#0B0F19] p-4 sm:p-6 shadow-sm flex flex-col justify-between h-[260px] sm:h-[300px]">
+            <div className="flex items-center justify-between mb-2 sm:mb-4">
+              <div>
+                <h3 className="text-[10px] sm:text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Biểu đồ</h3>
+                <h4 className="text-sm sm:text-base font-extrabold text-white">Expenses</h4>
+              </div>
+              <div className="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-[#FA5C5C] shadow-[0_0_8px_rgba(250,92,92,0.5)]" />
+            </div>
+            
+            <div className="flex-1 w-full min-h-0">
+              {(!dashboardData?.monthlyHistory || dashboardData.monthlyHistory.length === 0) ? (
+                <div className="w-full h-full flex items-center justify-center text-slate-500 text-xs">
+                  Đang tổng hợp dữ liệu...
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={chartData} margin={{ top: 10, right: 5, left: -25, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="expenseGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#FF7575" stopOpacity={1} />
+                        <stop offset="100%" stopColor="#E33C3C" stopOpacity={1} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.06)" />
+                    <XAxis
+                      dataKey="name"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: "rgba(255, 255, 255, 0.4)", fontSize: 10, fontWeight: 600 }}
+                      dy={5}
+                    />
+                    <YAxis
+                      axisLine={false}
+                      tickLine={false}
+                      tickFormatter={formatYAxis}
+                      tick={{ fill: "rgba(255, 255, 255, 0.4)", fontSize: 10, fontWeight: 600 }}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "#0B0F19",
+                        borderColor: "rgba(255,255,255,0.1)",
+                        borderRadius: "12px",
+                        color: "#fff",
+                        fontSize: "11px",
+                        boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.5)",
+                      }}
+                      formatter={(value) => [formatCurrency(Number(value)), "Chi tiêu"]}
+                      labelFormatter={(label) => `Tháng: ${label}`}
+                      cursor={{ fill: "rgba(255,255,255,0.03)" }}
+                    />
+                    <Bar
+                      dataKey="expense"
+                      fill="url(#expenseGrad)"
+                      radius={[6, 6, 0, 0]}
+                      barSize={18}
+                      className="cursor-pointer"
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </div>
-          <div className="flex-1 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] relative">
-            {/* Grid Background Lines */}
-            <div className="absolute inset-0 flex flex-col justify-between pointer-events-none pb-8 pt-4">
-              <div className="border-b border-slate-100 dark:border-white/5 w-full h-0" />
-              <div className="border-b border-slate-100 dark:border-white/5 w-full h-0" />
-              <div className="border-b border-slate-100 dark:border-white/5 w-full h-0" />
-              <div className="border-b border-slate-100 dark:border-white/5 w-full h-0" />
+
+          {/* Card 2: Income */}
+          <div className="rounded-3xl border border-slate-200 dark:border-white/10 bg-slate-950 dark:bg-[#0B0F19] p-4 sm:p-6 shadow-sm flex flex-col justify-between h-[260px] sm:h-[300px]">
+            <div className="flex items-center justify-between mb-2 sm:mb-4">
+              <div>
+                <h3 className="text-[10px] sm:text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Biểu đồ</h3>
+                <h4 className="text-sm sm:text-base font-extrabold text-white">Income</h4>
+              </div>
+              <div className="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-[#10B981] shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
             </div>
 
-            <div className="relative flex items-end justify-between px-4 pt-12 pb-8 min-w-[450px] h-full z-10">
-              {dashboardData?.monthlyHistory?.map((h, i) => {
-                const maxVal = Math.max(...dashboardData.monthlyHistory.map((m) => Math.max(Number(m.income), Number(m.expense))), 1);
-                const incomeH = (Number(h.income) / maxVal) * 85;
-                const expenseH = (Number(h.expense) / maxVal) * 85;
-                return (
-                  <div
-                    key={i}
-                    className="h-full flex-1 flex flex-col justify-end items-center relative group max-w-[64px] cursor-pointer"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setActiveChartIndex(activeChartIndex === i ? null : i);
-                    }}
-                  >
-                    <div className={`absolute -top-12 left-1/2 -translate-x-1/2 bg-slate-900/95 dark:bg-slate-900/95 text-white dark:text-white text-[11px] px-3 py-2 rounded-xl transition-all duration-300 z-30 whitespace-nowrap text-left shadow-xl border border-white/10 dark:border-white/10 pointer-events-none ${
-                      activeChartIndex === i
-                        ? "opacity-100 -translate-y-1"
-                        : "opacity-0 group-hover:opacity-100 group-hover:-translate-y-1"
-                    }`}>
-                      <div className="font-bold text-slate-400 dark:text-slate-500 mb-1 border-b border-white/10 dark:border-white/10 pb-0.5">{h.month}</div>
-                      <div className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />Thu: <span className="font-bold">{formatCurrency(h.income)}</span></div>
-                      <div className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-red-400" />Chi: <span className="font-bold">{formatCurrency(h.expense)}</span></div>
-                    </div>
-                    <div className="flex items-end gap-1.5 h-full w-full justify-center pb-8 pt-4">
-                      <div className="w-5 bg-gradient-to-t from-emerald-500 to-teal-400 dark:from-emerald-600/40 dark:to-teal-500/50 rounded-t-lg transition-all duration-300 hover:brightness-110 hover:shadow-[0_0_12px_rgba(52,211,153,0.3)] active:scale-95 cursor-pointer" style={{ height: `${Math.max(incomeH, 3)}%` }} />
-                      <div className="w-5 bg-gradient-to-t from-red-500 to-rose-400 dark:from-red-600/40 dark:to-rose-500/50 rounded-t-lg transition-all duration-300 hover:brightness-110 hover:shadow-[0_0_12px_rgba(244,63,94,0.3)] active:scale-95 cursor-pointer" style={{ height: `${Math.max(expenseH, 3)}%` }} />
-                    </div>
-                    <span className="absolute bottom-1 text-[11px] text-slate-400 dark:text-slate-500 font-bold group-hover:text-slate-900 dark:group-hover:text-white transition-colors">{h.month}</span>
-                  </div>
-                );
-              })}
-              {(!dashboardData?.monthlyHistory || dashboardData.monthlyHistory.length === 0) && (
-                <div className="w-full h-full flex items-center justify-center text-slate-400 text-sm">
-                  Đang tổng hợp dữ liệu lịch sử...
+            <div className="flex-1 w-full min-h-0">
+              {(!dashboardData?.monthlyHistory || dashboardData.monthlyHistory.length === 0) ? (
+                <div className="w-full h-full flex items-center justify-center text-slate-500 text-xs">
+                  Đang tổng hợp dữ liệu...
                 </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={chartData} margin={{ top: 10, right: 5, left: -25, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="incomeGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#4EFAAF" stopOpacity={1} />
+                        <stop offset="100%" stopColor="#10B981" stopOpacity={1} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.06)" />
+                    <XAxis
+                      dataKey="name"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: "rgba(255, 255, 255, 0.4)", fontSize: 10, fontWeight: 600 }}
+                      dy={5}
+                    />
+                    <YAxis
+                      axisLine={false}
+                      tickLine={false}
+                      tickFormatter={formatYAxis}
+                      tick={{ fill: "rgba(255, 255, 255, 0.4)", fontSize: 10, fontWeight: 600 }}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "#0B0F19",
+                        borderColor: "rgba(255,255,255,0.1)",
+                        borderRadius: "12px",
+                        color: "#fff",
+                        fontSize: "11px",
+                        boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.5)",
+                      }}
+                      formatter={(value) => [formatCurrency(Number(value)), "Thu nhập"]}
+                      labelFormatter={(label) => `Tháng: ${label}`}
+                      cursor={{ fill: "rgba(255,255,255,0.03)" }}
+                    />
+                    <Bar
+                      dataKey="income"
+                      fill="url(#incomeGrad)"
+                      radius={[6, 6, 0, 0]}
+                      barSize={18}
+                      className="cursor-pointer"
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
               )}
             </div>
           </div>
@@ -386,7 +480,7 @@ const Home = () => {
           </div>
         ),
     }),
-    [dashboardData, navigate, formatCurrency, formatCompact, safeNumber]
+    [dashboardData, navigate, formatCurrency, formatCompact, safeNumber, chartData, formatYAxis]
   );
 
   return (
@@ -489,25 +583,59 @@ const Home = () => {
             }`}>
               <div className="border-t border-slate-200 dark:border-white/10 pt-6">
                 {detailedLoading ? (
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-center py-6">
-                      <div className="flex flex-col items-center gap-3">
-                        <div className="w-10 h-10 rounded-full border-[3px] border-violet-200 dark:border-violet-500/30 border-t-violet-600 dark:border-t-violet-400 animate-spin" />
-                        <p className="text-sm text-slate-500 dark:text-slate-400">Nova Money đang phân tích chuyên sâu dữ liệu của bạn, vui lòng chờ nhé...</p>
-                      </div>
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-3 bg-violet-500/[0.04] border border-violet-500/10 rounded-2xl p-4 animate-pulse">
+                      <div className="w-5 h-5 rounded-full border-2 border-violet-200 dark:border-violet-500/30 border-t-violet-600 dark:border-t-violet-400 animate-spin shrink-0" />
+                      <p className="text-[13px] font-semibold text-violet-600 dark:text-violet-400">
+                        Nova Money đang phân tích chuyên sâu dữ liệu của bạn, vui lòng chờ giây lát...
+                      </p>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.02] p-5 animate-pulse">
-                        <div className="h-4 bg-slate-200 dark:bg-white/10 rounded-full w-1/3 mb-4" />
-                        <div className="h-3 bg-slate-200 dark:bg-white/10 rounded-full w-1/4 mb-3" />
-                        <div className="h-3 bg-slate-200 dark:bg-white/10 rounded-full w-3/4 mb-2" />
-                        <div className="h-3 bg-slate-200 dark:bg-white/10 rounded-full w-2/3" />
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-pulse">
+                      {/* Left Card Skeleton */}
+                      <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/40 dark:bg-white/[0.02] p-5 sm:p-6 flex flex-col justify-between min-h-[280px]">
+                        <div>
+                          <div className="flex items-center gap-2.5 mb-6">
+                            <div className="w-9 h-9 rounded-xl bg-slate-200 dark:bg-white/10 shrink-0" />
+                            <div className="space-y-1.5 w-1/3">
+                              <div className="h-3.5 bg-slate-200 dark:bg-white/10 rounded-md w-full" />
+                              <div className="h-2.5 bg-slate-200 dark:bg-white/10 rounded-md w-2/3" />
+                            </div>
+                          </div>
+                          <div className="h-6 bg-slate-200 dark:bg-white/10 rounded-full w-24 mb-5" />
+                          <div className="space-y-2 mb-6">
+                            <div className="h-3 bg-slate-200 dark:bg-white/10 rounded-md w-full" />
+                            <div className="h-3 bg-slate-200 dark:bg-white/10 rounded-md w-5/6" />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-200 dark:border-white/10">
+                          <div className="bg-white/90 dark:bg-[#0f172a]/60 rounded-2xl p-4 border border-slate-200/60 dark:border-white/5 space-y-2">
+                            <div className="h-2.5 bg-slate-200 dark:bg-white/10 rounded-md w-1/2" />
+                            <div className="h-4 bg-slate-200 dark:bg-white/10 rounded-md w-3/4" />
+                          </div>
+                          <div className="bg-white/90 dark:bg-[#0f172a]/60 rounded-2xl p-4 border border-slate-200/60 dark:border-white/5 space-y-2">
+                            <div className="h-2.5 bg-slate-200 dark:bg-white/10 rounded-md w-1/2" />
+                            <div className="h-4 bg-slate-200 dark:bg-white/10 rounded-md w-3/4" />
+                          </div>
+                        </div>
                       </div>
-                      <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.02] p-5 animate-pulse md:col-span-2">
-                        <div className="h-4 bg-slate-200 dark:bg-white/10 rounded-full w-1/4 mb-4" />
-                        <div className="h-3 bg-slate-200 dark:bg-white/10 rounded-full w-full mb-2" />
-                        <div className="h-3 bg-slate-200 dark:bg-white/10 rounded-full w-5/6 mb-2" />
-                        <div className="h-3 bg-slate-200 dark:bg-white/10 rounded-full w-4/6" />
+
+                      {/* Right Card Skeleton */}
+                      <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/40 dark:bg-white/[0.02] p-5 sm:p-6 flex flex-col justify-between min-h-[280px]">
+                        <div>
+                          <div className="flex items-center gap-2.5 mb-6">
+                            <div className="w-9 h-9 rounded-xl bg-slate-200 dark:bg-white/10 shrink-0" />
+                            <div className="space-y-1.5 w-1/3">
+                              <div className="h-3.5 bg-slate-200 dark:bg-white/10 rounded-md w-full" />
+                              <div className="h-2.5 bg-slate-200 dark:bg-white/10 rounded-md w-2/3" />
+                            </div>
+                          </div>
+                          <div className="bg-slate-100/50 dark:bg-[#0f172a]/45 border border-slate-200/40 dark:border-white/5 rounded-2xl p-4 space-y-3 mt-2 min-h-[160px]">
+                            <div className="h-3 bg-slate-200 dark:bg-white/10 rounded-md w-full" />
+                            <div className="h-3 bg-slate-200 dark:bg-white/10 rounded-md w-5/6" />
+                            <div className="h-3 bg-slate-200 dark:bg-white/10 rounded-md w-11/12" />
+                            <div className="h-3 bg-slate-200 dark:bg-white/10 rounded-md w-4/5" />
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -563,7 +691,7 @@ const Home = () => {
                           </div>
                           
                           <div className="bg-slate-100/50 dark:bg-[#0f172a]/45 border border-slate-200/40 dark:border-white/5 rounded-2xl p-4 max-h-[220px] overflow-y-auto custom-scrollbar shadow-inner mt-2">
-                            <div className="text-[13.5px] font-medium leading-relaxed pl-3.5 border-l-2 border-violet-500 text-slate-650 dark:text-slate-350 whitespace-pre-wrap">
+                            <div className="text-[13.5px] font-medium leading-relaxed text-slate-650 dark:text-slate-350 whitespace-pre-wrap">
                               {detailedInsight.detailedAdvice}
                             </div>
                           </div>

@@ -640,8 +640,41 @@ const Jars = () => {
           {/* Jar cards grid */}
           <div className={`${pieData.length > 0 ? "lg:col-span-2" : "lg:col-span-3"}`}>
             {loading ? (
-              <div className="flex justify-center items-center h-40">
-                <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-pulse">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="card relative overflow-hidden p-5 border border-slate-200/60 dark:border-white/10 bg-white/40 dark:bg-white/[0.02]">
+                    {/* Color accent bar placeholder */}
+                    <div className="absolute top-0 left-0 right-0 h-1 bg-slate-200 dark:bg-slate-700" />
+                    
+                    {/* Header placeholder */}
+                    <div className="flex items-start justify-between mt-1 mb-3">
+                      <div className="flex items-center gap-3 w-full">
+                        {/* Icon placeholder */}
+                        <div className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-700 shrink-0" />
+                        {/* Title & subtitle placeholder */}
+                        <div className="space-y-2 flex-1">
+                          <div className="h-4 w-3/4 bg-slate-200 dark:bg-slate-700 rounded" />
+                          <div className="h-3 w-1/2 bg-slate-200 dark:bg-slate-700 rounded" />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Balance placeholder */}
+                    <div className="h-8 w-2/3 bg-slate-200 dark:bg-slate-700 rounded mb-4" />
+
+                    {/* Progress bar placeholder */}
+                    <div className="space-y-2 mb-3">
+                      <div className="flex justify-between">
+                        <div className="h-3 w-1/4 bg-slate-200 dark:bg-slate-700 rounded" />
+                        <div className="h-3 w-1/4 bg-slate-200 dark:bg-slate-700 rounded" />
+                      </div>
+                      <div className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-full" />
+                    </div>
+
+                    {/* Status tag placeholder */}
+                    <div className="h-5 w-1/3 bg-slate-200 dark:bg-slate-700 rounded mt-2" />
+                  </div>
+                ))}
               </div>
             ) : jars.length === 0 ? (
               <div className="card text-center py-12">

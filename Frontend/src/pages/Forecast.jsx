@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext, useMemo, useRef } from "react";
+import { useState, useEffect, useContext, useMemo, useRef, useCallback } from "react";
 import axiosConfig from "../util/axiosConfig";
 import toast from "react-hot-toast";
 import { AlertTriangle, Lightbulb, Activity, Crown, Sparkles, CheckCircle2 } from "lucide-react";
@@ -41,6 +41,21 @@ const Forecast = () => {
 
     // idx 0 = current month; idx 1-5 = future months
     const isCurrentMonth = selectedIdx === 0;
+
+    const formatYAxis = useCallback((value) => {
+        if (value === 0) return "0";
+        const abs = Math.abs(value);
+        if (abs >= 1_000_000_000) {
+            return `${(value / 1_000_000_000).toFixed(1)}B`;
+        }
+        if (abs >= 1_000_000) {
+            return `${(value / 1_000_000).toFixed(1)}M`;
+        }
+        if (abs >= 1_000) {
+            return `${(value / 1_000).toFixed(1)}K`;
+        }
+        return value.toString();
+    }, []);
 
     useEffect(() => {
         if (user && user.subscriptionPlan === "PREMIUM") {
@@ -264,52 +279,73 @@ const Forecast = () => {
                         
                         {/* Main Chart Area */}
                         <div className="lg:col-span-2 space-y-6">
-                            <div className="bg-white dark:bg-white/5 p-6 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm">
-                                <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-6 flex items-center gap-2">
-                                    <Activity size={20} className="text-indigo-500" />
-                                    Dự báo các khoản chi chính
-                                </h3>
+                            <div className="rounded-3xl border border-slate-200 dark:border-white/10 bg-slate-950 dark:bg-[#0B0F19] p-4 sm:p-6 shadow-sm flex flex-col justify-between min-h-[380px]">
+                                <div className="flex items-center justify-between mb-6">
+                                    <h3 className="text-base font-extrabold text-white flex items-center gap-2">
+                                        <Activity size={20} className="text-indigo-400 animate-pulse" />
+                                        Dự báo các khoản chi chính
+                                    </h3>
+                                    <div className="flex gap-4 text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                                        <span className="flex items-center gap-1.5">
+                                            <div className="w-2 h-2 rounded-full bg-[#475569]" />Trung bình
+                                        </span>
+                                        <span className="flex items-center gap-1.5">
+                                            <div className="w-2 h-2 rounded-full bg-violet-400" />Dự báo
+                                        </span>
+                                    </div>
+                                </div>
                                 {chartData.length > 0 ? (
-                                    <div className="h-80">
+                                    <div className="h-[260px] sm:h-[320px] w-full min-h-0">
                                         <ResponsiveContainer width="100%" height="100%">
-                                            <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
+                                            <BarChart data={chartData} margin={{ top: 10, right: 5, left: -25, bottom: 0 }}>
                                                 <defs>
                                                     <linearGradient id="colorAverage" x1="0" y1="0" x2="0" y2="1">
-                                                        <stop offset="5%" stopColor={isDark ? '#475569' : '#94a3b8'} stopOpacity={0.8}/>
-                                                        <stop offset="95%" stopColor={isDark ? '#1e293b' : '#cbd5e1'} stopOpacity={0.2}/>
+                                                        <stop offset="0%" stopColor="#475569" stopOpacity={0.8}/>
+                                                        <stop offset="100%" stopColor="#1e293b" stopOpacity={0.2}/>
                                                     </linearGradient>
                                                     <linearGradient id="colorPredicted" x1="0" y1="0" x2="0" y2="1">
-                                                        <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.9}/>
-                                                        <stop offset="95%" stopColor="#6366f1" stopOpacity={0.4}/>
+                                                        <stop offset="0%" stopColor="#A78BFA" stopOpacity={1}/>
+                                                        <stop offset="100%" stopColor="#6366f1" stopOpacity={1}/>
                                                     </linearGradient>
                                                 </defs>
-                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? 'rgba(255,255,255,0.05)' : '#f1f5f9'} />
-                                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: isDark ? '#94a3b8' : '#64748b' }} dy={10} />
-                                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: isDark ? '#94a3b8' : '#64748b' }} tickFormatter={(val) => `${val/1000}k`} />
+                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.06)" />
+                                                <XAxis
+                                                    dataKey="name"
+                                                    axisLine={false}
+                                                    tickLine={false}
+                                                    tick={{ fontSize: 10, fill: "rgba(255, 255, 255, 0.4)", fontWeight: 600 }}
+                                                    dy={5}
+                                                />
+                                                <YAxis
+                                                    axisLine={false}
+                                                    tickLine={false}
+                                                    tickFormatter={formatYAxis}
+                                                    tick={{ fontSize: 10, fill: "rgba(255, 255, 255, 0.4)", fontWeight: 600 }}
+                                                />
                                                 <Tooltip
-                                                    cursor={{ fill: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' }}
+                                                    cursor={{ fill: 'rgba(255,255,255,0.03)' }}
                                                     contentStyle={{
                                                         borderRadius: '16px',
-                                                        border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid #e2e8f0',
-                                                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-                                                        backgroundColor: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-                                                        backdropFilter: 'blur(12px)',
-                                                        color: isDark ? '#f8fafc' : '#0f172a',
+                                                        border: '1px solid rgba(255,255,255,0.1)',
+                                                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)',
+                                                        backgroundColor: '#0B0F19',
+                                                        color: '#fff',
+                                                        fontSize: "11px",
                                                         padding: '12px 16px',
                                                     }}
                                                     itemStyle={{ padding: '2px 0', fontSize: '12px' }}
-                                                    labelStyle={{ fontWeight: 'bold', marginBottom: '6px', fontSize: '12px', color: isDark ? '#94a3b8' : '#64748b' }}
-                                                    formatter={(value, name) => [new Intl.NumberFormat('vi-VN').format(value) + ' đ', name]}
+                                                    labelStyle={{ fontWeight: 'bold', marginBottom: '6px', fontSize: '12px', color: 'rgba(255, 255, 255, 0.5)' }}
+                                                    formatter={(value, name) => [new Intl.NumberFormat('vi-VN').format(value) + ' VND', name]}
                                                 />
-                                                <Bar dataKey="average" name="Trung bình" fill="url(#colorAverage)" radius={[6, 6, 0, 0]} barSize={16} />
-                                                <Bar dataKey="predicted" name="Dự báo" fill="url(#colorPredicted)" radius={[6, 6, 0, 0]} barSize={16} />
+                                                <Bar dataKey="average" name="Trung bình" fill="url(#colorAverage)" radius={[6, 6, 0, 0]} barSize={16} className="cursor-pointer" />
+                                                <Bar dataKey="predicted" name="Dự báo" fill="url(#colorPredicted)" radius={[6, 6, 0, 0]} barSize={16} className="cursor-pointer" />
                                             </BarChart>
                                         </ResponsiveContainer>
                                     </div>
                                 ) : (
-                                    <div className="h-80 flex flex-col items-center justify-center text-slate-400">
+                                    <div className="h-80 flex flex-col items-center justify-center text-slate-500">
                                         <Activity size={48} className="opacity-20 mb-3" />
-                                        <p>Chưa đủ dữ liệu lịch sử để dự báo</p>
+                                        <p className="text-sm">Chưa đủ dữ liệu lịch sử để dự báo</p>
                                     </div>
                                 )}
                             </div>

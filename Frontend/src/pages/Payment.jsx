@@ -343,9 +343,46 @@ const Payment = () => {
           </div>
 
           {historyLoading ? (
-            <div className="py-8 flex flex-col items-center justify-center">
-              <LoaderCircle size={24} className="animate-spin text-violet-650" />
-              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-2">Đang tải lịch sử giao dịch...</p>
+            <div className="overflow-x-auto animate-pulse">
+              <table className="w-full border-collapse text-left text-xs">
+                <thead>
+                  <tr className="border-b border-slate-100 dark:border-white/5 text-slate-400 font-bold uppercase tracking-wider">
+                    <th className="py-3 px-4">Mã đơn hàng</th>
+                    <th className="py-3 px-4">Gói dịch vụ</th>
+                    <th className="py-3 px-4">Số tiền</th>
+                    <th className="py-3 px-4">Ngày giao dịch</th>
+                    <th className="py-3 px-4">Trạng thái</th>
+                    <th className="py-3 px-4 text-right">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                  {[1, 2, 3, 4].map((i) => (
+                    <tr key={i}>
+                      <td className="py-3.5 px-4">
+                        <div className="h-4 w-16 bg-slate-200 dark:bg-slate-700/50 rounded" />
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <div className="h-4 w-24 bg-slate-200 dark:bg-slate-700/50 rounded" />
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <div className="h-4 w-20 bg-slate-200 dark:bg-slate-700/50 rounded" />
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <div className="h-4 w-28 bg-slate-200 dark:bg-slate-700/50 rounded" />
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <div className="h-5 w-20 bg-slate-200 dark:bg-slate-700/50 rounded-full" />
+                      </td>
+                      <td className="py-3.5 px-4 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <div className="w-7 h-7 bg-slate-200 dark:bg-slate-700/50 rounded-lg" />
+                          <div className="w-7 h-7 bg-slate-200 dark:bg-slate-700/50 rounded-lg" />
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           ) : payments.length > 0 ? (
             <div className="overflow-x-auto">
