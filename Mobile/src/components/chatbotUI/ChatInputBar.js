@@ -83,9 +83,9 @@ export default function ChatInputBar({
     if (hasText) {
       return (
         <Pressable
-          style={[styles.actionCircle, disabled && styles.actionCircleDisabled]}
+          style={[styles.actionCircle, isDisabled && styles.actionCircleDisabled]}
           onPress={onSend}
-          disabled={disabled}
+          disabled={isDisabled}
         >
           <Svg width={18} height={18} viewBox="0 0 24 24" fill={COLORS.WHITE}>
             <Path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z" />
@@ -101,10 +101,10 @@ export default function ChatInputBar({
             style={[
               styles.actionCircle,
               styles.actionCircleRecording,
-              disabled && styles.actionCircleDisabled
+              isDisabled && styles.actionCircleDisabled
             ]}
             onPress={onMicPress}
-            disabled={disabled}
+            disabled={isDisabled}
           >
             <WaveformIcon />
           </Pressable>
@@ -114,9 +114,9 @@ export default function ChatInputBar({
 
     return (
       <Pressable
-        style={[styles.actionCircle, disabled && styles.actionCircleDisabled]}
+        style={[styles.actionCircle, isDisabled && styles.actionCircleDisabled]}
         onPress={onMicPress}
-        disabled={disabled}
+        disabled={isDisabled}
       >
         <MicIcon />
       </Pressable>
@@ -131,13 +131,13 @@ export default function ChatInputBar({
         </View>
 
         <TextInput
-          style={[styles.input, isInputDisabled && styles.inputDisabled]}
+          style={[styles.input, isDisabled && styles.inputDisabled]}
           placeholder={placeholder}
           placeholderTextColor={COLORS.CHAT_MUTED}
           value={value}
-          onChangeText={isInputDisabled ? undefined : onChangeText}
-          editable={!isInputDisabled}
-          selectTextOnFocus={!isInputDisabled}
+          onChangeText={isDisabled ? undefined : onChangeText}
+          editable={!isDisabled}
+          selectTextOnFocus={!isDisabled}
           multiline
         />
 

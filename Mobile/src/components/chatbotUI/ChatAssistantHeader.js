@@ -14,6 +14,7 @@ export default function ChatAssistantHeader({
   modelLabel,
   onChangeMode,
   onModelChange,
+  onOpenSessions,
 }) {
   const insets = useSafeAreaInsets();
   const [isModelOpen, setIsModelOpen] = useState(false);
@@ -56,6 +57,20 @@ export default function ChatAssistantHeader({
             </Pressable>
           </View>
         </View>
+
+        {onOpenSessions ? (
+          <Pressable
+            style={({ pressed }) => [
+              styles.historyButton,
+              pressed && styles.historyButtonPressed,
+            ]}
+            onPress={onOpenSessions}
+            accessibilityRole="button"
+            accessibilityLabel="Open chat history"
+          >
+            <Ionicons name="time-outline" size={20} color={COLORS.PRIMARY} />
+          </Pressable>
+        ) : null}
       </View>
 
       <ModeSegmentedControl
@@ -162,6 +177,20 @@ const styles = StyleSheet.create({
   copyBlock: {
     flex: 1,
     minWidth: 0,
+  },
+  historyButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: COLORS.ROSE_MIST,
+    borderWidth: 1,
+    borderColor: "rgba(239, 94, 131, 0.18)",
+    marginLeft: 10,
+  },
+  historyButtonPressed: {
+    opacity: 0.78,
   },
   subtitle: {
     fontSize: 18,

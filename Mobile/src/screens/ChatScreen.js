@@ -6,19 +6,15 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
-  Pressable
+  ActivityIndicator
 } from "react-native";
 import { COLORS } from "../constants/colors";
 import ChatAssistantHeader from "../components/chatbotUI/ChatAssistantHeader";
 import MessageBubble from "../components/chatbotUI/MessageBubble";
 import QuickPromptChips from "../components/chatbotUI/QuickPromptChips";
 import ChatInputBar from "../components/chatbotUI/ChatInputBar";
-
-import ChatHeader from "../components/chatbotUI/ChatHeader";
 import SessionsModal from "../components/chatbotUI/SessionsModal";
 import EditMessageModal from "../components/chatbotUI/EditMessageModal";
-
 import useChatMessages from "../components/chatbotUI/useChatMessages";
 import useModelConfig from "../components/chatbotUI/useModelConfig";
 import useVoiceInput from "../components/chatbotUI/useVoiceInput";
@@ -119,31 +115,8 @@ export default function ChatScreen() {
   ), [handleConfirmAction, handleCancelConfirmation, handleUndo, handleEditMessage, retryLastMessage, isProcessingCrud]);
 
   return (
-
     <View style={styles.container}>
       <ChatAssistantHeader
-
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <ChatHeader>
-        <View style={styles.headerRightContainer}>
-          <Pressable
-            style={({ pressed }) => [styles.historyBtn, pressed && styles.historyBtnPressed]}
-            onPress={() => setIsSessionsVisible(true)}
-            accessibilityRole="button"
-            accessibilityLabel="Mở lịch sử phiên chat"
-          >
-            <Text style={styles.historyIcon}>⏳</Text>
-          </Pressable>
-          <ModelSelectorPill
-            label={modelLabel}
-            value={modelValue}
-            options={modelOptions}
-            title={activeMode === "chat" ? "MODEL CHAT" : "MODEL AGENT"}
-            onSelect={handleModelChange}
-          />
-        </View>
-      </ChatHeader>
-      <ModeSegmentedControl
         activeMode={activeMode}
         isFreePlan={isFreePlan}
         modelOptions={modelOptions}
@@ -151,6 +124,7 @@ export default function ChatScreen() {
         modelLabel={modelLabel}
         onChangeMode={handleModeSwitch}
         onModelChange={handleModelChange}
+        onOpenSessions={() => setIsSessionsVisible(true)}
       />
 
       <KeyboardAvoidingView
@@ -221,28 +195,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.CHAT_BG
-  },
-  headerRightContainer: {
-    flexDirection: "row",
-    alignItems: "center"
-  },
-  historyBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: COLORS.CARD,
-    borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
-    marginRight: 8
-  },
-  historyBtnPressed: {
-    opacity: 0.8,
-    backgroundColor: COLORS.ROSE_MIST
-  },
-  historyIcon: {
-    fontSize: 16
   },
   keyboardView: {
     flex: 1
