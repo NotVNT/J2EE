@@ -79,7 +79,7 @@ const LandingPage = () => {
                             
                             <button
                                 onClick={() => navigate('/login')}
-                                className="hidden sm:inline-flex px-5 py-2.5 rounded-xl text-sm font-bold
+                                className="hidden md:inline-flex px-5 py-2.5 rounded-xl text-sm font-bold
                                     text-slate-700 dark:text-slate-200
                                     hover:text-slate-900 dark:hover:text-white
                                     hover:bg-slate-100 dark:hover:bg-white/10
@@ -90,7 +90,7 @@ const LandingPage = () => {
                             </button>
                             <button
                                 onClick={() => navigate('/signup')}
-                                className="px-5 py-2.5 rounded-xl text-sm font-bold
+                                className="hidden sm:inline-flex px-5 py-2.5 rounded-xl text-sm font-bold
                                     bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 
                                     text-white shadow-lg shadow-violet-500/20 hover:shadow-violet-600/35 hover:-translate-y-0.5
                                     transition-all duration-300 active:scale-[0.98] flex items-center gap-2"
@@ -129,6 +129,21 @@ const LandingPage = () => {
                                 <ChevronRight size={18} className="opacity-50" />
                             </button>
                         ))}
+                        <div className="h-px bg-slate-200 dark:bg-white/10 my-3" />
+                        <button
+                            onClick={() => { setMobileMenuOpen(false); navigate('/login'); }}
+                            className="w-full py-3.5 rounded-xl text-center font-bold text-sm
+                                text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+                        >
+                            Đăng Nhập
+                        </button>
+                        <button
+                            onClick={() => { setMobileMenuOpen(false); navigate('/signup'); }}
+                            className="w-full py-3.5 rounded-xl text-center font-bold text-sm
+                                bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg"
+                        >
+                            Bắt Đầu Miễn Phí
+                        </button>
                     </div>
                 </div>
             )}
@@ -205,8 +220,9 @@ const LandingPage = () => {
                             />
                             
                             {/* Floating stat card 1 */}
-                            <div className="absolute -top-8 -left-8 lg:-left-12 backdrop-blur-2xl bg-white/95 dark:bg-[#1E293B]/95
-                                border border-white dark:border-white/10 rounded-2xl p-5 shadow-2xl animate-bounce-slow">
+                            <div className="absolute -top-8 left-2 sm:-left-8 lg:-left-12 backdrop-blur-2xl bg-white/95 dark:bg-[#1E293B]/95
+                                border border-white dark:border-white/10 rounded-2xl p-5 shadow-2xl animate-bounce-slow
+                                scale-75 xs:scale-90 sm:scale-100 origin-top-left">
                                 <div className="flex items-center gap-4">
                                     <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/30">
                                         <TrendingUp size={24} className="text-white" />
@@ -219,8 +235,9 @@ const LandingPage = () => {
                             </div>
 
                             {/* Floating stat card 2 */}
-                            <div className="absolute -bottom-8 -right-4 lg:-right-10 backdrop-blur-2xl bg-white/95 dark:bg-[#1E293B]/95
-                                border border-white dark:border-white/10 rounded-2xl p-6 shadow-2xl animate-float">
+                            <div className="absolute -bottom-8 right-2 sm:-right-4 lg:-right-10 backdrop-blur-2xl bg-white/95 dark:bg-[#1E293B]/95
+                                border border-white dark:border-white/10 rounded-2xl p-6 shadow-2xl animate-float
+                                scale-75 xs:scale-90 sm:scale-100 origin-bottom-right">
                                 <p className="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest mb-4">Giao dịch nổi bật</p>
                                 <div className="space-y-4">
                                     <div className="flex items-center gap-4 text-sm">
@@ -402,7 +419,7 @@ const LandingPage = () => {
                         </div>
 
                         {/* Gói Cơ Bản */}
-                        <div className="bg-[#8b5cf6] rounded-[2.5rem] p-8 lg:p-10 shadow-2xl shadow-violet-900/30 transition transform hover:-translate-y-1 scale-105 z-10 relative">
+                        <div className="bg-[#8b5cf6] rounded-[2.5rem] p-8 lg:p-10 shadow-2xl shadow-violet-900/30 transition transform hover:-translate-y-1 scale-100 lg:scale-105 z-10 relative">
                             <div className="flex justify-between items-start mb-6">
                                 <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
                                     <ShieldCheck size={24} className="text-white" />
@@ -473,7 +490,7 @@ const LandingPage = () => {
                 
                 <div className="max-w-4xl mx-auto px-4 lg:px-8 text-center relative z-10">
                     <h2 className="text-4xl lg:text-6xl font-black text-white mb-8 tracking-tight">
-                        Kiểm soát tiền bạc.<br/>Làm chủ cuộc sống.
+                        Kiểm soát tiền bạc.<br className="hidden sm:block" />Làm chủ cuộc sống.
                     </h2>
                     <p className="text-xl text-white/70 mb-12 max-w-2xl mx-auto font-medium">
                         Tham gia cùng hàng ngàn người dùng đang thay đổi thói quen tài chính mỗi ngày. Bắt đầu hành trình của bạn ngay bây giờ.
