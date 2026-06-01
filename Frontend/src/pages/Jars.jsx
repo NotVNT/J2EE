@@ -35,7 +35,9 @@ const Jars = () => {
   const [editJar, setEditJar] = useState(null);
   const [deleteAlert, setDeleteAlert] = useState({ show: false, id: null });
   const [showTransferModal, setShowTransferModal] = useState(false);
+  const [transferFromJarId, setTransferFromJarId] = useState(null);
   const [selectedJarId, setSelectedJarId] = useState(null);
+  const [addExpenseJarId, setAddExpenseJarId] = useState(null);
   const [expenses, setExpenses] = useState([]);
   const [categories, setCategories] = useState([]);
   const [openAddExpenseModal, setOpenAddExpenseModal] = useState(false);
@@ -574,9 +576,52 @@ const Jars = () => {
                 )}
               </div>
             </div>
-            
           </div>
         </div>
+
+        {/* ── Modals for Jar Detail View ── */}
+        <Modal isOpen={!!editJar} onClose={() => setEditJar(null)} title="Cập nhật hũ chi tiêu">
+          <JarForm key={editJar?.id || "edit-jar"} initialData={editJar} isEditing jars={jars} onSave={handleUpdateJar} onCancel={() => setEditJar(null)} />
+        </Modal>
+
+        <Modal isOpen={deleteAlert.show} onClose={() => setDeleteAlert({ show: false, id: null })} title="Xoá hũ chi tiêu">
+          <DeleteAlert
+            content="Bạn có chắc muốn xoá hũ này không? Số dư trong hũ sẽ bị mất."
+            onDelete={() => handleDeleteJar(deleteAlert.id)}
+            onCancel={() => setDeleteAlert({ show: false, id: null })}
+          />
+        </Modal>
+
+        <Modal
+          isOpen={openAddExpenseModal}
+          onClose={() => {
+            setOpenAddExpenseModal(false);
+            setAddExpenseJarId(null);
+          }}
+          title="Thêm chi tiêu vào hũ"
+        >
+          <AddExpenseForm
+            key={addExpenseJarId || selectedJar?.id || "default"}
+            onAddExpense={handleAddExpense}
+            categories={categories}
+            defaultJarId={addExpenseJarId || selectedJar?.id}
+            jars={jars}
+          />
+        </Modal>
+
+        <Modal isOpen={openEditExpenseModal} onClose={() => { setOpenEditExpenseModal(false); setExpenseToEdit(null); }} title="Chỉnh sửa chi tiêu">
+          {expenseToEdit && (
+            <EditExpenseForm onUpdateExpense={handleUpdateExpense} categories={categories} expenseToEdit={expenseToEdit} jars={jars} />
+          )}
+        </Modal>
+
+        <Modal isOpen={openDeleteExpenseAlert.show} onClose={() => setOpenDeleteExpenseAlert({ show: false, id: null })} title="Xóa chi tiêu">
+          <DeleteAlert
+            content="Bạn có chắc chắn muốn xóa chi tiêu này không?"
+            onDelete={() => handleDeleteExpense(openDeleteExpenseAlert.id)}
+            onCancel={() => setOpenDeleteExpenseAlert({ show: false, id: null })}
+          />
+        </Modal>
       </Dashboard>
     );
   }
@@ -782,6 +827,14 @@ const Jars = () => {
                     onClick={() => setSelectedJarId(jar.id)}
                     onEdit={() => setEditJar(jar)}
                     onDelete={() => setDeleteAlert({ show: true, id: jar.id })}
+                    onAddExpenseClick={() => {
+                      setAddExpenseJarId(jar.id);
+                      setOpenAddExpenseModal(true);
+                    }}
+                    onTransferClick={() => {
+                      setTransferFromJarId(jar.id);
+                      setShowTransferModal(true);
+                    }}
                   />
                 ))}
               </div>
@@ -809,14 +862,31 @@ const Jars = () => {
         {showTransferModal && (
           <JarTransferModal
             jars={jars}
+            defaultFromJarId={transferFromJarId}
             onTransfer={handleTransfer}
-            onClose={() => setShowTransferModal(false)}
+            onClose={() => {
+              setShowTransferModal(false);
+              setTransferFromJarId(null);
+            }}
           />
         )}
 
         {/* ── Expense CRUD Modals ── */}
-        <Modal isOpen={openAddExpenseModal} onClose={() => setOpenAddExpenseModal(false)} title="Thêm chi tiêu vào hũ">
-          <AddExpenseForm onAddExpense={handleAddExpense} categories={categories} defaultJarId={selectedJar?.id} jars={jars} />
+        <Modal
+          isOpen={openAddExpenseModal}
+          onClose={() => {
+            setOpenAddExpenseModal(false);
+            setAddExpenseJarId(null);
+          }}
+          title="Thêm chi tiêu vào hũ"
+        >
+          <AddExpenseForm
+            key={addExpenseJarId || selectedJar?.id || "default"}
+            onAddExpense={handleAddExpense}
+            categories={categories}
+            defaultJarId={addExpenseJarId || selectedJar?.id}
+            jars={jars}
+          />
         </Modal>
 
         <Modal isOpen={openEditExpenseModal} onClose={() => { setOpenEditExpenseModal(false); setExpenseToEdit(null); }} title="Chỉnh sửa chi tiêu">

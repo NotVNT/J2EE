@@ -1,11 +1,11 @@
 package com.example.moneymanager.service;
 
-import com.example.moneymanager.config.GeminiKeyRotator;
-import com.example.moneymanager.config.GeminiProperties;
 import com.example.moneymanager.config.GptOssKeyRotator;
 import com.example.moneymanager.config.GptOssProperties;
 import com.example.moneymanager.config.OcrKeyRotator;
 import com.example.moneymanager.config.OcrProperties;
+import com.example.moneymanager.config.GeminiKeyRotator;
+import com.example.moneymanager.config.GeminiProperties;
 import com.example.moneymanager.dto.ReceiptImportAnalyzeResponseDTO;
 import com.example.moneymanager.entity.CategoryEntity;
 import com.example.moneymanager.entity.ProfileEntity;
@@ -44,9 +44,9 @@ class ReceiptImportServiceOcrRoutingRegressionTest {
     @Mock private ExpenseService expenseService;
     @Mock private SubscriptionService subscriptionService;
 
-    @Mock private RestClient.RequestBodyUriSpec geminiRequestBodyUriSpec;
-    @Mock private RestClient.RequestBodySpec geminiRequestBodySpec;
-    @Mock private RestClient.ResponseSpec geminiResponseSpec;
+    @Mock private RestClient.RequestBodyUriSpec ocrRequestBodyUriSpec;
+    @Mock private RestClient.RequestBodySpec ocrRequestBodySpec;
+    @Mock private RestClient.ResponseSpec ocrResponseSpec;
 
     private ReceiptImportService receiptImportService;
 
@@ -66,9 +66,9 @@ class ReceiptImportServiceOcrRoutingRegressionTest {
         );
         GeminiProperties geminiProperties = new GeminiProperties(
                 List.of("gemini-key"),
-                "gemini-2.0-flash-lite",
+                "gemini-3.1-flash-lite",
                 "https://generativelanguage.googleapis.com",
-                45
+                60
         );
 
         receiptImportService = new ReceiptImportService(
@@ -90,8 +90,8 @@ class ReceiptImportServiceOcrRoutingRegressionTest {
     }
 
     @Test
-    @DisplayName("REGRESSION: receipt OCR must route through Gemini when analyzeReceipt is called")
-    void analyzeReceipt_mustUseGeminiRestClient() {
+    @DisplayName("REGRESSION: receipt OCR must route through Gemini flash-lite when OCR config is present")
+    void analyzeReceipt_mustUseDedicatedOcrConfigWhenAvailable() {
         ProfileEntity profile = ProfileEntity.builder().id(7L).build();
         CategoryEntity foodCategory = CategoryEntity.builder().id(11L).name("Ăn uống").type("expense").icon("Utensils").profile(profile).build();
         CategoryEntity otherCategory = CategoryEntity.builder().id(12L).name("Khác").type("expense").icon("CircleHelp").profile(profile).build();
@@ -106,11 +106,11 @@ class ReceiptImportServiceOcrRoutingRegressionTest {
         when(categoryRepository.findByTypeAndProfileId("expense", 7L)).thenReturn(List.of(foodCategory, otherCategory));
         when(categoryRepository.findByNameIgnoreCaseAndTypeAndProfileId("Khác", "expense", 7L)).thenReturn(Optional.of(otherCategory));
 
-        when(geminiRestClient.post()).thenReturn(geminiRequestBodyUriSpec);
-        when(geminiRequestBodyUriSpec.uri(any(Function.class))).thenReturn(geminiRequestBodySpec);
-        when(geminiRequestBodySpec.body(any(String.class))).thenReturn(geminiRequestBodySpec);
-        when(geminiRequestBodySpec.retrieve()).thenReturn(geminiResponseSpec);
-        when(geminiResponseSpec.body(String.class)).thenReturn("""
+        when(geminiRestClient.post()).thenReturn(ocrRequestBodyUriSpec);
+        when(ocrRequestBodyUriSpec.uri(any(Function.class))).thenReturn(ocrRequestBodySpec);
+        when(ocrRequestBodySpec.body(any(String.class))).thenReturn(ocrRequestBodySpec);
+        when(ocrRequestBodySpec.retrieve()).thenReturn(ocrResponseSpec);
+        when(ocrResponseSpec.body(String.class)).thenReturn("""
                 {
                   "candidates": [
                     {
@@ -136,7 +136,6 @@ class ReceiptImportServiceOcrRoutingRegressionTest {
         assertEquals(otherCategory.getId(), result.getItems().get(0).getCategoryId());
 
         verify(geminiRestClient).post();
-        verify(ocrRestClient, never()).post();
         verify(gptOssRestClient, never()).post();
     }
 }
