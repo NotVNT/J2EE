@@ -227,8 +227,13 @@ const Expense = () => {
         receiptDate: normalizeToIsoDate(response.data?.receiptDate) || getTodayIsoDate(),
         jarId: "",
         items: (response.data?.items || []).map((item) => ({
-          name: item?.name || "", amount: item?.amount ?? "", categoryId: item?.categoryId ?? "",
-          icon: item?.icon || "", date: normalizeToIsoDate(item?.date) || normalizeToIsoDate(response.data?.receiptDate) || getTodayIsoDate(),
+          name: item?.name || "",
+          amount: item?.amount ?? "",
+          unitPrice: item?.amount ?? "",
+          quantity: 1,
+          categoryId: item?.categoryId ?? "",
+          icon: item?.icon || "",
+          date: normalizeToIsoDate(item?.date) || normalizeToIsoDate(response.data?.receiptDate) || getTodayIsoDate(),
         })),
       });
       setOpenReceiptPreviewModal(true);
@@ -248,6 +253,34 @@ const Expense = () => {
     nextItems[index] = { ...nextItems[index], [key]: value };
     return { ...prev, items: nextItems };
   });
+  const handleUnitPriceChange = (index, value) => {
+    const val = Number(value) || 0;
+    setReceiptPreview((prev) => {
+      if (!prev) return prev;
+      const nextItems = [...prev.items];
+      const qty = nextItems[index].quantity ?? 1;
+      nextItems[index] = {
+        ...nextItems[index],
+        unitPrice: val,
+        amount: val * qty,
+      };
+      return { ...prev, items: nextItems };
+    });
+  };
+  const handleQuantityChange = (index, value) => {
+    const val = Number(value) || 1;
+    setReceiptPreview((prev) => {
+      if (!prev) return prev;
+      const nextItems = [...prev.items];
+      const price = nextItems[index].unitPrice ?? nextItems[index].amount ?? 0;
+      nextItems[index] = {
+        ...nextItems[index],
+        quantity: val,
+        amount: price * val,
+      };
+      return { ...prev, items: nextItems };
+    });
+  };
   const handleRemovePreviewItem = (index) => setReceiptPreview((prev) => prev ? { ...prev, items: prev.items.filter((_, i) => i !== index) } : prev);
   const handleCloseReceiptPreview = () => { if (isConfirmingImport) return; setOpenReceiptPreviewModal(false); setReceiptPreview(null); };
 
@@ -420,15 +453,23 @@ const Expense = () => {
               {(receiptPreview?.items || []).map((item, index) => (
                 <div key={index} className="rounded-xl border border-slate-200 dark:border-white/10 p-3 bg-slate-50 dark:bg-white/3">
                   <div className="grid grid-cols-1 md:grid-cols-12 gap-2 items-end">
-                    <div className="md:col-span-4">
+                    <div className="md:col-span-3">
                       <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Tên sản phẩm</label>
                       <input className={inputCls} value={item.name || ""} onChange={(e) => handlePreviewItemChange(index, "name", e.target.value)} />
                     </div>
                     <div className="md:col-span-2">
-                      <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Số tiền</label>
-                      <input type="number" min="0" className={inputCls} value={item.amount ?? ""} onChange={(e) => handlePreviewItemChange(index, "amount", e.target.value)} />
+                      <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Đơn giá</label>
+                      <input type="number" min="0" className={inputCls} value={item.unitPrice ?? item.amount ?? ""} onChange={(e) => handleUnitPriceChange(index, e.target.value)} />
                     </div>
-                    <div className="md:col-span-3">
+                    <div className="md:col-span-1">
+                      <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">SL</label>
+                      <input type="number" min="1" className={inputCls} value={item.quantity ?? 1} onChange={(e) => handleQuantityChange(index, e.target.value)} />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Thành tiền</label>
+                      <input type="text" readOnly className={`${inputCls} bg-slate-200/50 dark:bg-white/5 cursor-not-allowed`} value={new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format((item.quantity ?? 1) * (item.unitPrice ?? item.amount ?? 0))} />
+                    </div>
+                    <div className="md:col-span-2">
                       <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Danh mục</label>
                       <CustomSelect
                         value={item.categoryId ?? ""}
@@ -440,12 +481,12 @@ const Expense = () => {
                         className={inputCls}
                       />
                     </div>
-                    <div className="md:col-span-2">
+                    <div className="md:col-span-1">
                       <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Ngày</label>
                       <DateInput className={inputCls} value={item.date || receiptPreview?.receiptDate || ""} onChange={(e) => handlePreviewItemChange(index, "date", e.target.value)} />
                     </div>
                     <div className="md:col-span-1 flex md:justify-end">
-                      <button type="button" className="rounded-xl border border-red-200 dark:border-red-500/30 px-2 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors" onClick={() => handleRemovePreviewItem(index)}>
+                      <button type="button" className="rounded-xl border border-red-200 dark:border-red-500/30 px-2 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors w-full flex justify-center items-center" onClick={() => handleRemovePreviewItem(index)}>
                         <Trash2 size={15} />
                       </button>
                     </div>
