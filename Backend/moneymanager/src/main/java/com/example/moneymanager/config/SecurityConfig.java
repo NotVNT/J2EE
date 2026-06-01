@@ -38,6 +38,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
+                .logout(logout -> logout.disable())
                 .headers(h -> h
                         .frameOptions(fo -> fo.deny())
                         .contentTypeOptions(Customizer.withDefaults())
@@ -52,11 +53,11 @@ public class SecurityConfig {
                                 "/status",
                                 "/health",
                                 "/register",
-                                "/complete-profile",
                                 "/activate",
                                 "/verify-activation",
                                 "/otp/resend",
                                 "/login",
+                                "/logout",
                                 "/forgot-password",
                                 "/verify-reset-otp",
                                 "/reset-password",
