@@ -54,6 +54,7 @@ public class GoogleAuthController {
             
             return ResponseEntity.ok(Map.of(
                     "message", "Đăng nhập thành công.",
+                    "token", token != null ? token : "",
                     "user", result.get("user")
             ));
         } catch (Exception e) {

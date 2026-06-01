@@ -120,6 +120,7 @@ public class ProfileController {
         
         return ResponseEntity.ok(Map.of(
                 "message", "Đăng nhập thành công.",
+                "token", token,
                 "user", result.get("user")
         ));
     }
