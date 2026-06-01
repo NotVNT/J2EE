@@ -272,8 +272,8 @@ const styles = StyleSheet.create({
     marginBottom: scale(20)
   },
   brandLogo: {
-    width: scale(220),
-    aspectRatio: 220 / 72
+    width: 90,
+    height: 90
   },
   title: {
     color: COLORS.DARK_TEXT,

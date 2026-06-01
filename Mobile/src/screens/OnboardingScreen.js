@@ -145,8 +145,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-between"
   },
   brandLogo: {
-    width: scale(150),
-    aspectRatio: 150 / 46
+    width: scale(40),
+    aspectRatio: 1
   },
   skipText: {
     color: COLORS.DARK_TEXT_SECONDARY,

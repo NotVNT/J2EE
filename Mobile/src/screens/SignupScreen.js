@@ -151,8 +151,8 @@ const styles = StyleSheet.create({
     marginBottom: scale(16)
   },
   brandLogo: {
-    width: scale(160),
-    aspectRatio: 160 / 50
+    width: 90,
+    height: 90
   },
   title: {
     fontSize: clampScale(28, 24, 32),
