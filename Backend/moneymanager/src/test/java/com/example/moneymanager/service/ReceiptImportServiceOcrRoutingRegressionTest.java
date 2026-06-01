@@ -4,6 +4,8 @@ import com.example.moneymanager.config.GptOssKeyRotator;
 import com.example.moneymanager.config.GptOssProperties;
 import com.example.moneymanager.config.OcrKeyRotator;
 import com.example.moneymanager.config.OcrProperties;
+import com.example.moneymanager.config.GeminiKeyRotator;
+import com.example.moneymanager.config.GeminiProperties;
 import com.example.moneymanager.dto.ReceiptImportAnalyzeResponseDTO;
 import com.example.moneymanager.entity.CategoryEntity;
 import com.example.moneymanager.entity.ProfileEntity;
@@ -36,6 +38,7 @@ class ReceiptImportServiceOcrRoutingRegressionTest {
 
     @Mock private RestClient ocrRestClient;
     @Mock private RestClient gptOssRestClient;
+    @Mock private RestClient geminiRestClient;
     @Mock private ProfileService profileService;
     @Mock private CategoryRepository categoryRepository;
     @Mock private ExpenseService expenseService;
@@ -61,6 +64,12 @@ class ReceiptImportServiceOcrRoutingRegressionTest {
                 "https://openrouter.ai/api/v1",
                 60
         );
+        GeminiProperties geminiProperties = new GeminiProperties(
+                List.of("gemini-key"),
+                "gemini-2.5-pro",
+                "https://generativelanguage.googleapis.com",
+                60
+        );
 
         receiptImportService = new ReceiptImportService(
                 ocrRestClient,
@@ -69,6 +78,9 @@ class ReceiptImportServiceOcrRoutingRegressionTest {
                 gptOssRestClient,
                 gptOssProperties,
                 new GptOssKeyRotator(gptOssProperties),
+                geminiRestClient,
+                geminiProperties,
+                new GeminiKeyRotator(geminiProperties),
                 new ObjectMapper(),
                 profileService,
                 categoryRepository,
@@ -94,7 +106,7 @@ class ReceiptImportServiceOcrRoutingRegressionTest {
         when(categoryRepository.findByTypeAndProfileId("expense", 7L)).thenReturn(List.of(foodCategory, otherCategory));
         when(categoryRepository.findByNameIgnoreCaseAndTypeAndProfileId("Khác", "expense", 7L)).thenReturn(Optional.of(otherCategory));
 
-        when(ocrRestClient.post()).thenReturn(ocrRequestBodyUriSpec);
+        when(geminiRestClient.post()).thenReturn(ocrRequestBodyUriSpec);
         when(ocrRequestBodyUriSpec.uri(any(Function.class))).thenReturn(ocrRequestBodySpec);
         when(ocrRequestBodySpec.body(any(String.class))).thenReturn(ocrRequestBodySpec);
         when(ocrRequestBodySpec.retrieve()).thenReturn(ocrResponseSpec);
@@ -123,7 +135,7 @@ class ReceiptImportServiceOcrRoutingRegressionTest {
         assertEquals("Bun bo", result.getItems().get(0).getName());
         assertEquals(otherCategory.getId(), result.getItems().get(0).getCategoryId());
 
-        verify(ocrRestClient).post();
+        verify(geminiRestClient).post();
         verify(gptOssRestClient, never()).post();
     }
 }

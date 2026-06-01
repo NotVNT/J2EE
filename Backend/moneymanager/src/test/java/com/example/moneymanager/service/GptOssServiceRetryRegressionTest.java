@@ -43,7 +43,7 @@ class GptOssServiceRetryRegressionTest {
         );
 
         when(gptOssRestClient.post()).thenReturn(requestBodyUriSpec);
-        when(requestBodyUriSpec.uri("/chat/completions")).thenReturn(requestBodySpec);
+        when(requestBodyUriSpec.uri(org.mockito.ArgumentMatchers.<java.util.function.Function<org.springframework.web.util.UriBuilder, java.net.URI>>any())).thenReturn(requestBodySpec);
         when(requestBodySpec.header(anyString(), anyString())).thenReturn(requestBodySpec);
         when(requestBodySpec.body(anyString())).thenReturn(requestBodySpec);
         when(requestBodySpec.retrieve()).thenReturn(responseSpec);
