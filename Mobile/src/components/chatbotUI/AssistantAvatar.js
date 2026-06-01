@@ -12,17 +12,22 @@ export default function AssistantAvatar() {
 
 const styles = StyleSheet.create({
   assistantAvatar: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 12,
-    backgroundColor: COLORS.CHAT_PURPLE_SOFT,
+    marginRight: 10,
+    backgroundColor: COLORS.ROSE_MIST,
     borderWidth: 1,
-    borderColor: "rgba(255, 139, 221, 0.45)",
+    borderColor: COLORS.CARD_BORDER,
+    shadowColor: COLORS.PRIMARY,
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2
   },
   assistantAvatarText: {
-    fontSize: 22,
+    fontSize: 18,
   },
 });

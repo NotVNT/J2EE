@@ -2,6 +2,7 @@ import React, { useCallback, useContext, useMemo, useState } from "react";
 import { ActivityIndicator, Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from "react-native";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
+import * as DocumentPicker from "expo-document-picker";
 import http from "../services/http";
 import { API_ENDPOINTS } from "../constants/api";
 import { SUCCESS_ALERT_MESSAGES, SUCCESS_ALERT_TITLE } from "../constants/alertMessages";
@@ -12,7 +13,7 @@ import { CategoryVectorIcon, getIconColor } from "../utils/VectorIcons";
 import VoiceInputButton from "../components/VoiceInputButton";
 import { downloadAndShareFile } from "../utils/fileDownload";
 import { AuthContext } from "../components/AuthContext";
-import { analyzeReceipt } from "../services/receiptImportService";
+import { analyzeReceiptFile } from "../services/receiptImportService";
 import ShowMoreButton, { useVisibleItems } from "../components/ShowMoreButton";
 import QuickExpenseTemplates from "../components/QuickExpenseTemplates";
 
@@ -192,12 +193,117 @@ export default function ExpenseScreen() {
     }
   };
 
+  /** Điều hướng sang ReceiptPreviewScreen với kết quả phân tích */
+  const navigateToPreview = async (fileAsset) => {
+    setIsScanning(true);
+    try {
+      const analyzeResult = await analyzeReceiptFile(fileAsset);
+      if (!analyzeResult?.items?.length) {
+        Alert.alert(
+          "Không nhận diện được",
+          "Gemini không tìm thấy khoản chi nào trong tệp. Hãy thử tệp khác hoặc nhập tay."
+        );
+        return;
+      }
+      navigation.navigate("ReceiptPreview", { analyzeResult });
+    } catch (error) {
+      Alert.alert(
+        "Lỗi phân tích",
+        getApiErrorMessage(error, "Không thể phân tích hóa đơn. Vui lòng thử lại.")
+      );
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
+  /** Chụp ảnh bằng camera */
+  const handlePickCamera = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("Quyền bị từ chối", "Cần cấp quyền camera để chụp hóa đơn.");
+      return;
+    }
+    let result;
+    try {
+      result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ["images"],
+        quality: 0.85,
+        allowsEditing: false,
+      });
+    } catch (e) {
+      Alert.alert("Lỗi", "Không thể mở camera: " + (e.message || ""));
+      return;
+    }
+    if (result.canceled || !result.assets?.length) return;
+    const asset = result.assets[0];
+    if (!asset.uri) return;
+    await navigateToPreview(asset);
+  };
+
+  /** Chọn ảnh từ thư viện */
+  const handlePickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("Quyền bị từ chối", "Cần cấp quyền thư viện ảnh để chọn hóa đơn.");
+      return;
+    }
+    let result;
+    try {
+      result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        quality: 0.85,
+        allowsEditing: false,
+      });
+    } catch (e) {
+      Alert.alert("Lỗi", "Không thể mở thư viện ảnh: " + (e.message || ""));
+      return;
+    }
+    if (result.canceled || !result.assets?.length) return;
+    const asset = result.assets[0];
+
+    const MAX_SIZE = 10 * 1024 * 1024;
+    if (asset.fileSize && asset.fileSize > MAX_SIZE) {
+      Alert.alert("Ảnh quá lớn", "Vui lòng chọn ảnh dưới 10 MB.");
+      return;
+    }
+    await navigateToPreview(asset);
+  };
+
+  /** Chọn file PDF từ bộ nhớ */
+  const handlePickPdf = async () => {
+    let result;
+    try {
+      result = await DocumentPicker.getDocumentAsync({
+        type: "application/pdf",
+        copyToCacheDirectory: true,
+      });
+    } catch (e) {
+      Alert.alert("Lỗi", "Không thể mở trình chọn file: " + (e.message || ""));
+      return;
+    }
+
+    if (result.canceled || !result.assets?.length) return;
+    const asset = result.assets[0];
+
+    const MAX_SIZE = 10 * 1024 * 1024;
+    if (asset.size && asset.size > MAX_SIZE) {
+      Alert.alert("File quá lớn", "Vui lòng chọn file PDF dưới 10 MB.");
+      return;
+    }
+
+    await navigateToPreview({
+      uri: asset.uri,
+      name: asset.name,
+      mimeType: asset.mimeType || "application/pdf",
+    });
+  };
+
   const handleScanReceipt = async () => {
     // Premium gate
     if (!isPremium) {
       Alert.alert(
         "Tính năng Premium",
-        "Quét hóa đơn bằng ảnh là tính năng dành riêng cho gói Premium.\n\nHãy nâng cấp tài khoản để sử dụng.",
+        "Quét hóa đơn bằng ảnh / PDF là tính năng dành riêng cho gói Premium.\n\nHãy nâng cấp tài khoản để sử dụng.",
         [
           { text: "Để sau", style: "cancel" },
           { text: "Nâng cấp", onPress: () => navigation.navigate("Payment") },
@@ -206,81 +312,12 @@ export default function ExpenseScreen() {
       return;
     }
 
-    // Request camera permission
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert("Quyền bị từ chối", "Cần cấp quyền truy cập camera để quét hóa đơn.");
-      return;
-    }
-
-    // Show action sheet: Camera or Library
-    const result = await new Promise((resolve) => {
-      Alert.alert("Quét hóa đơn", "Chọn nguồn ảnh:", [
-        { text: "Chụp ảnh", onPress: () => resolve("camera") },
-        { text: "Thư viện", onPress: () => resolve("library") },
-        { text: "Hủy", style: "cancel", onPress: () => resolve(null) },
-      ]);
-    });
-
-    if (!result) return;
-
-    let pickerResult;
-    try {
-      if (result === "camera") {
-        pickerResult = await ImagePicker.launchCameraAsync({
-          mediaTypes: ["images"],
-          quality: 0.8,
-          allowsEditing: false,
-        });
-      } else {
-        pickerResult = await ImagePicker.launchImageLibraryAsync({
-          mediaTypes: ["images"],
-          quality: 0.8,
-          allowsEditing: false,
-        });
-      }
-    } catch (pickerError) {
-      Alert.alert("Lỗi", "Không thể mở camera/thư viện: " + (pickerError.message || ""));
-      return;
-    }
-
-    if (pickerResult.canceled || !pickerResult.assets?.length) return;
-
-    const asset = pickerResult.assets[0];
-
-    // Client-side validation
-    if (!asset.uri) {
-      Alert.alert("Lỗi", "Không đọc được ảnh. Vui lòng thử lại.");
-      return;
-    }
-
-    const validMimes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
-    if (asset.mimeType && !validMimes.includes(asset.mimeType)) {
-      Alert.alert("Định dạng không hỗ trợ", "Vui lòng chọn ảnh JPEG, PNG, GIF hoặc WebP.");
-      return;
-    }
-
-    // File size check (10MB = 10 * 1024 * 1024 bytes)
-    const MAX_SIZE = 10 * 1024 * 1024;
-    if (asset.fileSize && asset.fileSize > MAX_SIZE) {
-      Alert.alert("Ảnh quá lớn", "Vui lòng chọn ảnh dưới 10MB.");
-      return;
-    }
-
-    // Upload & analyze
-    setIsScanning(true);
-    try {
-      const analyzeResult = await analyzeReceipt(asset);
-      if (!analyzeResult?.items?.length) {
-        Alert.alert("Không nhận diện được", "Gemini không tìm thấy mặt hàng nào trong ảnh. Hãy thử ảnh khác.");
-        return;
-      }
-      navigation.navigate("ReceiptPreview", { analyzeResult });
-    } catch (error) {
-      Alert.alert("Lỗi phân tích", getApiErrorMessage(error, "Không thể phân tích hóa đơn. Vui lòng thử lại."));
-    } finally {
-      setIsScanning(false);
-    }
+    Alert.alert("📎 Nhập từ hóa đơn", "Chọn nguồn tệp hóa đơn:", [
+      { text: "📷 Chụp ảnh", onPress: handlePickCamera },
+      { text: "🖼️ Chọn ảnh từ thư viện", onPress: handlePickImage },
+      { text: "📄 Chọn file PDF", onPress: handlePickPdf },
+      { text: "Hủy", style: "cancel" },
+    ]);
   };
 
   const handleExport = async () => {

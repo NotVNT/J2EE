@@ -3,71 +3,75 @@ import { StyleSheet, Text, View, Pressable } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { COLORS } from "../../constants/colors";
 
-export default function ChatHeader({ onOpenSettings }) {
+export default function ChatHeader({ children }) {
   const navigation = useNavigation();
 
   return (
     <View style={styles.header}>
-      <Pressable
-        style={styles.headerIconButton}
-        onPress={() => navigation.goBack()}
-        android_ripple={{ color: COLORS.CHAT_PURPLE_LIGHT, borderless: true, radius: 22 }}
-      >
-        <Text style={styles.headerIcon}>←</Text>
-      </Pressable>
+      <View style={styles.headerLeft}>
+        <Pressable
+          style={({ pressed }) => [styles.headerIconButton, pressed && styles.headerIconButtonPressed]}
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={styles.headerIcon}>←</Text>
+        </Pressable>
 
-      <Text style={styles.headerTitle}>AI Chat</Text>
+        <Text style={styles.headerTitle}>AI Chat</Text>
+      </View>
+
+      <View style={styles.headerRight}>
+        {children}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   header: {
-    minHeight: 72,
-    paddingHorizontal: 24,
+    minHeight: 64,
+    paddingHorizontal: 16,
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.CARD_BORDER,
+    backgroundColor: COLORS.BG,
+    zIndex: 150,
+    elevation: 5
+  },
+  headerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12
+  },
+  headerRight: {
+    flexDirection: "row",
+    alignItems: "center"
   },
   headerIconButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: COLORS.CHAT_BUBBLE,
+    backgroundColor: COLORS.CARD,
     borderWidth: 1,
-    borderColor: COLORS.CHAT_BORDER,
+    borderColor: COLORS.CARD_BORDER
+  },
+  headerIconButtonPressed: {
+    opacity: 0.82,
+    backgroundColor: COLORS.ROSE_MIST
   },
   headerIcon: {
-    fontSize: 20,
-    color: COLORS.CHAT_PURPLE,
-    fontWeight: "700",
+    fontSize: 16,
+    color: COLORS.PRIMARY, // active brand pink
+    fontWeight: "bold",
+    marginTop: -2
   },
   headerTitle: {
-    flex: 1,
-    color: COLORS.CHAT_TEXT,
+    color: COLORS.PRIMARY, // active brand pink (matches mockup!)
     fontSize: 20,
     fontWeight: "800",
-    marginLeft: 16,
-  },
-  filterButton: {
-    width: 52,
-    height: 52,
-    borderRadius: 18,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: COLORS.CHAT_BUBBLE,
-    borderWidth: 1,
-    borderColor: COLORS.CHAT_BORDER,
-    shadowColor: COLORS.CHAT_SHADOW,
-    shadowOpacity: 0.12,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 2,
-  },
-  filterIcon: {
-    fontSize: 20,
-    color: COLORS.CHAT_PURPLE,
-    fontWeight: "600",
-  },
+    textAlign: "left"
+  }
 });
