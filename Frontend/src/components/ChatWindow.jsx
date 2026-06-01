@@ -151,6 +151,7 @@ const ChatWindow = ({
   const [activeBranches, setActiveBranches] = useState({});
   const [editingTarget, setEditingTarget] = useState(null);
   const composerRef = useRef(null);
+  const isComposingRef = useRef(false);
 
   const { visibleMessages } = useMemo(() => {
     const turns = [];
@@ -224,14 +225,19 @@ const ChatWindow = ({
     onSendMessage(input, { editMessageId: editingTarget?.id ?? null });
     setInput("");
     setEditingTarget(null);
+    // Force-clear the DOM value so pending IME commits cannot re-insert text
+    if (composerRef.current) composerRef.current.value = "";
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey && !e.isComposing && !isComposingRef.current) {
       e.preventDefault();
       handleSubmit(e);
     }
   };
+
+  const handleCompositionStart = () => { isComposingRef.current = true; };
+  const handleCompositionEnd  = () => { isComposingRef.current = false; };
 
   const isEmpty = messages.length === 0;
 
@@ -494,6 +500,8 @@ const ChatWindow = ({
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
+              onCompositionStart={handleCompositionStart}
+              onCompositionEnd={handleCompositionEnd}
               placeholder={editingTarget ? "Sửa nội dung rồi gửi lại..." : "Nhập câu hỏi hoặc yêu cầu Nova Money..."}
               rows={1}
               className="flex-1 bg-transparent text-[14px] md:text-[15px] text-slate-800 dark:text-[#e3e3e3] placeholder-slate-400 dark:placeholder-[#c4c7c5]
