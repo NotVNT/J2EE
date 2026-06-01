@@ -86,8 +86,8 @@ public class GptOssService {
             log.debug("GPT-OSS callWithPrompt attempt {} request: {}", attempt, requestJson);
 
             String rawResponse = gptOssRestClient.post()
-                    .uri("/chat/completions")
-                    .header("Authorization", "Bearer " + apiKey)
+                    .uri(uriBuilder -> uriBuilder.path("/chat/completions").build())
+                    .header("Authorization", "Bearer " + apiKey())
                     .body(requestJson)
                     .retrieve()
                     .onStatus(status -> !status.is2xxSuccessful(), (req, res) -> {

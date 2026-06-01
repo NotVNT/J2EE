@@ -19,7 +19,6 @@ export default function ModelSelectorPill({
 
   return (
     <View style={styles.wrapper}>
-
       <Pressable style={styles.modelPill} onPress={() => setIsOpen((current) => !current)}>
         <View style={styles.modelIconCircle}>
           <Text style={styles.modelIcon}>🤖</Text>
@@ -90,147 +89,141 @@ export default function ModelSelectorPill({
 
 const styles = StyleSheet.create({
   wrapper: {
-    alignSelf: "center",
-    marginTop: 14,
-    minWidth: 238,
     position: "relative",
-    zIndex: 20,
-    elevation: 20,
+    zIndex: 200,
+    elevation: 200
   },
   modelPill: {
-    alignSelf: "center",
-    height: 40,
-    minWidth: 214,
-    maxWidth: 260,
-    paddingLeft: 16,
-    paddingRight: 14,
-    borderRadius: 20,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: COLORS.CARD_BORDER,
+    backgroundColor: COLORS.CARD,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    backgroundColor: "rgba(250, 241, 255, 0.94)",
-    borderWidth: 1,
-    borderColor: COLORS.CHAT_BORDER,
-    shadowColor: COLORS.CHAT_PURPLE,
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 3,
+    paddingLeft: 4,
+    paddingRight: 14,
+    shadowColor: COLORS.PRIMARY,
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2
   },
   modelIconCircle: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: COLORS.ROSE_MIST,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(139, 61, 255, 0.14)",
+    marginRight: 8
   },
   modelIcon: {
-    fontSize: 12,
-    color: COLORS.CHAT_PURPLE,
+    fontSize: 13
   },
   modelLabel: {
-    flexShrink: 1,
     fontSize: 13,
-    fontWeight: "700",
-    color: COLORS.CHAT_PURPLE,
+    fontWeight: "750",
+    color: COLORS.TEXT_SECONDARY
   },
-
   dropdown: {
     position: "absolute",
-    top: 48,
-    left: -10,
-    right: -10,
-    paddingTop: 16,
-    paddingHorizontal: 14,
-    paddingBottom: 14,
-    borderRadius: 22,
+    top: 44,
+    right: 0,
+    width: 250,
+    backgroundColor: COLORS.CARD,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: COLORS.CHAT_BORDER,
-    backgroundColor: "rgba(255, 255, 255, 0.98)",
-    shadowColor: COLORS.CHAT_PURPLE,
-    shadowOpacity: 0.16,
-    shadowRadius: 22,
-    shadowOffset: { width: 0, height: 14 },
-    elevation: 8,
+    borderColor: COLORS.CARD_BORDER,
+    padding: 8,
+    shadowColor: "#000",
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 10
   },
   dropdownTitle: {
-    marginBottom: 8,
-    color: COLORS.CHAT_PURPLE,
     fontSize: 10,
-    fontWeight: "800",
+    fontWeight: "900",
+    color: COLORS.PRIMARY, // active pink
+    letterSpacing: 1.2,
+    paddingHorizontal: 12,
+    paddingTop: 8,
+    paddingBottom: 6,
+    textTransform: "uppercase"
   },
   optionRow: {
-    minHeight: 48,
-    borderRadius: 10,
-    paddingHorizontal: 8,
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    borderRadius: 10,
+    marginVertical: 2,
+    borderWidth: 1,
+    borderColor: "transparent"
   },
   optionRowSelected: {
-    backgroundColor: "rgba(139, 61, 255, 0.07)",
+    backgroundColor: "rgba(232, 89, 126, 0.06)",
+    borderColor: "rgba(232, 89, 126, 0.2)"
   },
   optionRowDisabled: {
-    opacity: 0.48,
+    opacity: 0.4
   },
   checkSlot: {
-    width: 18,
+    width: 20,
+    height: 20,
     alignItems: "center",
+    justifyContent: "center",
+    marginRight: 6
   },
   checkCircle: {
     width: 16,
     height: 16,
     borderRadius: 8,
+    backgroundColor: COLORS.PRIMARY,
     alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: COLORS.CHAT_PURPLE,
+    justifyContent: "center"
   },
   checkText: {
-    color: COLORS.WHITE,
     fontSize: 10,
-    fontWeight: "900",
+    fontWeight: "bold",
+    color: COLORS.WHITE
   },
   optionIcon: {
-    width: 18,
-    color: COLORS.GOLD,
-    fontSize: 15,
-    textAlign: "center",
+    fontSize: 16,
+    marginRight: 8
   },
   optionCopy: {
-    flex: 1,
-    minWidth: 0,
+    flex: 1
   },
   optionTitleRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    justifyContent: "space-between",
+    gap: 4
   },
   optionLabel: {
-    flexShrink: 1,
-    color: COLORS.CHAT_PURPLE,
-    fontSize: 12,
-    fontWeight: "800",
+    fontSize: 14,
+    fontWeight: "700",
+    color: COLORS.TEXT
   },
   optionLabelDisabled: {
-    color: COLORS.CHAT_MUTED,
-  },
-  optionDescription: {
-    marginTop: 2,
-    color: COLORS.CHAT_MUTED,
-    fontSize: 10,
-    fontWeight: "600",
+    color: COLORS.TEXT_MUTED
   },
   badge: {
+    backgroundColor: COLORS.PRIMARY,
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 8,
-    backgroundColor: COLORS.CHAT_PURPLE_SOFT,
+    borderRadius: 6
   },
   badgeText: {
-    color: COLORS.CHAT_PURPLE,
     fontSize: 8,
-    fontWeight: "900",
+    fontWeight: "800",
+    color: COLORS.WHITE
   },
+  optionDescription: {
+    fontSize: 11,
+    color: COLORS.TEXT_SECONDARY,
+    marginTop: 2
+  }
 });
