@@ -9,22 +9,21 @@ import {
   ActivityIndicator,
   Pressable
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { COLORS } from "../constants/colors";
-import ModeSegmentedControl from "../components/chatbotUI/ModeSegmentedControl";
-import ModelSelectorPill from "../components/chatbotUI/ModelSelectorPill";
+import ChatAssistantHeader from "../components/chatbotUI/ChatAssistantHeader";
 import MessageBubble from "../components/chatbotUI/MessageBubble";
 import QuickPromptChips from "../components/chatbotUI/QuickPromptChips";
 import ChatInputBar from "../components/chatbotUI/ChatInputBar";
+
 import ChatHeader from "../components/chatbotUI/ChatHeader";
 import SessionsModal from "../components/chatbotUI/SessionsModal";
 import EditMessageModal from "../components/chatbotUI/EditMessageModal";
+
 import useChatMessages from "../components/chatbotUI/useChatMessages";
 import useModelConfig from "../components/chatbotUI/useModelConfig";
 import useVoiceInput from "../components/chatbotUI/useVoiceInput";
 
 export default function ChatScreen() {
-  const insets = useSafeAreaInsets();
   const [inputText, setInputText] = useState("");
   const [isSessionsVisible, setIsSessionsVisible] = useState(false);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
@@ -120,6 +119,10 @@ export default function ChatScreen() {
   ), [handleConfirmAction, handleCancelConfirmation, handleUndo, handleEditMessage, retryLastMessage, isProcessingCrud]);
 
   return (
+
+    <View style={styles.container}>
+      <ChatAssistantHeader
+
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <ChatHeader>
         <View style={styles.headerRightContainer}>
@@ -140,11 +143,14 @@ export default function ChatScreen() {
           />
         </View>
       </ChatHeader>
-
       <ModeSegmentedControl
         activeMode={activeMode}
         isFreePlan={isFreePlan}
+        modelOptions={modelOptions}
+        modelValue={modelValue}
+        modelLabel={modelLabel}
         onChangeMode={handleModeSwitch}
+        onModelChange={handleModelChange}
       />
 
       <KeyboardAvoidingView
@@ -161,7 +167,7 @@ export default function ChatScreen() {
           ListFooterComponent={
             loading ? (
               <View style={styles.loadingContainer}>
-                <ActivityIndicator color={COLORS.CHAT_PURPLE} size="small" />
+                <ActivityIndicator color={COLORS.PRIMARY} size="small" />
                 <Text style={styles.loadingText}>
                   {modelLabel} đang suy nghĩ...
                 </Text>
@@ -243,7 +249,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: 24,
-    paddingTop: 28,
+    paddingTop: 20,
     paddingBottom: 20
   },
   loadingContainer: {

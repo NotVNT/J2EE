@@ -1,7 +1,9 @@
 import React, { useEffect, useRef } from "react";
 import { StyleSheet, Text, View, TextInput, Pressable, Platform, Animated } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path, Rect } from "react-native-svg";
 import { COLORS } from "../../constants/colors";
+import { getSafeAreaBottom } from "../../utils/safeAreaSpacing";
 
 export default function ChatInputBar({
   value = "",
@@ -14,7 +16,10 @@ export default function ChatInputBar({
   onMicPress,
   isRecording
 }) {
-  const isInputDisabled = loading || disabled;
+
+  const insets = useSafeAreaInsets();
+  const isDisabled = loading || disabled;
+
   const hasText = value.trim().length > 0;
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
@@ -119,7 +124,7 @@ export default function ChatInputBar({
   };
 
   return (
-    <View style={styles.inputShell}>
+    <View style={[styles.inputShell, { paddingBottom: getSafeAreaBottom(insets, 86) }]}>
       <View style={styles.inputInner}>
         <View style={styles.inputSparkle}>
           <Text style={styles.inputSparkleText}>✦</Text>
@@ -157,9 +162,9 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     backgroundColor: "rgba(255, 255, 255, 0.94)",
     borderWidth: 1,
-    borderColor: COLORS.CHAT_BORDER,
-    shadowColor: COLORS.CHAT_PURPLE,
-    shadowOpacity: 0.15,
+    borderColor: "rgba(239, 94, 131, 0.18)",
+    shadowColor: COLORS.PRIMARY,
+    shadowOpacity: 0.12,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 6 },
     elevation: 4
@@ -173,7 +178,7 @@ const styles = StyleSheet.create({
   },
   inputSparkleText: {
     fontSize: 16,
-    color: COLORS.CHAT_PURPLE
+    color: COLORS.PRIMARY
   },
   input: {
     flex: 1,
@@ -192,7 +197,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: COLORS.CHAT_PURPLE
+    backgroundColor: COLORS.PRIMARY
   },
   actionCircleDisabled: {
     backgroundColor: COLORS.CHAT_MUTED

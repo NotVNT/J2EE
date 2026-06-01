@@ -1,12 +1,14 @@
 import React, { useCallback, useMemo, useState } from "react";
 import { Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, View, Dimensions } from "react-native";
 import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path, G, Text as SvgText } from "react-native-svg";
 import http from "../services/http";
 import { API_ENDPOINTS } from "../constants/api";
 import { COLORS } from "../constants/colors";
 import { getApiErrorMessage, formatDate } from "../utils/format";
 import { CategoryVectorIcon, getIconColor } from "../utils/VectorIcons";
+import { getSafeAreaBottom, getSafeAreaTop } from "../utils/safeAreaSpacing";
 
 const screenWidth = Dimensions.get("window").width;
 const formatMoney = (n) =>
@@ -78,6 +80,7 @@ function ExpenseItem({ item, onDelete }) {
 export default function JarDetailScreen() {
   const navigation = useNavigation();
   const route = useRoute();
+  const insets = useSafeAreaInsets();
   const { id } = route.params;
 
   const [jars, setJars] = useState([]);
@@ -239,12 +242,12 @@ export default function JarDetailScreen() {
   const cy = svgSize / 2;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: getSafeAreaTop(insets) }]}>
       <FlatList
         data={jarExpenses}
         keyExtractor={(item) => String(item.id)}
         renderItem={({ item }) => <ExpenseItem item={item} onDelete={handleDeleteExpense} />}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: getSafeAreaBottom(insets) }]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         ListHeaderComponent={
           <View>

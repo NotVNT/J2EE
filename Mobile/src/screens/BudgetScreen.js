@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import http from "../services/http";
 import { fetchCategoriesByType } from "../services/categoryService";
 import { API_ENDPOINTS } from "../constants/api";
@@ -8,6 +9,7 @@ import { SUCCESS_ALERT_MESSAGES, SUCCESS_ALERT_TITLE } from "../constants/alertM
 import { formatCurrencyInput, formatMoney, getApiErrorMessage, parseCurrencyInput } from "../utils/format";
 import { COLORS } from "../constants/colors";
 import { CategoryVectorIcon, getIconColor } from "../utils/VectorIcons";
+import { getSafeAreaBottom, getSafeAreaTop } from "../utils/safeAreaSpacing";
 
 function getBudgetVisual(progressRatio) {
   if (progressRatio >= 1) {
@@ -104,6 +106,7 @@ function BudgetCard({ item, onDelete }) {
 }
 
 export default function BudgetScreen() {
+  const insets = useSafeAreaInsets();
   const [budgets, setBudgets] = useState([]);
   const [categories, setCategories] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -249,7 +252,7 @@ export default function BudgetScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: getSafeAreaTop(insets) }]}>
       <View style={styles.overviewCard}>
         <Text style={styles.overviewTitle}>Ngân sách tháng</Text>
         <Text style={styles.overviewLimit}>Hạn mức: {formatMoney(summary.totalLimit)}</Text>
@@ -320,7 +323,7 @@ export default function BudgetScreen() {
         data={budgets}
         keyExtractor={(item) => String(item?.id)}
         renderItem={({ item }) => <BudgetCard item={item} onDelete={onDelete} />}
-        contentContainerStyle={[styles.listContent, !budgets.length && styles.listContentEmpty]}
+        contentContainerStyle={[styles.listContent, { paddingBottom: getSafeAreaBottom(insets) }, !budgets.length && styles.listContentEmpty]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         ListHeaderComponent={
           budgets.length ? (
@@ -346,7 +349,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#f2f4f7",
     padding: 16,
-    paddingTop: 24
+    paddingTop: 16
   },
   overviewCard: {
     backgroundColor: COLORS.PRIMARY,

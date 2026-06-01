@@ -5,6 +5,8 @@ import { API_ENDPOINTS } from "../constants/api";
 import { formatDate, formatMoney, getApiErrorMessage, todayIso } from "../utils/format";
 import { PickDateField } from "../utils/pickDate";
 import { COLORS } from "../constants/colors";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { getSafeAreaBottom, getSafeAreaTop } from "../utils/safeAreaSpacing";
 
 function TransactionItem({ item, type }) {
   return (
@@ -21,6 +23,7 @@ function TransactionItem({ item, type }) {
 }
 
 export default function FilterScreen() {
+  const insets = useSafeAreaInsets();
   const [type, setType] = useState("expense");
   const [startDate, setStartDate] = useState(todayIso());
   const [endDate, setEndDate] = useState(todayIso());
@@ -58,7 +61,7 @@ export default function FilterScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: getSafeAreaTop(insets) }]}>
       <View style={styles.formCard}>
         <Text style={styles.formTitle}>Lọc giao dịch nâng cao</Text>
 
@@ -132,7 +135,7 @@ export default function FilterScreen() {
         data={results}
         keyExtractor={(item, index) => String(item?.id || `${type}-${index}`)}
         renderItem={({ item }) => <TransactionItem item={item} type={type} />}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[styles.listContent, { paddingBottom: getSafeAreaBottom(insets) }]}
         ListEmptyComponent={<Text style={styles.emptyText}>Chưa có kết quả lọc</Text>}
       />
     </View>
