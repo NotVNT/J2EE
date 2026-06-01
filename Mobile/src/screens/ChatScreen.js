@@ -63,8 +63,6 @@ export default function ChatScreen() {
     onResult: handleVoiceResult
   });
 
-  const [inputText, setInputText] = useState("");
-
   useEffect(() => {
     setTimeout(() => {
       flatListRef.current?.scrollToEnd({ animated: true });
