@@ -254,29 +254,29 @@ const Expense = () => {
     return { ...prev, items: nextItems };
   });
   const handleUnitPriceChange = (index, value) => {
-    const val = Number(value) || 0;
+    const val = value === "" ? "" : (Number(value) || 0);
     setReceiptPreview((prev) => {
       if (!prev) return prev;
       const nextItems = [...prev.items];
-      const qty = nextItems[index].quantity ?? 1;
+      const qty = Number(nextItems[index].quantity) || 1;
       nextItems[index] = {
         ...nextItems[index],
         unitPrice: val,
-        amount: val * qty,
+        amount: (Number(val) || 0) * qty,
       };
       return { ...prev, items: nextItems };
     });
   };
   const handleQuantityChange = (index, value) => {
-    const val = Number(value) || 1;
+    const val = value === "" ? "" : (Number(value) || 1);
     setReceiptPreview((prev) => {
       if (!prev) return prev;
       const nextItems = [...prev.items];
-      const price = nextItems[index].unitPrice ?? nextItems[index].amount ?? 0;
+      const price = Number(nextItems[index].unitPrice) || Number(nextItems[index].amount) || 0;
       nextItems[index] = {
         ...nextItems[index],
         quantity: val,
-        amount: price * val,
+        amount: price * (Number(val) || 1),
       };
       return { ...prev, items: nextItems };
     });
@@ -453,21 +453,21 @@ const Expense = () => {
               {(receiptPreview?.items || []).map((item, index) => (
                 <div key={index} className="rounded-xl border border-slate-200 dark:border-white/10 p-3 bg-slate-50 dark:bg-white/3">
                   <div className="grid grid-cols-1 md:grid-cols-12 gap-2 items-end">
-                    <div className="md:col-span-3">
+                    <div className="md:col-span-2">
                       <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Tên sản phẩm</label>
                       <input className={inputCls} value={item.name || ""} onChange={(e) => handlePreviewItemChange(index, "name", e.target.value)} />
                     </div>
                     <div className="md:col-span-2">
                       <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Đơn giá</label>
-                      <input type="number" min="0" className={inputCls} value={item.unitPrice ?? item.amount ?? ""} onChange={(e) => handleUnitPriceChange(index, e.target.value)} />
+                      <input type="number" min="0" className={inputCls} value={item.unitPrice !== undefined ? item.unitPrice : (item.amount ?? "")} onChange={(e) => handleUnitPriceChange(index, e.target.value)} />
                     </div>
-                    <div className="md:col-span-1">
+                    <div className="md:col-span-2">
                       <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">SL</label>
-                      <input type="number" min="1" className={inputCls} value={item.quantity ?? 1} onChange={(e) => handleQuantityChange(index, e.target.value)} />
+                      <input type="number" min="1" className={`${inputCls} text-center`} value={item.quantity !== undefined && item.quantity !== "" ? item.quantity : 1} onChange={(e) => handleQuantityChange(index, e.target.value)} />
                     </div>
                     <div className="md:col-span-2">
                       <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Thành tiền</label>
-                      <input type="text" readOnly className={`${inputCls} bg-slate-200/50 dark:bg-white/5 cursor-not-allowed`} value={new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format((item.quantity ?? 1) * (item.unitPrice ?? item.amount ?? 0))} />
+                      <input type="text" readOnly className={`${inputCls} bg-slate-200/50 dark:bg-white/5 cursor-not-allowed`} value={new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format((Number(item.quantity) || 1) * (Number(item.unitPrice) || Number(item.amount) || 0))} />
                     </div>
                     <div className="md:col-span-2">
                       <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Danh mục</label>
@@ -494,6 +494,34 @@ const Expense = () => {
                 </div>
               ))}
             </div>
+
+            {(() => {
+              const previewItems = receiptPreview?.items || [];
+              const totalQuantity = previewItems.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0);
+              const totalAmount = previewItems.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+              return (
+                previewItems.length > 0 && (
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-violet-500/5 dark:bg-amber-500/5 border border-violet-500/10 dark:border-amber-500/10 mt-2">
+                    <div className="flex items-center gap-1.5 text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400">
+                      <span>Tổng sản phẩm:</span>
+                      <span className="font-bold text-slate-800 dark:text-white bg-slate-100 dark:bg-white/5 px-2 py-0.5 rounded-lg">
+                        {previewItems.length}
+                      </span>
+                      <span className="ml-2">Tổng số lượng:</span>
+                      <span className="font-bold text-slate-800 dark:text-white bg-slate-100 dark:bg-white/5 px-2 py-0.5 rounded-lg">
+                        {totalQuantity}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm sm:text-base font-extrabold text-slate-800 dark:text-white">
+                      <span>Tổng tiền các sản phẩm cộng lại:</span>
+                      <span className="text-violet-650 dark:text-amber-500 text-lg sm:text-xl">
+                        {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(totalAmount)}
+                      </span>
+                    </div>
+                  </div>
+                )
+              );
+            })()}
 
             <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-white/10">
               <button type="button" className="rounded-xl border border-slate-200 dark:border-white/10 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors disabled:opacity-60" onClick={handleCloseReceiptPreview} disabled={isConfirmingImport}>
