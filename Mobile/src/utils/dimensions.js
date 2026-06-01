@@ -31,10 +31,11 @@ export const vh = (percentage) => (initHeight * percentage) / 100;
  */
 export function useDynamicViewport() {
   const { width, height } = useWindowDimensions();
-  const insets = useSafeAreaInsets();
+  const rawInsets = useSafeAreaInsets();
+  const insets = rawInsets || { top: 0, bottom: 0, left: 0, right: 0 };
 
   // Chiều cao an toàn thực tế trừ đi tai thỏ (top) và thanh điều hướng (bottom)
-  const safeHeight = height - insets.top - insets.bottom;
+  const safeHeight = height - (insets.top || 0) - (insets.bottom || 0);
 
   // Phiên bản động của các hàm scale tương thích với sự xoay màn hình
   const dynamicScale = (size) => (width / BASE_WIDTH) * size;
