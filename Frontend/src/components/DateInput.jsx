@@ -35,6 +35,7 @@ const DateInput = ({
       className={className}
       disabled={disabled}
       required={required}
+      placeholder={placeholder}
     />
   );
 };

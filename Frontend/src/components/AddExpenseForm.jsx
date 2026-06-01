@@ -16,6 +16,7 @@ const AddExpenseForm = ({ onAddExpense, categories, defaultJarId, jars = [], ini
 
     useEffect(() => {
         if (initialDate) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setExpense((prev) => ({ ...prev, date: initialDate }));
         }
     }, [initialDate]);
