@@ -159,7 +159,3 @@ const styles = StyleSheet.create({
   actionCircleDisabled: {
     backgroundColor: COLORS.CHAT_MUTED,
   },
-  actionCircleRecording: {
-    backgroundColor: "#EF4444",
-  },
-});

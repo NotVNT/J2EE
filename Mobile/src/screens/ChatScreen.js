@@ -20,7 +20,6 @@ import useModelConfig from "../components/chatbotUI/useModelConfig";
 import useVoiceInput from "../components/chatbotUI/useVoiceInput";
 
 export default function ChatScreen() {
-  // ── Model / Mode ───────────────────────────────────────
   const {
     activeMode,
     activeProvider,
@@ -35,7 +34,6 @@ export default function ChatScreen() {
     handleModelChange
   } = useModelConfig();
 
-  // ── Chat messages ──────────────────────────────────────
   const {
     messages,
     loading,
@@ -49,7 +47,6 @@ export default function ChatScreen() {
     handleUndo
   } = useChatMessages({ activeMode, activeProvider, activeModel, activeModelLabel });
 
-  // ── Voice input ────────────────────────────────────────
   const handleVoiceResult = useCallback((transcript) => {
     setInputText((prev) => {
       const trimmed = transcript.trim();
@@ -62,17 +59,13 @@ export default function ChatScreen() {
     handleMicPress
   } = useVoiceInput({ language: "vi-VN", onResult: handleVoiceResult });
 
-  // ── Input state (local — chỉ ChatScreen cần) ────────────
   const [inputText, setInputText] = useState("");
 
-  // ── Scroll to bottom ───────────────────────────────────
   useEffect(() => {
     setTimeout(() => {
       flatListRef.current?.scrollToEnd({ animated: true });
     }, 100);
   }, [messages, chatBusy]);
-
-  // ── Handlers ───────────────────────────────────────────
 
   const handleInputChange = useCallback((text) => {
     if (chatBusy) return;
@@ -99,7 +92,6 @@ export default function ChatScreen() {
     />
   ), [handleConfirmAction, handleCancelConfirmation, handleUndo, isProcessingCrud]);
 
-  // ── Render ─────────────────────────────────────────────
   return (
     <SafeAreaView style={styles.container}>
       <ModeSegmentedControl

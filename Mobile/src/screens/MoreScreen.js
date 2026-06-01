@@ -1,58 +1,74 @@
 import React, { useCallback, useContext, useState } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
+import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View, Image } from "react-native";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AuthContext } from "../components/AuthContext";
 import { COLORS } from "../constants/colors";
 import { API_ENDPOINTS } from "../constants/api";
 import http from "../services/http";
 import { getApiErrorMessage } from "../utils/format";
 
-function UserAvatar({ fullName }) {
-  const initial = (fullName || "U").slice(0, 1).toUpperCase();
+// ─── Modular Helper Components ───────────────────────────────
 
+function SettingGroup({ title, children }) {
   return (
-    <View style={styles.avatarWrap}>
-      <Text style={styles.avatarText}>{initial}</Text>
+    <View style={styles.groupCard}>
+      {title ? (
+        <View style={styles.groupHeader}>
+          <Text style={styles.groupHeaderText}>{title}</Text>
+        </View>
+      ) : null}
+      <View style={styles.groupContent}>{children}</View>
     </View>
   );
 }
 
-function MenuCard({ title, description, onPress }) {
+function SettingItem({ icon, title, value, onPress, hasChevron = true, isSwitch = false, switchValue, onSwitchChange, disabled = false }) {
   return (
-    <Pressable style={styles.menuCard} onPress={onPress}>
+    <Pressable
+      style={({ pressed }) => [
+        styles.itemRow,
+        pressed && !isSwitch && styles.itemRowPressed,
+        disabled && styles.itemRowDisabled
+      ]}
+      onPress={onPress}
+      disabled={isSwitch || disabled}
+    >
+      <View style={styles.itemLeft}>
+        <View style={styles.itemIconWrap}>
+          <Text style={styles.itemIconText}>{icon}</Text>
+        </View>
+        <Text style={styles.itemTitle}>{title}</Text>
+      </View>
 
-      <View style={styles.menuBody}>
-        <Text style={styles.menuTitle}>{title}</Text>
-        <Text style={styles.menuDescription}>{description}</Text>
+      <View style={styles.itemRight}>
+        {value ? <Text style={styles.itemValueText}>{value}</Text> : null}
+        {isSwitch ? (
+          <Switch
+            value={switchValue}
+            onValueChange={onSwitchChange}
+            disabled={disabled}
+            trackColor={{ false: COLORS.CARD_BORDER, true: COLORS.PRIMARY }}
+            thumbColor={COLORS.WHITE}
+          />
+        ) : hasChevron ? (
+          <Text style={styles.itemChevron}>›</Text>
+        ) : null}
       </View>
     </Pressable>
   );
 }
 
-function MenuToggleCard({ title, description, value, onValueChange, disabled }) {
-  return (
-    <View style={styles.menuCard}>
-      <View style={styles.menuBody}>
-        <Text style={styles.menuTitle}>{title}</Text>
-        <Text style={styles.menuDescription}>{description}</Text>
-      </View>
-      <Switch
-        value={value}
-        onValueChange={onValueChange}
-        disabled={disabled}
-        trackColor={{ false: COLORS.CARD_BORDER, true: COLORS.PRIMARY }}
-        thumbColor={COLORS.WHITE}
-      />
-    </View>
-  );
-}
+// ─── Main More/Settings Screen ────────────────────────────────
 
 export default function MoreScreen() {
   const navigation = useNavigation();
-  const { user } = useContext(AuthContext);
+  const { user, signOut } = useContext(AuthContext);
+  const insets = useSafeAreaInsets();
 
   const [preferences, setPreferences] = useState([]);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [appNotifications, setAppNotifications] = useState(true);
 
   const fetchPreferences = useCallback(async () => {
     try {
@@ -90,62 +106,162 @@ export default function MoreScreen() {
     }
   };
 
+  const fullName = user?.fullName || "Người dùng";
+  const email = user?.email || "Chưa có email";
+  const profileImageUrl = user?.profileImageUrl || "";
+  const initial = fullName.slice(0, 1).toUpperCase();
+
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-
-      <View style={styles.sectionHeaderRow}>
-        <Text style={styles.sectionTitle}>Quản lý tài khoản</Text>
+    <ScrollView style={styles.container} contentContainerStyle={[styles.content, { paddingTop: insets.top + 16 }]} showsVerticalScrollIndicator={false}>
+      
+      {/* Top Application Bar */}
+      <View style={styles.topAppBar}>
+        <View style={styles.appLogoRow}>
+          {profileImageUrl ? (
+            <Image source={{ uri: profileImageUrl }} style={styles.appBarAvatar} />
+          ) : (
+            <View style={styles.appBarAvatarPlaceholder}>
+              <Text style={styles.appBarAvatarPlaceholderText}>{initial}</Text>
+            </View>
+          )}
+          <Text style={styles.appLogoText}>Money Manager</Text>
+        </View>
+        <Pressable style={styles.appBarSettingsButton} onPress={() => navigation.navigate("Profile")}>
+          <Text style={styles.appBarSettingsIcon}>⚙️</Text>
+        </Pressable>
       </View>
 
-      <MenuCard
-        title="Hồ sơ cá nhân"
-        description="Xem chi tiết thông tin tài khoản của bạn"
+      {/* Profile Overview Banner Section */}
+      <Pressable 
+        style={({ pressed }) => [styles.profileHeroCard, pressed && styles.profileHeroCardPressed]}
         onPress={() => navigation.navigate("Profile")}
-      />
+      >
+        {profileImageUrl ? (
+          <Image source={{ uri: profileImageUrl }} style={styles.heroAvatar} />
+        ) : (
+          <View style={styles.heroAvatarPlaceholder}>
+            <Text style={styles.heroAvatarText}>{initial}</Text>
+          </View>
+        )}
+        <View style={styles.heroTextWrap}>
+          <Text style={styles.heroName}>{fullName}</Text>
+          <Text style={styles.heroEmail}>{email}</Text>
+        </View>
+        <Text style={styles.heroChevron}>›</Text>
+      </Pressable>
 
-      <MenuCard
-        title="Thanh toán"
-        description="Nâng cấp gói và kiểm tra trạng thái giao dịch"
-        onPress={() => navigation.navigate("Payment")}
-      />
+      {/* Account Settings Group */}
+      <SettingGroup title="TÀI KHOẢN">
+        <SettingItem
+          icon="👤"
+          title="Thông tin cá nhân"
+          onPress={() => navigation.navigate("Profile")}
+        />
+        <SettingItem
+          icon="🔒"
+          title="Đổi mật khẩu"
+          onPress={() => navigation.navigate("EditProfile")}
+        />
+        <SettingItem
+          icon="💳"
+          title="Thanh toán & Nâng cấp"
+          onPress={() => navigation.navigate("Payment")}
+        />
+      </SettingGroup>
 
-      <View style={styles.sectionHeaderRow}>
-        <Text style={styles.sectionTitle}>Quản lý tài chính</Text>
-      </View>
+      {/* Customization Settings Group */}
+      <SettingGroup title="TÙY CHỈNH">
+        <SettingItem
+          icon="💵"
+          title="Đơn vị tiền tệ"
+          value="VND"
+          hasChevron={false}
+        />
+        <SettingItem
+          icon="🌐"
+          title="Ngôn ngữ"
+          value="Vietnamese"
+          hasChevron={false}
+        />
+        <SettingItem
+          icon="🌙"
+          title="Giao diện"
+          value="Chế độ tối"
+          hasChevron={false}
+        />
+      </SettingGroup>
 
-      <MenuCard
-        title="Hũ chi tiêu"
-        description="Phân bổ thu nhập & quản lý tiền theo từng ví phụ"
-        onPress={() => navigation.navigate("Jars")}
-      />
+      {/* Financial Management Group */}
+      <SettingGroup title="QUẢN LÝ TÀI CHÍNH">
+        <SettingItem
+          icon="📦"
+          title="Hũ chi tiêu phụ"
+          onPress={() => navigation.navigate("Jars")}
+        />
+        <SettingItem
+          icon="📊"
+          title="Báo cáo thu chi tháng"
+          onPress={() => navigation.navigate("Reports")}
+        />
+      </SettingGroup>
 
-      <View style={styles.sectionHeaderRow}>
-        <Text style={styles.sectionTitle}>AI & Phân tích chuyên sâu</Text>
-      </View>
+      {/* AI Assistance Group */}
+      <SettingGroup title="TRỢ LÝ AI">
+        <SettingItem
+          icon="✨"
+          title="Trò chuyện Gemini AI"
+          onPress={() => navigation.navigate("Chat")}
+        />
+      </SettingGroup>
 
-      <MenuCard
-        title="Trò chuyện AI"
-        description="Hỏi Gemini AI về quản lý chi tiêu và tiết kiệm"
-        onPress={() => navigation.navigate("Chat")}
-      />
+      {/* Notification Preferences Group */}
+      <SettingGroup title="THÔNG BÁO">
+        <SettingItem
+          icon="🔔"
+          title="Thông báo ứng dụng"
+          isSwitch={true}
+          switchValue={appNotifications}
+          onSwitchChange={setAppNotifications}
+        />
+        <SettingItem
+          icon="✉️"
+          title="Nhắc nhở qua Email"
+          isSwitch={true}
+          switchValue={isDailyEnabled}
+          onSwitchChange={handleToggleDailyEmail}
+          disabled={isUpdating || !dailyReportPref}
+        />
+      </SettingGroup>
 
-      <MenuCard
-        title="Báo cáo tài chính tháng"
-        description="Xem điểm đánh giá tài chính và cơ cấu thu chi chi tiết"
-        onPress={() => navigation.navigate("Reports")}
-      />
+      {/* App Info Group */}
+      <SettingGroup title="THÔNG TIN ỨNG DỤNG">
+        <SettingItem
+          icon="❓"
+          title="Trợ giúp & Hỗ trợ"
+          hasChevron={true}
+        />
+        <SettingItem
+          icon="🛡️"
+          title="Chính sách bảo mật"
+          hasChevron={true}
+        />
+        <SettingItem
+          icon="ℹ️"
+          title="Phiên bản"
+          value="1.0.0 (Build 42)"
+          hasChevron={false}
+        />
+      </SettingGroup>
 
-      <View style={styles.sectionHeaderRow}>
-        <Text style={styles.sectionTitle}>Thông báo</Text>
-      </View>
+      {/* Wide Outline Red Log Out Button */}
+      <Pressable 
+        style={({ pressed }) => [styles.logoutButton, pressed && styles.logoutButtonPressed]} 
+        onPress={signOut}
+      >
+        <Text style={styles.logoutIcon}>🚪</Text>
+        <Text style={styles.logoutText}>Đăng xuất</Text>
+      </Pressable>
 
-      <MenuToggleCard
-        title="Nhắc nhở hằng ngày"
-        description="Nhận email nhắc nhở cập nhật thu chi vào lúc 22:00 mỗi ngày"
-        value={isDailyEnabled}
-        onValueChange={handleToggleDailyEmail}
-        disabled={isUpdating || !dailyReportPref}
-      />
     </ScrollView>
   );
 }
@@ -153,118 +269,220 @@ export default function MoreScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.BG,
-    paddingTop: 50
+    backgroundColor: COLORS.BG
   },
   content: {
     paddingHorizontal: 16,
-    paddingTop: 24,
-    paddingBottom: 24
+    paddingBottom: 90
   },
-  heroCard: {
-    backgroundColor: COLORS.PRIMARY,
-    borderRadius: 18,
-    padding: 16,
-    marginBottom: 14,
-    shadowColor: COLORS.PRIMARY,
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 4
-  },
-  heroTopRow: {
+  topAppBar: {
     flexDirection: "row",
-    alignItems: "center"
-  },
-  avatarWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
-    backgroundColor: COLORS.PRIMARY_DARK,
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "space-between",
+    marginBottom: 20,
+    height: 48
+  },
+  appLogoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10
+  },
+  appBarAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: COLORS.PRIMARY_LIGHT
+    borderColor: COLORS.CARD_BORDER
   },
-  avatarText: {
+  appBarAvatarPlaceholder: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: COLORS.PRIMARY,
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  appBarAvatarPlaceholderText: {
     color: COLORS.WHITE,
-    fontWeight: "800",
-    fontSize: 20
-  },
-  heroTextWrap: {
-    marginLeft: 12,
-    flex: 1
-  },
-  heroTitle: {
-    color: COLORS.DARK_TEXT_SECONDARY,
-    fontSize: 12,
-    fontWeight: "600"
-  },
-  heroName: {
-    color: COLORS.WHITE,
-    fontSize: 19,
-    fontWeight: "800",
-    marginTop: 2
-  },
-  heroEmail: {
-    color: COLORS.PEACH,
-    marginTop: 12,
+    fontWeight: "bold",
     fontSize: 14
   },
-  sectionHeaderRow: {
-    marginBottom: 8,
-    marginTop: 2
-  },
-  sectionTitle: {
-    color: COLORS.TEXT,
-    fontSize: 16,
+  appLogoText: {
+    color: COLORS.PRIMARY,
+    fontSize: 20,
     fontWeight: "800"
   },
-  menuCard: {
+  appBarSettingsButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: COLORS.CARD,
-    borderRadius: 14,
     borderWidth: 1,
     borderColor: COLORS.CARD_BORDER,
-    paddingVertical: 14,
-    paddingHorizontal: 12,
-    marginBottom: 10,
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  appBarSettingsIcon: {
+    fontSize: 16
+  },
+  profileHeroCard: {
     flexDirection: "row",
-    alignItems: "center"
+    alignItems: "center",
+    backgroundColor: COLORS.CARD,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: COLORS.CARD_BORDER,
+    padding: 16,
+    marginBottom: 20,
+    shadowColor: COLORS.BLACK,
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2
   },
-  menuBody: {
-    flex: 1,
-    paddingHorizontal: 12
+  profileHeroCardPressed: {
+    opacity: 0.88,
+    transform: [{ scale: 0.99 }]
   },
-  menuTitle: {
+  heroAvatar: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    borderWidth: 2,
+    borderColor: COLORS.PRIMARY_GLOW
+  },
+  heroAvatarPlaceholder: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: COLORS.PRIMARY,
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  heroAvatarText: {
+    color: COLORS.WHITE,
+    fontWeight: "800",
+    fontSize: 22
+  },
+  heroTextWrap: {
+    marginLeft: 14,
+    flex: 1
+  },
+  heroName: {
     color: COLORS.TEXT,
-    fontSize: 16,
-    fontWeight: "700"
+    fontSize: 18,
+    fontWeight: "800"
   },
-  menuDescription: {
+  heroEmail: {
     color: COLORS.TEXT_SECONDARY,
-    marginTop: 3,
-    lineHeight: 18
+    fontSize: 13,
+    marginTop: 2
   },
-  menuArrow: {
-    color: COLORS.TEXT_MUTED,
+  heroChevron: {
+    color: COLORS.TEXT_SECONDARY,
     fontSize: 24,
     fontWeight: "700"
   },
-  noteCard: {
-    marginTop: 4,
-    backgroundColor: COLORS.ROSE_MIST,
-    borderRadius: 12,
+  groupCard: {
+    backgroundColor: COLORS.CARD,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: COLORS.CARD_BORDER,
-    padding: 12
+    marginBottom: 16,
+    overflow: "hidden"
   },
-  noteTitle: {
+  groupHeader: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.CARD_BORDER
+  },
+  groupHeaderText: {
     color: COLORS.PRIMARY,
-    fontWeight: "800",
-    marginBottom: 4
+    fontSize: 11,
+    fontWeight: "850",
+    letterSpacing: 1.2
   },
-  noteText: {
-    color: COLORS.PRIMARY_DARK,
-    lineHeight: 18
+  groupContent: {
+    flexDirection: "column"
+  },
+  itemRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.BG
+  },
+  itemRowPressed: {
+    backgroundColor: 'rgba(232, 89, 126, 0.05)'
+  },
+  itemRowDisabled: {
+    opacity: 0.6
+  },
+  itemLeft: {
+    flexDirection: "row",
+    alignItems: "center"
+  },
+  itemIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    backgroundColor: COLORS.BG,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: COLORS.CARD_BORDER
+  },
+  itemIconText: {
+    fontSize: 15
+  },
+  itemTitle: {
+    color: COLORS.TEXT,
+    fontSize: 15,
+    fontWeight: "600",
+    marginLeft: 12
+  },
+  itemRight: {
+    flexDirection: "row",
+    alignItems: "center"
+  },
+  itemValueText: {
+    color: COLORS.TEXT_SECONDARY,
+    fontSize: 13,
+    fontWeight: "600",
+    marginRight: 6
+  },
+  itemChevron: {
+    color: COLORS.TEXT_SECONDARY,
+    fontSize: 22,
+    fontWeight: "700"
+  },
+  logoutButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: COLORS.CARD,
+    borderWidth: 1,
+    borderColor: 'rgba(231, 111, 81, 0.3)',
+    borderRadius: 16,
+    paddingVertical: 15,
+    marginTop: 12,
+    marginBottom: 20
+  },
+  logoutButtonPressed: {
+    backgroundColor: 'rgba(231, 111, 81, 0.04)',
+    transform: [{ scale: 0.99 }]
+  },
+  logoutIcon: {
+    fontSize: 16,
+    marginRight: 6
+  },
+  logoutText: {
+    color: COLORS.EXPENSE,
+    fontSize: 16,
+    fontWeight: "800"
   }
 });
