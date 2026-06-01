@@ -1,18 +1,24 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import EmojiPickerPopup from "./EmojiPickerPopup.jsx";
 import Input from "./Input.jsx";
 import { formatCurrency } from "../util/helper.js";
 import { AlertTriangle } from "lucide-react";
 
-const AddExpenseForm = ({ onAddExpense, categories, defaultJarId, jars = [] }) => {
+const AddExpenseForm = ({ onAddExpense, categories, defaultJarId, jars = [], initialDate = "" }) => {
     const [expense, setExpense] = useState({
         name: "",
         categoryId: categories.length > 0 ? categories[0].id : "",
         amount: "",
-        date: "",
+        date: initialDate || "",
         icon: "",
         jarId: defaultJarId || (jars.length > 0 ? jars[0].id : ""),
     });
+
+    useEffect(() => {
+        if (initialDate) {
+            setExpense((prev) => ({ ...prev, date: initialDate }));
+        }
+    }, [initialDate]);
 
     const handleChange = (key, value) => setExpense({ ...expense, [key]: value });
 

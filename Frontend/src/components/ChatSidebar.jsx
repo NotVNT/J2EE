@@ -210,7 +210,7 @@ const ChatSidebar = ({
                           value={editTitle}
                           onChange={(e) => setEditTitle(e.target.value)}
                           onKeyDown={(e) => {
-                            if (e.key === "Enter") confirmRename();
+                            if (e.key === "Enter" && !e.isComposing) confirmRename();
                             if (e.key === "Escape") cancelRename();
                           }}
                           className="flex-1 bg-slate-200 dark:bg-white/10 rounded-full px-3 py-1.5 text-sm text-slate-800 dark:text-slate-200

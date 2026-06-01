@@ -275,6 +275,47 @@ html[data-performance="low"] *::after {
   background-color: rgba(10, 14, 26, 0.90);
 }
 
+/* Sleek Top Progress Bar Loader */
+.top-loader-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  z-index: 9999;
+  background-color: transparent;
+  overflow: hidden;
+  pointer-events: none; /* User can click through it */
+  transition: opacity 200ms ease-out;
+}
+
+.top-loader-progress {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  height: 100%;
+  background: linear-gradient(90deg, #7c3aed, #ec4899, #f59e0b, #7c3aed);
+  background-size: 300% 100%;
+  width: 100%;
+  animation: top-loader-slide 2.2s infinite linear;
+}
+
+@keyframes top-loader-slide {
+  0% {
+    transform: translateX(-100%);
+    background-position: 0% 50%;
+  }
+  50% {
+    transform: translateX(0%);
+    background-position: 100% 50%;
+  }
+  100% {
+    transform: translateX(100%);
+    background-position: 0% 50%;
+  }
+}
+
 .global-spinner-ring {
   width: 56px;
   height: 56px;
@@ -417,5 +458,36 @@ html[data-performance="low"] .global-spinner-wrapper {
   background: rgba(245, 158, 11, 0.3);
 }
 
+/* ───────────────────────────────────────────────────────────── */
+/* RECHARTS PREMIUM MICRO-ANIMATIONS                             */
+/* ───────────────────────────────────────────────────────────── */
 
+.recharts-bar-rectangle {
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease, filter 0.2s ease;
+  cursor: pointer;
+  transform-origin: bottom;
+}
 
+.recharts-bar-rectangle:hover {
+  transform: scaleY(1.03);
+  opacity: 0.95;
+  filter: brightness(1.08) drop-shadow(0px 6px 12px rgba(99, 102, 241, 0.18));
+}
+
+.dark .recharts-bar-rectangle:hover {
+  filter: brightness(1.15) drop-shadow(0px 6px 15px rgba(167, 139, 250, 0.3));
+}
+
+.recharts-pie-sector {
+  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), filter 0.25s ease;
+  cursor: pointer;
+}
+
+.recharts-pie-sector:hover {
+  opacity: 0.92;
+  filter: brightness(1.08) drop-shadow(0px 4px 10px rgba(99, 102, 241, 0.22));
+}
+
+.dark .recharts-pie-sector:hover {
+  filter: brightness(1.15) drop-shadow(0px 5px 12px rgba(167, 139, 250, 0.35));
+}

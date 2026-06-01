@@ -28,6 +28,11 @@ const Expense = () => {
   const [openAddExpenseModal, setOpenAddExpenseModal] = useState(false);
   const [openEditExpenseModal, setOpenEditExpenseModal] = useState(false);
   const [expenseToEdit, setExpenseToEdit] = useState(null);
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState(() => getTodayIsoDate());
+  const handleSelectCalendarDate = (date) => {
+    setSelectedCalendarDate(date);
+    setOpenAddExpenseModal(true);
+  };
   const [openDeleteAlert, setOpenDeleteAlert] = useState({ show: false, data: null });
   const [isImportingReceipt, setIsImportingReceipt] = useState(false);
   const [isConfirmingImport, setIsConfirmingImport] = useState(false);
@@ -292,6 +297,7 @@ const Expense = () => {
           type="expense"
           onEdit={(exp) => { setExpenseToEdit(exp); setOpenEditExpenseModal(true); }}
           onDelete={(id) => setOpenDeleteAlert({ show: true, data: id })}
+          onSelectDate={handleSelectCalendarDate}
         />
 
         {/* Quick Expense Templates */}
@@ -311,7 +317,7 @@ const Expense = () => {
         />
 
         <Modal isOpen={openAddExpenseModal} onClose={() => setOpenAddExpenseModal(false)} title="Thêm chi tiêu">
-          <AddExpenseForm onAddExpense={handleAddExpense} categories={categories} jars={jars} />
+          <AddExpenseForm onAddExpense={handleAddExpense} categories={categories} jars={jars} initialDate={selectedCalendarDate} />
         </Modal>
 
         <Modal isOpen={openEditExpenseModal} onClose={() => { setOpenEditExpenseModal(false); setExpenseToEdit(null); }} title="Chỉnh sửa chi tiêu">

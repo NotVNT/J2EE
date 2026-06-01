@@ -29,6 +29,11 @@ const Income = () => {
   const [openAddIncomeModal, setOpenAddIncomeModal] = useState(false);
   const [openEditIncomeModal, setOpenEditIncomeModal] = useState(false);
   const [selectedIncome, setSelectedIncome] = useState(null);
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState(() => getTodayIsoDate());
+  const handleSelectCalendarDate = (date) => {
+    setSelectedCalendarDate(date);
+    setOpenAddIncomeModal(true);
+  };
   const [openDeleteAlert, setOpenDeleteAlert] = useState({ show: false, data: null });
 
   const exportUpgradeMessage = "Tính năng xuất báo cáo chỉ có từ gói Cơ Bản. Vui lòng nâng cấp để tiếp tục.";
@@ -187,6 +192,7 @@ const Income = () => {
           initialMonth={filterType === "specific" && selectedMonthDate ? selectedMonthDate : undefined}
           onEdit={(income) => { setSelectedIncome(income); setOpenEditIncomeModal(true); }}
           onDelete={(id) => setOpenDeleteAlert({ show: true, data: id })}
+          onSelectDate={handleSelectCalendarDate}
         />
 
         <IncomeList
@@ -200,7 +206,7 @@ const Income = () => {
         />
 
         <Modal isOpen={openAddIncomeModal} onClose={() => setOpenAddIncomeModal(false)} title="Thêm thu nhập">
-          <AddIncomeForm onAddIncome={(income) => handleAddIncome(income)} categories={categories} />
+          <AddIncomeForm onAddIncome={(income) => handleAddIncome(income)} categories={categories} initialDate={selectedCalendarDate} />
         </Modal>
 
         <Modal isOpen={openEditIncomeModal} onClose={() => { setOpenEditIncomeModal(false); setSelectedIncome(null); }} title="Chỉnh sửa thu nhập">

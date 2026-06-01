@@ -10,14 +10,20 @@ import { hasDisplayImage } from "../util/imageDisplay.js";
 const fmt = (n) =>
   new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(n ?? 0);
 
-const AddIncomeForm = ({onAddIncome, categories}) => {
+const AddIncomeForm = ({onAddIncome, categories, initialDate = ""}) => {
     const [income, setIncome] = useState({
         name: '',
         amount: '',
-        date: '',
+        date: initialDate || '',
         icon: '',
         categoryId: ''
-    })
+    });
+
+    useEffect(() => {
+        if (initialDate) {
+            setIncome((prev) => ({ ...prev, date: initialDate }));
+        }
+    }, [initialDate]);
     const [loading, setLoading] = useState(false);
     const [jars, setJars] = useState([]);
     const [allocations, setAllocations] = useState([]);

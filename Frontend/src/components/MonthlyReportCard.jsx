@@ -132,21 +132,22 @@ const MonthlyReportCard = ({ report }) => {
 
   const SpendingChangeIcon = spendingChangeInfo.icon;
 
+  const PIE_FALLBACK_COLORS = useMemo(() => ["#F59E0B", "#8B5CF6", "#10B981", "#3B82F6", "#EF4444", "#EC4899", "#06B6D4", "#84CC16"], []);
+
   const pieData = useMemo(() => {
     if (!report.categoryBreakdown || report.categoryBreakdown.length === 0) return [];
-    return report.categoryBreakdown.map((item) => ({
+    return report.categoryBreakdown.map((item, i) => ({
       name: item.name,
       amount: item.amount,
       percent: item.percent,
-      color: item.color || "#94A3B8",
+      color: (!item.color || item.color === "#94A3B8") ? PIE_FALLBACK_COLORS[i % PIE_FALLBACK_COLORS.length] : item.color,
       icon: item.icon || "📦",
     }));
-  }, [report.categoryBreakdown]);
+  }, [report.categoryBreakdown, PIE_FALLBACK_COLORS]);
 
-  const PIE_FALLBACK_COLORS = ["#F59E0B", "#8B5CF6", "#10B981", "#3B82F6", "#EF4444", "#EC4899", "#06B6D4", "#84CC16"];
-  const pieColors = pieData.length > 0
-    ? pieData.map((item, i) => item.color || PIE_FALLBACK_COLORS[i % PIE_FALLBACK_COLORS.length])
-    : PIE_FALLBACK_COLORS;
+  const pieColors = useMemo(() => {
+    return pieData.map((item) => item.color);
+  }, [pieData]);
 
   return (
     <div className="space-y-6">
@@ -214,7 +215,36 @@ const MonthlyReportCard = ({ report }) => {
             <ChartBar size={18} className="text-violet-500" />
             Phân bổ chi tiêu theo danh mục
           </h3>
-          <CustomPieChart data={pieData} colors={pieColors} />
+          <div className="flex justify-center">
+            <CustomPieChart
+              data={pieData}
+              colors={pieColors}
+              showTextAnchor
+              label="Tổng chi tiêu"
+              totalAmount={formatCurrency(report.totalExpense)}
+            />
+          </div>
+          <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pt-6 border-t border-slate-100 dark:border-white/10">
+            {pieData.map((item, idx) => (
+              <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5">
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-8 h-8 rounded-lg flex items-center justify-center text-base shrink-0"
+                    style={{ backgroundColor: `${item.color}20`, color: item.color }}
+                  >
+                    {item.icon}
+                  </div>
+                  <div className="truncate">
+                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{item.name}</p>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">{item.percent?.toFixed(1)}%</p>
+                  </div>
+                </div>
+                <span className="text-xs font-extrabold text-slate-900 dark:text-white shrink-0">
+                  {formatCurrency(item.amount)}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

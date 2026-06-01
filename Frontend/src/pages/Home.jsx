@@ -36,9 +36,11 @@ import WidgetWrapper from "../components/dashboard/WidgetWrapper.jsx";
 import WidgetSettingsPanel from "../components/dashboard/WidgetSettingsPanel.jsx";
 import { usePageTitle } from "../hooks/usePageTitle.js";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { useTheme } from "../context/ThemeContext.jsx";
 
 const Home = () => {
   useUser();
+  const { theme } = useTheme();
   usePageTitle("Tổng quan");
   const navigate = useNavigate();
 
@@ -232,137 +234,147 @@ const Home = () => {
           <InfoCard onClick={() => navigate("/saving-goals")} icon={<PieChart size={22} />} label="Hoàn thành" value={safeNumber(dashboardData?.savingGoalCompletedCount)} color="bg-emerald-500/10 text-emerald-400" />
         </section>
       ),
-      monthly_history: () => (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
-          {/* Card 1: Expenses */}
-          <div className="rounded-3xl border border-slate-200 dark:border-white/10 bg-slate-950 dark:bg-[#0B0F19] p-4 sm:p-6 shadow-sm flex flex-col justify-between h-[260px] sm:h-[300px]">
-            <div className="flex items-center justify-between mb-2 sm:mb-4">
-              <div>
-                <h3 className="text-[10px] sm:text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Biểu đồ</h3>
-                <h4 className="text-sm sm:text-base font-extrabold text-white">Expenses</h4>
-              </div>
-              <div className="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-[#FA5C5C] shadow-[0_0_8px_rgba(250,92,92,0.5)]" />
-            </div>
-            
-            <div className="flex-1 w-full min-h-0">
-              {(!dashboardData?.monthlyHistory || dashboardData.monthlyHistory.length === 0) ? (
-                <div className="w-full h-full flex items-center justify-center text-slate-500 text-xs">
-                  Đang tổng hợp dữ liệu...
+      monthly_history: () => {
+        const isDark = theme === "dark";
+        const gridStroke = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)";
+        const tickColor = isDark ? "rgba(255, 255, 255, 0.4)" : "rgba(0, 0, 0, 0.4)";
+        const tooltipBg = isDark ? "#0B0F19" : "#ffffff";
+        const tooltipBorder = isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)";
+        const tooltipColor = isDark ? "#ffffff" : "#1e293b";
+        const tooltipCursor = isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)";
+
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+            {/* Card 1: Expenses */}
+            <div className="rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-4 sm:p-6 shadow-sm flex flex-col justify-between h-[260px] sm:h-[300px]">
+              <div className="flex items-center justify-between mb-2 sm:mb-4">
+                <div>
+                  <h3 className="text-[10px] sm:text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Biểu đồ</h3>
+                  <h4 className="text-sm sm:text-base font-extrabold text-slate-800 dark:text-white">Chi tiêu</h4>
                 </div>
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chartData} margin={{ top: 10, right: 5, left: -25, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="expenseGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#FF7575" stopOpacity={1} />
-                        <stop offset="100%" stopColor="#E33C3C" stopOpacity={1} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.06)" />
-                    <XAxis
-                      dataKey="name"
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fill: "rgba(255, 255, 255, 0.4)", fontSize: 10, fontWeight: 600 }}
-                      dy={5}
-                    />
-                    <YAxis
-                      axisLine={false}
-                      tickLine={false}
-                      tickFormatter={formatYAxis}
-                      tick={{ fill: "rgba(255, 255, 255, 0.4)", fontSize: 10, fontWeight: 600 }}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "#0B0F19",
-                        borderColor: "rgba(255,255,255,0.1)",
-                        borderRadius: "12px",
-                        color: "#fff",
-                        fontSize: "11px",
-                        boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.5)",
-                      }}
-                      formatter={(value) => [formatCurrency(Number(value)), "Chi tiêu"]}
-                      labelFormatter={(label) => `Tháng: ${label}`}
-                      cursor={{ fill: "rgba(255,255,255,0.03)" }}
-                    />
-                    <Bar
-                      dataKey="expense"
-                      fill="url(#expenseGrad)"
-                      radius={[6, 6, 0, 0]}
-                      barSize={18}
-                      className="cursor-pointer"
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
+                <div className="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-[#FA5C5C] shadow-[0_0_8px_rgba(250,92,92,0.5)]" />
+              </div>
+              
+              <div className="flex-1 w-full min-h-0">
+                {(!dashboardData?.monthlyHistory || dashboardData.monthlyHistory.length === 0) ? (
+                  <div className="w-full h-full flex items-center justify-center text-slate-500 text-xs">
+                    Đang tổng hợp dữ liệu...
+                  </div>
+                ) : (
+                  <ResponsiveContainer key={theme} width="100%" height="100%">
+                    <BarChart data={chartData} margin={{ top: 15, right: 10, left: 10, bottom: 5 }}>
+                      <defs>
+                        <linearGradient id="expenseGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#FF7575" stopOpacity={1} />
+                          <stop offset="100%" stopColor="#E33C3C" stopOpacity={1} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={gridStroke} />
+                      <XAxis
+                        dataKey="name"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: tickColor, fontSize: 10, fontWeight: 600 }}
+                        dy={5}
+                      />
+                      <YAxis
+                        axisLine={false}
+                        tickLine={false}
+                        tickFormatter={formatYAxis}
+                        tick={{ fill: tickColor, fontSize: 10, fontWeight: 600 }}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: tooltipBg,
+                          borderColor: tooltipBorder,
+                          borderRadius: "12px",
+                          color: tooltipColor,
+                          fontSize: "11px",
+                          boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+                        }}
+                        formatter={(value) => [formatCurrency(Number(value)), "Chi tiêu"]}
+                        labelFormatter={(label) => `Tháng: ${label}`}
+                        cursor={{ fill: tooltipCursor }}
+                      />
+                      <Bar
+                        dataKey="expense"
+                        fill="url(#expenseGrad)"
+                        radius={[6, 6, 0, 0]}
+                        barSize={18}
+                        className="cursor-pointer"
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+            </div>
+
+            {/* Card 2: Income */}
+            <div className="rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-4 sm:p-6 shadow-sm flex flex-col justify-between h-[260px] sm:h-[300px]">
+              <div className="flex items-center justify-between mb-2 sm:mb-4">
+                <div>
+                  <h3 className="text-[10px] sm:text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Biểu đồ</h3>
+                  <h4 className="text-sm sm:text-base font-extrabold text-slate-800 dark:text-white">Thu nhập</h4>
+                </div>
+                <div className="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-[#10B981] shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+              </div>
+
+              <div className="flex-1 w-full min-h-0">
+                {(!dashboardData?.monthlyHistory || dashboardData.monthlyHistory.length === 0) ? (
+                  <div className="w-full h-full flex items-center justify-center text-slate-500 text-xs">
+                    Đang tổng hợp dữ liệu...
+                  </div>
+                ) : (
+                  <ResponsiveContainer key={theme} width="100%" height="100%">
+                    <BarChart data={chartData} margin={{ top: 15, right: 10, left: 10, bottom: 5 }}>
+                      <defs>
+                        <linearGradient id="incomeGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#4EFAAF" stopOpacity={1} />
+                          <stop offset="100%" stopColor="#10B981" stopOpacity={1} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={gridStroke} />
+                      <XAxis
+                        dataKey="name"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: tickColor, fontSize: 10, fontWeight: 600 }}
+                        dy={5}
+                      />
+                      <YAxis
+                        axisLine={false}
+                        tickLine={false}
+                        tickFormatter={formatYAxis}
+                        tick={{ fill: tickColor, fontSize: 10, fontWeight: 600 }}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: tooltipBg,
+                          borderColor: tooltipBorder,
+                          borderRadius: "12px",
+                          color: tooltipColor,
+                          fontSize: "11px",
+                          boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+                        }}
+                        formatter={(value) => [formatCurrency(Number(value)), "Thu nhập"]}
+                        labelFormatter={(label) => `Tháng: ${label}`}
+                        cursor={{ fill: tooltipCursor }}
+                      />
+                      <Bar
+                        dataKey="income"
+                        fill="url(#incomeGrad)"
+                        radius={[6, 6, 0, 0]}
+                        barSize={18}
+                        className="cursor-pointer"
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
             </div>
           </div>
-
-          {/* Card 2: Income */}
-          <div className="rounded-3xl border border-slate-200 dark:border-white/10 bg-slate-950 dark:bg-[#0B0F19] p-4 sm:p-6 shadow-sm flex flex-col justify-between h-[260px] sm:h-[300px]">
-            <div className="flex items-center justify-between mb-2 sm:mb-4">
-              <div>
-                <h3 className="text-[10px] sm:text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Biểu đồ</h3>
-                <h4 className="text-sm sm:text-base font-extrabold text-white">Income</h4>
-              </div>
-              <div className="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-[#10B981] shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-            </div>
-
-            <div className="flex-1 w-full min-h-0">
-              {(!dashboardData?.monthlyHistory || dashboardData.monthlyHistory.length === 0) ? (
-                <div className="w-full h-full flex items-center justify-center text-slate-500 text-xs">
-                  Đang tổng hợp dữ liệu...
-                </div>
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chartData} margin={{ top: 10, right: 5, left: -25, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="incomeGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#4EFAAF" stopOpacity={1} />
-                        <stop offset="100%" stopColor="#10B981" stopOpacity={1} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.06)" />
-                    <XAxis
-                      dataKey="name"
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fill: "rgba(255, 255, 255, 0.4)", fontSize: 10, fontWeight: 600 }}
-                      dy={5}
-                    />
-                    <YAxis
-                      axisLine={false}
-                      tickLine={false}
-                      tickFormatter={formatYAxis}
-                      tick={{ fill: "rgba(255, 255, 255, 0.4)", fontSize: 10, fontWeight: 600 }}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "#0B0F19",
-                        borderColor: "rgba(255,255,255,0.1)",
-                        borderRadius: "12px",
-                        color: "#fff",
-                        fontSize: "11px",
-                        boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.5)",
-                      }}
-                      formatter={(value) => [formatCurrency(Number(value)), "Thu nhập"]}
-                      labelFormatter={(label) => `Tháng: ${label}`}
-                      cursor={{ fill: "rgba(255,255,255,0.03)" }}
-                    />
-                    <Bar
-                      dataKey="income"
-                      fill="url(#incomeGrad)"
-                      radius={[6, 6, 0, 0]}
-                      barSize={18}
-                      className="cursor-pointer"
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-          </div>
-        </div>
-      ),
+        );
+      },
       recent_transactions: () => (
         <RecentTransactions transactions={dashboardData?.recentTransactions || []} onMore={() => navigate("/expense")} />
       ),
@@ -465,7 +477,7 @@ const Home = () => {
           </div>
         ),
     }),
-    [dashboardData, navigate, formatCurrency, formatCompact, safeNumber, chartData, formatYAxis]
+    [dashboardData, navigate, formatCurrency, formatCompact, safeNumber, chartData, formatYAxis, theme]
   );
 
   return (
