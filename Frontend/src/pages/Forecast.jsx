@@ -9,6 +9,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGri
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../hooks/useUser";
 import { usePageTitle } from "../hooks/usePageTitle";
+import { useTheme } from "../context/ThemeContext";
 
 const getNearestMonths = (count) => {
     const months = [];
@@ -23,6 +24,15 @@ const getNearestMonths = (count) => {
 const Forecast = () => {
     useUser();
     usePageTitle("Dự báo thông minh");
+    const { theme } = useTheme();
+    const isDark = theme === "dark";
+    const gridStroke = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)";
+    const tickColor = isDark ? "rgba(255, 255, 255, 0.4)" : "rgba(0, 0, 0, 0.4)";
+    const tooltipBg = isDark ? "#0B0F19" : "#ffffff";
+    const tooltipBorder = isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)";
+    const tooltipColor = isDark ? "#ffffff" : "#1e293b";
+    const tooltipCursor = isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)";
+    const labelColor = isDark ? "rgba(255, 255, 255, 0.5)" : "rgba(0, 0, 0, 0.5)";
     const { user } = useContext(AppContext);
     const [monthlyForecast, setMonthlyForecast] = useState(null);
     const [anomalies, setAnomalies] = useState([]);
@@ -276,9 +286,9 @@ const Forecast = () => {
                         
                         {/* Main Chart Area */}
                         <div className="lg:col-span-2 space-y-6">
-                            <div className="rounded-3xl border border-slate-200 dark:border-white/10 bg-slate-950 dark:bg-[#0B0F19] p-4 sm:p-6 shadow-sm flex flex-col justify-between min-h-[380px]">
+                            <div className="rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-4 sm:p-6 shadow-sm flex flex-col justify-between min-h-[380px]">
                                 <div className="flex items-center justify-between mb-6">
-                                    <h3 className="text-base font-extrabold text-white flex items-center gap-2">
+                                    <h3 className="text-base font-extrabold text-slate-800 dark:text-white flex items-center gap-2">
                                         <Activity size={20} className="text-indigo-400 animate-pulse" />
                                         Dự báo các khoản chi chính
                                     </h3>
@@ -293,45 +303,45 @@ const Forecast = () => {
                                 </div>
                                 {chartData.length > 0 ? (
                                     <div className="h-[260px] sm:h-[320px] w-full min-h-0">
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <BarChart data={chartData} margin={{ top: 10, right: 5, left: -25, bottom: 0 }}>
+                                        <ResponsiveContainer key={theme} width="100%" height="100%">
+                                            <BarChart data={chartData} margin={{ top: 15, right: 10, left: 15, bottom: 5 }}>
                                                 <defs>
                                                     <linearGradient id="colorAverage" x1="0" y1="0" x2="0" y2="1">
-                                                        <stop offset="0%" stopColor="#475569" stopOpacity={0.8}/>
-                                                        <stop offset="100%" stopColor="#1e293b" stopOpacity={0.2}/>
+                                                        <stop offset="0%" stopColor="#94A3B8" stopOpacity={0.8}/>
+                                                        <stop offset="100%" stopColor="#64748B" stopOpacity={0.2}/>
                                                     </linearGradient>
                                                     <linearGradient id="colorPredicted" x1="0" y1="0" x2="0" y2="1">
-                                                        <stop offset="0%" stopColor="#A78BFA" stopOpacity={1}/>
-                                                        <stop offset="100%" stopColor="#6366f1" stopOpacity={1}/>
+                                                        <stop offset="0%" stopColor="#C084FC" stopOpacity={1}/>
+                                                        <stop offset="100%" stopColor="#8B5CF6" stopOpacity={1}/>
                                                     </linearGradient>
                                                 </defs>
-                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.06)" />
+                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={gridStroke} />
                                                 <XAxis
                                                     dataKey="name"
                                                     axisLine={false}
                                                     tickLine={false}
-                                                    tick={{ fontSize: 10, fill: "rgba(255, 255, 255, 0.4)", fontWeight: 600 }}
+                                                    tick={{ fontSize: 10, fill: tickColor, fontWeight: 600 }}
                                                     dy={5}
                                                 />
                                                 <YAxis
                                                     axisLine={false}
                                                     tickLine={false}
                                                     tickFormatter={formatYAxis}
-                                                    tick={{ fontSize: 10, fill: "rgba(255, 255, 255, 0.4)", fontWeight: 600 }}
+                                                    tick={{ fontSize: 10, fill: tickColor, fontWeight: 600 }}
                                                 />
                                                 <Tooltip
-                                                    cursor={{ fill: 'rgba(255,255,255,0.03)' }}
+                                                    cursor={{ fill: tooltipCursor }}
                                                     contentStyle={{
                                                         borderRadius: '16px',
-                                                        border: '1px solid rgba(255,255,255,0.1)',
-                                                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)',
-                                                        backgroundColor: '#0B0F19',
-                                                        color: '#fff',
+                                                        border: `1px solid ${tooltipBorder}`,
+                                                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                                                        backgroundColor: tooltipBg,
+                                                        color: tooltipColor,
                                                         fontSize: "11px",
                                                         padding: '12px 16px',
                                                     }}
                                                     itemStyle={{ padding: '2px 0', fontSize: '12px' }}
-                                                    labelStyle={{ fontWeight: 'bold', marginBottom: '6px', fontSize: '12px', color: 'rgba(255, 255, 255, 0.5)' }}
+                                                    labelStyle={{ fontWeight: 'bold', marginBottom: '6px', fontSize: '12px', color: labelColor }}
                                                     formatter={(value, name) => [new Intl.NumberFormat('vi-VN').format(value) + ' VND', name]}
                                                 />
                                                 <Bar dataKey="average" name="Trung bình" fill="url(#colorAverage)" radius={[6, 6, 0, 0]} barSize={16} className="cursor-pointer" />

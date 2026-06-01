@@ -1,9 +1,4 @@
-import { useEffect, useState } from "react";
-import {
-  formatDateForDisplay,
-  parseDisplayDateToIso,
-  sanitizeDateInput,
-} from "../util/dateInput.js";
+import { normalizeToIsoDate } from "../util/dateInput.js";
 
 const DateInput = ({
   value,
@@ -16,13 +11,10 @@ const DateInput = ({
   required = false,
   ...rest
 }) => {
-  const [displayValue, setDisplayValue] = useState(() => formatDateForDisplay(value));
+  const isoValue = normalizeToIsoDate(value);
 
-  useEffect(() => {
-    setDisplayValue(formatDateForDisplay(value));
-  }, [value]);
-
-  const emitValue = (nextValue) => {
+  const handleChange = (event) => {
+    const nextValue = event.target.value;
     onChange?.({
       target: {
         value: nextValue,
@@ -32,57 +24,17 @@ const DateInput = ({
     });
   };
 
-  const handleChange = (event) => {
-    const nextDisplayValue = sanitizeDateInput(event.target.value);
-    setDisplayValue(nextDisplayValue);
-
-    if (!nextDisplayValue) {
-      emitValue("");
-      return;
-    }
-
-    const isoDate = parseDisplayDateToIso(nextDisplayValue);
-    if (isoDate) {
-      emitValue(isoDate);
-    }
-  };
-
-  const handleBlur = () => {
-    if (!displayValue) {
-      setDisplayValue("");
-      return;
-    }
-
-    const isoDate = parseDisplayDateToIso(displayValue);
-    if (!isoDate) {
-      setDisplayValue(formatDateForDisplay(value));
-      return;
-    }
-
-    const normalizedDisplayValue = formatDateForDisplay(isoDate);
-    setDisplayValue(normalizedDisplayValue);
-
-    if (isoDate !== value) {
-      emitValue(isoDate);
-    }
-  };
-
   return (
     <input
       {...rest}
       id={id}
       name={name}
-      type="text"
-      inputMode="numeric"
-      autoComplete="off"
-      value={displayValue}
+      type="date"
+      value={isoValue}
       onChange={handleChange}
-      onBlur={handleBlur}
-      placeholder={placeholder}
       className={className}
       disabled={disabled}
       required={required}
-      maxLength={10}
     />
   );
 };

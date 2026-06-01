@@ -19,14 +19,14 @@ export const LoadingProvider = ({ children }) => {
     counter.current += 1;
     setLoadingMessage(msg);
 
-    // If it's the first request, set a debounce timer of 150ms before showing loading
+    // If it's the first request, set a debounce timer of 450ms before showing loading
     if (counter.current === 1) {
       if (showTimeoutRef.current) {
         clearTimeout(showTimeoutRef.current);
       }
       showTimeoutRef.current = setTimeout(() => {
         setIsLoading(true);
-      }, 150); // 150ms debounce
+      }, 450); // 450ms debounce
     }
   }, []);
 
