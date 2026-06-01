@@ -66,7 +66,7 @@ class ReceiptImportServiceOcrRoutingRegressionTest {
         );
         GeminiProperties geminiProperties = new GeminiProperties(
                 List.of("gemini-key"),
-                "gemini-2.5-pro",
+                "gemini-3.1-flash-lite",
                 "https://generativelanguage.googleapis.com",
                 60
         );
