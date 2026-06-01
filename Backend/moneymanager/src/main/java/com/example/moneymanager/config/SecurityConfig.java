@@ -31,7 +31,7 @@ public class SecurityConfig {
     private final AppUserDetailsService appUserDetailsService;
     private final JwtRequestFilter jwtRequestFilter;
 
-    @Value("#{environment.getProperty('money.manager.frontend.url') ?: 'http://localhost:5173'}")
+    @Value("${money.manager.frontend.url:http://localhost:5173}")
     private String frontendUrl;
 
     @Bean

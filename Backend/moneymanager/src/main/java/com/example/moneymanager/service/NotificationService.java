@@ -49,7 +49,7 @@ public class NotificationService {
     @Lazy
     private ExpenseService expenseService;
 
-    @Value("#{environment.getProperty('money.manager.frontend.url')}")
+    @Value("${money.manager.frontend.url}")
     private String frontendUrl;
 
     @Value("${app.scheduled-jobs.enabled:true}")
