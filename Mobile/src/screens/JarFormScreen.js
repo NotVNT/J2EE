@@ -181,8 +181,8 @@ export default function JarFormScreen() {
         </Text>
       </Pressable>
 
-      {/* Bộ Chọn Emoji Modal Sheet */}
-      <Modal visible={showEmojiPicker} animationType="slide" transparent>
+      {/* Bộ Chọn Emoji Modal */}
+      <Modal visible={showEmojiPicker} animationType="fade" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
@@ -362,17 +362,17 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
 
-  // Modal Bottom Sheet Styles
+  // Modal Centered Styles
   modalOverlay: {
     flex: 1,
     backgroundColor: COLORS.OVERLAY,
-    justifyContent: "flex-end",
+    justifyContent: "center",
+    padding: 16,
   },
   modalContent: {
     backgroundColor: COLORS.WHITE,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    maxHeight: "75%",
+    borderRadius: 20,
+    maxHeight: "80%",
     padding: 16,
   },
   modalHeader: {
@@ -413,8 +413,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   emojiGridCell: {
-    width: (Dimensions.get("window").width - 32 - 8 * 5) / 6, // 6 ô mỗi hàng
-    height: (Dimensions.get("window").width - 32 - 8 * 5) / 6,
+    width: (Dimensions.get("window").width - 64 - 8 * 5) / 6, // 6 ô mỗi hàng
+    height: (Dimensions.get("window").width - 64 - 8 * 5) / 6,
     borderRadius: 10,
     borderWidth: 1.5,
     borderColor: "transparent",

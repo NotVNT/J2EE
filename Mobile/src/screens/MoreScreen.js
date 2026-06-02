@@ -197,6 +197,7 @@ export default function MoreScreen() {
         />
       </SettingGroup>
 
+  
       {/* Notification Preferences Group */}
       <SettingGroup title="THÔNG BÁO">
         <SettingItem

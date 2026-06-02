@@ -695,14 +695,14 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: COLORS.OVERLAY,
-    justifyContent: "flex-end",
+    justifyContent: "center",
+    padding: 16,
   },
   jarPickerContent: {
     backgroundColor: COLORS.WHITE,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderRadius: 20,
     padding: 20,
-    paddingBottom: 36,
+    paddingBottom: 24,
   },
   jarPickerTitle: {
     fontSize: 16,
@@ -822,10 +822,10 @@ const styles = StyleSheet.create({
   // Form styles
   formContent: {
     backgroundColor: COLORS.WHITE,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderRadius: 20,
     padding: 20,
-    maxHeight: "85%",
+    marginHorizontal: 8,
+    maxHeight: "80%",
   },
   formTitle: {
     fontSize: 16,
