@@ -232,3 +232,7 @@ debug.log
 lerna-debug.log
 .npmrc
 .yarnrc
+
+# === Local Startup Scripts ===
+run-backend.bat
+run-backend.ps1
