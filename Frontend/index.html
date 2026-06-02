@@ -4,7 +4,8 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- CSP: report-only in dev; enforced via vercel.json headers in prod -->
+    <!-- CSP: report-only is disallowed in <meta> tags by standard spec; enforced via vercel.json headers in prod.
+         If you want CSP report-only in dev, configure server.headers in vite.config.js instead.
     <meta
       http-equiv="Content-Security-Policy-Report-Only"
       content="
@@ -21,6 +22,7 @@
         frame-ancestors 'none';
       "
     />
+    -->
     <title>Money Manager</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

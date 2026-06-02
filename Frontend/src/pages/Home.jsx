@@ -255,13 +255,13 @@ const Home = () => {
                 <div className="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-[#FA5C5C] shadow-[0_0_8px_rgba(250,92,92,0.5)]" />
               </div>
               
-              <div className="flex-1 w-full min-h-0">
+              <div className="h-[170px] sm:h-[200px] w-full min-h-0">
                 {(!dashboardData?.monthlyHistory || dashboardData.monthlyHistory.length === 0) ? (
                   <div className="w-full h-full flex items-center justify-center text-slate-500 text-xs">
                     Đang tổng hợp dữ liệu...
                   </div>
                 ) : (
-                  <ResponsiveContainer key={theme} width="100%" height="100%">
+                  <ResponsiveContainer key={theme} width="99%" height={170}>
                     <BarChart data={chartData} margin={{ top: 15, right: 10, left: 10, bottom: 5 }}>
                       <defs>
                         <linearGradient id="expenseGrad" x1="0" y1="0" x2="0" y2="1">
@@ -319,13 +319,13 @@ const Home = () => {
                 <div className="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-[#10B981] shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
               </div>
 
-              <div className="flex-1 w-full min-h-0">
+              <div className="h-[170px] sm:h-[200px] w-full min-h-0">
                 {(!dashboardData?.monthlyHistory || dashboardData.monthlyHistory.length === 0) ? (
                   <div className="w-full h-full flex items-center justify-center text-slate-500 text-xs">
                     Đang tổng hợp dữ liệu...
                   </div>
                 ) : (
-                  <ResponsiveContainer key={theme} width="100%" height="100%">
+                  <ResponsiveContainer key={theme} width="99%" height={170}>
                     <BarChart data={chartData} margin={{ top: 15, right: 10, left: 10, bottom: 5 }}>
                       <defs>
                         <linearGradient id="incomeGrad" x1="0" y1="0" x2="0" y2="1">

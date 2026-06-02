@@ -87,10 +87,15 @@ public class SecurityConfig {
                 "http://localhost:3000",
                 "http://localhost:8081"
         ));
-        // Add production frontend URL if it's different from localhost
-        if (frontendUrl != null && !frontendUrl.isBlank()
-                && !frontendUrl.startsWith("http://localhost")) {
-            allowedOrigins.add(frontendUrl);
+        // Add production frontend URLs (supports comma-separated list)
+        if (frontendUrl != null && !frontendUrl.isBlank()) {
+            String[] urls = frontendUrl.split(",");
+            for (String url : urls) {
+                String trimmed = url.trim();
+                if (!trimmed.isBlank() && !trimmed.startsWith("http://localhost")) {
+                    allowedOrigins.add(trimmed);
+                }
+            }
         }
         configuration.setAllowedOriginPatterns(allowedOrigins);
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
