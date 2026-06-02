@@ -38,8 +38,8 @@ function EmptyScreen() {
   return <View style={{ flex: 1 }} />;
 }
 
-function PillTabButton({ children, onPress, accessibilityState }) {
-  const focused = accessibilityState?.selected;
+function PillTabButton({ children, onPress, accessibilityState, suppressActive }) {
+  const focused = accessibilityState?.selected && !suppressActive;
   return (
     <Pressable
       onPress={onPress}
@@ -69,10 +69,6 @@ function TabLabel({ label, color }) {
     </Text>
   );
 }
-
-const renderTabLabel = (label) => ({ color }) => (
-  <TabLabel label={label} color={color} />
-);
 
 function HomeStack() {
   return (
@@ -131,8 +127,12 @@ export default function MainTabs() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const [isQuickMenuVisible, setIsQuickMenuVisible] = useState(false);
+  const [suppressTabFocus, setSuppressTabFocus] = useState(false);
+  const [floatingFocusedKey, setFloatingFocusedKey] = useState(null);
 
   const openExtraScreen = (routeName) => {
+    setFloatingFocusedKey(routeName);
+    setSuppressTabFocus(true);
     setIsQuickMenuVisible(false);
     const routeMap = {
       Income: "Income",
@@ -145,7 +145,20 @@ export default function MainTabs() {
     navigation.navigate("HomeTab", { screen });
   };
 
-  const pillTabBarButton = (props) => <PillTabButton {...props} />;
+  const pillTabBarButton = (props) => {
+    const originalOnPress = props.onPress;
+    return (
+      <PillTabButton
+        {...props}
+        suppressActive={suppressTabFocus}
+        onPress={(e) => {
+          setSuppressTabFocus(false);
+          setFloatingFocusedKey(null);
+          originalOnPress?.(e);
+        }}
+      />
+    );
+  };
 
   const fabTabBarButton = () => (
     <View style={styles.fabTabSlot}>
@@ -154,6 +167,18 @@ export default function MainTabs() {
         onPress={() => setIsQuickMenuVisible((prev) => !prev)}
       />
     </View>
+  );
+
+  // Override icon/label color when floating menu suppresses tab focus
+  const tabColor = (focused, originalColor) =>
+    focused && suppressTabFocus ? COLORS.TAB_INACTIVE : originalColor;
+
+  const tabIcon = (emoji) => ({ focused, color }) => (
+    <Text style={{ color: tabColor(focused, color), fontSize: 17, marginTop: 4 }}>{emoji}</Text>
+  );
+
+  const tabLabel = (label) => ({ focused, color }) => (
+    <TabLabel label={label} color={tabColor(focused, color)} />
   );
 
   return (
@@ -197,8 +222,8 @@ export default function MainTabs() {
           name="HomeTab"
           component={HomeStack}
           options={{
-            tabBarLabel: renderTabLabel("Trang chủ"),
-            tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 17, marginTop: 4 }}>🏠</Text>,
+            tabBarLabel: tabLabel("Trang chủ"),
+            tabBarIcon: tabIcon("🏠"),
             tabBarButton: pillTabBarButton,
           }}
         />
@@ -207,8 +232,8 @@ export default function MainTabs() {
           name="CategoryTab"
           component={CategoryStack}
           options={{
-            tabBarLabel: renderTabLabel("Danh mục"),
-            tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 17, marginTop: 4 }}>📂</Text>,
+            tabBarLabel: tabLabel("Danh mục"),
+            tabBarIcon: tabIcon("📂"),
             tabBarButton: pillTabBarButton,
           }}
         />
@@ -225,7 +250,12 @@ export default function MainTabs() {
           listeners={{
             tabPress: (e) => {
               e.preventDefault();
-              setIsQuickMenuVisible((prev) => !prev);
+              setIsQuickMenuVisible((prev) => {
+                if (prev) {
+                  setFloatingFocusedKey(null);
+                }
+                return !prev;
+              });
             },
           }}
         />
@@ -234,8 +264,8 @@ export default function MainTabs() {
           name="ExpenseTab"
           component={ExpenseStack}
           options={{
-            tabBarLabel: renderTabLabel("Chi tiêu"),
-            tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 17, marginTop: 4 }}>💸</Text>,
+            tabBarLabel: tabLabel("Chi tiêu"),
+            tabBarIcon: tabIcon("💸"),
             tabBarButton: pillTabBarButton,
           }}
         />
@@ -244,8 +274,8 @@ export default function MainTabs() {
           name="SettingTab"
           component={SettingStack}
           options={{
-            tabBarLabel: renderTabLabel("Hồ sơ"),
-            tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 17, marginTop: 4 }}>👤</Text>,
+            tabBarLabel: tabLabel("Hồ sơ"),
+            tabBarIcon: tabIcon("👤"),
             tabBarButton: pillTabBarButton,
           }}
         />
@@ -253,8 +283,12 @@ export default function MainTabs() {
 
       <FloatingQuickMenu
         visible={isQuickMenuVisible}
-        onClose={() => setIsQuickMenuVisible(false)}
+        onClose={() => {
+          setFloatingFocusedKey(null);
+          setIsQuickMenuVisible(false);
+        }}
         onSelectRoute={openExtraScreen}
+        focusedKey={floatingFocusedKey}
       />
     </>
   );

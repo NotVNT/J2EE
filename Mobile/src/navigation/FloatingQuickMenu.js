@@ -64,7 +64,7 @@ export function FloatingTabButton({ onPress, isOpen }) {
 }
 
 // ─── Speed Dial overlay + sub-buttons ────────────────────
-export default function FloatingQuickMenu({ visible, onClose, onSelectRoute }) {
+export default function FloatingQuickMenu({ visible, onClose, onSelectRoute, focusedKey }) {
   const overlayOpacity = useRef(new Animated.Value(0)).current;
   const insets = useSafeAreaInsets();
 
@@ -183,12 +183,13 @@ export default function FloatingQuickMenu({ visible, onClose, onSelectRoute }) {
                   styles.subButton,
                   styles[`blob${i}`],
                   { backgroundColor: action.color },
+                  focusedKey === action.key && styles.subButtonFocused,
                 ]}
                 onPress={() => onSelectRoute(action.key)}
               >
                 <Text style={styles.subIcon}>{action.icon}</Text>
               </Pressable>
-              <View style={styles.labelBubble}>
+              <View style={[styles.labelBubble, focusedKey === action.key && styles.labelBubbleFocused]}>
                 <Text
                   style={styles.subLabel}
                   numberOfLines={1}
@@ -339,5 +340,18 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "700",
     textAlign: "center",
+  },
+
+  // ── Focused sub-action ────────────────────────────────
+  subButtonFocused: {
+    borderWidth: 3,
+    borderColor: "#FFF",
+    transform: [{ scale: 1.1 }],
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 10,
+  },
+  labelBubbleFocused: {
+    backgroundColor: COLORS.PRIMARY,
   },
 });

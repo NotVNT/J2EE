@@ -39,7 +39,22 @@ export default function ChatAssistantHeader({
         </View>
 
         <View style={styles.copyBlock}>
-          <Text style={styles.subtitle} numberOfLines={1}>{subtitle}</Text>
+          <View style={styles.titleRow}>
+            <Text style={styles.subtitle} numberOfLines={1}>{subtitle}</Text>
+            {onOpenSessions ? (
+              <Pressable
+                style={({ pressed }) => [
+                  styles.historyButton,
+                  pressed && styles.historyButtonPressed,
+                ]}
+                onPress={onOpenSessions}
+                accessibilityRole="button"
+                accessibilityLabel="Open chat history"
+              >
+                <Ionicons name="time-outline" size={18} color={COLORS.PRIMARY} />
+              </Pressable>
+            ) : null}
+          </View>
           <View style={styles.metaRow}>
             <View style={styles.onlineDot} />
             <Text style={styles.metaText}>Trực tuyến</Text>
@@ -58,19 +73,6 @@ export default function ChatAssistantHeader({
           </View>
         </View>
 
-        {onOpenSessions ? (
-          <Pressable
-            style={({ pressed }) => [
-              styles.historyButton,
-              pressed && styles.historyButtonPressed,
-            ]}
-            onPress={onOpenSessions}
-            accessibilityRole="button"
-            accessibilityLabel="Open chat history"
-          >
-            <Ionicons name="time-outline" size={20} color={COLORS.PRIMARY} />
-          </Pressable>
-        ) : null}
       </View>
 
       <ModeSegmentedControl
@@ -178,21 +180,26 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
   },
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
   historyButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: COLORS.ROSE_MIST,
+    backgroundColor: COLORS.WARNING_LIGHT,
     borderWidth: 1,
-    borderColor: "rgba(239, 94, 131, 0.18)",
-    marginLeft: 10,
+    borderColor: COLORS.WARNING,
+    marginLeft: 8,
   },
   historyButtonPressed: {
     opacity: 0.78,
   },
   subtitle: {
+    flexShrink: 1,
     fontSize: 18,
     lineHeight: 23,
     fontWeight: 'bold',

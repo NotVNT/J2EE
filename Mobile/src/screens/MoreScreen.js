@@ -179,24 +179,16 @@ export default function MoreScreen() {
         <SettingItem
           icon="📦"
           title="Hũ chi tiêu phụ"
-          onPress={() => navigation.navigate("Jars")}
+          onPress={() => navigation.navigate("HomeTab", { screen: "Jars" })}
         />
         <SettingItem
           icon="📊"
           title="Báo cáo thu chi tháng"
-          onPress={() => navigation.navigate("Reports")}
+          onPress={() => navigation.navigate("HomeTab", { screen: "Reports" })}
         />
       </SettingGroup>
 
-      {/* AI Assistance Group */}
-      <SettingGroup title="TRỢ LÝ AI">
-        <SettingItem
-          icon="✨"
-          title="Trò chuyện Gemini AI"
-          onPress={() => navigation.navigate("Chat")}
-        />
-      </SettingGroup>
-
+  
       {/* Notification Preferences Group */}
       <SettingGroup title="THÔNG BÁO">
         <SettingItem

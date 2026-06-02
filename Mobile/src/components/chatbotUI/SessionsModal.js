@@ -181,14 +181,13 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: "rgba(9, 6, 10, 0.65)",
-    justifyContent: "flex-end"
+    justifyContent: "center",
+    padding: scale(16)
   },
   sheet: {
     backgroundColor: COLORS.BG,
-    borderTopLeftRadius: scale(24),
-    borderTopRightRadius: scale(24),
-    maxHeight: "75%",
-    minHeight: "45%",
+    borderRadius: scale(20),
+    maxHeight: "80%",
     borderWidth: 1,
     borderColor: COLORS.CARD_BORDER,
     paddingBottom: scale(20)
