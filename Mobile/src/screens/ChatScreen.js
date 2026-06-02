@@ -143,7 +143,7 @@ export default function ChatScreen() {
               <View style={styles.loadingContainer}>
                 <ActivityIndicator color={COLORS.PRIMARY} size="small" />
                 <Text style={styles.loadingText}>
-                  {modelLabel} đang suy nghĩ...
+                  Trợ lý AI đang suy nghĩ...
                 </Text>
               </View>
             ) : null

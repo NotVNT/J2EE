@@ -113,12 +113,22 @@ const AIChat = () => {
         activeModelLabel: "Gemini 3.1 Flash-Lite",
       };
     }
-    // Chat mode — luôn dùng GPT-OSS
-    return {
-      activeProvider: "gptoss",
-      activeModel: "gpt-oss-120b",
-      activeModelLabel: "GPT-OSS 120B",
-    };
+    // Chat mode:
+    // Nếu là PREMIUM: dùng GPT-OSS 120B
+    // Nếu là BASIC: dùng Gemini 3.1 Flash-Lite
+    if (isPremiumPlan) {
+      return {
+        activeProvider: "gptoss",
+        activeModel: "gpt-oss-120b",
+        activeModelLabel: "GPT-OSS 120B",
+      };
+    } else {
+      return {
+        activeProvider: "gemini",
+        activeModel: "gemini-3.1-flash-lite",
+        activeModelLabel: "Gemini 3.1 Flash-Lite",
+      };
+    }
   };
 
   const handleSendMessage = async (text, options = {}) => {

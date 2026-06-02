@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useContext } from "react";
+import { useState, useEffect, useMemo, useCallback, useContext } from "react";
 import { Alert } from "react-native";
 import { AuthContext } from "../AuthContext";
 
@@ -6,23 +6,21 @@ import { AuthContext } from "../AuthContext";
 
 const MODELS = {
   chat: {
-    ninerouter: { provider: "ninerouter", model: "project-demo", label: "Nova Lite" },
+    gemini:     { provider: "gemini",     model: "gemini-3.1-flash-lite", label: "Gemini 3.1 Flash" },
     gptoss:     { provider: "gptoss",     model: "gpt-oss-120b", label: "GPT-OSS 120B" }
   },
   agent: {
-    ninerouter: { provider: "ninerouter", model: "gemma4-31B",          label: "Nova Lite" },
     gemini:     { provider: "gemini",     model: "gemini-3.1-flash-lite", label: "Gemini 3.1 Flash" }
   }
 };
 
 const CHAT_OPTIONS = [
-  { label: "Nova Lite",     value: "ninerouter", icon: "✦", description: "Nhanh · tiết kiệm" },
-  { label: "GPT-OSS 120B",  value: "gptoss",     icon: "✧", description: "Mạnh · phân tích sâu", disabled: false, badge: null }
+  { label: "Gemini 3.1 Flash", value: "gemini", icon: "🤖", description: "Nhanh · thông minh · tiết kiệm" },
+  { label: "GPT-OSS 120B",     value: "gptoss", icon: "✧",  description: "Mạnh · phân tích sâu", disabled: false, badge: null }
 ];
 
 const AGENT_OPTIONS = [
-  { label: "Gemini 3.1 Flash", value: "gemini",     icon: "🤖", description: "Nhanh · thông minh · tiết kiệm", disabled: false, badge: null },
-  { label: "Nova Lite",        value: "ninerouter", icon: "✦",  description: "Nhanh · tiết kiệm" }
+  { label: "Gemini 3.1 Flash", value: "gemini", icon: "🤖", description: "Nhanh · thông minh · tiết kiệm" }
 ];
 
 /**
@@ -42,23 +40,32 @@ export default function useModelConfig() {
   const isPremiumPlan = user?.subscriptionPlan === "PREMIUM";
 
   const [activeMode, setActiveMode] = useState("chat");
-  const [chatModel, setChatModel]   = useState("gptoss");
+  const [chatModel, setChatModel]   = useState(isPremiumPlan ? "gptoss" : "gemini");
   const [agentModel, setAgentModel] = useState("gemini");
+
+  // Sync defaults when user's plan loads or changes
+  useEffect(() => {
+    if (!isPremiumPlan) {
+      setChatModel("gemini");
+    } else {
+      setChatModel("gptoss");
+    }
+  }, [isPremiumPlan]);
 
   // ── Derived ────────────────────────────────────────────
 
   const activeParams = useMemo(() => {
     const modeConfig = activeMode === "agent" ? MODELS.agent : MODELS.chat;
     const key        = activeMode === "agent" ? agentModel : chatModel;
-    return modeConfig[key] || modeConfig.ninerouter;
+    return modeConfig[key] || modeConfig.gemini;
   }, [activeMode, chatModel, agentModel]);
 
   const modelOptions = useMemo(() => {
     const options = activeMode === "chat" ? CHAT_OPTIONS : AGENT_OPTIONS;
     if (isPremiumPlan) return options;
-    // Free/Basic: chỉ ninerouter available, các model khác bị lock
+    // Free/Basic: chỉ gemini available, các model khác bị lock
     return options.map((opt) =>
-      opt.value === "ninerouter"
+      opt.value === "gemini"
         ? opt
         : { ...opt, disabled: true, badge: "PREMIUM" }
     );
@@ -87,7 +94,7 @@ export default function useModelConfig() {
 
   const handleModelChange = useCallback((model) => {
     if (model === modelValue) return;
-    if (!isPremiumPlan && model !== "ninerouter") return;
+    if (!isPremiumPlan && model !== "gemini") return;
 
     if (activeMode === "chat") {
       setChatModel(model);
