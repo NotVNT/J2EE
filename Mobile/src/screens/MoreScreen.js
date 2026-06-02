@@ -188,6 +188,15 @@ export default function MoreScreen() {
         />
       </SettingGroup>
 
+      {/* AI Assistance Group */}
+      <SettingGroup title="TRỢ LÝ AI">
+        <SettingItem
+          icon="✨"
+          title="Trò chuyện Gemini AI"
+          onPress={() => navigation.navigate("HomeTab", { screen: "Chat" })}
+        />
+      </SettingGroup>
+
   
       {/* Notification Preferences Group */}
       <SettingGroup title="THÔNG BÁO">

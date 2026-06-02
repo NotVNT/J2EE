@@ -39,4 +39,8 @@ public class OcrKeyRotator {
     public boolean hasKeys() {
         return !apiKeys.isEmpty();
     }
+
+    public int keyCount() {
+        return apiKeys.size();
+    }
 }

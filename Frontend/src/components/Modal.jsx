@@ -25,7 +25,7 @@ const Modal = ({ isOpen, onClose, children, title }) => {
               type="button"
               onClick={onClose}
               className="w-9 h-9 flex items-center justify-center rounded-xl transition-all duration-300 cursor-pointer
-                text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:rotate-90
+                text-slate-400 hover:text-slate-600 dark:hover:text-slate-200
                 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10"
             >
               <X size={18} />

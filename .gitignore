@@ -24,8 +24,17 @@ COMMANDCODE.md
 .github/skills/
 
 .agents/
-!.agents/skills/ 
+!.agents/skills/
+
+# === Milens Code Intelligence (LOCAL ONLY) ===
+# Milens index database & session cache — tool-generated, regenerate with: npx milens analyze -p . --force
 .milens/
+.milens-session/
+
+# Milens generated files
+AGENTS.md.bak
+milens-session.json
+.milens-*.log
 
 
 # === Environment files (ALL levels — never commit secrets) ===
@@ -65,6 +74,9 @@ node_modules/
 .yarn/unplugged
 .yarn/build-state.yml
 .yarn/install-state.gz
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
 
 # Logs
 npm-debug.log*
@@ -73,8 +85,14 @@ yarn-error.log*
 .pnpm-debug.log*
 lerna-debug.log*
 
-# Package lock — keep Frontend lock, ignore Mobile (optional per team)
-# Mobile/package-lock.json  # uncomment if not tracking Mobile lock
+# npm cache
+.npm/
+.eslintcache
+.stylelintcache
+
+# Bundle analyzer
+dist/stats.html
+reports/
 
 
 # === Frontend / Vite ===
@@ -85,7 +103,6 @@ Frontend/.env.local
 Frontend/.env.*.local
 Frontend/.env.production
 Frontend/.env.production.local
-dist-ssr/
 *.local
 
 # Test coverage
@@ -139,15 +156,15 @@ GoogleService-Info.plist
 .vscode/
 .vscode/settings.json
 .vscode/launch.json
+.vscode/extensions.json
+.vscode/debug.log
+.vscode/ipynb_checkpoints/
 .idea/
 *.iml
 *.iws
 *.ipr
 *.sublime-workspace
 *.sublime-project
-*.swp
-*.swo
-*~
 .factorypath
 .springBeans
 .sts4-cache
@@ -159,7 +176,7 @@ GoogleService-Info.plist
 /.nb-gradle/
 
 
-# === OS generated files ===
+# === OS & Temporary files ===
 .DS_Store
 .DS_Store?
 .AppleDouble
@@ -169,15 +186,21 @@ ehthumbs.db
 Desktop.ini
 $RECYCLE.BIN/
 .windows
-
-
-# === Temp / Cache files ===
+*.swp
+*.swo
+*~
+.~*
 *.tmp
 *.bak
 *.backup
+*.orig
+*.rej
 *.pid
 *.seed
 *.pid.lock
+
+
+# === Build & Cache directories ===
 .cache/
 .temp/
 .parcel-cache/
@@ -187,8 +210,29 @@ $RECYCLE.BIN/
 *.tsbuildinfo
 
 
-# === Test output ===
+# === Test & Coverage output ===
 coverage/
 test-results/
 playwright-report/
+.nyc_output/
+*.lcov
+
+
+# === Database & Runtime files ===
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
 .mcp.json
+
+
+# === Development logs ===
+*.log
+debug.log
+lerna-debug.log
+.npmrc
+.yarnrc
+
+# === Local Startup Scripts ===
+run-backend.bat
+run-backend.ps1

@@ -1,4 +1,17 @@
-import {BadgeDollarSign, ChartBar, Coins, FunnelPlus, LayoutDashboard, List, PiggyBank, Target, Wallet, Activity, Vault, BotMessageSquare} from "lucide-react";
+import {
+    BadgeDollarSign,
+    ChartBar,
+    Coins,
+    FunnelPlus,
+    LayoutDashboard,
+    List,
+    PiggyBank,
+    Target,
+    Wallet,
+    Activity,
+    Vault,
+    BotMessageSquare,
+} from "lucide-react";
 
 export const SIDE_BAR_DATA = [
     {

@@ -1,4 +1,5 @@
 import { useContext, useEffect, useRef, useState } from "react";
+import moment from "moment";
 import toast from "react-hot-toast";
 import { AlertTriangle, FileText, LoaderCircle, Trash2 } from "lucide-react";
 import CustomSelect from "../components/CustomSelect.jsx";
@@ -34,6 +35,7 @@ const Expense = () => {
     setOpenAddExpenseModal(true);
   };
   const [openDeleteAlert, setOpenDeleteAlert] = useState({ show: false, data: null });
+  const [calendarMonth, setCalendarMonth] = useState(() => moment());
   const [isImportingReceipt, setIsImportingReceipt] = useState(false);
   const [isConfirmingImport, setIsConfirmingImport] = useState(false);
   const [openReceiptPreviewModal, setOpenReceiptPreviewModal] = useState(false);
@@ -331,6 +333,7 @@ const Expense = () => {
           onEdit={(exp) => { setExpenseToEdit(exp); setOpenEditExpenseModal(true); }}
           onDelete={(id) => setOpenDeleteAlert({ show: true, data: id })}
           onSelectDate={handleSelectCalendarDate}
+          onMonthChange={setCalendarMonth}
         />
 
         {/* Quick Expense Templates */}
@@ -347,6 +350,7 @@ const Expense = () => {
           onEmail={handleEmailExpenseDetails}
           disableExportActions={exportLocked}
           disabledMessage={exportUpgradeMessage}
+          calendarMonth={calendarMonth}
         />
 
         <Modal isOpen={openAddExpenseModal} onClose={() => setOpenAddExpenseModal(false)} title="Thêm chi tiêu">

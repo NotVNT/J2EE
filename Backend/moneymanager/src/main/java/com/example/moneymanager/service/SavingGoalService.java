@@ -25,6 +25,7 @@ public class SavingGoalService {
     private final SavingGoalContributionRepository contributionRepository;
     private final ProfileService profileService;
     private final NotificationService notificationService;
+    private final DashboardCacheInvalidationService dashboardCacheInvalidationService;
 
     // ─── CREATE ──────────────────────────────────────────────────
     @Transactional
@@ -50,6 +51,7 @@ public class SavingGoalService {
                 .build();
 
         entity = goalRepository.save(entity);
+        dashboardCacheInvalidationService.evictDashboard();
         return toDTO(entity);
     }
 
@@ -93,6 +95,7 @@ public class SavingGoalService {
         }
 
         entity = goalRepository.save(entity);
+        dashboardCacheInvalidationService.evictDashboard();
         return toDTO(entity);
     }
 
@@ -104,6 +107,7 @@ public class SavingGoalService {
         contributionRepository.deleteAll(
                 contributionRepository.findByGoalIdOrderByContributionDateDesc(entity.getId()));
         goalRepository.delete(entity);
+        dashboardCacheInvalidationService.evictDashboard();
     }
 
     // ─── ADD CONTRIBUTION ────────────────────────────────────────
@@ -139,6 +143,7 @@ public class SavingGoalService {
         notificationService.notifyGoalProgress(profile, goal.getName(),
                 dto.getAmount(), goal.getCurrentAmount(), goal.getTargetAmount());
 
+        dashboardCacheInvalidationService.evictDashboard();
         return toContributionDTO(contribution);
     }
 

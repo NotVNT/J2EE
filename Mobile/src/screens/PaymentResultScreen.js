@@ -109,7 +109,7 @@ export default function PaymentResultScreen() {
         </View>
       ) : null}
 
-      <Pressable style={styles.homeButton} onPress={() => navigation.navigate("Main")}>
+      <Pressable style={styles.homeButton} onPress={() => navigation.navigate("HomeTab")}>
         <Text style={styles.homeButtonText}>Về trang chủ</Text>
       </Pressable>
     </ScrollView>

@@ -1,5 +1,6 @@
 import Dashboard from "../components/Dashboard.jsx";
 import { useUser } from "../hooks/useUser.jsx";
+import moment from "moment";
 import { useCallback, useContext, useEffect, useState } from "react";
 import axiosConfig from "../util/axiosConfig.jsx";
 import { API_ENDPOINTS } from "../util/apiEndpoints.js";
@@ -24,8 +25,9 @@ const Income = () => {
   const { user } = useContext(AppContext);
   const [incomeData, setIncomeData] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [filterType] = useState("current");
+  const [filterType] = useState("all");
   const [selectedMonthDate] = useState("");
+  const [calendarMonth, setCalendarMonth] = useState(() => moment());
   const [openAddIncomeModal, setOpenAddIncomeModal] = useState(false);
   const [openEditIncomeModal, setOpenEditIncomeModal] = useState(false);
   const [selectedIncome, setSelectedIncome] = useState(null);
@@ -193,6 +195,7 @@ const Income = () => {
           onEdit={(income) => { setSelectedIncome(income); setOpenEditIncomeModal(true); }}
           onDelete={(id) => setOpenDeleteAlert({ show: true, data: id })}
           onSelectDate={handleSelectCalendarDate}
+          onMonthChange={setCalendarMonth}
         />
 
         <IncomeList
@@ -203,6 +206,7 @@ const Income = () => {
           onEmail={handleEmailIncomeDetails}
           disableExportActions={exportLocked}
           disabledMessage={exportUpgradeMessage}
+          calendarMonth={calendarMonth}
         />
 
         <Modal isOpen={openAddIncomeModal} onClose={() => setOpenAddIncomeModal(false)} title="Thêm thu nhập">

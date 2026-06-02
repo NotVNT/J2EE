@@ -11,6 +11,7 @@ public enum NotificationType {
     SAVING_STREAK,
     MONTHLY_REPORT,
     PAYMENT,
+    SUBSCRIPTION_RENEWAL,
     SYSTEM,
     ADMIN,
     GROUP_EXPENSE,

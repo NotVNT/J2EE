@@ -40,6 +40,7 @@ public class ExpenseService {
     private final BudgetRepository budgetRepository;
     private final JarRepository jarRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final DashboardCacheInvalidationService dashboardCacheInvalidationService;
 
     // Adds a new expense and checks budget status
     @Transactional
@@ -76,6 +77,7 @@ public class ExpenseService {
         // Publish event — side-effects chạy async sau khi transaction commit
         eventPublisher.publishEvent(new TransactionEvents.ExpenseCreated(
                 profile, newExpense.getName(), newExpense.getAmount(), category, expenseDate));
+        dashboardCacheInvalidationService.evictDashboard();
 
         // Vẫn trả BudgetStatus đồng bộ cho response (chỉ đọc, không write)
         BudgetStatusDTO budgetStatus = budgetService.checkBudgetStatus(
@@ -137,6 +139,7 @@ public class ExpenseService {
         }
         
         expenseRepository.delete(entity);
+        dashboardCacheInvalidationService.evictDashboard();
     }
 
     // Update expense by id for current user
@@ -206,6 +209,7 @@ public class ExpenseService {
         // Publish event — side-effects chạy async sau khi transaction commit
         eventPublisher.publishEvent(new TransactionEvents.ExpenseUpdated(
                 profile, expense.getName(), expense.getAmount(), category, expenseDate));
+        dashboardCacheInvalidationService.evictDashboard();
 
         return toResponseDTO(expense, budgetStatus);
     }

@@ -195,6 +195,22 @@ const Home = () => {
     fetchAiInsight();
   }, [fetchAiInsight, fetchDashboardData]);
 
+  useEffect(() => {
+    const refreshDashboard = () => {
+      if (document.visibilityState === "visible") {
+        fetchDashboardData();
+      }
+    };
+
+    window.addEventListener("focus", refreshDashboard);
+    document.addEventListener("visibilitychange", refreshDashboard);
+
+    return () => {
+      window.removeEventListener("focus", refreshDashboard);
+      document.removeEventListener("visibilitychange", refreshDashboard);
+    };
+  }, [fetchDashboardData]);
+
   const formatCurrency = useCallback((amount) => {
     if (!amount && amount !== 0) return "0 VND";
     const num = typeof amount === "object" ? 0 : Number(amount);
