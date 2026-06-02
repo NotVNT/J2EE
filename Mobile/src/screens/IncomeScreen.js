@@ -149,72 +149,79 @@ export default function IncomeScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: getSafeAreaTop(insets) }]}>
-      <View style={styles.filterCard}>
-        <Text style={styles.filterTitle}>Khung thời gian</Text>
-        <View style={styles.filterRow}>
-          <Pressable
-            style={[styles.filterChip, filterType === FILTER_TYPES.current && styles.filterChipActive]}
-            onPress={() => {
-              setFilterType(FILTER_TYPES.current);
-            }}
-          >
-            <Text style={[styles.filterChipText, filterType === FILTER_TYPES.current && styles.filterChipTextActive]}>Tháng này</Text>
-          </Pressable>
-
-          <Pressable
-            style={[styles.filterChip, styles.filterChipLast, filterType === FILTER_TYPES.all && styles.filterChipActive]}
-            onPress={() => {
-              setFilterType(FILTER_TYPES.all);
-            }}
-          >
-            <Text style={[styles.filterChipText, filterType === FILTER_TYPES.all && styles.filterChipTextActive]}>Tất cả</Text>
-          </Pressable>
-
-        </View>
-
-      </View>
-
-      <View style={styles.summaryCard}>
-        <Text style={styles.summaryLabel}>Tổng thu nhập</Text>
-        <Text style={styles.summaryAmount}>{formatMoney(totalIncome)}</Text>
-        <Text style={styles.summaryHint}>{incomes.length} giao dịch</Text>
-
-        <View style={styles.actionRowMain}>
-          <Pressable style={styles.addButtonMain} onPress={() => navigation.navigate("AddIncome")}>
-            <Text style={styles.addButtonText}>+ Thêm thu nhập</Text>
-          </Pressable>
-          <VoiceInputButton onResult={handleVoiceResult} />
-        </View>
-        <Pressable 
-          style={[styles.exportButton, isExporting && { opacity: 0.7 }]} 
-          onPress={handleExport}
-          disabled={isExporting}
-        >
-          <Text style={styles.exportText}>
-            {isExporting
-              ? "Đang tạo báo cáo..."
-              : filterType === FILTER_TYPES.all
-                ? "Tải báo cáo tất cả tháng"
-                : "Tải báo cáo tháng này"}
-          </Text>
-        </Pressable>
-      </View>
-
       <FlatList
         data={incomes}
         keyExtractor={(item) => String(item?.id)}
         renderItem={({ item }) => <IncomeItem item={item} onDelete={onDelete} />}
-        contentContainerStyle={[styles.listContent, { paddingBottom: getSafeAreaBottom(insets) }, !incomes.length && styles.listContentEmpty]}
+        contentContainerStyle={[
+          styles.listContent,
+          { paddingBottom: getSafeAreaBottom(insets) },
+          !incomes.length && styles.listContentEmpty
+        ]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         ListHeaderComponent={
-          incomes.length ? (
-            <View>
-              <IncomeExpenseChart data={incomes} title="Tổng quan thu nhập" colorPrimary={COLORS.INCOME} />
-              <View style={styles.listHeader}>
-                <Text style={styles.listTitle}>Danh sách thu nhập</Text>
+          <View style={{ marginBottom: 12 }}>
+            {/* Filter Card */}
+            <View style={styles.filterCard}>
+              <Text style={styles.filterTitle}>Khung thời gian</Text>
+              <View style={styles.filterRow}>
+                <Pressable
+                  style={[styles.filterChip, filterType === FILTER_TYPES.current && styles.filterChipActive]}
+                  onPress={() => {
+                    setFilterType(FILTER_TYPES.current);
+                  }}
+                >
+                  <Text style={[styles.filterChipText, filterType === FILTER_TYPES.current && styles.filterChipTextActive]}>Tháng này</Text>
+                </Pressable>
+
+                <Pressable
+                  style={[styles.filterChip, styles.filterChipLast, filterType === FILTER_TYPES.all && styles.filterChipActive]}
+                  onPress={() => {
+                    setFilterType(FILTER_TYPES.all);
+                  }}
+                >
+                  <Text style={[styles.filterChipText, filterType === FILTER_TYPES.all && styles.filterChipTextActive]}>Tất cả</Text>
+                </Pressable>
               </View>
             </View>
-          ) : null
+
+            {/* Summary Card */}
+            <View style={styles.summaryCard}>
+              <Text style={styles.summaryLabel}>Tổng thu nhập</Text>
+              <Text style={styles.summaryAmount}>{formatMoney(totalIncome)}</Text>
+              <Text style={styles.summaryHint}>{incomes.length} giao dịch</Text>
+
+              <View style={styles.actionRowMain}>
+                <Pressable style={styles.addButtonMain} onPress={() => navigation.navigate("AddIncome")}>
+                  <Text style={styles.addButtonText}>+ Thêm thu nhập</Text>
+                </Pressable>
+                <VoiceInputButton onResult={handleVoiceResult} />
+              </View>
+              <Pressable 
+                style={[styles.exportButton, isExporting && { opacity: 0.7 }]} 
+                onPress={handleExport}
+                disabled={isExporting}
+              >
+                <Text style={styles.exportText}>
+                  {isExporting
+                    ? "Đang tạo báo cáo..."
+                    : filterType === FILTER_TYPES.all
+                      ? "Tải báo cáo tất cả tháng"
+                      : "Tải báo cáo tháng này"}
+                </Text>
+              </Pressable>
+            </View>
+
+            {/* Charts & Header */}
+            {incomes.length ? (
+              <View>
+                <IncomeExpenseChart data={incomes} title="Tổng quan thu nhập" colorPrimary={COLORS.INCOME} />
+                <View style={styles.listHeader}>
+                  <Text style={styles.listTitle}>Danh sách thu nhập</Text>
+                </View>
+              </View>
+            ) : null}
+          </View>
         }
         ListEmptyComponent={
           <View style={styles.emptyState}>

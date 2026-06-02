@@ -349,118 +349,128 @@ export default function ExpenseScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: getSafeAreaTop(insets) }]}>
-      <View style={styles.filterCard}>
-        <Text style={styles.filterTitle}>Khung thời gian</Text>
-        <View style={styles.filterRow}>
-          <Pressable
-            style={[styles.filterChip, filterType === FILTER_TYPES.current && styles.filterChipActive]}
-            onPress={() => setFilterType(FILTER_TYPES.current)}
-          >
-            <Text style={[styles.filterChipText, filterType === FILTER_TYPES.current && styles.filterChipTextActive]}>
-              Tháng này
-            </Text>
-          </Pressable>
-
-          <Pressable
-            style={[styles.filterChip, styles.filterChipLast, filterType === FILTER_TYPES.all && styles.filterChipActive]}
-            onPress={() => setFilterType(FILTER_TYPES.all)}
-          >
-            <Text style={[styles.filterChipText, filterType === FILTER_TYPES.all && styles.filterChipTextActive]}>
-              Tất cả
-            </Text>
-          </Pressable>
-        </View>
-      </View>
-
-      <View style={styles.summaryCard}>
-        <View style={styles.summaryContent}>
-          <Text style={styles.summaryLabel}>Tổng chi tiêu</Text>
-          <Text style={styles.summaryAmount}>{formatMoney(totalExpense)}</Text>
-          <Text style={styles.summaryHint}>{expenses.length} giao dịch</Text>
-        </View>
-
-        <View style={styles.actionRowMain}>
-          <Pressable style={styles.addButtonMain} onPress={() => navigation.navigate("HomeTab", { screen: "AddExpense" })}>
-            <Text style={styles.addButtonText}>+ Thêm chi tiêu</Text>
-          </Pressable>
-          <VoiceInputButton onResult={handleVoiceResult} />
-          <Pressable
-            style={[styles.scanButton, isScanning && { opacity: 0.6 }]}
-            onPress={handleScanReceipt}
-            disabled={isScanning}
-          >
-            {isScanning ? (
-              <ActivityIndicator color={COLORS.PRIMARY} size="small" />
-            ) : (
-              <Text style={styles.scanButtonIcon}>📷</Text>
-            )}
-          </Pressable>
-        </View>
-        {!isPremium && (
-          <Text style={styles.premiumHint}>
-            🔒 Quét hóa đơn là tính năng Premium
-          </Text>
-        )}
-        <Pressable 
-          style={[styles.exportButton, isExporting && { opacity: 0.7 }]} 
-          onPress={handleExport}
-          disabled={isExporting}
-        >
-          <Text style={styles.exportText}>
-            {isExporting
-              ? "Đang tạo báo cáo..."
-              : filterType === FILTER_TYPES.all
-                ? "Tải báo cáo tất cả tháng"
-                : "Tải báo cáo tháng này"}
-          </Text>
-        </Pressable>
-      </View>
-
-      <QuickExpenseTemplates onRefreshList={fetchExpenses} />
-
-      {/* Search bar */}
-      <View style={styles.searchBar}>
-        <Text style={styles.searchIcon}>🔍</Text>
-        <TextInput
-          style={styles.searchInput}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          placeholder="Tìm kiếm ghi chú, tên chi tiêu..."
-          placeholderTextColor={COLORS.TEXT_MUTED}
-        />
-        {searchQuery ? (
-          <Pressable onPress={() => setSearchQuery("")} style={styles.searchClear}>
-            <Text style={styles.searchClearText}>✕</Text>
-          </Pressable>
-        ) : null}
-      </View>
-
       <FlatList
         data={visibleExpenses}
         keyExtractor={(item) => String(item?.id)}
         renderItem={({ item }) => (
           <ExpenseItem item={item} onDelete={onDelete} searchKeyword={searchQuery.trim()} />
         )}
-        contentContainerStyle={[styles.listContent, { paddingBottom: getSafeAreaBottom(insets) }, !filteredExpenses.length && styles.listContentEmpty]}
+        contentContainerStyle={[
+          styles.listContent,
+          { paddingBottom: getSafeAreaBottom(insets) },
+          !filteredExpenses.length && styles.listContentEmpty
+        ]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         ListHeaderComponent={
-          filteredExpenses.length ? (
-            <View>
-              <IncomeExpenseChart data={filteredExpenses} title="Tổng quan chi tiêu" colorPrimary={COLORS.EXPENSE} />
-              <View style={styles.listHeader}>
-                <Text style={styles.listTitle}>
-                  {searchQuery.trim()
-                    ? `Kết quả tìm kiếm (${filteredExpenses.length})`
-                    : "Danh sách chi tiêu"}
-                </Text>
-                <ShowMoreButton 
-                  visible={canToggleExpenses} 
-                  expanded={expandedExpenses} 
-                  onPress={toggleExpenses} 
-                />
+          <View style={{ marginBottom: 12 }}>
+            {/* Filter Card */}
+            <View style={styles.filterCard}>
+              <Text style={styles.filterTitle}>Khung thời gian</Text>
+              <View style={styles.filterRow}>
+                <Pressable
+                  style={[styles.filterChip, filterType === FILTER_TYPES.current && styles.filterChipActive]}
+                  onPress={() => setFilterType(FILTER_TYPES.current)}
+                >
+                  <Text style={[styles.filterChipText, filterType === FILTER_TYPES.current && styles.filterChipTextActive]}>
+                    Tháng này
+                  </Text>
+                </Pressable>
+
+                <Pressable
+                  style={[styles.filterChip, styles.filterChipLast, filterType === FILTER_TYPES.all && styles.filterChipActive]}
+                  onPress={() => setFilterType(FILTER_TYPES.all)}
+                >
+                  <Text style={[styles.filterChipText, filterType === FILTER_TYPES.all && styles.filterChipTextActive]}>
+                    Tất cả
+                  </Text>
+                </Pressable>
               </View>
             </View>
-          ) : null
+
+            {/* Summary Card */}
+            <View style={styles.summaryCard}>
+              <View style={styles.summaryContent}>
+                <Text style={styles.summaryLabel}>Tổng chi tiêu</Text>
+                <Text style={styles.summaryAmount}>{formatMoney(totalExpense)}</Text>
+                <Text style={styles.summaryHint}>{expenses.length} giao dịch</Text>
+              </View>
+
+              <View style={styles.actionRowMain}>
+                <Pressable style={styles.addButtonMain} onPress={() => navigation.navigate("HomeTab", { screen: "AddExpense" })}>
+                  <Text style={styles.addButtonText}>+ Thêm chi tiêu</Text>
+                </Pressable>
+                <VoiceInputButton onResult={handleVoiceResult} />
+                <Pressable
+                  style={[styles.scanButton, isScanning && { opacity: 0.6 }]}
+                  onPress={handleScanReceipt}
+                  disabled={isScanning}
+                >
+                  {isScanning ? (
+                    <ActivityIndicator color={COLORS.PRIMARY} size="small" />
+                  ) : (
+                    <Text style={styles.scanButtonIcon}>📷</Text>
+                  )}
+                </Pressable>
+              </View>
+              {!isPremium && (
+                <Text style={styles.premiumHint}>
+                  🔒 Quét hóa đơn là tính năng Premium
+                </Text>
+              )}
+              <Pressable 
+                style={[styles.exportButton, isExporting && { opacity: 0.7 }]} 
+                onPress={handleExport}
+                disabled={isExporting}
+              >
+                <Text style={styles.exportText}>
+                  {isExporting
+                    ? "Đang tạo báo cáo..."
+                    : filterType === FILTER_TYPES.all
+                      ? "Tải báo cáo tất cả tháng"
+                      : "Tải báo cáo tháng này"}
+                </Text>
+              </Pressable>
+            </View>
+
+            {/* Quick Templates */}
+            <QuickExpenseTemplates onRefreshList={fetchExpenses} />
+
+            {/* Search bar */}
+            <View style={styles.searchBar}>
+              <Text style={styles.searchIcon}>🔍</Text>
+              <TextInput
+                style={styles.searchInput}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                placeholder="Tìm kiếm ghi chú, tên chi tiêu..."
+                placeholderTextColor={COLORS.TEXT_MUTED}
+              />
+              {searchQuery ? (
+                <Pressable onPress={() => setSearchQuery("")} style={styles.searchClear}>
+                  <Text style={styles.searchClearText}>✕</Text>
+                </Pressable>
+              ) : null}
+            </View>
+
+            {/* Charts & Header */}
+            {filteredExpenses.length ? (
+              <View>
+                <IncomeExpenseChart data={filteredExpenses} title="Tổng quan chi tiêu" colorPrimary={COLORS.EXPENSE} />
+                <View style={styles.listHeader}>
+                  <Text style={styles.listTitle}>
+                    {searchQuery.trim()
+                      ? `Kết quả tìm kiếm (${filteredExpenses.length})`
+                      : "Danh sách chi tiêu"}
+                  </Text>
+                  <ShowMoreButton 
+                    visible={canToggleExpenses} 
+                    expanded={expandedExpenses} 
+                    onPress={toggleExpenses} 
+                  />
+                </View>
+              </View>
+            ) : null}
+          </View>
         }
         ListEmptyComponent={
           <View style={styles.emptyState}>
