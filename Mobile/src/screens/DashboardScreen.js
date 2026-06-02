@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo, useState } from "react";
 import { Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import HomeTopHeader from "../components/HomeTopHeader";
 import HomeBanner from "../components/HomeBanner";
 import FinanceOverviewChart from "../components/FinanceOverviewChart";
@@ -10,6 +11,7 @@ import { API_ENDPOINTS } from "../constants/api";
 import { buildMonthlyFinanceSeries } from "../utils/financeStats";
 import { formatDate, formatMoney, getApiErrorMessage } from "../utils/format";
 import { COLORS } from "../constants/colors";
+import { scale, clampScale } from "../utils/dimensions";
 import {
   AiInsightButton,
   AiInsightSheet,
@@ -17,6 +19,7 @@ import {
   useAiInsight,
 } from "../ai-insight";
 import ShowMoreButton, { useVisibleItems } from "../components/ShowMoreButton";
+import { getSafeAreaBottom } from "../utils/safeAreaSpacing";
 
 function SectionHeader({ title, onMore, moreLabel = "Xem thêm" }) {
   if (String(title || "").startsWith("Giao ")) {
@@ -112,6 +115,7 @@ function SavingGoalCard({ goal, onPress }) {
 
 export default function DashboardScreen() {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const [dashboard, setDashboard] = useState(null);
   const [savingGoals, setSavingGoals] = useState([]);
   const [monthlySeries, setMonthlySeries] = useState([]);
@@ -217,12 +221,12 @@ export default function DashboardScreen() {
     <>
       <ScrollView
         style={styles.container}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: getSafeAreaBottom(insets) }]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         showsVerticalScrollIndicator={false}
       >
         <HomeTopHeader
-          onMenuPress={() => navigation.navigate("SettingTab")}
+          onMenuPress={() => navigation.navigate("SettingTab", { screen: "Profile" })}
           onBellPress={() => setNotificationVisible(true)}
           unreadCount={unreadCount}
         />
@@ -326,9 +330,9 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.BG
   },
   content: {
-    padding: 14,
-    paddingBottom: 22,
-    gap: 10
+    padding: scale(14),
+    paddingBottom: scale(22),
+    gap: scale(10)
   },
   financeHeaderRow: {
     flexDirection: "row",
@@ -336,25 +340,25 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   aiButtonSpacing: {
-    marginLeft: 8,
+    marginLeft: scale(8),
   },
   sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginTop: 6
+    marginTop: scale(6)
   },
   sectionTitle: {
     color: COLORS.TEXT,
-    fontSize: 17,
+    fontSize: clampScale(17, 15, 19),
     fontWeight: "800"
   },
   sectionCard: {
     backgroundColor: COLORS.CARD,
-    borderRadius: 14,
+    borderRadius: scale(14),
     borderWidth: 1,
     borderColor: COLORS.CARD_BORDER,
-    padding: 12
+    padding: scale(12)
   },
 
   // Transaction styles
@@ -362,7 +366,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 10,
+    paddingVertical: scale(10),
     borderBottomWidth: 1,
     borderBottomColor: COLORS.BG
   },
@@ -370,45 +374,45 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     flex: 1,
-    paddingRight: 8
+    paddingRight: scale(8)
   },
   transactionIconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
+    width: scale(36),
+    aspectRatio: 1,
+    borderRadius: scale(10),
     backgroundColor: COLORS.ROSE_MIST,
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 10,
+    marginRight: scale(10),
     borderWidth: 1,
     borderColor: COLORS.CARD_BORDER,
   },
   transactionIcon: {
-    fontSize: 16,
+    fontSize: clampScale(16, 14, 18),
   },
   transactionName: {
     color: COLORS.TEXT,
     fontWeight: "700",
-    fontSize: 14
+    fontSize: clampScale(14, 12, 16)
   },
   transactionDate: {
     color: COLORS.TEXT_MUTED,
-    marginTop: 2,
-    fontSize: 12
+    marginTop: scale(2),
+    fontSize: clampScale(12, 10, 14)
   },
   transactionAmount: {
     fontWeight: "800",
-    fontSize: 13
+    fontSize: clampScale(13, 11, 15)
   },
   emptyText: {
     color: COLORS.TEXT_SECONDARY,
     textAlign: "center",
-    paddingVertical: 16,
+    paddingVertical: scale(16),
   },
 
   // Saving Goal Card styles
   savingGoalCard: {
-    paddingVertical: 10,
+    paddingVertical: scale(10),
     borderBottomWidth: 1,
     borderBottomColor: COLORS.BG,
   },
@@ -416,62 +420,62 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 8,
+    marginBottom: scale(8),
   },
   savingGoalInfo: {
     flex: 1,
-    paddingRight: 10,
+    paddingRight: scale(10),
   },
   savingGoalName: {
     color: COLORS.TEXT,
     fontWeight: "700",
-    fontSize: 14,
+    fontSize: clampScale(14, 12, 16),
   },
   savingGoalStatus: {
     color: COLORS.TEXT_MUTED,
-    fontSize: 12,
-    marginTop: 2,
+    fontSize: clampScale(12, 10, 14),
+    marginTop: scale(2),
   },
   savingGoalPercent: {
-    fontSize: 18,
+    fontSize: clampScale(18, 16, 22),
     fontWeight: "900",
   },
   savingGoalTrack: {
-    height: 6,
-    borderRadius: 6,
+    height: scale(6),
+    borderRadius: scale(6),
     backgroundColor: COLORS.CARD_BORDER,
     overflow: "hidden",
   },
   savingGoalFill: {
     height: "100%",
-    borderRadius: 6,
+    borderRadius: scale(6),
   },
 
   // Empty goal state
   emptyGoalContainer: {
     alignItems: "center",
-    paddingVertical: 16,
+    paddingVertical: scale(16),
   },
   emptyGoalIcon: {
-    fontSize: 28,
-    marginBottom: 6,
+    fontSize: clampScale(28, 24, 32),
+    marginBottom: scale(6),
   },
   emptyGoalText: {
     color: COLORS.TEXT_SECONDARY,
-    fontSize: 13,
-    marginBottom: 10,
+    fontSize: clampScale(13, 11, 15),
+    marginBottom: scale(10),
   },
   createGoalButton: {
     backgroundColor: COLORS.ROSE_MIST,
     borderWidth: 1,
     borderColor: COLORS.CARD_BORDER,
-    borderRadius: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    borderRadius: scale(10),
+    paddingHorizontal: scale(16),
+    paddingVertical: scale(8),
   },
   createGoalButtonText: {
     color: COLORS.PRIMARY,
     fontWeight: "700",
-    fontSize: 13,
+    fontSize: clampScale(13, 11, 15),
   },
 });

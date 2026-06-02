@@ -8,9 +8,11 @@ import {
   ActivityIndicator,
   FlatList
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { COLORS } from "../constants/colors";
 import { formatMoney } from "../utils/format";
 import { fetchCurrentMonthReport, fetchReportByMonth } from "../services/reportService";
+import { getSafeAreaContentStyle } from "../utils/safeAreaSpacing";
 
 const MONTHS = [
   "Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6",
@@ -60,6 +62,7 @@ function MetricRow({ label, value, prevValue, type }) {
 }
 
 export default function ReportsScreen() {
+  const insets = useSafeAreaInsets();
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1); // 1-12
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
@@ -108,7 +111,7 @@ export default function ReportsScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+    <ScrollView style={styles.container} contentContainerStyle={[styles.content, getSafeAreaContentStyle(insets)]} showsVerticalScrollIndicator={false}>
       {/* Month Navigation */}
       <View style={styles.header}>
         <Pressable onPress={goToPrevMonth} style={styles.arrowButton}>

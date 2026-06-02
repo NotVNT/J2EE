@@ -1,12 +1,14 @@
 import React, { useCallback, useContext, useMemo, useState } from "react";
 import { Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, View, Dimensions } from "react-native";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path, G, Text as SvgText, Defs, LinearGradient, Stop } from "react-native-svg";
 import http from "../services/http";
 import { API_ENDPOINTS } from "../constants/api";
 import { COLORS } from "../constants/colors";
 import { AuthContext } from "../components/AuthContext";
 import { getApiErrorMessage } from "../utils/format";
+import { getSafeAreaBottom, getSafeAreaTop } from "../utils/safeAreaSpacing";
 
 const screenWidth = Dimensions.get("window").width;
 const formatMoney = (n) =>
@@ -103,6 +105,7 @@ function JarCard({ item, totalBalance, onPress }) {
 
 export default function JarScreen() {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const { user } = useContext(AuthContext);
 
   const [jars, setJars] = useState([]);
@@ -198,7 +201,7 @@ export default function JarScreen() {
   const cy = svgSize / 2;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: getSafeAreaTop(insets) }]}>
       <FlatList
         data={jars}
         keyExtractor={(item) => String(item.id)}
@@ -209,7 +212,7 @@ export default function JarScreen() {
             onPress={() => navigation.navigate("JarDetail", { id: item.id, name: item.name })}
           />
         )}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: getSafeAreaBottom(insets) }]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         ListHeaderComponent={
           <View>

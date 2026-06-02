@@ -1,12 +1,14 @@
 import React, { useCallback, useMemo, useState } from "react";
 import { Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, View, Dimensions } from "react-native";
 import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path, G, Text as SvgText } from "react-native-svg";
 import http from "../services/http";
 import { API_ENDPOINTS } from "../constants/api";
 import { COLORS } from "../constants/colors";
 import { getApiErrorMessage, formatDate } from "../utils/format";
 import { CategoryVectorIcon, getIconColor } from "../utils/VectorIcons";
+import { getSafeAreaBottom, getSafeAreaTop } from "../utils/safeAreaSpacing";
 
 const screenWidth = Dimensions.get("window").width;
 const formatMoney = (n) =>
@@ -78,6 +80,7 @@ function ExpenseItem({ item, onDelete }) {
 export default function JarDetailScreen() {
   const navigation = useNavigation();
   const route = useRoute();
+  const insets = useSafeAreaInsets();
   const { id } = route.params;
 
   const [jars, setJars] = useState([]);
@@ -90,7 +93,7 @@ export default function JarDetailScreen() {
     try {
       const [jarsRes, expensesRes] = await Promise.all([
         http.get(API_ENDPOINTS.GET_JARS),
-        http.get(API_ENDPOINTS.GET_ALL_EXPENSE)
+        http.get(API_ENDPOINTS.GET_ALL_EXPENSE + "?all=true")
       ]);
       setJars(Array.isArray(jarsRes.data) ? jarsRes.data : []);
       setExpenses(Array.isArray(expensesRes.data) ? expensesRes.data : []);
@@ -107,7 +110,7 @@ export default function JarDetailScreen() {
     try {
       const [jarsRes, expensesRes] = await Promise.all([
         http.get(API_ENDPOINTS.GET_JARS),
-        http.get(API_ENDPOINTS.GET_ALL_EXPENSE)
+        http.get(API_ENDPOINTS.GET_ALL_EXPENSE + "?all=true")
       ]);
       setJars(Array.isArray(jarsRes.data) ? jarsRes.data : []);
       setExpenses(Array.isArray(expensesRes.data) ? expensesRes.data : []);
@@ -124,11 +127,13 @@ export default function JarDetailScreen() {
     }, [fetchJarsAndExpenses])
   );
 
-  const selectedJar = useMemo(() => jars.find(j => j.id === id) || null, [jars, id]);
+  const selectedJar = useMemo(() => jars.find(j => Number(j.id) === Number(id)) || null, [jars, id]);
   const totalBalance = useMemo(() => jars.reduce((sum, j) => sum + (j.currentBalance ?? 0), 0), [jars]);
 
   const jarExpenses = useMemo(() => {
-    return expenses.filter(e => e.jarId === id).sort((a, b) => new Date(b.date) - new Date(a.date));
+    return expenses
+      .filter(e => e.jarId !== null && Number(e.jarId) === Number(id))
+      .sort((a, b) => new Date(b.date) - new Date(a.date));
   }, [expenses, id]);
 
   // Group by category for Pie chart
@@ -237,12 +242,12 @@ export default function JarDetailScreen() {
   const cy = svgSize / 2;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: getSafeAreaTop(insets) }]}>
       <FlatList
         data={jarExpenses}
         keyExtractor={(item) => String(item.id)}
         renderItem={({ item }) => <ExpenseItem item={item} onDelete={handleDeleteExpense} />}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: getSafeAreaBottom(insets) }]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         ListHeaderComponent={
           <View>

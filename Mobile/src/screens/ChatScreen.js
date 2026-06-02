@@ -8,21 +8,22 @@ import {
   Platform,
   ActivityIndicator
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { COLORS } from "../constants/colors";
-import ModeSegmentedControl from "../components/chatbotUI/ModeSegmentedControl";
-import ModelSelectorPill from "../components/chatbotUI/ModelSelectorPill";
+import ChatAssistantHeader from "../components/chatbotUI/ChatAssistantHeader";
 import MessageBubble from "../components/chatbotUI/MessageBubble";
 import QuickPromptChips from "../components/chatbotUI/QuickPromptChips";
 import ChatInputBar from "../components/chatbotUI/ChatInputBar";
-import ChatHeader from "../components/chatbotUI/ChatHeader";
+import SessionsModal from "../components/chatbotUI/SessionsModal";
+import EditMessageModal from "../components/chatbotUI/EditMessageModal";
 import useChatMessages from "../components/chatbotUI/useChatMessages";
 import useModelConfig from "../components/chatbotUI/useModelConfig";
 import useVoiceInput from "../components/chatbotUI/useVoiceInput";
 
 export default function ChatScreen() {
-  const insets = useSafeAreaInsets();
   const [inputText, setInputText] = useState("");
+  const [isSessionsVisible, setIsSessionsVisible] = useState(false);
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [editingMessage, setEditingMessage] = useState(null);
 
   const {
     activeMode,
@@ -40,12 +41,20 @@ export default function ChatScreen() {
 
   const {
     messages,
+    sessions,
+    activeSessionId,
     loading,
     chatBusy,
     hasUserStartedChat,
     isProcessingCrud,
     flatListRef,
     sendMessage,
+    retryLastMessage,
+    stopGenerating,
+    selectSession,
+    deleteSession,
+    renameSession,
+    startNewChat,
     handleConfirmAction,
     handleCancelConfirmation,
     handleUndo
@@ -84,32 +93,38 @@ export default function ChatScreen() {
     sendMessage(prompt.text);
   }, [sendMessage]);
 
+  const handleEditMessage = useCallback((message) => {
+    setEditingMessage(message);
+    setIsEditModalVisible(true);
+  }, []);
+
+  const handleSaveEditedMessage = useCallback((newText, messageId) => {
+    sendMessage(newText, { editMessageId: messageId });
+  }, [sendMessage]);
+
   const renderMessage = useCallback(({ item }) => (
     <MessageBubble
       message={item}
       onConfirm={handleConfirmAction}
       onCancel={handleCancelConfirmation}
       onUndo={handleUndo}
+      onEditMessage={handleEditMessage}
+      onRetry={retryLastMessage}
       isProcessing={isProcessingCrud}
     />
-  ), [handleConfirmAction, handleCancelConfirmation, handleUndo, isProcessingCrud]);
+  ), [handleConfirmAction, handleCancelConfirmation, handleUndo, handleEditMessage, retryLastMessage, isProcessingCrud]);
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <ChatHeader>
-        <ModelSelectorPill
-          label={modelLabel}
-          value={modelValue}
-          options={modelOptions}
-          title={activeMode === "chat" ? "MODEL CHAT" : "MODEL AGENT"}
-          onSelect={handleModelChange}
-        />
-      </ChatHeader>
-
-      <ModeSegmentedControl
+    <View style={styles.container}>
+      <ChatAssistantHeader
         activeMode={activeMode}
         isFreePlan={isFreePlan}
+        modelOptions={modelOptions}
+        modelValue={modelValue}
+        modelLabel={modelLabel}
         onChangeMode={handleModeSwitch}
+        onModelChange={handleModelChange}
+        onOpenSessions={() => setIsSessionsVisible(true)}
       />
 
       <KeyboardAvoidingView
@@ -126,7 +141,7 @@ export default function ChatScreen() {
           ListFooterComponent={
             loading ? (
               <View style={styles.loadingContainer}>
-                <ActivityIndicator color={COLORS.CHAT_PURPLE} size="small" />
+                <ActivityIndicator color={COLORS.PRIMARY} size="small" />
                 <Text style={styles.loadingText}>
                   {modelLabel} đang suy nghĩ...
                 </Text>
@@ -143,6 +158,7 @@ export default function ChatScreen() {
           value={inputText}
           onChangeText={handleInputChange}
           onSend={handleSend}
+          onStop={stopGenerating}
           placeholder={inputPlaceholder}
           loading={loading}
           disabled={chatBusy}
@@ -150,6 +166,27 @@ export default function ChatScreen() {
           isRecording={isRecording}
         />
       </KeyboardAvoidingView>
+
+      <SessionsModal
+        visible={isSessionsVisible}
+        onClose={() => setIsSessionsVisible(false)}
+        sessions={sessions}
+        activeSessionId={activeSessionId}
+        onSelectSession={selectSession}
+        onDeleteSession={deleteSession}
+        onRenameSession={renameSession}
+        onNewChat={startNewChat}
+      />
+
+      <EditMessageModal
+        visible={isEditModalVisible}
+        onClose={() => {
+          setIsEditModalVisible(false);
+          setEditingMessage(null);
+        }}
+        message={editingMessage}
+        onSave={handleSaveEditedMessage}
+      />
     </View>
   );
 }
@@ -164,7 +201,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: 24,
-    paddingTop: 28,
+    paddingTop: 20,
     paddingBottom: 20
   },
   loadingContainer: {
