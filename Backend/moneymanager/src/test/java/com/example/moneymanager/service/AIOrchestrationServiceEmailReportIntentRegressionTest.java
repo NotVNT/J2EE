@@ -58,6 +58,7 @@ class AIOrchestrationServiceEmailReportIntentRegressionTest {
     @Mock private BudgetService budgetService;
     @Mock private SavingGoalService savingGoalService;
     @Mock private JarService jarService;
+    @Mock private DashboardCacheInvalidationService dashboardCacheInvalidationService;
     @Mock private CategoryRepository categoryRepository;
     @Mock private ExpenseRepository expenseRepository;
     @Mock private IncomeRepository incomeRepository;

@@ -18,7 +18,7 @@ export default function AiInsightLockedModal({ visible, onClose }) {
     onClose();
     // Small delay to let modal close animation finish
     setTimeout(() => {
-      navigation.navigate("Payment");
+      navigation.navigate("SettingTab", { screen: "Payment" });
     }, 300);
   };
 

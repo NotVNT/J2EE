@@ -11,7 +11,9 @@ const IncomeList = ({
     onEmail,
     disableExportActions = false,
     disabledMessage = "",
+    calendarMonth,
 }) => {
+    const [viewMode, setViewMode] = useState("month");
     const [loadingAction, setLoadingAction] = useState(null);
     const isBusy = loadingAction !== null;
 
@@ -25,14 +27,45 @@ const IncomeList = ({
         }
     };
 
+    const filteredTransactions = viewMode === "month" && calendarMonth
+        ? transactions?.filter((t) => moment(t.date).isSame(calendarMonth, "month"))
+        : transactions;
+
     return (
         <div className="card">
             <div className="mb-1 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <h5 className="text-lg font-semibold text-slate-900 dark:text-white">Nguồn thu nhập</h5>
-                    <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">
-                        {transactions?.length ?? 0} giao dịch
-                    </p>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                    <div>
+                        <h5 className="text-lg font-semibold text-slate-900 dark:text-white">Nguồn thu nhập</h5>
+                        <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">
+                            {filteredTransactions?.length ?? 0} giao dịch
+                        </p>
+                    </div>
+
+                    <div className="flex rounded-xl bg-slate-100 p-1 dark:bg-white/5 text-xs font-semibold w-fit">
+                        <button
+                            type="button"
+                            onClick={() => setViewMode("month")}
+                            className={`rounded-lg px-3 py-1.5 transition-all cursor-pointer ${
+                                viewMode === "month"
+                                    ? "bg-white text-slate-900 shadow-sm dark:bg-white/10 dark:text-white"
+                                    : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                            }`}
+                        >
+                            Theo tháng
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setViewMode("all")}
+                            className={`rounded-lg px-3 py-1.5 transition-all cursor-pointer ${
+                                viewMode === "all"
+                                    ? "bg-white text-slate-900 shadow-sm dark:bg-white/10 dark:text-white"
+                                    : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                            }`}
+                        >
+                            Tất cả
+                        </button>
+                    </div>
                 </div>
 
                 <div className="flex w-full flex-col gap-2 sm:w-auto sm:items-end">
@@ -89,11 +122,12 @@ const IncomeList = ({
             </div>
 
             <div className="mt-4 grid grid-cols-1 gap-2 sm:gap-3 md:grid-cols-2">
-                {transactions?.map((income) => (
+                {filteredTransactions?.map((income) => (
                     <TransactionInfoCard
                         key={income.id}
                         title={income.name}
                         icon={income.icon}
+                        category={income.categoryName}
                         date={moment(income.date).format("DD/MM/YYYY")}
                         amount={income.amount}
                         type="income"

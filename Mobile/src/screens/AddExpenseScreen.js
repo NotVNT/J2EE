@@ -266,7 +266,7 @@ export default function AddExpenseScreen() {
         "Nhập hóa đơn bằng ảnh / PDF là tính năng dành riêng cho gói Premium.",
         [
           { text: "Để sau", style: "cancel" },
-          { text: "Nâng cấp", onPress: () => navigation.navigate("Payment") },
+          { text: "Nâng cấp", onPress: () => navigation.navigate("SettingTab", { screen: "Payment" }) },
         ]
       );
       return;

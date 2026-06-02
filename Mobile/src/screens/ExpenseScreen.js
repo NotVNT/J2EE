@@ -189,7 +189,7 @@ export default function ExpenseScreen() {
       const response = await http.post(API_ENDPOINTS.VOICE_PARSE, { text });
       const data = response.data;
       if (data) {
-        navigation.navigate("AddExpense", { initialData: data });
+        navigation.navigate("HomeTab", { screen: "AddExpense", params: { initialData: data } });
       }
     } catch (error) {
       Alert.alert("Lỗi AI", getApiErrorMessage(error, "Không thể phân tích nội dung giọng nói"));
@@ -208,7 +208,7 @@ export default function ExpenseScreen() {
         );
         return;
       }
-      navigation.navigate("ReceiptPreview", { analyzeResult });
+      navigation.navigate("HomeTab", { screen: "ReceiptPreview", params: { analyzeResult } });
     } catch (error) {
       Alert.alert(
         "Lỗi phân tích",
@@ -309,7 +309,7 @@ export default function ExpenseScreen() {
         "Quét hóa đơn bằng ảnh / PDF là tính năng dành riêng cho gói Premium.\n\nHãy nâng cấp tài khoản để sử dụng.",
         [
           { text: "Để sau", style: "cancel" },
-          { text: "Nâng cấp", onPress: () => navigation.navigate("Payment") },
+          { text: "Nâng cấp", onPress: () => navigation.navigate("SettingTab", { screen: "Payment" }) },
         ]
       );
       return;
@@ -380,7 +380,7 @@ export default function ExpenseScreen() {
         </View>
 
         <View style={styles.actionRowMain}>
-          <Pressable style={styles.addButtonMain} onPress={() => navigation.navigate("AddExpense")}>
+          <Pressable style={styles.addButtonMain} onPress={() => navigation.navigate("HomeTab", { screen: "AddExpense" })}>
             <Text style={styles.addButtonText}>+ Thêm chi tiêu</Text>
           </Pressable>
           <VoiceInputButton onResult={handleVoiceResult} />
@@ -474,7 +474,7 @@ export default function ExpenseScreen() {
                 : "Hãy thêm giao dịch đầu tiên để bắt đầu theo dõi chi tiêu dễ hơn."}
             </Text>
             {!searchQuery.trim() && (
-              <Pressable style={styles.emptyAction} onPress={() => navigation.navigate("AddExpense")}>
+              <Pressable style={styles.emptyAction} onPress={() => navigation.navigate("HomeTab", { screen: "AddExpense" })}>
                 <Text style={styles.emptyActionText}>+ Thêm chi tiêu</Text>
               </Pressable>
             )}

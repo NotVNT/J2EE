@@ -33,6 +33,7 @@ public class BudgetService {
     private final EmailService emailService;
     private final EmailNotificationPreferenceService emailNotificationPreferenceService;
     private final MailTemplateService mailTemplateService;
+    private final DashboardCacheInvalidationService dashboardCacheInvalidationService;
 
     // ─────────────────────────────────────────────────────────────
     // LUỒNG 1: THIẾT LẬP HẠN MỨC
@@ -82,6 +83,7 @@ public class BudgetService {
         }
 
         entity = budgetRepository.save(entity);
+        dashboardCacheInvalidationService.evictDashboard();
         BigDecimal spent = getTotalSpent(profile.getId(), category.getId(), month, year);
         return toDTO(entity, spent);
     }
@@ -134,6 +136,7 @@ public class BudgetService {
             throw new RuntimeException("Không có quyền xóa hạn mức này");
         }
         budgetRepository.delete(entity);
+        dashboardCacheInvalidationService.evictDashboard();
     }
 
     // ─────────────────────────────────────────────────────────────

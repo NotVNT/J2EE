@@ -122,11 +122,11 @@ const PlanFormModal = ({ isOpen, editingPlan, formData, setFormData, onSave, onC
                   <select
                     value={formData.subscriptionPlan}
                     onChange={e => setFormData({ ...formData, subscriptionPlan: e.target.value })}
-                    className={`${inputCls} pr-10 appearance-none cursor-pointer`}
+                    className={`${inputCls} !bg-slate-50 dark:!bg-slate-800 pr-10 appearance-none cursor-pointer`}
                   >
-                    <option value="FREE">FREE</option>
-                    <option value="BASIC">BASIC</option>
-                    <option value="PREMIUM">PREMIUM</option>
+                    <option value="FREE" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">FREE</option>
+                    <option value="BASIC" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">BASIC</option>
+                    <option value="PREMIUM" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">PREMIUM</option>
                   </select>
                   <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" />
                 </div>

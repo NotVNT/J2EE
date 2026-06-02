@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
@@ -35,7 +36,9 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.function.Supplier;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ReceiptImportService {
@@ -93,7 +96,7 @@ public class ReceiptImportService {
         );
         CategoryEntity otherCategory = ensureOtherExpenseCategory(profile, expenseCategories);
 
-        JsonNode aiResult = analyzeReceiptWithGemini(file, fileBytes);
+        JsonNode aiResult = analyzeReceiptWithOcrProvider(fileBytes);
         return buildPreviewFromAiResult(aiResult, expenseCategories, otherCategory);
     }
 
@@ -281,6 +284,123 @@ public class ReceiptImportService {
         return true;
     }
 
+    private JsonNode analyzeReceiptWithOcrProvider(byte[] fileBytes) {
+        OcrProviderConfig providerConfig = resolveReceiptOcrProvider();
+        if (providerConfig == null) {
+            throw new ReceiptImportException("OCR API ch\u01B0a \u0111\u01B0\u1EE3c c\u1EA5u h\u00ECnh.");
+        }
+
+        try {
+            String base64Image = Base64.getEncoder().encodeToString(fileBytes);
+            String requestJson = objectMapper.writeValueAsString(buildGeminiOcrRequest(base64Image, fileBytes));
+            String configuredModel = providerConfig.model();
+            final String modelToUse = (configuredModel == null || configuredModel.isBlank())
+                    ? RECEIPT_OCR_MODEL
+                    : configuredModel;
+
+            Exception lastFailure = null;
+            for (int attempt = 1; attempt <= providerConfig.maxAttempts(); attempt++) {
+                try {
+                    String responseJson = providerConfig.restClient().post()
+                            .uri(uriBuilder -> uriBuilder
+                                    .path("/v1beta/models/{model}:generateContent")
+                                    .queryParam("key", providerConfig.apiKeySupplier().get())
+                                    .build(modelToUse))
+                            .body(requestJson)
+                            .retrieve()
+                            .body(String.class);
+
+                    if (responseJson == null || responseJson.isBlank()) {
+                        throw new ReceiptImportException(providerConfig.providerName() + " OCR kh\u00F4ng tr\u1EA3 v\u1EC1 d\u1EEF li\u1EC7u.");
+                    }
+
+                    JsonNode root = objectMapper.readTree(responseJson);
+                    String text = extractGeminiText(root);
+                    if (text == null || text.isBlank()) {
+                        throw new ReceiptImportException(providerConfig.providerName() + " OCR kh\u00F4ng tr\u1EA3 v\u1EC1 k\u1EBFt qu\u1EA3 ph\u00E2n t\u00EDch h\u00F3a \u0111\u01A1n.");
+                    }
+
+                    return objectMapper.readTree(sanitizeJsonResponse(text));
+                } catch (Exception exception) {
+                    lastFailure = exception;
+                    if (attempt < providerConfig.maxAttempts()) {
+                        log.warn("Receipt OCR attempt {}/{} failed on provider {}. Rotating key. Cause: {}",
+                                attempt,
+                                providerConfig.maxAttempts(),
+                                providerConfig.providerName(),
+                                exception.getMessage());
+                    }
+                }
+            }
+
+            throw lastFailure != null
+                    ? lastFailure
+                    : new ReceiptImportException("Receipt OCR kh\u00F4ng tr\u1EA3 v\u1EC1 k\u1EBFt qu\u1EA3.");
+        } catch (Exception exception) {
+            throw new ReceiptImportException("Kh\u00F4ng th\u1EC3 k\u1EBFt n\u1ED1i v\u1EDBi OCR API \u0111\u1EC3 ph\u00E2n t\u00EDch h\u00F3a \u0111\u01A1n: " + exception.getMessage(), exception);
+        }
+    }
+
+    private ObjectNode buildGeminiOcrRequest(String base64Image, byte[] fileBytes) {
+        ObjectNode requestBody = objectMapper.createObjectNode();
+
+        ObjectNode sysInstructionNode = objectMapper.createObjectNode();
+        ArrayNode sysParts = objectMapper.createArrayNode();
+        ObjectNode sysPart = objectMapper.createObjectNode();
+        sysPart.put("text", "You are the OCR engine for the Money Manager application. Read the receipt image and return only valid JSON that matches the required schema.");
+        sysParts.add(sysPart);
+        sysInstructionNode.set("parts", sysParts);
+        requestBody.set("systemInstruction", sysInstructionNode);
+
+        ArrayNode contents = objectMapper.createArrayNode();
+        ObjectNode contentNode = objectMapper.createObjectNode();
+        contentNode.put("role", "user");
+        ArrayNode parts = objectMapper.createArrayNode();
+
+        ObjectNode textPart = objectMapper.createObjectNode();
+        textPart.put("text", """
+                Read the receipt image and return only valid JSON in this schema:
+                {
+                  "merchant": "string",
+                  "location": "string" or null,
+                  "receiptDate": "YYYY-MM-DD" or null,
+                  "items": [
+                    {
+                      "name": "string",
+                      "amount": number,
+                      "categoryHint": "food|transport|shopping|utilities|health|education|entertainment|other"
+                    }
+                  ]
+                }
+                Rules:
+                - Do not add markdown or any text outside the JSON payload.
+                - Extract as many readable line items as possible, not just one line.
+                - For receipts with multiple products, return every product in items in the original order.
+                - If quantity x unit price is shown, calculate amount = quantity * unit price for that item.
+                - Ignore totals, VAT, and discounts unless they are actual purchased items.
+                - location is the store location or branch shown on the receipt. Use null when unclear.
+                - Use null for receiptDate when the date is missing.
+                - Only keep items with amount > 0.
+                """);
+        parts.add(textPart);
+
+        ObjectNode inlineDataPart = objectMapper.createObjectNode();
+        ObjectNode inlineData = objectMapper.createObjectNode();
+        inlineData.put("mimeType", canonicalMimeType(fileBytes));
+        inlineData.put("data", base64Image);
+        inlineDataPart.set("inlineData", inlineData);
+        parts.add(inlineDataPart);
+
+        contentNode.set("parts", parts);
+        contents.add(contentNode);
+        requestBody.set("contents", contents);
+
+        ObjectNode genConfig = objectMapper.createObjectNode();
+        genConfig.put("responseMimeType", "application/json");
+        requestBody.set("generationConfig", genConfig);
+        return requestBody;
+    }
+
     private JsonNode analyzeReceiptWithGemini(MultipartFile file, byte[] fileBytes) {
         try {
             String base64Image = Base64.getEncoder().encodeToString(fileBytes);
@@ -388,19 +508,25 @@ public class ReceiptImportService {
     private OcrProviderConfig resolveReceiptOcrProvider() {
         if (isOcrProviderConfigured()) {
             return new OcrProviderConfig(
+                    "dedicated-ocr",
                     ocrRestClient,
-                    ocrKeyRotator.nextKey(),
+                    ocrKeyRotator::nextKey,
                     ocrProperties.model(),
-                    ocrProperties.baseUrl()
+                    ocrKeyRotator.keyCount()
             );
         }
 
-        return new OcrProviderConfig(
-                gptOssRestClient,
-                gptOssKeyRotator.nextKey(),
-                gptOssProperties.model(),
-                gptOssProperties.baseUrl()
-        );
+        if (geminiKeyRotator.hasKeys()) {
+            return new OcrProviderConfig(
+                    "gemini-fallback",
+                    geminiRestClient,
+                    geminiKeyRotator::nextKey,
+                    geminiProperties.model(),
+                    geminiKeyRotator.keyCount()
+            );
+        }
+
+        return null;
     }
 
     private boolean isOcrProviderConfigured() {
@@ -604,10 +730,11 @@ public class ReceiptImportService {
     }
 
     private record OcrProviderConfig(
+            String providerName,
             RestClient restClient,
-            String apiKey,
+            Supplier<String> apiKeySupplier,
             String model,
-            String baseUrl
+            int maxAttempts
     ) {
     }
 }

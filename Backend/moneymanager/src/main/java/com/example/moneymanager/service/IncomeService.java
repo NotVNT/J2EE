@@ -30,6 +30,7 @@ public class IncomeService {
     private final com.example.moneymanager.repository.IncomeAllocationRepository incomeAllocationRepository;
     private final JarService jarService;
     private final ApplicationEventPublisher eventPublisher;
+    private final DashboardCacheInvalidationService dashboardCacheInvalidationService;
 
     // Adds a new income to the database
     @Transactional
@@ -103,6 +104,8 @@ public class IncomeService {
         // Publish event — notification chạy async sau khi transaction commit
         eventPublisher.publishEvent(new TransactionEvents.IncomeCreated(
                 profile, newIncome.getName(), newIncome.getAmount()));
+
+        dashboardCacheInvalidationService.evictDashboard();
 
         return toDTO(newIncome);
     }
@@ -238,6 +241,7 @@ public class IncomeService {
             }
         }
 
+        dashboardCacheInvalidationService.evictDashboard();
         return toDTO(income);
     }
 
@@ -259,6 +263,7 @@ public class IncomeService {
         }
         
         incomeRepository.delete(entity);
+        dashboardCacheInvalidationService.evictDashboard();
     }
 
     // Get latest 5 incomes for current user

@@ -13,7 +13,7 @@ const uploadProfileImage = async (image) => {
         });
 
         console.log('Image uploaded successfully.', response.data);
-        return response.data.secure_url;
+        return response.data.url;
     } catch (error) {
         console.error("Error uploading the image", error);
         throw error;

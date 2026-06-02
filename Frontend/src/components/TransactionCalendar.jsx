@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import moment from "moment";
 import { ChevronLeft, ChevronRight, Calendar, Tag, Hash, FileText } from "lucide-react";
 import * as Lucide from "lucide-react";
@@ -41,6 +41,7 @@ const TransactionCalendar = ({
   onDelete,
   initialMonth,
   onSelectDate,
+  onMonthChange,
 }) => {
   const [currentMonth, setCurrentMonth] = useState(() => {
     if (initialMonth) {
@@ -54,6 +55,10 @@ const TransactionCalendar = ({
   });
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTransactionId, setSelectedTransactionId] = useState(null);
+
+  useEffect(() => {
+    onMonthChange?.(currentMonth);
+  }, [currentMonth, onMonthChange]);
 
   const dayMap = buildTransactionDayMap(transactions, type);
   const calendarDays = buildCalendarDays(currentMonth);

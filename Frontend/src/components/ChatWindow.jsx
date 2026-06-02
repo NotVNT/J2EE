@@ -153,9 +153,11 @@ const ChatWindow = ({
   const composerRef = useRef(null);
   const isComposingRef = useRef(false);
 
+  const safeMessages = useMemo(() => Array.isArray(messages) ? messages : [], [messages]);
+
   const { visibleMessages } = useMemo(() => {
     const turns = [];
-    for (const msg of messages) {
+    for (const msg of safeMessages) {
       if (msg.role === "user") {
         const lastTurn = turns[turns.length - 1];
         if (lastTurn && lastTurn.userMsg?.content === msg.content) {
@@ -187,21 +189,25 @@ const ChatWindow = ({
       const activeIdx = activeBranches[turn.id] ?? (turn.branches.length - 1);
       const branch = turn.branches[activeIdx];
       
-      if (branch.userMsg) {
-        visible.push({ ...branch.userMsg, turnId: turn.id, isUser: true });
-      }
-      for (const res of branch.responses) {
-        visible.push({ 
-          ...res, 
-          turnId: turn.id, 
-          activeIdx, 
-          totalBranches: turn.branches.length,
-          isLastResponse: res === branch.responses[branch.responses.length - 1]
-        });
+      if (branch) {
+        if (branch.userMsg) {
+          visible.push({ ...branch.userMsg, turnId: turn.id, isUser: true });
+        }
+        if (Array.isArray(branch.responses)) {
+          for (const res of branch.responses) {
+            visible.push({ 
+              ...res, 
+              turnId: turn.id, 
+              activeIdx, 
+              totalBranches: turn.branches.length,
+              isLastResponse: res === branch.responses[branch.responses.length - 1]
+            });
+          }
+        }
       }
     }
     return { visibleMessages: visible };
-  }, [messages, activeBranches]);
+  }, [safeMessages, activeBranches]);
 
   const hasModelControls = !!onProviderSwitch;
   const suggestionCards = selectedProvider === "gemini" ? AGENT_MODE_CARDS : CHAT_MODE_CARDS;
@@ -239,7 +245,7 @@ const ChatWindow = ({
   const handleCompositionStart = () => { isComposingRef.current = true; };
   const handleCompositionEnd  = () => { isComposingRef.current = false; };
 
-  const isEmpty = messages.length === 0;
+  const isEmpty = safeMessages.length === 0;
 
   return (
     <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#131314] relative overflow-hidden">

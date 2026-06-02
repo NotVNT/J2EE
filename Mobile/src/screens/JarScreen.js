@@ -159,7 +159,7 @@ export default function JarScreen() {
         `Gói thành viên hiện tại (${plan}) chỉ hỗ trợ tối đa ${maxJars} hũ chi tiêu. Vui lòng nâng cấp gói để tiếp tục!`,
         [
           { text: "Để sau", style: "cancel" },
-          { text: "Nâng cấp ngay", onPress: () => navigation.navigate("Payment") }
+          { text: "Nâng cấp ngay", onPress: () => navigation.navigate("SettingTab", { screen: "Payment" }) }
         ]
       );
     }

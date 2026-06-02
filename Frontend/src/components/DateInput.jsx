@@ -1,4 +1,5 @@
-import { normalizeToIsoDate } from "../util/dateInput.js";
+import { useState } from "react";
+import { sanitizeDateInput, parseDisplayDateToIso, formatDateForDisplay, normalizeToIsoDate } from "../util/dateInput.js";
 
 const DateInput = ({
   value,
@@ -11,13 +12,35 @@ const DateInput = ({
   required = false,
   ...rest
 }) => {
-  const isoValue = normalizeToIsoDate(value);
+  const [prevValue, setPrevValue] = useState(value);
+  const [localVal, setLocalVal] = useState(() => {
+    return value ? formatDateForDisplay(value) : "";
+  });
+  const [expectedIso, setExpectedIso] = useState(() => {
+    return value ? normalizeToIsoDate(value) : "";
+  });
+
+  // Adjust state during render when 'value' prop changes externally
+  if (value !== prevValue) {
+    setPrevValue(value);
+    const normalizedProp = value ? normalizeToIsoDate(value) : "";
+    if (normalizedProp !== expectedIso) {
+      setLocalVal(value ? formatDateForDisplay(value) : "");
+      setExpectedIso(normalizedProp);
+    }
+  }
 
   const handleChange = (event) => {
-    const nextValue = event.target.value;
+    const rawVal = event.target.value;
+    const sanitized = sanitizeDateInput(rawVal);
+    setLocalVal(sanitized);
+
+    const isoVal = parseDisplayDateToIso(sanitized);
+    setExpectedIso(isoVal);
+
     onChange?.({
       target: {
-        value: nextValue,
+        value: isoVal,
         name,
         id,
       },
@@ -29,8 +52,8 @@ const DateInput = ({
       {...rest}
       id={id}
       name={name}
-      type="date"
-      value={isoValue}
+      type="text"
+      value={localVal}
       onChange={handleChange}
       className={className}
       disabled={disabled}

@@ -50,6 +50,15 @@ const AIChat = () => {
   const fetchSessionsTimerRef = useRef(null);
   const abortControllerRef = useRef(null);
 
+  // Reset isSending khi đổi session hoặc unmount — tránh spinner stuck
+  useEffect(() => {
+    setIsSending(false);
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+  }, [activeSessionId]);
+
   // Model / provider state
   const [selectedProvider, setProvider] = useState("gptoss");
   const [agentModel, setAgentModel] = useState("gemini");
@@ -88,7 +97,10 @@ const AIChat = () => {
 
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const timer = setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }, 100);
+    return () => clearTimeout(timer);
   }, [messages]);
 
   // Resolve active provider / model / label
@@ -201,7 +213,7 @@ const AIChat = () => {
         }
         await replaceEditedSessionHistory(resolvedSessionId, nextMessages);
         debouncedFetchSessions();
-        setIsSending(false);
+        // Không return sớm — để finally xử lý setIsSending(false) thống nhất
         return;
       }
 
@@ -486,8 +498,9 @@ const AIChat = () => {
     setActiveSessionId(sessionId);
     setShowMobileSidebar(false);
     setPendingIntent(null);
+    setMessages([]);
     axiosConfig.get(API_ENDPOINTS.AI_CHAT_MESSAGES(sessionId))
-      .then(({ data }) => setMessages(data))
+      .then(({ data }) => setMessages(Array.isArray(data) ? data : []))
       .catch(() => setMessages([]));
   };
 

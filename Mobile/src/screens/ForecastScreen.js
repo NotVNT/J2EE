@@ -169,7 +169,7 @@ function ForecastPaywall() {
       </View>
       <Pressable
         style={styles.paywallButton}
-        onPress={() => navigation.navigate("Payment")}
+        onPress={() => navigation.navigate("SettingTab", { screen: "Payment" })}
       >
         <Text style={styles.paywallButtonText}>Nâng cấp lên PREMIUM</Text>
       </Pressable>

@@ -43,6 +43,7 @@ public class AIOrchestrationService {
     private final BudgetService budgetService;
     private final SavingGoalService savingGoalService;
     private final JarService jarService;
+    private final DashboardCacheInvalidationService dashboardCacheInvalidationService;
     private final CategoryRepository categoryRepository;
     private final ExpenseRepository expenseRepository;
     private final IncomeRepository incomeRepository;
@@ -514,6 +515,7 @@ public class AIOrchestrationService {
         }
         String catDisplayName = entity.getCategory() != null ? entity.getCategory().getName() : "danh m\u1EE5c";
         expenseRepository.save(entity);
+        dashboardCacheInvalidationService.evictDashboard();
         return "\u2705 \u0110\u00E3 c\u1EADp nh\u1EADt chi ti\u00EAu " + formatCurrency(entity.getAmount()) + "\u0111 cho " + catDisplayName;
     }
 
@@ -535,6 +537,7 @@ public class AIOrchestrationService {
         }
         if (data.get("date") != null) entity.setDate(parseDate((String) data.get("date")));
         incomeRepository.save(entity);
+        dashboardCacheInvalidationService.evictDashboard();
         return "\u2705 \u0110\u00E3 c\u1EADp nh\u1EADt thu nh\u1EADp " + formatCurrency(entity.getAmount()) + "\u0111";
     }
 
@@ -572,6 +575,7 @@ public class AIOrchestrationService {
         }
         String catDisplayName = entity.getCategory() != null ? entity.getCategory().getName() : "danh mục";
         budgetRepository.save(entity);
+        dashboardCacheInvalidationService.evictDashboard();
         return "\u2705 \u0110\u00E3 c\u1EADp nh\u1EADt ng\u00E2n s\u00E1ch " + formatCurrency(entity.getAmountLimit()) + "\u0111 cho " + catDisplayName;
     }
 
