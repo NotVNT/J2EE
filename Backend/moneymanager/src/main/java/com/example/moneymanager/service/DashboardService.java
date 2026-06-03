@@ -4,7 +4,9 @@ import com.example.moneymanager.dto.*;
 import com.example.moneymanager.entity.ProfileEntity;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,8 +36,18 @@ public class DashboardService {
     private final ProfileService profileService;
     private final SavingGoalService savingGoalService;
     private final BudgetService budgetService;
-    private final GeminiService geminiService;
-    private final GptOssService gptOssService;
+
+    @Lazy
+    @Autowired
+    private GeminiService geminiService;
+
+    @Lazy
+    @Autowired
+    private GptOssService gptOssService;
+
+    @Lazy
+    @Autowired
+    private AiViolationService aiViolationService;
 
     @Transactional(readOnly = true)
     @Cacheable(value = "dashboard", key = "#root.target.getProfileId()", unless = "#result == null or #result.isEmpty()")
@@ -150,6 +162,9 @@ public class DashboardService {
             }
 
             String userName = profile.getFullName() != null ? profile.getFullName() : "bạn";
+            if (aiViolationService.isAiBlocked(profile)) {
+                return Map.of("insight", "Tính năng AI tạm thời không khả dụng.");
+            }
             Map<String, Object> currentData = getDashboardData();
 
             if (currentData == null || currentData.isEmpty()) {
@@ -184,6 +199,12 @@ public class DashboardService {
             }
 
             String userName = profile.getFullName() != null ? profile.getFullName() : "bạn";
+            if (aiViolationService.isAiBlocked(profile)) {
+                Map<String, Object> blockedResponse = new HashMap<>();
+                blockedResponse.put("message", "Tính năng AI tạm thời không khả dụng.");
+                blockedResponse.put("status", "ai_blocked");
+                return blockedResponse;
+            }
             log.info("Getting detailed insight for user: {}", userName);
 
             Map<String, Object> currentData = getDashboardData();
