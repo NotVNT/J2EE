@@ -3,6 +3,7 @@ package com.example.moneymanager.service;
 import com.example.moneymanager.config.GptOssKeyRotator;
 import com.example.moneymanager.config.GptOssProperties;
 import com.example.moneymanager.dto.AssistantChatResponseDTO;
+import com.example.moneymanager.util.AISystemPrompts;
 import com.example.moneymanager.util.OpenRouterResponseParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -53,8 +54,10 @@ public class GptOssService {
             }
         }
 
-        throw new RuntimeException("Không thể gọi GPT-OSS API ổn định sau nhiều lần thử. "
-                + (lastFailure != null ? lastFailure.getMessage() : "Vui lòng thử lại sau."));
+        throw new RuntimeException(
+            "AI hiện tại không khả dụng, vui lòng thử lại sau.",
+            lastFailure
+        );
     }
 
     private String callWithPromptOnce(String systemPrompt, String userMessage, int maxTokens, int attempt) {
@@ -97,7 +100,12 @@ public class GptOssService {
                         } catch (Exception ignored) {
                         }
                         log.error("GPT-OSS HTTP error {}: {}", res.getStatusCode().value(), errorBody);
-                        throw new RuntimeException("GPT-OSS API HTTP " + res.getStatusCode().value() + ": " + errorBody);
+                        int statusCode = res.getStatusCode().value();
+                        // Chỉ log không expose raw error body ra ngoài
+                        if (statusCode == 503 || statusCode == 502 || statusCode == 429) {
+                            throw new RuntimeException("GPT-OSS tạm thời không khả dụng [" + statusCode + "]");
+                        }
+                        throw new RuntimeException("GPT-OSS API lỗi tạm thời [" + statusCode + "]");
                     })
                     .body(String.class);
 
@@ -147,7 +155,11 @@ public class GptOssService {
             throw new RuntimeException("GPT-OSS không trả về nội dung hợp lệ.");
         } catch (Exception exception) {
             log.error("GPT-OSS call error: {}", exception.getMessage(), exception);
-            throw new RuntimeException("Không thể gọi GPT-OSS API: " + exception.getMessage(), exception);
+            // Re-throw runtime exceptions as-is (already have clean messages from above)
+            if (exception instanceof RuntimeException re) {
+                throw re;
+            }
+            throw new RuntimeException("Lỗi kết nối GPT-OSS, vui lòng thử lại sau.", exception);
         }
     }
 
@@ -188,7 +200,7 @@ public class GptOssService {
     public AssistantChatResponseDTO chat(String message) {
         try {
             String reply = callWithPrompt(
-                    "Bạn là chuyên gia tài chính AI của Money Manager. Trả lời bằng tiếng Việt, ngắn gọn, rõ ràng, không dùng markdown.",
+                    AISystemPrompts.CHAT_SYSTEM_PROMPT,
                     message,
                     800
             );

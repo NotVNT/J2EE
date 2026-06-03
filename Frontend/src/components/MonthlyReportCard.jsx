@@ -100,13 +100,20 @@ const MonthlyReportCard = ({ report }) => {
       }
     } catch (err) {
       if (analysisRequestIdRef.current === requestId) {
-        const timeoutMessage = err.code === "ECONNABORTED"
-          ? "AI đang phản hồi chậm hơn dự kiến. Vui lòng thử lại sau ít phút."
-          : null;
+        const isTimeout = err.code === "ECONNABORTED";
+        const rawMsg = err.response?.data?.message || err.message || "";
+        // Ẩn raw technical error từ upstream provider, chỉ hiển thị friendly message
+        const isUpstreamError = rawMsg.toLowerCase().includes("upstream") ||
+          rawMsg.toLowerCase().includes("provider") ||
+          rawMsg.toLowerCase().includes("503") ||
+          rawMsg.toLowerCase().includes("openinference") ||
+          rawMsg.toLowerCase().includes("gpt-oss");
         setAnalysisError(
-          timeoutMessage ||
-          err.response?.data?.message ||
-          "Không thể kết nối AI. Vui lòng thử lại."
+          isTimeout
+            ? "AI đang phản hồi chậm hơn dự kiến. Vui lòng thử lại sau ít phút."
+            : isUpstreamError
+            ? "AI đang bảo trì, vui lòng thử lại sau."
+            : "Không thể kết nối AI. Vui lòng thử lại."
         );
       }
     } finally {
