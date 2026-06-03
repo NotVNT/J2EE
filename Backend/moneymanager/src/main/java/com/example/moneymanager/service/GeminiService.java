@@ -341,17 +341,17 @@ public class GeminiService {
             return result;
         }
 
-        // TÃ­nh tá»· lá»‡ tÄƒng trÆ°á»Ÿng trung bÃ¬nh
+        // Tính tỷ lệ tăng trưởng trung bình (chỉ tính các tháng đã hoàn thành, bỏ qua tháng hiện tại ở cuối danh sách)
         BigDecimal avgExpenseGrowth = BigDecimal.ZERO;
         BigDecimal avgIncomeGrowth = BigDecimal.ZERO;
         int expenseCount = 0;
         int incomeCount = 0;
 
-        for (int i = 1; i < monthlyTrends.size(); i++) {
+        for (int i = 1; i < monthlyTrends.size() - 1; i++) {
             MonthlyData prev = monthlyTrends.get(i - 1);
             MonthlyData curr = monthlyTrends.get(i);
 
-            // TÃ­nh tÄƒng trÆ°á»Ÿng chi tiÃªu an toÃ n
+            // Tính tăng trưởng chi tiêu an toàn
             if (prev.getTotalExpense() != null && prev.getTotalExpense().compareTo(BigDecimal.ZERO) > 0) {
                 BigDecimal expenseGrowth = safeDivide(
                         curr.getTotalExpense().subtract(prev.getTotalExpense()),
@@ -362,7 +362,7 @@ public class GeminiService {
                 expenseCount++;
             }
 
-            // TÃ­nh tÄƒng trÆ°á»Ÿng thu nháº­p an toÃ n
+            // Tính tăng trưởng thu nhập an toàn
             if (prev.getTotalIncome() != null && prev.getTotalIncome().compareTo(BigDecimal.ZERO) > 0) {
                 BigDecimal incomeGrowth = safeDivide(
                         curr.getTotalIncome().subtract(prev.getTotalIncome()),
@@ -381,17 +381,7 @@ public class GeminiService {
             avgIncomeGrowth = avgIncomeGrowth.divide(BigDecimal.valueOf(incomeCount), 4, RoundingMode.HALF_UP);
         }
 
-        // Dá»± Ä‘oÃ¡n cho thÃ¡ng tiáº¿p theo
-        MonthlyData lastMonth = monthlyTrends.get(monthlyTrends.size() - 1);
-        if (lastMonth.getTotalExpense() != null) {
-            result.setPredictedNextMonthExpense(lastMonth.getTotalExpense().multiply(BigDecimal.ONE.add(avgExpenseGrowth)));
-        }
-        if (lastMonth.getTotalIncome() != null) {
-            result.setPredictedNextMonthIncome(lastMonth.getTotalIncome().multiply(BigDecimal.ONE.add(avgIncomeGrowth)));
-        }
-        result.setPredictedNextMonthNetCashFlow(result.getPredictedNextMonthIncome().subtract(result.getPredictedNextMonthExpense()));
-
-        // Dá»± Ä‘oÃ¡n cuá»‘i thÃ¡ng hiá»‡n táº¡i
+        // Dự đoán cuối tháng hiện tại trước
         int currentDay = LocalDate.now().getDayOfMonth();
         int daysInMonth = LocalDate.now().lengthOfMonth();
         int daysLeft = daysInMonth - currentDay;
@@ -421,14 +411,103 @@ public class GeminiService {
         }
         result.setProjectedEndBalance(currentTotalIncome.subtract(result.getProjectedEndExpense()));
 
-        // Dá»± Ä‘oÃ¡n thá»i Ä‘iá»ƒm cáº¡n kiá»‡t tiá»n
+        // Dự đoán cho tháng tiếp theo sử dụng baseline hợp lý
+        // 1. Tính trung bình lịch sử các tháng đã hoàn thành
+        BigDecimal sumCompletedExpense = BigDecimal.ZERO;
+        BigDecimal sumCompletedIncome = BigDecimal.ZERO;
+        int completedExpenseMonths = 0;
+        int completedIncomeMonths = 0;
+
+        for (int i = 0; i < monthlyTrends.size() - 1; i++) {
+            MonthlyData m = monthlyTrends.get(i);
+            if (m.getTotalExpense() != null && m.getTotalExpense().compareTo(BigDecimal.ZERO) > 0) {
+                sumCompletedExpense = sumCompletedExpense.add(m.getTotalExpense());
+                completedExpenseMonths++;
+            }
+            if (m.getTotalIncome() != null && m.getTotalIncome().compareTo(BigDecimal.ZERO) > 0) {
+                sumCompletedIncome = sumCompletedIncome.add(m.getTotalIncome());
+                completedIncomeMonths++;
+            }
+        }
+
+        BigDecimal avgCompletedExpense = completedExpenseMonths > 0
+                ? sumCompletedExpense.divide(BigDecimal.valueOf(completedExpenseMonths), 2, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO;
+
+        BigDecimal avgCompletedIncome = completedIncomeMonths > 0
+                ? sumCompletedIncome.divide(BigDecimal.valueOf(completedIncomeMonths), 2, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO;
+
+        // 2. Weight/blend cho baseline dựa theo tiến trình thời gian của tháng hiện tại
+        double currentMonthWeight = (double) currentDay / daysInMonth;
+        double historicalWeight = 1.0 - currentMonthWeight;
+
+        BigDecimal baselineExpense;
+        if (avgCompletedExpense.compareTo(BigDecimal.ZERO) > 0) {
+            baselineExpense = avgCompletedExpense.multiply(BigDecimal.valueOf(historicalWeight))
+                    .add(result.getProjectedEndExpense().multiply(BigDecimal.valueOf(currentMonthWeight)));
+        } else {
+            baselineExpense = result.getProjectedEndExpense();
+        }
+        // Đảm bảo baseline chi tiêu tối thiểu phải bằng số tiền thực tế đã chi trong tháng này
+        if (baselineExpense.compareTo(currentTotalExpense) < 0) {
+            baselineExpense = currentTotalExpense;
+        }
+        // Đảm bảo không giảm quá sâu so với trung bình lịch sử nếu có lịch sử
+        if (avgCompletedExpense.compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal minThreshold = avgCompletedExpense.multiply(new BigDecimal("0.5"));
+            if (baselineExpense.compareTo(minThreshold) < 0) {
+                baselineExpense = minThreshold;
+            }
+        }
+
+        BigDecimal baselineIncome;
+        if (avgCompletedIncome.compareTo(BigDecimal.ZERO) > 0) {
+            baselineIncome = avgCompletedIncome.multiply(BigDecimal.valueOf(historicalWeight))
+                    .add(currentTotalIncome.multiply(BigDecimal.valueOf(currentMonthWeight)));
+        } else {
+            baselineIncome = currentTotalIncome;
+        }
+        // Đảm bảo baseline thu nhập tối thiểu phải bằng số thu nhập thực tế trong tháng này
+        if (baselineIncome.compareTo(currentTotalIncome) < 0) {
+            baselineIncome = currentTotalIncome;
+        }
+        // Đảm bảo không giảm quá sâu so với trung bình lịch sử nếu có lịch sử
+        if (avgCompletedIncome.compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal minThreshold = avgCompletedIncome.multiply(new BigDecimal("0.5"));
+            if (baselineIncome.compareTo(minThreshold) < 0) {
+                baselineIncome = minThreshold;
+            }
+        }
+
+        // Giới hạn tỷ lệ tăng trưởng trong khoảng [-15%, +15%] để tránh bùng nổ/suy giảm số mũ phi thực tế
+        BigDecimal maxGrowth = new BigDecimal("0.15");
+        BigDecimal minGrowth = new BigDecimal("-0.15");
+
+        if (avgExpenseGrowth.compareTo(maxGrowth) > 0) {
+            avgExpenseGrowth = maxGrowth;
+        } else if (avgExpenseGrowth.compareTo(minGrowth) < 0) {
+            avgExpenseGrowth = minGrowth;
+        }
+
+        if (avgIncomeGrowth.compareTo(maxGrowth) > 0) {
+            avgIncomeGrowth = maxGrowth;
+        } else if (avgIncomeGrowth.compareTo(minGrowth) < 0) {
+            avgIncomeGrowth = minGrowth;
+        }
+
+        result.setPredictedNextMonthExpense(baselineExpense.multiply(BigDecimal.ONE.add(avgExpenseGrowth)));
+        result.setPredictedNextMonthIncome(baselineIncome.multiply(BigDecimal.ONE.add(avgIncomeGrowth)));
+        result.setPredictedNextMonthNetCashFlow(result.getPredictedNextMonthIncome().subtract(result.getPredictedNextMonthExpense()));
+
+        // Dự đoán thời điểm cạn kiệt tiền
         if (result.getProjectedEndExpense().compareTo(currentTotalIncome) > 0 && avgDailyExpense.compareTo(BigDecimal.ZERO) > 0) {
             BigDecimal daysToRunOut = safeDivide(currentTotalIncome, avgDailyExpense, 0);
             LocalDate runOutDay = LocalDate.now().plusDays(daysToRunOut.longValue());
             result.setRunOutDate(runOutDay.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
         }
 
-        // ÄÃ¡nh giÃ¡ rá»§i ro
+        // Đánh giá rủi ro
         if (currentTotalIncome.compareTo(BigDecimal.ZERO) > 0) {
             if (result.getProjectedEndExpense().compareTo(currentTotalIncome) > 0) {
                 result.setRiskLevel("CAO");

@@ -1,4 +1,5 @@
 import {Pencil, Trash2} from "lucide-react";
+import * as Lucide from "lucide-react";
 import {hasDisplayImage, hideBrokenImageWrapper} from "../util/imageDisplay.js";
 
 const CategoryList = ({categories, onEditCategory, onDeleteCategory}) => {
@@ -17,19 +18,27 @@ const CategoryList = ({categories, onEditCategory, onDeleteCategory}) => {
                             key={category.id}
                             className="group relative flex items-center gap-4 p-3 rounded-lg hover:bg-slate-100/60 dark:hover:bg-white/5 transition-colors"
                         >
-                            {hasDisplayImage(category.icon) ? (
-                                <div
-                                    data-image-wrapper="true"
-                                    className="w-12 h-12 flex shrink-0 items-center justify-center text-xl text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-white/10 rounded-full"
-                                >
+                            <div
+                                data-image-wrapper="true"
+                                className="w-12 h-12 flex shrink-0 items-center justify-center text-xl text-slate-700 dark:text-slate-350 bg-slate-100 dark:bg-white/10 border border-slate-200/50 dark:border-white/5 rounded-full shadow-sm"
+                            >
+                                {hasDisplayImage(category.icon) ? (
                                     <img
                                         src={category.icon}
                                         alt={category.name}
                                         className="h-5 w-5 object-contain"
                                         onError={hideBrokenImageWrapper}
                                     />
-                                </div>
-                            ) : null}
+                                ) : (() => {
+                                    if (!category.icon) return "📦";
+                                    if (category.icon.length <= 2) return <span className="text-sm leading-none">{category.icon}</span>;
+                                    const LucideIcon = Lucide[category.icon];
+                                    if (LucideIcon) {
+                                        return <LucideIcon className="h-5 w-5 text-slate-500 dark:text-slate-400" />;
+                                    }
+                                    return <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold">{category.icon.substring(0, 2)}</span>;
+                                })()}
+                            </div>
 
                             <div className="flex-1 flex items-center justify-between">
                                 <div>

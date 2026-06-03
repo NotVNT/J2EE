@@ -77,6 +77,17 @@ public class AdminController {
         return ResponseEntity.ok(Map.of("message", "Đã xóa người dùng thành công."));
     }
 
+    @GetMapping("/users/{id}/ai-violations")
+    public ResponseEntity<List<AiViolationDTO>> getAiViolations(@PathVariable Long id) {
+        return ResponseEntity.ok(adminService.getAiViolations(id));
+    }
+
+    @PostMapping("/users/{id}/ai-unblock")
+    public ResponseEntity<Void> unblockAi(@PathVariable Long id) {
+        adminService.adminUnblockAi(id);
+        return ResponseEntity.ok().build();
+    }
+
     @PostMapping("/notifications/broadcast")
     public ResponseEntity<?> sendBroadcast(@RequestBody AdminBroadcastDTO dto) {
         adminService.sendBroadcast(dto);

@@ -5,6 +5,7 @@ import com.example.moneymanager.dto.*;
 import com.example.moneymanager.exception.ForbiddenException;
 import com.example.moneymanager.entity.*;
 import com.example.moneymanager.repository.*;
+import com.example.moneymanager.util.AIContentGuard;
 import com.example.moneymanager.util.AIInstructionPromptBuilder;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -51,6 +52,7 @@ public class AIOrchestrationService {
     private final SavingGoalRepository savingGoalRepository;
     private final ProfileRepository profileRepository;
     private final JarRepository jarRepository;
+    private final AiViolationService aiViolationService;
     private final ObjectMapper objectMapper;
 
     @Transactional(readOnly = true)
@@ -63,13 +65,36 @@ public class AIOrchestrationService {
                     .validationErrors(List.of("Tin nhắn không được để trống."))
                     .build();
         }
+        ProfileEntity profile = profileService.getCurrentProfile();
+        if (aiViolationService.isAiBlocked(profile)) {
+            return buildGuardedIntentResponse(
+                    "Tính năng AI Agent của bạn đang bị khóa do vi phạm chính sách sử dụng. Vui lòng liên hệ hỗ trợ để được xem xét mở khóa.",
+                    "blocked"
+            );
+        }
+
+        AIContentGuard.GuardResult guardResult = AIContentGuard.checkInput(userMessage);
+        if (guardResult != AIContentGuard.GuardResult.PASS) {
+            log.info("Agent mode topic guard triggered: {} for message: {}", guardResult,
+                    userMessage.substring(0, Math.min(50, userMessage.length())));
+            AiViolationService.ViolationAction action = aiViolationService.recordViolation(
+                    profile,
+                    guardResult,
+                    userMessage.substring(0, Math.min(100, userMessage.length())),
+                    "AGENT_MODE"
+            );
+            if (action == AiViolationService.ViolationAction.ACCOUNT_DELETED) {
+                throw new ForbiddenException("Tài khoản của bạn đã bị xóa do vi phạm chính sách sử dụng AI.");
+            }
+            return buildGuardedIntentResponse(AIContentGuard.getRefusalMessage(guardResult), "content-filter");
+        }
+
         userMessage = sanitizeUserMessage(userMessage);
 
         String provider = request.getProvider() != null ? request.getProvider() : "gemini";
         String model = request.getModel() != null ? request.getModel() : geminiProperties.model();
 
         try {
-            ProfileEntity profile = profileService.getCurrentProfile();
             SubscriptionPlan plan = profile.getSubscriptionPlan();
 
             // FREE users cannot use Agent at all
@@ -83,6 +108,18 @@ public class AIOrchestrationService {
 
             // Trim conversation history to last 5 turns (user+assistant pairs) to keep context sharp
             List<AIChatMessageDTO> trimmedHistory = trimConversationHistory(request.getConversationHistory(), 10);
+            trimmedHistory = trimmedHistory.stream()
+                    .map(message -> {
+                        if (message.getContent() != null
+                                && com.example.moneymanager.util.AIContentGuard.checkInput(message.getContent()) == com.example.moneymanager.util.AIContentGuard.GuardResult.INJECTION_DETECTED) {
+                            return AIChatMessageDTO.builder()
+                                    .role(message.getRole())
+                                    .content("[n\u1ed9i dung \u0111\u00e3 \u0111\u01b0\u1ee3c l\u1ecdc]")
+                                    .build();
+                        }
+                        return message;
+                    })
+                    .toList();
 
             String intentInstruction = "<user_request>\n" + userMessage + "\n</user_request>\n\n" +
                     "PHÂN LOẠI INTENT VÀ TRẢ VỀ JSON THUẦN. " +
@@ -131,17 +168,21 @@ public class AIOrchestrationService {
             List<String> validationErrors = (List<String>) parsed.getOrDefault("validationErrors", new ArrayList<>());
             String confirmationPrompt = (String) parsed.get("confirmationPrompt");
             String answer = (String) parsed.get("answer");
+            if (answer != null) {
+                answer = AIContentGuard.sanitizeOutput(answer);
+            }
             Double confidence = toDouble(parsed.get("confidence"));
 
             // ── Step 2: Heuristic reclassification ────────────────────────────
             // If AI returns ANSWER_QUESTION but the message has a clear agent verb, do not fall back
             final String finalUserMessage = userMessage;
-            if ("ANSWER_QUESTION".equals(intent)) {
+            if ("ANSWER_QUESTION".equals(intent) || "INVALID_REQUEST".equals(intent)) {
                 String reclassified = reclassifyByPageContext(finalUserMessage, pageContext, trimmedHistory);
                 if (reclassified != null) {
                     intent = reclassified;
                     intentType = "ACTION";
                     confidence = 0.65;
+                    validationErrors.clear();
                     log.info("Reclassified to {} based on pageContext={}", intent, pageContext);
                 }
             }
@@ -211,6 +252,13 @@ public class AIOrchestrationService {
 
     public AIConfirmActionResponseDTO executeConfirmedIntent(AIConfirmActionRequestDTO request) {
         ProfileEntity profile = profileService.getCurrentProfile();
+
+        if (aiViolationService.isAiBlocked(profile)) {
+            return AIConfirmActionResponseDTO.builder()
+                    .status("ERROR")
+                    .message("Tính năng AI Agent của bạn đang bị khóa do vi phạm chính sách sử dụng.")
+                    .build();
+        }
 
         // FREE users cannot execute any Agent actions \u2014 block direct API calls too
         if (profile.getSubscriptionPlan() == SubscriptionPlan.FREE) {
@@ -666,9 +714,23 @@ public class AIOrchestrationService {
         return AIIntentResponseDTO.builder()
                 .status("SUCCESS")
                 .intent("ANSWER_QUESTION")
-                .answer(answer)
+                .answer(AIContentGuard.sanitizeOutput(answer))
                 .provider(provider)
                 .modelUsed(model)
+                .build();
+    }
+
+    private AIIntentResponseDTO buildGuardedIntentResponse(String message, String modelUsed) {
+        return AIIntentResponseDTO.builder()
+                .status("BLOCKED")
+                .intent("INVALID_REQUEST")
+                .intentType("INVALID")
+                .validationErrors(List.of(message))
+                .answer(message)
+                .reply(message)
+                .provider("nova-guard")
+                .modelUsed(modelUsed)
+                .confidence(1.0)
                 .build();
     }
 
@@ -985,8 +1047,8 @@ public class AIOrchestrationService {
         String ctx = normalizeIntentText(pageContext != null ? pageContext : "dashboard");
 
         boolean hasDelete = msg.matches(".*\\b(xoa|bo|huy)\\b.*");
-        boolean hasUpdate = msg.matches(".*\\b(sua|chinh|doi|cap nhat)\\b.*");
-        boolean hasCreate = msg.matches(".*\\b(them|tao|ghi|nhap)\\b.*");
+        boolean hasUpdate = msg.matches(".*\\b(sua|chinh|doi|cap nhat|update)\\b.*");
+        boolean hasCreate = msg.matches(".*\\b(them|tao|ghi|nhap|nap|add)\\b.*");
         boolean hasExport = msg.matches(".*\\b(xuat|tai|download|export)\\b.*");
         boolean hasEmailCommand = msg.matches(".*\\b(gui(?:\\s+qua)?\\s+(?:mail|email)|email\\s+bao\\s+cao|mail\\s+bao\\s+cao)\\b.*");
         boolean mentionsEmail = msg.matches(".*\\b(email|mail)\\b.*");
@@ -1009,7 +1071,14 @@ public class AIOrchestrationService {
             if (hasUpdate) return "UPDATE_JAR";
             if (hasCreate) return "CREATE_JAR";
         }
-        return switch (ctx) {
+
+        // Broad fallback checking for general contexts like "aichat" or "dashboard"
+        boolean isExpenseDomain = msg.matches(".*\\b(chi tieu|chi|giao dich|mua|tieu|an|di lai|mua sam)\\b.*");
+        boolean isIncomeDomain = msg.matches(".*\\b(thu nhap|thu|luong|doanh thu|tien luong)\\b.*");
+        boolean isBudgetDomain = msg.matches(".*\\b(ngan sach|budget|han muc)\\b.*");
+        boolean isGoalDomain = msg.matches(".*\\b(muc tieu|tiet kiem|saving|goal)\\b.*");
+
+        String intent = switch (ctx) {
             case "expense" -> {
                 if (hasDelete) yield "DELETE_EXPENSE";
                 if (hasUpdate) yield "UPDATE_EXPENSE";
@@ -1042,6 +1111,39 @@ public class AIOrchestrationService {
             }
             default -> null;
         };
+
+        if (intent != null) {
+            return intent;
+        }
+
+        // If context specific intent is null, use general keyword rules (helpful for "aichat", "dashboard", etc.)
+        if (isExpenseDomain) {
+            if (hasDelete) return "DELETE_EXPENSE";
+            if (hasUpdate) return "UPDATE_EXPENSE";
+            if (hasCreate) return "CREATE_EXPENSE";
+        }
+        if (isIncomeDomain) {
+            if (hasDelete) return "DELETE_INCOME";
+            if (hasUpdate) return "UPDATE_INCOME";
+            if (hasCreate) return "CREATE_INCOME";
+        }
+        if (isBudgetDomain) {
+            if (hasDelete) return "DELETE_BUDGET";
+            if (hasUpdate) return "UPDATE_BUDGET";
+            if (hasCreate) return "CREATE_BUDGET";
+        }
+        if (isGoalDomain) {
+            if (hasDelete) return "DELETE_SAVING_GOAL";
+            if (hasUpdate) return "UPDATE_SAVING_GOAL";
+            if (hasCreate) return "CREATE_SAVING_GOAL";
+        }
+
+        // Default fallback to CREATE_EXPENSE if it has clear CREATE keywords but domain is unspecified
+        if (hasCreate) {
+            return "CREATE_EXPENSE";
+        }
+
+        return null;
     }
 
     private boolean recentHistorySuggestsReportAction(List<AIChatMessageDTO> history) {

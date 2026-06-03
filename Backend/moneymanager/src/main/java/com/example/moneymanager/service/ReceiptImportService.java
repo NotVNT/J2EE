@@ -14,6 +14,7 @@ import com.example.moneymanager.dto.ReceiptImportItemDTO;
 import com.example.moneymanager.dto.ReceiptImportResponseDTO;
 import com.example.moneymanager.entity.CategoryEntity;
 import com.example.moneymanager.entity.ProfileEntity;
+import com.example.moneymanager.exception.ForbiddenException;
 import com.example.moneymanager.exception.ReceiptImportException;
 import com.example.moneymanager.repository.CategoryRepository;
 import com.example.moneymanager.util.OpenRouterResponseParser;
@@ -63,8 +64,10 @@ public class ReceiptImportService {
     private final CategoryRepository categoryRepository;
     private final ExpenseService expenseService;
     private final SubscriptionService subscriptionService;
+    private final AiViolationService aiViolationService;
 
     public ReceiptImportResponseDTO importReceipt(MultipartFile file) {
+        ensureAiReceiptAccess();
         ReceiptImportAnalyzeResponseDTO preview = analyzeReceipt(file);
         return confirmImport(ReceiptImportConfirmRequestDTO.builder()
             .merchant(preview.getMerchant())
@@ -75,6 +78,7 @@ public class ReceiptImportService {
         }
 
         public ReceiptImportAnalyzeResponseDTO analyzeReceipt(MultipartFile file) {
+        ensureAiReceiptAccess();
         ProfileEntity profile = profileService.getCurrentProfile();
         subscriptionService.ensureCanImportReceipt(profile);
 
@@ -727,6 +731,14 @@ public class ReceiptImportService {
 
     private String safeText(String value) {
         return Objects.requireNonNullElse(value, "").trim();
+    }
+
+    private void ensureAiReceiptAccess() {
+        if (aiViolationService.isAiBlocked(profileService.getCurrentProfile())) {
+            throw new ForbiddenException(
+                    "Tính năng AI nhập hóa đơn tạm thời không khả dụng do vi phạm chính sách sử dụng."
+            );
+        }
     }
 
     private record OcrProviderConfig(

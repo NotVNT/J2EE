@@ -62,6 +62,8 @@ Backend/moneymanager/.settings/
 *.log
 logs/
 out/
+**/application-local*.properties
+**/application-local*.yml
 
 # Maven wrapper jar (can be regenerated)
 .mvn/wrapper/maven-wrapper.jar
@@ -203,6 +205,8 @@ $RECYCLE.BIN/
 # === Build & Cache directories ===
 .cache/
 .temp/
+.vite/
+**/.vite/
 .parcel-cache/
 .turbo/
 .eslintcache

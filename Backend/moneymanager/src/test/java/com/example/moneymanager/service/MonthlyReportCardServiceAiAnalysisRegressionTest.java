@@ -33,6 +33,7 @@ class MonthlyReportCardServiceAiAnalysisRegressionTest {
     @Mock private SavingGoalContributionRepository savingGoalContributionRepository;
     @Mock private SubscriptionService subscriptionService;
     @Mock private GptOssService gptOssService;
+    @Mock private AiViolationService aiViolationService;
 
     @InjectMocks
     private MonthlyReportCardService monthlyReportCardService;
@@ -49,6 +50,7 @@ class MonthlyReportCardServiceAiAnalysisRegressionTest {
                 .build();
 
         when(profileService.getCurrentProfile()).thenReturn(premiumProfile);
+        when(aiViolationService.isAiBlocked(premiumProfile)).thenReturn(false);
         when(gptOssService.callWithPrompt(anyString(), eq("Phân tích hành vi tài chính tháng 5"), eq(450)))
                 .thenReturn("AI analysis");
 

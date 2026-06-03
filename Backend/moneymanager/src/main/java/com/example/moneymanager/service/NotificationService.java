@@ -2,7 +2,6 @@ package com.example.moneymanager.service;
 
 import com.example.moneymanager.dto.BudgetStatusDTO;
 import com.example.moneymanager.dto.ExpenseDTO;
-import com.example.moneymanager.dto.MonthlyReportCardDTO;
 import com.example.moneymanager.dto.NotificationDTO;
 import com.example.moneymanager.entity.*;
 import com.example.moneymanager.repository.*;
@@ -42,7 +41,6 @@ public class NotificationService {
     private final SavingGoalContributionRepository savingGoalContributionRepository;
     private final SavingGoalRepository savingGoalRepository;
     private final BudgetRepository budgetRepository;
-    private final MonthlyReportCardService monthlyReportCardService;
     private final EmailNotificationPreferenceService emailNotificationPreferenceService;
     
     @Autowired
@@ -426,16 +424,16 @@ public class NotificationService {
             batch = profileRepository.findAll(PageRequest.of(page++, 100));
             for (ProfileEntity profile : batch.getContent()) {
                 try {
-                    MonthlyReportCardDTO report = monthlyReportCardService.getReportCard(prevMonth.getYear(), prevMonth.getMonthValue());
+                    MonthlyReportSnapshot report = buildMonthlyReportSnapshot(profile.getId(), prevMonth);
                     String title = "📊 Bảng điểm tháng " + prevMonth.getMonthValue() + "/" + prevMonth.getYear();
                     String message = String.format(
                             "Điểm %s (%s) | Thu nhập: %s | Chi tiêu: %s | Tiết kiệm: %s (%.1f%%)",
-                            report.getGrade(),
-                            report.getGradeLabel(),
-                            java.text.NumberFormat.getInstance(new java.util.Locale("vi", "VN")).format(report.getTotalIncome()),
-                            java.text.NumberFormat.getInstance(new java.util.Locale("vi", "VN")).format(report.getTotalExpense()),
-                            java.text.NumberFormat.getInstance(new java.util.Locale("vi", "VN")).format(report.getSavings()),
-                            report.getSavingsRate()
+                            report.grade(),
+                            report.gradeLabel(),
+                            java.text.NumberFormat.getInstance(new java.util.Locale("vi", "VN")).format(report.totalIncome()),
+                            java.text.NumberFormat.getInstance(new java.util.Locale("vi", "VN")).format(report.totalExpense()),
+                            java.text.NumberFormat.getInstance(new java.util.Locale("vi", "VN")).format(report.savings()),
+                            report.savingsRate()
                     );
                     createNotification(profile, title, message, NotificationType.MONTHLY_REPORT);
                 } catch (Exception e) {
@@ -509,4 +507,69 @@ public class NotificationService {
         String message = String.format("%s vừa thanh toán khoản nợ %s VNĐ trong nhóm '%s'.", payerName, formattedAmount, groupName);
         createNotification(profile, "Thanh toán trong nhóm", message, NotificationType.GROUP_SETTLEMENT);
     }
+    private MonthlyReportSnapshot buildMonthlyReportSnapshot(Long profileId, YearMonth month) {
+        LocalDate startOfMonth = month.atDay(1);
+        LocalDate endOfMonth = month.atEndOfMonth();
+        BigDecimal totalIncome = getTotalIncome(profileId, startOfMonth, endOfMonth);
+        BigDecimal totalExpense = getTotalExpense(profileId, startOfMonth, endOfMonth);
+        BigDecimal savings = totalIncome.subtract(totalExpense);
+        double savingsRate = calculateSavingsRate(savings, totalIncome);
+        String grade = calculateGrade(savingsRate);
+
+        return new MonthlyReportSnapshot(
+                totalIncome,
+                totalExpense,
+                savings,
+                savingsRate,
+                grade,
+                getGradeLabel(grade)
+        );
+    }
+
+    private BigDecimal getTotalIncome(Long profileId, LocalDate startDate, LocalDate endDate) {
+        BigDecimal totalIncome = incomeRepository.findTotalIncomeByProfileIdAndDateBetween(profileId, startDate, endDate);
+        return totalIncome != null ? totalIncome : BigDecimal.ZERO;
+    }
+
+    private BigDecimal getTotalExpense(Long profileId, LocalDate startDate, LocalDate endDate) {
+        BigDecimal totalExpense = expenseRepository.findTotalExpenseByProfileIdAndDateBetween(profileId, startDate, endDate);
+        return totalExpense != null ? totalExpense : BigDecimal.ZERO;
+    }
+
+    private double calculateSavingsRate(BigDecimal savings, BigDecimal totalIncome) {
+        if (totalIncome.compareTo(BigDecimal.ZERO) <= 0) {
+            return savings.compareTo(BigDecimal.ZERO) < 0 ? -100.0 : 0.0;
+        }
+        return savings.multiply(BigDecimal.valueOf(100))
+                .divide(totalIncome, 2, RoundingMode.HALF_UP)
+                .doubleValue();
+    }
+
+    private String calculateGrade(double savingsRate) {
+        if (savingsRate > 30) return "A";
+        if (savingsRate > 20) return "B";
+        if (savingsRate > 10) return "C";
+        if (savingsRate >= 0) return "D";
+        return "F";
+    }
+
+    private String getGradeLabel(String grade) {
+        return switch (grade) {
+            case "A" -> "Xuáº¥t sáº¯c";
+            case "B" -> "Tá»‘t";
+            case "C" -> "KhÃ¡";
+            case "D" -> "Trung bÃ¬nh";
+            case "F" -> "Cáº§n cáº£i thiá»‡n";
+            default -> "KhÃ´ng xÃ¡c Ä‘á»‹nh";
+        };
+    }
+
+    private record MonthlyReportSnapshot(
+            BigDecimal totalIncome,
+            BigDecimal totalExpense,
+            BigDecimal savings,
+            double savingsRate,
+            String grade,
+            String gradeLabel
+    ) {}
 }

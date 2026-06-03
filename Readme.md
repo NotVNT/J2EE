@@ -172,7 +172,7 @@ Nova Money là trợ lý AI tích hợp sẵn, có hai chế độ hoạt độn
 - **Prompt Injection Protection**: Lọc pattern injection trước khi gửi đến AI.
 - **Heuristic reclassification**: Từ khóa tiếng Việt (`thêm`, `xóa`, `sửa`...) được dùng để phân loại heuristic song song AI.
 - **Undo**: Sau CRUD thành công, backend lưu `operationId`. Gọi `DELETE /ai/undo/{operationId}` để đảo ngược.
-- **Max message length**: 500 ký tự / lần gửi.
+- **Max message length**: 800 ký tự / lần gửi.
 
 ### Chat Mode — Q&A Tự Do
 
@@ -194,6 +194,14 @@ Nova Money là trợ lý AI tích hợp sẵn, có hai chế độ hoạt độn
 - **Floating Widget**: Nút góc phải dưới trên các trang khác; **Greeting bubble** xuất hiện sau 5 giây.
 - **Markdown rendering**: Table, code block, list, blockquote, bold/italic.
 - **Pending Intent Guard**: Khi form xác nhận CRUD đang mở, block nhắn tin tiếp.
+
+### AI Safety & Moderation
+
+- **Input guard**: `AIContentGuard` chặn prompt injection, chính trị, chẩn đoán y tế, nội dung tình dục, bạo lực/thù ghét, cờ bạc/cá độ, nội dung gây hại, và tín hiệu tự hại.
+- **Violation scoring**: Mỗi vi phạm được ghi vào `tbl_ai_violations`; vi phạm nhẹ cộng `1`, nặng cộng `2`, self-harm chỉ log để hỗ trợ an toàn chứ không phạt điểm.
+- **Escalation**: Từ `3` điểm trở lên khóa toàn bộ tính năng AI; từ `6` điểm trở lên backend kích hoạt quy trình xóa tài khoản.
+- **Admin moderation**: Admin có thể xem lịch sử vi phạm AI và mở khóa AI cho người dùng trong trang quản trị người dùng (`/admin/users`) qua các endpoint `/admin/users/{id}/ai-violations` và `/admin/users/{id}/ai-unblock`.
+- **Output sanitization**: Phản hồi AI được lọc link ngoài domain cho phép trước khi hiển thị.
 
 ---
 
@@ -255,8 +263,9 @@ Trung tâm thông báo hệ thống (ngân sách vượt mức, đăng ký sắp
 | OTP Verification | Xác thực tài khoản qua email |
 | Spam Protection | Rate limiting via `SpamProtectionService` + Redis |
 | Prompt Injection Guard | Pattern matching trước khi gửi AI |
+| AI Moderation | Violation scoring + block/unblock + delete escalation |
 | HTTPS / HSTS | Header bảo mật cấu hình ở `SecurityConfig` |
-| Input Sanitization | Max length 500 ký tự / message AI |
+| Input Sanitization | Max length 800 ký tự / message AI |
 | Role-based Access | ROLE_USER / ROLE_ADMIN |
 
 ---
@@ -285,6 +294,49 @@ Trung tâm thông báo hệ thống (ngân sách vượt mức, đăng ký sắp
 
 ---
 
+## Yêu Cầu Môi Trường
+
+- **Java**: JDK `21+`. Nếu máy có nhiều JDK, cần trỏ `JAVA_HOME` đúng trước khi chạy Maven.
+- **Node.js**: khuyến nghị Node `20+`.
+- **Package manager**: `npm` cho frontend/mobile; `mvn` hoặc `mvnw.cmd` cho backend.
+- **Hạ tầng local tối thiểu**: MySQL, Redis, MongoDB.
+- **Dịch vụ ngoài tùy tính năng**: Brevo SMTP, PayOS, Google Gemini, OpenRouter, AWS S3/Lambda, Google OAuth.
+
+**Lưu ý Windows**: môi trường có thể đang ưu tiên JDK từ Android Studio hoặc toolchain khác. Nếu Maven báo sai version Java, đặt lại:
+
+```powershell
+$env:JAVA_HOME="C:\Program Files\Java\jdk-21"
+$env:PATH="$env:JAVA_HOME\bin;$env:PATH"
+mvn -version
+```
+
+---
+
+## Biến Môi Trường Chính
+
+### Backend
+
+- **Database**: `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`
+- **Server/App URLs**: `SERVER_PORT`, `MONEY_MANAGER_FRONTEND_URL`, `MONEY_MANAGER_BACKEND_URL`
+- **JWT**: `JWT_SECRET`, `JWT_COOKIE_SECURE`, `JWT_COOKIE_SAME_SITE`
+- **Email/Brevo**: `BREVO_HOST`, `BREVO_PORT`, `BREVO_USERNAME`, `BREVO_PASSWORD`, `BREVO_FROM_EMAIL`
+- **PayOS**: `PAYOS_CLIENT_ID`, `PAYOS_API_KEY`, `PAYOS_CHECKSUM_KEY`, `PAYOS_RETURN_URL`, `PAYOS_CANCEL_URL`, `PAYOS_WEBHOOK_URL`, `PAYOS_STATUS_SYNC_DELAY_MS`
+- **Gemini**: `GEMINI_API_KEYS`, `GEMINI_MODEL`, `GEMINI_BASE_URL`, `GEMINI_TIMEOUT_SECONDS`
+- **GPT-OSS / OpenRouter**: `GPTOSS_API_KEYS`, `GPTOSS_MODEL`, `GPTOSS_BASE_URL`, `GPTOSS_TIMEOUT_SECONDS`
+- **OCR**: `OCR_API_KEYS`, `OCR_MODEL`, `OCR_BASE_URL`, `OCR_TIMEOUT_SECONDS`
+- **Google OAuth**: `GOOGLE_CLIENT_ID`
+- **AWS**: `AWS_ACCESS_KEY`, `AWS_SECRET_KEY`, `AWS_REGION`, `AWS_S3_BUCKET`, `AWS_LAMBDA_DOCUMENT_FUNCTION`
+- **MongoDB / Redis**: `MONGODB_URI`, `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`, `REDIS_TIMEOUT`, `REDIS_CONNECT_TIMEOUT`
+
+### Frontend
+
+- `VITE_API_BASE_URL`
+- `VITE_GOOGLE_CLIENT_ID`
+- `VITE_S3_BUCKET`
+- `VITE_S3_REGION`
+
+---
+
 ## Quick Start
 
 ```bash
@@ -307,6 +359,29 @@ npm start            # Expo Go
 cd Backend/moneymanager
 .\mvnw.cmd clean compile
 ```
+
+---
+
+## Kiểm Thử & Build
+
+### Frontend
+
+```bash
+cd Frontend
+npm test
+npm run build
+npm run lint
+```
+
+### Backend
+
+```bash
+cd Backend/moneymanager
+mvn test
+mvn clean compile
+```
+
+**Regression suites đang có trong repo** bao gồm AI safety (`AIChatServiceSafetyRegressionTest`, `AIOrchestrationServiceSafetyRegressionTest`), admin AI moderation (`AdminControllerAiSafetyRegressionTest`, `AdminServiceAiSafetyRegressionTest`) và dashboard monthly totals (`DashboardServiceMonthlyTotalsRegressionTest`).
 
 ---
 

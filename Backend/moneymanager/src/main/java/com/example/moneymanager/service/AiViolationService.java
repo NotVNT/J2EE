@@ -88,8 +88,8 @@ public class AiViolationService {
 
         notificationService.createNotification(
                 profile,
-                "T�i kho?n AI d� du?c m? kh�a ?",
-                "T�nh nang AI c?a b?n d� du?c ph?c h?i. Vui l�ng s? d?ng d�ng m?c d�ch.",
+                "Tài khoản AI đã được mở khóa 🔓",
+                "Tính năng AI của bạn đã được phục hồi. Vui lòng sử dụng đúng mục đích.",
                 NotificationType.SYSTEM
         );
 
@@ -116,6 +116,21 @@ public class AiViolationService {
                 NotificationType.SYSTEM
         );
 
+        try {
+            String htmlBody = mailTemplateService.buildAiWarningEmail(
+                    profile.getFullName(),
+                    message,
+                    Math.max(pointsUntilBlock, 0)
+            );
+            emailService.sendHtmlEmail(
+                    profile.getEmail(),
+                    "Cảnh báo sử dụng AI - Money Manager",
+                    htmlBody
+            );
+        } catch (Exception exception) {
+            log.warn("[AI-SAFETY] Failed to send AI warning email to {}: {}", profile.getEmail(), exception.getMessage());
+        }
+
         log.info("[AI-SAFETY] Warning sent to profileId={}, currentScore={}, pointsUntilBlock={}",
                 profile.getId(), currentScore, pointsUntilBlock);
         return ViolationAction.WARNED;
@@ -129,9 +144,8 @@ public class AiViolationService {
 
         notificationService.createNotification(
                 profile,
-                "?? T�nh nang AI d� b? kh�a",
-                "Do vi phạm nhiều lần chính sách sử dụng AI, tất cả tính năng AI của bạn tạm thời bị khóa. " +
-                        "N?u b?n cho r?ng d�y l� l?i, vui l�ng li�n h? h? tr? qua email.",
+                "Tính năng AI đã bị khóa 🔒",
+                "Do vi phạm nhiều lần chính sách sử dụng AI, tất cả tính năng AI của bạn tạm thời bị khóa. Nếu bạn cho rằng đây là lỗi, vui lòng liên hệ hỗ trợ qua email.",
                 NotificationType.SYSTEM
         );
 
@@ -158,7 +172,7 @@ public class AiViolationService {
             String htmlBody = mailTemplateService.buildAccountDeletionEmail(profile.getFullName());
             emailService.sendHtmlEmail(
                     profile.getEmail(),
-                    "? T�i kho?n Money Manager d� b? x�a",
+                    "Tài khoản Money Manager đã bị xoá ❌",
                     htmlBody
             );
         } catch (Exception exception) {
@@ -231,8 +245,7 @@ public class AiViolationService {
             default -> "sử dụng AI không đúng mục đích";
         };
         return String.format(
-                "T�i kho?n c?a b?n b? ghi nh?n vi ph?m do %s. Money Manager ch? h? tr? t�i ch�nh c� nh�n. " +
-                        "Nếu tiếp tục vi phạm, tính năng AI của bạn sẽ bị khóa. Còn %d điểm trước khi bị khóa.",
+                "Tài khoản của bạn bị ghi nhận vi phạm do %s. Money Manager chỉ hỗ trợ tài chính cá nhân. Nếu tiếp tục vi phạm, tính năng AI của bạn sẽ bị khóa. Còn %d điểm trước khi bị khóa.",
                 topic,
                 Math.max(pointsUntilBlock, 0)
         );

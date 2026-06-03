@@ -1,4 +1,5 @@
 import { useMemo, useState, useContext, useEffect, useRef } from "react";
+import * as Lucide from "lucide-react";
 import InfoCard from "./InfoCard";
 import CustomPieChart from "./CustomPieChart";
 import ReactMarkdown from "react-markdown";
@@ -239,7 +240,15 @@ const MonthlyReportCard = ({ report }) => {
                     className="w-8 h-8 rounded-lg flex items-center justify-center text-base shrink-0"
                     style={{ backgroundColor: `${item.color}20`, color: item.color }}
                   >
-                    {item.icon}
+                    {(() => {
+                      if (!item.icon) return "📦";
+                      if (item.icon.length <= 2) return item.icon; // probably an emoji
+                      const LucideIcon = Lucide[item.icon];
+                      if (LucideIcon) {
+                        return <LucideIcon size={16} />;
+                      }
+                      return "📦";
+                    })()}
                   </div>
                   <div className="truncate">
                     <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{item.name}</p>

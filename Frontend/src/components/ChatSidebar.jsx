@@ -123,7 +123,7 @@ const ChatSidebar = ({
   const userInitial = (userName || "U").charAt(0).toUpperCase();
 
   const sidebarContent = (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col flex-1 min-h-0">
       {/* New chat button */}
       <div className="p-3 pt-4">
         <button
@@ -171,8 +171,7 @@ const ChatSidebar = ({
       </div>
 
       {/* Sessions list */}
-      <div className="flex-1 overflow-y-auto px-2 pb-2 mt-4 space-y-5"
-        style={{ scrollbarWidth: "thin" }}>
+      <div className="flex-1 overflow-y-auto px-2 pb-2 mt-4 space-y-5 hide-scrollbar-until-hover">
         {isLoading ? (
           <div className="flex items-center justify-center py-8 text-slate-400 dark:text-slate-500 text-sm">
             <div className="w-5 h-5 border-2 border-slate-400 dark:border-slate-500 border-t-transparent rounded-full animate-spin mr-2" />
@@ -405,7 +404,7 @@ const ChatSidebar = ({
           </button>
         </div>
 
-        <div className="flex-1 relative flex flex-col">
+        <div className="flex-1 relative flex flex-col min-h-0">
           {/* Dashboard button */}
           <div className="px-3 pt-2">
             <button

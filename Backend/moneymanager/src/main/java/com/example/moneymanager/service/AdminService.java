@@ -5,6 +5,7 @@ import com.example.moneymanager.entity.*;
 import com.example.moneymanager.exception.ForbiddenException;
 import com.example.moneymanager.repository.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,6 +13,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.stream.Stream;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AdminService {
@@ -32,6 +34,8 @@ public class AdminService {
     private final EmailNotificationPreferenceRepository emailNotificationPreferenceRepository;
     private final JarRepository jarRepository;
     private final SpendingTipsRepository spendingTipsRepository;
+    private final AiViolationRepository aiViolationRepository;
+    private final AiViolationService aiViolationService;
 
     @Transactional(readOnly = true)
     public AdminOverviewDTO getOverview() {
@@ -279,6 +283,19 @@ public class AdminService {
         }
 
         // Delete in dependency order to satisfy FK constraints
+        deleteUserInternal(id);
+    }
+
+    @Transactional
+    public void deleteUserBySystem(Long id) {
+        if (!profileRepository.existsById(id)) {
+            throw new RuntimeException("Không tìm thấy người dùng.");
+        }
+        deleteUserInternal(id);
+    }
+
+    private void deleteUserInternal(Long id) {
+        aiViolationRepository.deleteByProfileId(id);
         notificationReadRepository.deleteByProfileId(id);
         notificationRepository.deleteByProfileId(id);
 
@@ -301,6 +318,29 @@ public class AdminService {
         profileRepository.deleteById(id);
     }
 
+    @Transactional(readOnly = true)
+    public List<AiViolationDTO> getAiViolations(Long profileId) {
+        ensureAdmin();
+        return aiViolationRepository.findByProfileIdOrderByCreatedAtDesc(profileId)
+                .stream()
+                .map(violation -> AiViolationDTO.builder()
+                        .id(violation.getId())
+                        .type(violation.getViolationType().name())
+                        .score(violation.getViolationScore())
+                        .snippet(violation.getMessageSnippet())
+                        .source(violation.getSource())
+                        .createdAt(violation.getCreatedAt())
+                        .build())
+                .toList();
+    }
+
+    @Transactional
+    public void adminUnblockAi(Long profileId) {
+        ensureAdmin();
+        aiViolationService.unblockAi(profileId);
+        log.info("[ADMIN] AI unblocked for profileId={} by admin", profileId);
+    }
+
     private AdminUserDTO toAdminUserDTO(ProfileEntity p) {
         return AdminUserDTO.builder()
                 .id(p.getId())
@@ -312,6 +352,9 @@ public class AdminService {
                 .subscriptionPlan(p.getSubscriptionPlan())
                 .subscriptionStatus(p.getSubscriptionStatus())
                 .subscriptionExpiresAt(p.getSubscriptionExpiresAt())
+                .aiViolationScore(p.getAiViolationScore())
+                .aiBlockedReason(p.getAiBlockedReason())
+                .aiBlockedAt(p.getAiBlockedAt())
                 .createdAt(p.getCreatedAt())
                 .build();
     }

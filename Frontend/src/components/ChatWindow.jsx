@@ -1,10 +1,12 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowUp, MessageSquare, Sparkles, RotateCcw, Menu, Square, ChevronLeft, ChevronRight, Pencil, X } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import AIConfirmationForm from "./AIConfirmationForm.jsx";
 import { INTENT_ICONS, INTENT_LABELS } from "../util/aiIntentParser.js";
+import { validateAiChatInput } from "../util/aiChatInputValidation.js";
+import { getAiChatCounterState, getAssistantMessageVariant } from "../util/aiChatUiState.js";
 import aiIcon from "../assets/logo/AI_favicon.png";
 
 const sanitizeSchema = {
@@ -60,22 +62,22 @@ const modelLabelMap = {
 
 const CHAT_MODE_CARDS = [
   {
-    title: "📊 Phân tích tài chính",
+    title: "Phân tích tài chính",
     desc: "Phân tích và gợi ý cải thiện chi tiêu tháng này.",
     prompt: "Hãy phân tích tình hình tài chính tháng này của tôi và đưa ra lời khuyên cải thiện.",
   },
   {
-    title: "💡 Gợi ý tiết kiệm",
+    title: "Gợi ý tiết kiệm",
     desc: "Tư vấn kế hoạch tiết kiệm chi tiêu hiệu quả.",
     prompt: "Làm thế nào để tôi có thể tiết kiệm chi tiêu hiệu quả hơn trong tháng này?",
   },
   {
-    title: "📈 Báo cáo tuần qua",
+    title: "Báo cáo tuần qua",
     desc: "Tóm tắt nhanh dòng tiền tuần vừa rồi.",
     prompt: "Tóm tắt báo cáo chi tiêu và thu nhập của tôi trong tuần qua.",
   },
   {
-    title: "🎯 Kế hoạch tài chính",
+    title: "Kế hoạch tài chính",
     desc: "Lập kế hoạch mục tiêu tài chính cá nhân.",
     prompt: "Giúp tôi lập kế hoạch tài chính để tiết kiệm được 50 triệu trong 6 tháng.",
   },
@@ -83,22 +85,22 @@ const CHAT_MODE_CARDS = [
 
 const AGENT_MODE_CARDS = [
   {
-    title: "📝 Thêm nhanh chi tiêu",
+    title: "Thêm nhanh chi tiêu",
     desc: "Nhập giao dịch bằng ngôn ngữ tự nhiên.",
-    prompt: "Thêm chi tiêu ăn trưa cùng đồng nghiệp 75k danh mục Ăn uống hôm nay",
+    prompt: "Thêm chi tiêu ăn trưa cùng đồng nghiệp 75k danh mục ăn uống hôm nay",
   },
   {
-    title: "💰 Ghi thu nhập",
+    title: "Ghi thu nhập",
     desc: "Ghi nhanh khoản thu nhập vừa nhận.",
     prompt: "Thêm thu nhập lương tháng 15 triệu hôm nay",
   },
   {
-    title: "📤 Xuất Excel chi tiêu",
+    title: "Xuất Excel chi tiêu",
     desc: "Tải xuống báo cáo chi tiêu tháng này.",
     prompt: "Xuất báo cáo chi tiêu tháng này ra file Excel",
   },
   {
-    title: "📧 Gửi báo cáo qua email",
+    title: "Gửi báo cáo qua email",
     desc: "Gửi báo cáo tháng này đến email của bạn.",
     prompt: "Gửi báo cáo chi tiêu tháng này qua email cho tôi",
   },
@@ -112,7 +114,7 @@ const AIActionBar = ({ onRetry, disabled, currentBranch, totalBranches, onPrevBr
         onClick={onRetry}
         disabled={disabled}
         className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.08] transition disabled:opacity-50 disabled:cursor-not-allowed"
-        title="Thử lại"
+        title="Th? l?i"
       >
         <RotateCcw size={14} />
       </button>
@@ -148,12 +150,20 @@ const ChatWindow = ({
   onStopGenerating,
 }) => {
   const [input, setInput] = useState("");
+  const [inputError, setInputError] = useState(null);
   const [activeBranches, setActiveBranches] = useState({});
   const [editingTarget, setEditingTarget] = useState(null);
   const composerRef = useRef(null);
   const isComposingRef = useRef(false);
+  const inputErrorTimerRef = useRef(null);
 
   const safeMessages = useMemo(() => Array.isArray(messages) ? messages : [], [messages]);
+
+  useEffect(() => () => {
+    if (inputErrorTimerRef.current) {
+      clearTimeout(inputErrorTimerRef.current);
+    }
+  }, []);
 
   const { visibleMessages } = useMemo(() => {
     const turns = [];
@@ -211,6 +221,7 @@ const ChatWindow = ({
 
   const hasModelControls = !!onProviderSwitch;
   const suggestionCards = selectedProvider === "gemini" ? AGENT_MODE_CARDS : CHAT_MODE_CARDS;
+  const counterState = getAiChatCounterState(input.length);
 
   const cancelEditing = () => {
     setEditingTarget(null);
@@ -227,7 +238,21 @@ const ChatWindow = ({
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!input.trim() || isSending) return;
+
+    const validation = validateAiChatInput(input);
+    if (!validation.valid) {
+      if (validation.reason) {
+        setInputError(validation.reason);
+        if (inputErrorTimerRef.current) {
+          clearTimeout(inputErrorTimerRef.current);
+        }
+        inputErrorTimerRef.current = setTimeout(() => setInputError(null), 3000);
+      }
+      return;
+    }
+
+    if (isSending) return;
+    setInputError(null);
     onSendMessage(input, { editMessageId: editingTarget?.id ?? null });
     setInput("");
     setEditingTarget(null);
@@ -273,7 +298,7 @@ const ChatWindow = ({
               } ${isFreePlan ? "opacity-50 cursor-not-allowed" : ""}`}
             >
               <Sparkles size={12} className={selectedProvider === "gemini" ? "text-white" : ""} />
-              <span className="tracking-wide">Agent{isFreePlan ? " 🔒" : ""}</span>
+              <span className="tracking-wide">Agent{isFreePlan ? " (Khóa)" : ""}</span>
             </button>
             <button
               type="button"
@@ -311,7 +336,7 @@ const ChatWindow = ({
 
               {/* Title & Description */}
               <h1 className="text-3xl md:text-4xl font-extrabold text-slate-800 dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-white dark:via-[#e3e3e3] dark:to-[#c4c7c5] tracking-tight leading-tight">
-                Xin chào, {userName || "bạn mến"}!
+                Xin chào, {userName || "bạn"}!
               </h1>
               <p className="text-slate-500 dark:text-slate-400 mt-3 text-sm md:text-base font-normal max-w-md leading-relaxed">
                 Tôi là Trợ lý Tài chính Nova AI. Bạn cần tôi hỗ trợ phân tích chi tiêu hay cập nhật giao dịch gì hôm nay không?
@@ -319,8 +344,8 @@ const ChatWindow = ({
               
               <p className="text-xs text-slate-400 dark:text-slate-500 mb-3 font-medium">
                 {selectedProvider === "gemini"
-                  ? "⚡ Gợi ý Agent - ra lệnh trực tiếp"
-                  : "💬 Gợi ý Chat - hỏi & tư vấn"}
+                  ? "Chế độ Agent - ra lệnh trực tiếp"
+                  : "Chế độ Chat - hỏi và tư vấn"}
               </p>
 
               {/* Grid of Suggestion Cards */}
@@ -364,9 +389,11 @@ const ChatWindow = ({
                   className={`text-sm leading-relaxed transition-all duration-300
                     ${msg.role === "user"
                       ? "bg-gradient-to-tr from-violet-600/90 via-violet-600 to-indigo-600/95 dark:from-amber-500/90 dark:via-amber-500 dark:to-orange-500/95 text-white rounded-[20px] rounded-tr-sm shadow-sm shadow-violet-500/5 dark:shadow-amber-500/5 px-4.5 py-2.5 max-w-[85%] sm:max-w-[75%]"
-                      : msg.isError
+                      : getAssistantMessageVariant(msg) === "guarded"
+                        ? "bg-blue-50/60 dark:bg-blue-500/5 text-blue-700 dark:text-blue-300 border border-blue-100 dark:border-blue-500/20 rounded-2xl rounded-tl-sm px-5 py-4 max-w-[90%] sm:max-w-[85%] shadow-sm"
+                        : getAssistantMessageVariant(msg) === "error"
                         ? "bg-red-50/60 dark:bg-red-500/5 text-red-600 dark:text-red-300 border border-red-100 dark:border-red-500/10 rounded-2xl rounded-tl-sm px-5 py-4 max-w-[90%] sm:max-w-[85%] shadow-sm"
-                        : msg.isSystem
+                        : getAssistantMessageVariant(msg) === "system"
                           ? "bg-amber-50/60 dark:bg-amber-500/5 text-amber-700 dark:text-amber-400 border border-amber-100 dark:border-amber-500/10 rounded-2xl rounded-tl-sm px-5 py-4 max-w-[90%] sm:max-w-[85%] shadow-sm"
                           : "bg-slate-50/40 dark:bg-white/[0.02] border border-slate-100/80 dark:border-white/[0.03] text-slate-700 dark:text-[#e3e3e3] rounded-2xl rounded-tl-sm px-5 py-4 max-w-[90%] sm:max-w-[85%] shadow-sm"}`}
                 >
@@ -386,7 +413,7 @@ const ChatWindow = ({
                     <div className="flex items-center gap-1.5 text-xs text-amber-500 dark:text-amber-400 font-medium">
                       <span>{INTENT_ICONS[msg.intent]}</span>
                       <span>{INTENT_LABELS[msg.intent] || msg.intent}</span>
-                      <span className="text-green-500 dark:text-green-400">đã xác nhận</span>
+                      <span className="text-green-500 dark:text-green-400">Đã xác nhận</span>
                     </div>
                   )}
 
@@ -417,7 +444,7 @@ const ChatWindow = ({
                       </ReactMarkdown>
                       {!msg.isError && !msg.isSystem && msg.modelUsed && (
                         <span className="block text-[10px] text-slate-400 dark:text-slate-500 mt-2 font-normal">
-                          Nova Money · {modelLabelMap[msg.modelUsed] || msg.modelLabel || msg.modelUsed}
+                          Nova Money ? {modelLabelMap[msg.modelUsed] || msg.modelLabel || msg.modelUsed}
                         </span>
                       )}
                     </>
@@ -504,7 +531,12 @@ const ChatWindow = ({
             <textarea
               ref={composerRef}
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e) => {
+                setInput(e.target.value);
+                if (inputError) {
+                  setInputError(null);
+                }
+              }}
               onKeyDown={handleKeyDown}
               onCompositionStart={handleCompositionStart}
               onCompositionEnd={handleCompositionEnd}
@@ -532,6 +564,24 @@ const ChatWindow = ({
           </div>
 
 
+
+          {counterState && (
+            <div className="mt-2 flex justify-end">
+              <span
+                className={`text-[10px] font-mono ${
+                  counterState.tone === "danger" ? "text-red-500 dark:text-red-400" : "text-slate-400 dark:text-slate-500"
+                }`}
+              >
+                {counterState.text}
+              </span>
+            </div>
+          )}
+
+          {inputError && (
+            <p className="text-xs text-red-500 dark:text-red-400 text-center mt-1">
+              {inputError}
+            </p>
+          )}
 
           <p className="text-[10px] text-slate-400 dark:text-slate-600 text-center mt-2.5">
             Nova Money có thể mắc lỗi. Hãy kiểm tra lại thông tin quan trọng.

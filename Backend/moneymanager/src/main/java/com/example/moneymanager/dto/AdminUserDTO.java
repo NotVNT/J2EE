@@ -20,5 +20,8 @@ public class AdminUserDTO {
     private SubscriptionPlan subscriptionPlan;
     private SubscriptionStatus subscriptionStatus;
     private LocalDate subscriptionExpiresAt;
+    private Integer aiViolationScore;
+    private String aiBlockedReason;
+    private LocalDateTime aiBlockedAt;
     private LocalDateTime createdAt;
 }

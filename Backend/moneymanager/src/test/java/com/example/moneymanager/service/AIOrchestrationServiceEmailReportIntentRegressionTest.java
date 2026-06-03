@@ -66,6 +66,7 @@ class AIOrchestrationServiceEmailReportIntentRegressionTest {
     @Mock private SavingGoalRepository savingGoalRepository;
     @Mock private ProfileRepository profileRepository;
     @Mock private JarRepository jarRepository;
+    @Mock private AiViolationService aiViolationService;
     @Spy private ObjectMapper objectMapper = new ObjectMapper();
 
     @InjectMocks

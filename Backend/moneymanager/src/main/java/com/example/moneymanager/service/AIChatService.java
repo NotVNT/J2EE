@@ -6,9 +6,12 @@ import com.example.moneymanager.config.GptOssProperties;
 import com.example.moneymanager.dto.AIChatMessageDTO;
 import com.example.moneymanager.dto.AIChatRequestDTO;
 import com.example.moneymanager.dto.AIChatResponseDTO;
+import com.example.moneymanager.entity.ProfileEntity;
 import com.example.moneymanager.entity.SubscriptionPlan;
 import com.example.moneymanager.exception.ForbiddenException;
 import com.example.moneymanager.service.SubscriptionService;
+import com.example.moneymanager.util.AIContentGuard;
+import com.example.moneymanager.util.AISystemPrompts;
 import com.example.moneymanager.util.OpenRouterResponseParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -47,15 +50,52 @@ public class AIChatService {
     private final ProfileService profileService;
     private final ChatHistoryService chatHistoryService;
     private final SubscriptionService subscriptionService;
+    private final AiViolationService aiViolationService;
     private final ObjectMapper objectMapper;
  
     public AIChatResponseDTO chat(AIChatRequestDTO request) {
         validateRequest(request);
-        subscriptionService.ensureCanUseDetailedAi(profileService.getCurrentProfile());
+        ProfileEntity profile = profileService.getCurrentProfile();
+        subscriptionService.ensureCanUseDetailedAi(profile);
+
+        if (aiViolationService.isAiBlocked(profile)) {
+            return AIChatResponseDTO.builder()
+                    .reply("Tài khoản của bạn đã bị khóa tính năng AI do vi phạm chính sách sử dụng nhiều lần.")
+                    .provider("nova-guard")
+                    .modelUsed("blocked")
+                    .build();
+        }
+
         List<AIChatMessageDTO> trimmedMessages = trimHistory(request.getMessages());
- 
+        
+        // Prompt injection guard
+        AIChatMessageDTO lastUserMsg = trimmedMessages.isEmpty() ? null : trimmedMessages.get(trimmedMessages.size() - 1);
+        if (lastUserMsg != null && "user".equals(lastUserMsg.getRole())) {
+            AIContentGuard.GuardResult checkResult = AIContentGuard.checkInput(lastUserMsg.getContent());
+            if (checkResult != AIContentGuard.GuardResult.PASS) {
+                AiViolationService.ViolationAction action = aiViolationService.recordViolation(
+                        profile,
+                        checkResult,
+                        lastUserMsg.getContent(),
+                        "CHAT_MODE"
+                );
+
+                if (action == AiViolationService.ViolationAction.ACCOUNT_DELETED) {
+                    throw new ForbiddenException("Tài khoản của bạn đã bị xóa do vi phạm chính sách nghiêm trọng.");
+                }
+
+                return AIChatResponseDTO.builder()
+                        .reply(AIContentGuard.getRefusalMessage(checkResult))
+                        .provider("nova-guard")
+                        .modelUsed("content-filter")
+                        .build();
+            }
+        }
+
+        List<AIChatMessageDTO> sanitizedMessages = sanitizeHistory(trimmedMessages);
+
         String provider = request.getProvider();
-        SubscriptionPlan plan = profileService.getCurrentProfile().getSubscriptionPlan();
+        SubscriptionPlan plan = profile.getSubscriptionPlan();
 
         // GPT-OSS chat (provider="gptoss") yêu cầu PREMIUM
         // Gemini chat hỗ trợ cả BASIC và PREMIUM
@@ -66,19 +106,29 @@ public class AIChatService {
 
         AIChatResponseDTO response;
         if ("gemini".equalsIgnoreCase(provider)) {
-            response = chatWithGemini(trimmedMessages);
+            response = chatWithGemini(sanitizedMessages);
         } else {
             try {
                 // GPT-OSS với rotate key
-                response = chatWithGptOss(trimmedMessages);
-                // Nếu GPT-OSS trả về thông báo lỗi hoặc bị bận, ta tự động fallback sang Gemini
+                response = chatWithGptOss(sanitizedMessages);
+                // Nếu GPT-OSS trả về thông báo lỗi hoặc bị bận, ta tự động fallback sang openrouter/free trước khi sang Gemini
                 if (shouldFallbackToGemini(response)) {
-                    log.warn("[gptoss] Response indicated failure or busy status, falling back to Gemini...");
-                    response = chatWithGemini(trimmedMessages);
+                    log.warn("[gptoss] Response indicated failure or busy status, trying openrouter/free fallback...");
+                    response = chatWithGptOssFallback(sanitizedMessages);
                 }
             } catch (Exception e) {
-                log.error("[gptoss] chat error, automatically falling back to Gemini...", e);
-                response = chatWithGemini(trimmedMessages);
+                log.error("[gptoss] chat error, trying openrouter/free fallback...", e);
+                try {
+                    response = chatWithGptOssFallback(sanitizedMessages);
+                } catch (Exception fallbackEx) {
+                    log.error("[gptoss] fallback openrouter/free also failed, falling back to Gemini...", fallbackEx);
+                    response = chatWithGemini(sanitizedMessages);
+                }
+            }
+            // Nếu sau tất cả các lần thử GPT-OSS vẫn lỗi/bận, mới thực sự chuyển sang Gemini
+            if (shouldFallbackToGemini(response)) {
+                log.warn("[gptoss] Both primary and fallback GPT-OSS failed/busy, falling back to Gemini...");
+                response = chatWithGemini(sanitizedMessages);
             }
         }
 
@@ -179,9 +229,30 @@ public class AIChatService {
         return messages.subList(size - MAX_HISTORY_TURNS, size);
     }
 
+    private List<AIChatMessageDTO> sanitizeHistory(List<AIChatMessageDTO> messages) {
+        if (messages == null || messages.isEmpty()) {
+            return List.of();
+        }
+        return messages.stream()
+                .map(msg -> {
+                    if ("user".equals(msg.getRole()) && msg.getContent() != null) {
+                        AIContentGuard.GuardResult checkResult = AIContentGuard.checkInput(msg.getContent());
+                        if (checkResult == AIContentGuard.GuardResult.INJECTION_DETECTED) {
+                            return AIChatMessageDTO.builder()
+                                    .role(msg.getRole())
+                                    .content("[đã lọc]")
+                                    .build();
+                        }
+                    }
+                    return msg;
+                })
+                .toList();
+    }
+
     private AIChatResponseDTO chatWithGemini(List<AIChatMessageDTO> messages) {
         try {
-            String reply = geminiService.generateMultiTurn(SYSTEM_PROMPT, messages, 1024);
+            String reply = geminiService.generateMultiTurn(AISystemPrompts.CHAT_SYSTEM_PROMPT, messages, 1024);
+            reply = AIContentGuard.sanitizeOutput(reply);
             return AIChatResponseDTO.builder()
                     .reply(reply)
                     .provider("gemini")
@@ -208,6 +279,20 @@ public class AIChatService {
         String apiKey = gptOssKeyRotator.nextKey();
         log.debug("[gptoss] rotate key, total keys={}", gptOssKeyRotator.keyCount());
         return chatWithOpenAICompatible(gptOssRestClient, gptOssProperties.model(),
+                apiKey, "gptoss", messages);
+    }
+
+    private AIChatResponseDTO chatWithGptOssFallback(List<AIChatMessageDTO> messages) {
+        if (!gptOssKeyRotator.hasKeys()) {
+            return AIChatResponseDTO.builder()
+                    .reply("GPT-OSS chưa được cấu hình. Vui lòng liên hệ quản trị viên.")
+                    .provider("gptoss")
+                    .modelUsed("openrouter/free")
+                    .build();
+        }
+        String apiKey = gptOssKeyRotator.nextKey();
+        log.info("[gptoss] Trying fallback model openrouter/free...");
+        return chatWithOpenAICompatible(gptOssRestClient, "openrouter/free",
                 apiKey, "gptoss", messages);
     }
 
