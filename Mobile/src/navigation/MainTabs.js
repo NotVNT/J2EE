@@ -4,31 +4,25 @@ import { useNavigation } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { COLORS } from "../constants/colors";
+import { useAppColors } from "../constants/colors";
 import FloatingQuickMenu, { FloatingTabButton } from "./FloatingQuickMenu";
-import DashboardScreen from "../screens/DashboardScreen";
-import CategoryScreen from "../screens/CategoryScreen";
-import ExpenseScreen from "../screens/ExpenseScreen";
-import MoreScreen from "../screens/MoreScreen";
-import AddExpenseScreen from "../screens/AddExpenseScreen";
-import AddIncomeScreen from "../screens/AddIncomeScreen";
-import IncomeScreen from "../screens/IncomeScreen";
-import BudgetScreen from "../screens/BudgetScreen";
-import SavingGoalScreen from "../screens/SavingGoalScreen";
-import ForecastScreen from "../screens/ForecastScreen";
-import ChatScreen from "../screens/ChatScreen";
-import ReportsScreen from "../screens/ReportsScreen";
-import JarScreen from "../screens/JarScreen";
-import JarDetailScreen from "../screens/JarDetailScreen";
-import JarFormScreen from "../screens/JarFormScreen";
-import JarTransferScreen from "../screens/JarTransferScreen";
-import ReceiptPreviewScreen from "../screens/ReceiptPreviewScreen";
-import FilterScreen from "../screens/FilterScreen";
-import ProfileScreen from "../screens/ProfileScreen";
-import EditProfileScreen from "../screens/EditProfileScreen";
-import PaymentScreen from "../screens/PaymentScreen";
-import PaymentCheckoutScreen from "../screens/PaymentCheckoutScreen";
-import PaymentResultScreen from "../screens/PaymentResultScreen";
+import DashboardScreen from "../screens/dashboard/DashboardScreen";
+import CategoryScreen from "../screens/finance/CategoryScreen";
+import ExpenseScreen from "../screens/finance/ExpenseScreen";
+import MoreScreen from "../screens/profile/MoreScreen";
+import IncomeScreen from "../screens/finance/IncomeScreen";
+import BudgetScreen from "../screens/finance/BudgetScreen";
+import GoalScreen from "../screens/finance/GoalScreen";
+import ForecastScreen from "../screens/insights/ForecastScreen";
+import ChatScreen from "../screens/insights/ChatScreen";
+import ReportsScreen from "../screens/insights/ReportsScreen";
+import JarScreen from "../screens/finance/JarScreen";
+import ReceiptPreviewScreen from "../screens/finance/ReceiptPreviewScreen";
+import ProfileScreen from "../screens/profile/ProfileScreen";
+import EditProfileScreen from "../screens/profile/EditProfileScreen";
+import PaymentScreen from "../screens/payment/PaymentScreen";
+import PaymentCheckoutScreen from "../screens/payment/PaymentCheckoutScreen";
+import PaymentResultScreen from "../screens/payment/PaymentResultScreen";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -40,12 +34,13 @@ function EmptyScreen() {
 
 function PillTabButton({ children, onPress, accessibilityState, suppressActive }) {
   const focused = accessibilityState?.selected && !suppressActive;
+  const colors = useAppColors();
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [
         styles.pillButton,
-        (focused || pressed) && styles.pillButtonActive,
+        (focused || pressed) && [styles.pillButtonActive, { backgroundColor: colors.TAB_ACTIVE_BG }],
       ]}
       unstable_pressDelay={0}
     >
@@ -74,18 +69,18 @@ function HomeStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Dashboard" component={DashboardScreen} />
-      <Stack.Screen name="AddExpense" component={AddExpenseScreen} />
-      <Stack.Screen name="AddIncome" component={AddIncomeScreen} />
+      <Stack.Screen name="AddExpense" component={ExpenseScreen} />
+      <Stack.Screen name="AddIncome" component={IncomeScreen} />
       <Stack.Screen name="Income" component={IncomeScreen} />
       <Stack.Screen name="Budget" component={BudgetScreen} />
-      <Stack.Screen name="SavingGoal" component={SavingGoalScreen} />
+      <Stack.Screen name="Goal" component={GoalScreen} />
       <Stack.Screen name="Forecast" component={ForecastScreen} />
       <Stack.Screen name="Chat" component={ChatScreen} />
       <Stack.Screen name="Reports" component={ReportsScreen} />
       <Stack.Screen name="Jars" component={JarScreen} />
-      <Stack.Screen name="JarDetail" component={JarDetailScreen} />
-      <Stack.Screen name="JarForm" component={JarFormScreen} />
-      <Stack.Screen name="JarTransfer" component={JarTransferScreen} />
+      <Stack.Screen name="JarDetail" component={JarScreen} />
+      <Stack.Screen name="JarForm" component={JarScreen} />
+      <Stack.Screen name="JarTransfer" component={JarScreen} />
       <Stack.Screen name="ReceiptPreview" component={ReceiptPreviewScreen} />
     </Stack.Navigator>
   );
@@ -95,7 +90,6 @@ function CategoryStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="CategoryMain" component={CategoryScreen} />
-      <Stack.Screen name="Filter" component={FilterScreen} />
     </Stack.Navigator>
   );
 }
@@ -104,6 +98,7 @@ function ExpenseStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="ExpenseMain" component={ExpenseScreen} />
+      <Stack.Screen name="AddExpense" component={ExpenseScreen} />
     </Stack.Navigator>
   );
 }
@@ -126,6 +121,7 @@ function SettingStack() {
 export default function MainTabs() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
+  const colors = useAppColors();
   const [isQuickMenuVisible, setIsQuickMenuVisible] = useState(false);
   const [suppressTabFocus, setSuppressTabFocus] = useState(false);
   const [floatingFocusedKey, setFloatingFocusedKey] = useState(null);
@@ -138,7 +134,7 @@ export default function MainTabs() {
       Income: "Income",
       Budget: "Budget",
       Forecast: "Forecast",
-      AddExpense: "AddExpense",
+      Goal: "Goal",
       Chat: "Chat",
     };
     const screen = routeMap[routeName] || routeName;
@@ -171,7 +167,7 @@ export default function MainTabs() {
 
   // Override icon/label color when floating menu suppresses tab focus
   const tabColor = (focused, originalColor) =>
-    focused && suppressTabFocus ? COLORS.TAB_INACTIVE : originalColor;
+    focused && suppressTabFocus ? colors.TAB_INACTIVE : originalColor;
 
   const tabIcon = (emoji) => ({ focused, color }) => (
     <Text style={{ color: tabColor(focused, color), fontSize: 17, marginTop: 4 }}>{emoji}</Text>
@@ -186,8 +182,8 @@ export default function MainTabs() {
       <Tab.Navigator
         screenOptions={{
           headerShown: false,
-          tabBarActiveTintColor: COLORS.TAB_ACTIVE,
-          tabBarInactiveTintColor: COLORS.TAB_INACTIVE,
+          tabBarActiveTintColor: colors.TAB_ACTIVE,
+          tabBarInactiveTintColor: colors.TAB_INACTIVE,
           tabBarLabelStyle: {
             fontSize: 10,
             fontWeight: "600",
@@ -195,20 +191,23 @@ export default function MainTabs() {
           },
           tabBarStyle: {
             height: 70,
-            backgroundColor: COLORS.TAB_BG,
+            backgroundColor: colors.TAB_BG,
             borderTopWidth: 1,
-            borderTopColor: COLORS.TAB_BORDER,
+            borderTopColor: colors.TAB_BORDER,
             borderLeftWidth: 1,
-            borderLeftColor: COLORS.TAB_BORDER,
+            borderLeftColor: colors.TAB_BORDER,
             borderRightWidth: 1,
-            borderRightColor: COLORS.TAB_BORDER,
+            borderRightColor: colors.TAB_BORDER,
             borderRadius: 20,
             marginHorizontal: 16,
             marginBottom: Math.max(insets.bottom, 8),
             paddingBottom: 6,
             position: "absolute",
             shadowColor: "#000",
-            shadowOffset: { width: 0, height: 2 },
+            shadowOffset: {
+              width: 0,
+              height: 2,
+            },
             shadowOpacity: 0.06,
             shadowRadius: 8,
             elevation: 3,
@@ -306,7 +305,6 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
   },
   pillButtonActive: {
-    backgroundColor: COLORS.TAB_ACTIVE_BG,
     borderColor: "transparent",
   },
   tabLabel: {
