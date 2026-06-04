@@ -1,9 +1,9 @@
 import React from "react";
-import { StyleSheet, Text, View, Pressable } from "react-native";
-import { COLORS } from "../../constants/colors";
-import AIConfirmationForm from "../AIConfirmationForm";
-import AssistantAvatar from "./AssistantAvatar";
-import { INTENT_ICONS, INTENT_LABELS } from "../../utils/aiIntentParser";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { COLORS, useAppColors } from "../../constants/colors";
+import AIConfirmationForm from "./AIConfirmationForm";
+import appLogo from "../../assets/applogo.png";
+import { INTENT_ICONS, INTENT_LABELS } from "../../utils/aiIntent";
 
 // Helper to format/clean markdown formatting for React Native Text display
 const cleanMarkdown = (text) => {
@@ -15,6 +15,7 @@ const cleanMarkdown = (text) => {
 };
 
 export default function MessageBubble({ message, onConfirm, onCancel, onUndo, onEditMessage, onRetry, isProcessing }) {
+  const colors = useAppColors();
   const isUser = message.sender === "user";
   const isBot = message.sender === "bot";
   const isSystem = message.isSystem;
@@ -41,8 +42,8 @@ export default function MessageBubble({ message, onConfirm, onCancel, onUndo, on
         <View
           style={[
             styles.bubble,
-            isUser ? styles.userBubble : styles.botBubble,
-            isSystem && styles.systemBubble,
+            isUser ? styles.userBubble : [styles.botBubble, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }],
+            isSystem && [styles.systemBubble, { backgroundColor: colors.ROSE_MIST, borderColor: colors.CARD_BORDER }],
             isError && styles.errorBubble,
           ]}
         >
@@ -83,7 +84,7 @@ export default function MessageBubble({ message, onConfirm, onCancel, onUndo, on
             <Text
               style={[
                 styles.messageText,
-                isUser ? styles.userText : isError ? styles.errorText : styles.botText,
+                isUser ? [styles.userText, { color: colors.TEXT }] : isError ? styles.errorText : [styles.botText, { color: colors.TEXT }],
               ]}
             >
               {isUser ? message.text : cleanMarkdown(message.text)}
@@ -92,7 +93,7 @@ export default function MessageBubble({ message, onConfirm, onCancel, onUndo, on
 
           {/* Model footprint label */}
           {isBot && !message.isIntent && !isSystem && !isError && message.modelLabel && (
-            <Text style={styles.modelFootprint}>Nova Money · {message.modelLabel}</Text>
+            <Text style={[styles.modelFootprint, { color: colors.PRIMARY }]}>Nova Money · {message.modelLabel}</Text>
           )}
 
           {/* Retry Button inside error or stopped messages */}
@@ -107,10 +108,20 @@ export default function MessageBubble({ message, onConfirm, onCancel, onUndo, on
             </Pressable>
           )}
         </View>
-        <Text style={[styles.timeText, isUser && styles.userTime]}>
+        <Text style={[styles.timeText, { color: colors.TEXT_MUTED }, isUser && styles.userTime]}>
           {message.time}
         </Text>
       </View>
+    </View>
+  );
+}
+
+function AssistantAvatar() {
+  const colors = useAppColors();
+
+  return (
+    <View style={[styles.assistantAvatar, { backgroundColor: colors.ROSE_MIST, shadowColor: colors.PRIMARY }]}> 
+      <Image source={appLogo} style={styles.assistantAvatarImage} resizeMode="cover" />
     </View>
   );
 }
@@ -156,7 +167,10 @@ const styles = StyleSheet.create({
     shadowColor: "#000",
     shadowOpacity: 0.06,
     shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
     elevation: 1
   },
   botBubble: {
@@ -254,5 +268,29 @@ const styles = StyleSheet.create({
     color: COLORS.PRIMARY,
     fontSize: 12,
     fontWeight: "700"
+  },
+  assistantAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 10,
+    backgroundColor: COLORS.ROSE_MIST,
+    borderWidth: 1,
+    borderColor: "rgba(239, 94, 131, 0.18)",
+    shadowColor: COLORS.PRIMARY,
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    elevation: 2,
+    overflow: "hidden"
+  },
+  assistantAvatarImage: {
+    width: 40,
+    height: 40
   }
 });

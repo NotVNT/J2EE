@@ -227,7 +227,6 @@ playwright-report/
 *.sqlite
 *.sqlite3
 *.db-journal
-.mcp.json
 
 
 # === Development logs ===
