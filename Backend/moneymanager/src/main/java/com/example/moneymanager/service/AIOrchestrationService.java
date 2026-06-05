@@ -862,10 +862,15 @@ public class AIOrchestrationService {
                     }).toList());
                 }
                 case "aichat" -> {
+                    java.time.LocalDate now = java.time.LocalDate.now();
+                    java.time.LocalDate monthStart = now.withDayOfMonth(1);
                     result.put("totalExpenseCount", expenseService.getTotalExpenseCountForCurrentUser());
                     result.put("totalIncomeCount", incomeService.getTotalIncomeCountForCurrentUser());
                     result.put("totalExpenseAmount", expenseService.getTotalExpenseForCurrentUser());
                     result.put("totalIncomeAmount", incomeService.getTotalIncomeForCurrentUser());
+                    result.put("currentMonth", now.getMonthValue() + "/" + now.getYear());
+                    result.put("currentMonthExpenseAmount", expenseService.getExpenseTotalForCurrentUserBetween(monthStart, now));
+                    result.put("currentMonthIncomeAmount", incomeService.getIncomeTotalForCurrentUserBetween(monthStart, now));
                     List<ExpenseDTO> recentExp = expenseService.getLatest5ExpensesForCurrentUser();
                     result.put("recentExpenses", recentExp.stream().map(this::buildExpenseMap).toList());
                     List<IncomeDTO> recentInc = incomeService.getLatest5IncomesForCurrentUser();
@@ -876,10 +881,15 @@ public class AIOrchestrationService {
                             .toList());
                 }
                 default -> {
+                    java.time.LocalDate now = java.time.LocalDate.now();
+                    java.time.LocalDate monthStart = now.withDayOfMonth(1);
                     result.put("totalExpenseCount", expenseService.getTotalExpenseCountForCurrentUser());
                     result.put("totalIncomeCount", incomeService.getTotalIncomeCountForCurrentUser());
                     result.put("totalExpenseAmount", expenseService.getTotalExpenseForCurrentUser());
                     result.put("totalIncomeAmount", incomeService.getTotalIncomeForCurrentUser());
+                    result.put("currentMonth", now.getMonthValue() + "/" + now.getYear());
+                    result.put("currentMonthExpenseAmount", expenseService.getExpenseTotalForCurrentUserBetween(monthStart, now));
+                    result.put("currentMonthIncomeAmount", incomeService.getIncomeTotalForCurrentUserBetween(monthStart, now));
                     List<ExpenseDTO> recentExp = expenseService.getLatest5ExpensesForCurrentUser();
                     result.put("recentExpenses", recentExp.stream().map(e -> buildExpenseMap(e)).toList());
                     List<IncomeDTO> recentInc = incomeService.getLatest5IncomesForCurrentUser();
@@ -1165,7 +1175,9 @@ public class AIOrchestrationService {
     private String normalizeIntentText(String text) {
         if (text == null) return "";
         String normalized = Normalizer.normalize(text, Normalizer.Form.NFD)
-                .replaceAll("\\p{M}+", "");
+                .replaceAll("\\p{M}+", "")
+                .replace('đ', 'd')
+                .replace('Đ', 'D');
         return normalized.toLowerCase(Locale.ROOT).trim();
     }
 
