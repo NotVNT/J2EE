@@ -1,9 +1,11 @@
 import React, { useContext } from "react";
 import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
 import { AuthContext } from "../../contexts/AuthContext";
 import { COLORS, useAppColors } from "../../constants/colors";
 import { getSafeAreaBottom, getSafeAreaTop } from "../../utils/safeArea";
+import StatusBadge from "../../components/ui/StatusBadge";
 
 function InfoRow({ colors, label, value, showChevron = false, isLast = false }) {
   return (
@@ -11,7 +13,7 @@ function InfoRow({ colors, label, value, showChevron = false, isLast = false }) 
       <Text style={[styles.infoLabel, { color: colors.TEXT_SECONDARY }]}>{label}</Text>
       <View style={styles.infoValueWrap}>
         <Text style={[styles.infoValue, { color: colors.TEXT }, label === "Số điện thoại" && { color: colors.TEXT_SECONDARY }]}>{value || "-"}</Text>
-        {showChevron && <Text style={[styles.infoChevron, { color: colors.TEXT_SECONDARY }]}>›</Text>}
+        {showChevron && <Ionicons name="chevron-forward" size={16} color={colors.TEXT_MUTED} style={{ marginLeft: 6 }} />}
       </View>
     </View>
   );
@@ -41,7 +43,7 @@ export default function ProfileScreen() {
         {/* User Profile Header Card */}
         <View style={[styles.heroCard, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}>
           {profileImageUrl ? (
-            <Image source={{ uri: profileImageUrl }} style={styles.avatarImage} />
+            <Image source={{ uri: profileImageUrl }} style={[styles.avatarImage, { borderColor: colors.PRIMARY_LIGHT }]} />
           ) : (
             <View style={[styles.avatarWrap, { backgroundColor: colors.PRIMARY }]}>
               <Text style={styles.avatarText}>{initial}</Text>
@@ -51,9 +53,7 @@ export default function ProfileScreen() {
           <View style={styles.heroInfo}>
             <Text style={[styles.heroName, { color: colors.TEXT }]}>{fullName}</Text>
             <Text style={[styles.heroEmail, { color: colors.TEXT_SECONDARY }]}>{email}</Text>
-            <View style={styles.planChip}>
-              <Text style={[styles.planChipText, { color: colors.PRIMARY }]}>{subscriptionPlan}</Text>
-            </View>
+            <StatusBadge plan={subscriptionPlan} style={{ marginTop: 8 }} />
           </View>
         </View>
 
@@ -74,7 +74,7 @@ export default function ProfileScreen() {
         <View style={[styles.sectionCard, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}>
           <View style={styles.planRow}>
             <Text style={[styles.planLabel, { color: colors.TEXT_SECONDARY }]}>Gói hiện tại</Text>
-            <Text style={[styles.planValue, { color: colors.PRIMARY }]}>{subscriptionPlan}</Text>
+            <StatusBadge plan={subscriptionPlan} />
           </View>
         </View>
 
@@ -86,7 +86,6 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: COLORS.BG,
   },
   topAppBar: {
     flexDirection: "row",
@@ -94,10 +93,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 16,
     height: 56,
-    backgroundColor: COLORS.BG,
   },
   appBarTitle: {
-    color: COLORS.TEXT,
     fontSize: 18,
     fontWeight: "700",
     textAlign: "center",
@@ -105,7 +102,6 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: COLORS.BG,
   },
   content: {
     paddingHorizontal: 16,
@@ -115,28 +111,31 @@ const styles = StyleSheet.create({
   heroCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: COLORS.CARD,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
     padding: 20,
     marginBottom: 24,
+    shadowColor: "#000",
+    shadowOpacity: 0.02,
+    shadowRadius: 6,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    elevation: 2,
   },
   avatarWrap: {
     width: 64,
     height: 64,
-    borderRadius: 12,
-    backgroundColor: COLORS.PRIMARY,
+    borderRadius: 32,
     alignItems: "center",
     justifyContent: "center",
   },
   avatarImage: {
     width: 64,
     height: 64,
-    borderRadius: 12,
-    backgroundColor: COLORS.BG,
+    borderRadius: 32,
     borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
   },
   avatarText: {
     color: COLORS.WHITE,
@@ -148,64 +147,51 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   heroName: {
-    color: COLORS.TEXT,
     fontSize: 18,
-    fontWeight: "700",
+    fontWeight: "750",
   },
   heroEmail: {
-    color: COLORS.TEXT_SECONDARY,
     fontSize: 14,
     marginTop: 2,
-  },
-  planChip: {
-    alignSelf: "flex-start",
-    marginTop: 8,
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    backgroundColor: "rgba(239, 94, 131, 0.18)",
-    borderWidth: 1,
-    borderColor: "rgba(239, 94, 131, 0.3)",
-  },
-  planChipText: {
-    color: COLORS.PRIMARY,
-    fontWeight: "800",
-    fontSize: 11,
-    letterSpacing: 0.5,
   },
   sectionHeader: {
     marginBottom: 8,
     marginLeft: 4,
   },
   sectionTitle: {
-    color: COLORS.TEXT_SECONDARY,
-    fontSize: 13,
-    fontWeight: "600",
+    fontSize: 12,
+    fontWeight: "800",
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
   },
   sectionCard: {
-    backgroundColor: COLORS.CARD,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
     marginBottom: 24,
     overflow: "hidden",
+    shadowColor: "#000",
+    shadowOpacity: 0.02,
+    shadowRadius: 6,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    elevation: 2,
   },
   infoRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 16,
+    paddingVertical: 14,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.CARD_BORDER,
   },
   infoRowLast: {
     borderBottomWidth: 0,
   },
   infoLabel: {
-    color: COLORS.TEXT_SECONDARY,
     fontSize: 14,
-    fontWeight: "500",
+    fontWeight: "550",
   },
   infoValueWrap: {
     flexDirection: "row",
@@ -213,37 +199,19 @@ const styles = StyleSheet.create({
     maxWidth: "65%",
   },
   infoValue: {
-    color: COLORS.TEXT,
     fontWeight: "600",
     fontSize: 14,
     textAlign: "right",
-  },
-  infoValueUnset: {
-    color: COLORS.TEXT_SECONDARY,
-    fontWeight: "500",
-  },
-  infoChevron: {
-    color: COLORS.TEXT_SECONDARY,
-    fontSize: 18,
-    fontWeight: "bold",
-    marginLeft: 6,
-    marginTop: -2,
   },
   planRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 16,
+    paddingVertical: 14,
     paddingHorizontal: 16,
   },
   planLabel: {
-    color: COLORS.TEXT_SECONDARY,
     fontSize: 14,
-    fontWeight: "500",
-  },
-  planValue: {
-    color: COLORS.PRIMARY,
-    fontWeight: "bold",
-    fontSize: 14,
+    fontWeight: "550",
   },
 });

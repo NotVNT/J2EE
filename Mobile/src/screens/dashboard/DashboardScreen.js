@@ -9,6 +9,8 @@ import RecentTransactionsSection from "../../components/Dashboard/RecentTransact
 import GoalsPreview from "../../components/Dashboard/GoalsPreview";
 import HomeBanner from "../../components/Dashboard/HomeBanner";
 import HomeTopHeader from "../../components/Dashboard/HomeTopHeader";
+import QuickActions from "../../components/Dashboard/QuickActions";
+import DailySummaryCards from "../../components/Dashboard/DailySummaryCards";
 import NotificationModal from "../../components/Dashboard/NotificationModal";
 import { useVisibleItems } from "../../components/common/ShowMoreButton";
 import { COLORS, useAppColors } from "../../constants/colors";
@@ -25,6 +27,7 @@ export default function DashboardScreen() {
   const ai = useAiInsight();
   const [notificationVisible, setNotificationVisible] = useState(false);
   const [aiLockVisible, setAiLockVisible] = useState(false);
+  const [isBalanceVisible, setIsBalanceVisible] = useState(true);
 
   const {
     visibleItems: recentTransactions,
@@ -57,6 +60,25 @@ export default function DashboardScreen() {
     navigation.navigate("Goal");
   }, [navigation]);
 
+  // Calculate today's income and expense from recentTransactions
+  const todayStr = new Date().toDateString();
+  let todayIncome = 0;
+  let todayExpense = 0;
+
+  if (Array.isArray(dashboard.recentTransactions)) {
+    dashboard.recentTransactions.forEach((tx) => {
+      const txDateStr = new Date(tx.createdAt || tx.updatedAt || tx.date).toDateString();
+      if (txDateStr === todayStr) {
+        const isInc = String(tx.type || "").toUpperCase().includes("INCOME");
+        if (isInc) {
+          todayIncome += Number(tx.amount || 0);
+        } else {
+          todayExpense += Number(tx.amount || 0);
+        }
+      }
+    });
+  }
+
   return (
     <>
       <ScrollView
@@ -69,8 +91,17 @@ export default function DashboardScreen() {
           onMenuPress={() => navigation.navigate("SettingTab", { screen: "Profile" })}
           onBellPress={() => setNotificationVisible(true)}
           unreadCount={dashboard.unreadCount}
+          balance={dashboard.dashboard?.totalBalance ?? 0}
+          isBalanceVisible={isBalanceVisible}
+          onToggleBalance={() => setIsBalanceVisible(prev => !prev)}
         />
-        <HomeBanner />
+        <HomeBanner
+          balanceData={dashboard.dashboard}
+          isBalanceVisible={isBalanceVisible}
+          monthlySeries={dashboard.monthlySeries}
+        />
+        <QuickActions />
+        <DailySummaryCards todayIncome={todayIncome} todayExpense={todayExpense} />
 
         <FinanceOverviewSection
           dashboard={dashboard.dashboard}

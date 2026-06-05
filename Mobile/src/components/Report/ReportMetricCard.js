@@ -1,5 +1,6 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { COLORS, useAppColors } from "../../constants/colors";
 import { formatMoney } from "../../utils/format";
 
@@ -67,7 +68,10 @@ export default function ReportMetricCard({ report }) {
       </View>
 
       <View style={[styles.card, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}> 
-        <Text style={[styles.cardTitle, { color: colors.TEXT }]}>📊 Chỉ số tài chính</Text>
+        <View style={styles.cardHeader}>
+          <Ionicons name="bar-chart-outline" size={18} color={colors.PRIMARY} />
+          <Text style={[styles.cardTitle, { color: colors.TEXT }]}>Chỉ số tài chính</Text>
+        </View>
         <MetricRow colors={colors} label="Tổng thu nhập" value={report.totalIncome} prevValue={report.prevMonthIncome} type="income" />
         <MetricRow colors={colors} label="Tổng chi tiêu" value={report.totalExpense} prevValue={report.prevMonthExpense} type="expense" />
         <View style={[styles.divider, { backgroundColor: colors.CARD_BORDER }]} />
@@ -82,11 +86,17 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 16,
-    backgroundColor: COLORS.CARD,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
     padding: 16,
+    shadowColor: "#000",
+    shadowOpacity: 0.02,
+    shadowRadius: 6,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    elevation: 2,
   },
   gradeCard: {
     width: 72,
@@ -97,11 +107,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   gradeLetter: {
-    fontSize: 32,
+    fontSize: 30,
     fontWeight: "900",
   },
   gradeLabel: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "800",
     marginTop: -2,
   },
@@ -111,25 +121,33 @@ const styles = StyleSheet.create({
   savingsRateText: {
     fontSize: 16,
     fontWeight: "800",
-    color: COLORS.TEXT,
   },
   spendingChangeText: {
     fontSize: 12,
-    color: COLORS.TEXT_SECONDARY,
     marginTop: 4,
   },
   card: {
-    backgroundColor: COLORS.CARD,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
     padding: 16,
+    shadowColor: "#000",
+    shadowOpacity: 0.02,
+    shadowRadius: 6,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    elevation: 2,
+  },
+  cardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 14,
   },
   cardTitle: {
     fontSize: 15,
     fontWeight: "800",
-    color: COLORS.TEXT,
-    marginBottom: 14,
   },
   metricRow: {
     flexDirection: "row",
@@ -142,12 +160,10 @@ const styles = StyleSheet.create({
   },
   metricLabel: {
     fontSize: 14,
-    fontWeight: "700",
-    color: COLORS.TEXT,
+    fontWeight: "750",
   },
   prevText: {
     fontSize: 11,
-    color: COLORS.TEXT_MUTED,
     marginTop: 2,
   },
   metricValue: {
@@ -156,7 +172,6 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: COLORS.CARD_BORDER,
     marginVertical: 10,
   },
 });

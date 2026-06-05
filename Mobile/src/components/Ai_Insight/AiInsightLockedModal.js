@@ -1,7 +1,7 @@
 import React from "react";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { COLORS } from "../../constants/colors";
+import { COLORS, useAppColors } from "../../constants/colors";
 
 const FEATURES = [
   "Tóm tắt tài chính hằng tháng",
@@ -11,6 +11,7 @@ const FEATURES = [
 ];
 
 export default function AiInsightLockedModal({ visible, onClose }) {
+  const colors = useAppColors();
   const navigation = useNavigation();
 
   const handleUpgrade = () => {
@@ -22,38 +23,38 @@ export default function AiInsightLockedModal({ visible, onClose }) {
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.overlay}>
+      <View style={[styles.overlay, { backgroundColor: colors.OVERLAY }]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        <View style={styles.card}>
-          <View style={styles.iconWrap}>
+        <View style={[styles.card, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}>
+          <View style={[styles.iconWrap, { backgroundColor: colors.ROSE_MIST, borderColor: colors.CARD_BORDER }]}>
             <Text style={styles.icon}>✨</Text>
           </View>
 
-          <View style={styles.lockBadge}>
+          <View style={[styles.lockBadge, { backgroundColor: colors.BG }]}>
             <Text style={styles.lockIcon}>🔒</Text>
-            <Text style={styles.lockText}>PREMIUM</Text>
+            <Text style={[styles.lockText, { color: colors.PRIMARY }]}>PREMIUM</Text>
           </View>
 
-          <Text style={styles.title}>AI Insight</Text>
-          <Text style={styles.description}>
+          <Text style={[styles.title, { color: colors.TEXT }]}>AI Insight</Text>
+          <Text style={[styles.description, { color: colors.TEXT_SECONDARY }]}>
             Phân tích tài chính thông minh với AI, dự báo dòng tiền và gợi ý cá nhân hóa.
           </Text>
 
           <View style={styles.featureList}>
             {FEATURES.map((feature) => (
               <View key={feature} style={styles.featureItem}>
-                <Text style={styles.featureCheck}>✓</Text>
-                <Text style={styles.featureText}>{feature}</Text>
+                <Text style={[styles.featureCheck, { color: colors.INCOME }]}>✓</Text>
+                <Text style={[styles.featureText, { color: colors.TEXT }]}>{feature}</Text>
               </View>
             ))}
           </View>
 
-          <Pressable style={styles.upgradeButton} onPress={handleUpgrade}>
-            <Text style={styles.upgradeButtonText}>Nâng cấp Premium</Text>
+          <Pressable style={[styles.upgradeButton, { backgroundColor: colors.PRIMARY }]} onPress={handleUpgrade}>
+            <Text style={[styles.upgradeButtonText, { color: colors.WHITE }]}>Nâng cấp Premium</Text>
           </Pressable>
 
-          <Pressable style={styles.laterButton} onPress={onClose}>
-            <Text style={styles.laterButtonText}>Để sau</Text>
+          <Pressable style={[styles.laterButton, { backgroundColor: colors.ROSE_MIST, borderColor: colors.PRIMARY }]} onPress={onClose}>
+            <Text style={[styles.laterButtonText, { color: colors.PRIMARY }]}>Để sau</Text>
           </Pressable>
         </View>
       </View>

@@ -1,20 +1,20 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { COLORS, useAppColors } from "../../constants/colors";
+import { useAppColors } from "../../constants/colors";
+import AppIcon from "../ui/AppIcon";
+import { scale } from "../../utils/layoutScale";
 
-/**
- * Empty state placeholder shown when no data is available.
- *
- * @param {object}  props
- * @param {string}  [props.message="Chưa có dữ liệu"] - Display message
- */
 export default function ForecastEmptyState({ message }) {
   const colors = useAppColors();
 
   return (
     <View style={styles.container}>
-      <Text style={styles.icon}>📭</Text>
-      <Text style={[styles.text, { color: colors.TEXT_SECONDARY }]}>{message || "Chưa có dữ liệu"}</Text>
+      <View style={[styles.iconContainer, { backgroundColor: colors.INFO_LIGHT || "rgba(107,155,210,0.15)" }]}>
+        <AppIcon name="bar-chart-outline" size={28} color={colors.INFO || "#6B9BD2"} />
+      </View>
+      <Text style={[styles.text, { color: colors.TEXT_SECONDARY }]}>
+        {message || "Chưa có dữ liệu dự báo"}
+      </Text>
     </View>
   );
 }
@@ -23,15 +23,20 @@ const styles = StyleSheet.create({
   container: {
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 32,
+    paddingVertical: scale(40),
+    paddingHorizontal: scale(24),
   },
-  icon: {
-    fontSize: 40,
-    marginBottom: 8,
+  iconContainer: {
+    width: scale(56),
+    height: scale(56),
+    borderRadius: scale(28),
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: scale(12),
   },
   text: {
     fontSize: 14,
-    color: COLORS.TEXT_SECONDARY,
     textAlign: "center",
+    lineHeight: 18,
   },
 });

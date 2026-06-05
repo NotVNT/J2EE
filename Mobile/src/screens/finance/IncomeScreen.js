@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import { FlatList, RefreshControl, StyleSheet, View } from "react-native";
+import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import IncomeEmptyState from "../../components/Incomes/IncomeEmptyState";
@@ -10,6 +10,8 @@ import { COLORS, useAppColors } from "../../constants/colors";
 import useIncomeForm from "../../hooks/useIncomeForm";
 import useIncomes from "../../hooks/useIncomes";
 import { getSafeAreaBottom, getSafeAreaContentStyle, getSafeAreaTop } from "../../utils/safeArea";
+import AppIcon from "../../components/ui/AppIcon";
+import { scale } from "../../utils/layoutScale";
 
 export default function IncomeScreen() {
   const route = useRoute();
@@ -83,14 +85,23 @@ function IncomeListRoute() {
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.BG, paddingTop: getSafeAreaTop(insets) }]}> 
+    <View style={[styles.container, { backgroundColor: colors.APP_BACKGROUND || colors.BG, paddingTop: getSafeAreaTop(insets, 12) }]}> 
+      {/* Top Header */}
+      <View style={styles.topHeader}>
+        <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
+          <AppIcon name="chevron-back" size={24} color={colors.TEXT} />
+        </Pressable>
+        <Text style={[styles.headerTitle, { color: colors.TEXT }]}>Lịch sử thu nhập</Text>
+        <View style={{ width: 24 }} /> {/* spacing placeholder */}
+      </View>
+
       <FlatList
         data={incomes}
         keyExtractor={(item) => String(item?.id)}
         renderItem={renderIncome}
         contentContainerStyle={[
           styles.listContent,
-          { paddingBottom: getSafeAreaBottom(insets) },
+          { paddingBottom: getSafeAreaBottom(insets) + scale(80) },
           !incomes.length && styles.listContentEmpty
         ]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
@@ -104,12 +115,23 @@ function IncomeListRoute() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.BG,
-    padding: 16,
-    paddingTop: 16
+    paddingHorizontal: scale(16)
+  },
+  topHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: scale(12),
+  },
+  backButton: {
+    padding: scale(4),
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: "700",
   },
   listContent: {
-    paddingBottom: 24
+    paddingBottom: scale(24)
   },
   listContentEmpty: {
     flexGrow: 1,

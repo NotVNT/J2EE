@@ -6,7 +6,10 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator
+  ActivityIndicator,
+  Modal,
+  Pressable,
+  Animated
 } from "react-native";
 import { COLORS, useAppColors } from "../../constants/colors";
 import ChatAssistantHeader from "../../components/chatbotUI/ChatAssistantHeader";
@@ -18,6 +21,41 @@ import EditMessageModal from "../../components/chatbotUI/EditMessageModal";
 import useChatMessages from "../../components/chatbotUI/useChatMessages";
 import useModelConfig from "../../components/chatbotUI/useModelConfig";
 import useVoiceInput from "../../components/chatbotUI/useVoiceInput";
+import AppIcon from "../../components/ui/AppIcon";
+
+function WaveformBar({ color }) {
+  const anim = React.useRef(new Animated.Value(1)).current;
+
+  React.useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(anim, {
+          toValue: 2.5,
+          duration: 300 + Math.random() * 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(anim, {
+          toValue: 1,
+          duration: 300 + Math.random() * 200,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, [anim]);
+
+  return (
+    <Animated.View
+      style={{
+        width: 4,
+        height: 18,
+        backgroundColor: color,
+        borderRadius: 2,
+        marginHorizontal: 3,
+        transform: [{ scaleY: anim }],
+      }}
+    />
+  );
+}
 
 export default function ChatScreen() {
   const colors = useAppColors();
@@ -188,6 +226,44 @@ export default function ChatScreen() {
         message={editingMessage}
         onSave={handleSaveEditedMessage}
       />
+
+      <Modal visible={isRecording} transparent animationType="slide">
+        <View style={[styles.voiceModalContainer, { backgroundColor: colors.SURFACE }]}>
+          <View style={styles.voiceHeader}>
+            <Text style={[styles.voiceTitle, { color: colors.TEXT }]}>Ghi âm giọng nói</Text>
+            <Pressable style={styles.voiceCloseBtn} onPress={handleMicPress}>
+              <AppIcon name="close" size={24} color={colors.TEXT} />
+            </Pressable>
+          </View>
+
+          <View style={styles.voiceBody}>
+            <View style={styles.waveformContainer}>
+              <WaveformBar color={colors.ACTION_VOICE || "#A855F7"} />
+              <WaveformBar color={colors.ACTION_VOICE || "#A855F7"} />
+              <WaveformBar color={colors.ACTION_VOICE || "#A855F7"} />
+              <WaveformBar color={colors.ACTION_VOICE || "#A855F7"} />
+              <WaveformBar color={colors.ACTION_VOICE || "#A855F7"} />
+              <WaveformBar color={colors.ACTION_VOICE || "#A855F7"} />
+              <WaveformBar color={colors.ACTION_VOICE || "#A855F7"} />
+              <WaveformBar color={colors.ACTION_VOICE || "#A855F7"} />
+            </View>
+
+            <Text style={[styles.voiceDisclaimerText, { color: colors.TEXT_SECONDARY }]}>
+              "Ghi âm được chuyển đổi sang văn bản ngay trên thiết bị này. Bằng cách nhấn ghi âm, bạn đồng ý chia sẻ văn bản đã chuyển đổi với SpendBee và Google Gemini."
+            </Text>
+          </View>
+
+          <View style={styles.voiceFooter}>
+            <Text style={[styles.voiceHintText, { color: colors.TEXT_SECONDARY }]}>Nhấn để dừng ghi âm</Text>
+            <Pressable
+              style={[styles.voiceMicButton, { backgroundColor: colors.ACTION_VOICE || "#A855F7" }]}
+              onPress={handleMicPress}
+            >
+              <AppIcon name="mic" size={28} color="#FFFFFF" />
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -221,5 +297,62 @@ const styles = StyleSheet.create({
   loadingText: {
     color: COLORS.CHAT_MUTED,
     fontSize: 12
-  }
+  },
+  voiceModalContainer: {
+    flex: 1,
+    padding: 24,
+    justifyContent: "space-between",
+  },
+  voiceHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: Platform.OS === "ios" ? 40 : 20,
+  },
+  voiceTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+  },
+  voiceCloseBtn: {
+    padding: 8,
+  },
+  voiceBody: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 16,
+  },
+  waveformContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    height: 80,
+    marginBottom: 40,
+  },
+  voiceDisclaimerText: {
+    fontSize: 13,
+    lineHeight: 20,
+    textAlign: "center",
+    fontStyle: "italic",
+  },
+  voiceFooter: {
+    alignItems: "center",
+    marginBottom: Platform.OS === "ios" ? 40 : 20,
+  },
+  voiceHintText: {
+    fontSize: 14,
+    marginBottom: 16,
+    fontWeight: "500",
+  },
+  voiceMicButton: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
 });

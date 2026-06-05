@@ -1,9 +1,9 @@
 {
   "expo": {
-    "name": "Devbot",
+    "name": "Money Manager",
     "slug": "moneymanager-mobile",
     "scheme": "moneymanager",
-    "version": "1.0.0",
+    "version": "1.5",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "jsEngine": "hermes",

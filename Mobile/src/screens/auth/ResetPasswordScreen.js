@@ -21,6 +21,8 @@ import {
 } from "../../utils/authPassword";
 import PasswordInput from "../../components/auth/PasswordInput";
 import PasswordRequirement from "../../components/auth/PasswordRequirement";
+import AppIcon from "../../components/ui/AppIcon";
+import { scale, clampScale } from "../../utils/layoutScale";
 
 export default function ResetPasswordScreen() {
   const navigation = useNavigation();
@@ -66,7 +68,7 @@ export default function ResetPasswordScreen() {
 
         <View style={styles.topBar}>
           <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Text style={styles.backArrow}>←</Text>
+            <AppIcon name="chevron-back" size={24} color={COLORS.DARK_TEXT} />
           </Pressable>
         </View>
 
@@ -113,72 +115,72 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: -120,
     left: -100,
-    width: 300,
-    height: 300,
-    borderRadius: 150,
+    width: scale(300),
+    height: scale(300),
+    borderRadius: scale(150),
     backgroundColor: COLORS.PRIMARY_GLOW,
   },
   bgGlowBottom: {
     position: "absolute",
     right: -140,
     bottom: -120,
-    width: 320,
-    height: 320,
-    borderRadius: 160,
+    width: scale(320),
+    height: scale(320),
+    borderRadius: scale(160),
     backgroundColor: COLORS.PRIMARY_GLOW,
   },
   topBar: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: scale(16),
+    paddingVertical: scale(8),
   },
   backButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: scale(36),
+    height: scale(36),
+    borderRadius: scale(18),
     alignItems: "center",
     justifyContent: "center",
-  },
-  backArrow: {
-    color: COLORS.DARK_TEXT,
-    fontSize: 22,
-    fontWeight: "600",
   },
   scrollContent: {
     flexGrow: 1,
     justifyContent: "center",
-    paddingHorizontal: 28,
-    paddingBottom: 20,
+    paddingHorizontal: scale(28),
+    paddingBottom: scale(20),
   },
   title: {
-    fontSize: 26,
-    fontWeight: "700",
+    fontSize: clampScale(26, 22, 30),
+    fontWeight: "800",
     color: COLORS.DARK_TEXT,
-    marginBottom: 8,
+    marginBottom: scale(8),
     textAlign: "center",
   },
   subtitle: {
     fontSize: 14,
     color: COLORS.DARK_TEXT_SECONDARY,
     textAlign: "center",
-    marginBottom: 28,
+    marginBottom: scale(28),
   },
   resetButton: {
     backgroundColor: COLORS.PRIMARY,
-    borderRadius: 14,
-    height: 50,
+    borderRadius: scale(12),
+    height: scale(50),
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 6,
+    marginTop: scale(6),
+    shadowColor: COLORS.PRIMARY,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 4,
   },
   resetButtonDisabled: {
     opacity: 0.5,
   },
   resetButtonText: {
-    color: COLORS.DARK_TEXT,
-    fontSize: 16,
-    fontWeight: "700",
+    color: COLORS.WHITE || "#FFFFFF",
+    fontSize: clampScale(16, 14, 18),
+    fontWeight: "800",
   },
 });

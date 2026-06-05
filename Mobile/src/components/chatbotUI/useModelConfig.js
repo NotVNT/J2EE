@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, useContext } from "react";
+import { useState, useMemo, useCallback, useContext } from "react";
 import { Alert } from "react-native";
 import { AuthContext } from "../../contexts/AuthContext";
 
@@ -40,25 +40,22 @@ export default function useModelConfig() {
   const isPremiumPlan = user?.subscriptionPlan === "PREMIUM";
 
   const [activeMode, setActiveMode] = useState("chat");
-  const [chatModel, setChatModel]   = useState(isPremiumPlan ? "gptoss" : "gemini");
+  const [chatModel, setChatModel]   = useState("gptoss");
   const [agentModel, setAgentModel] = useState("gemini");
-
-  // Sync defaults when user's plan loads or changes
-  useEffect(() => {
-    if (!isPremiumPlan) {
-      setChatModel("gemini");
-    } else {
-      setChatModel("gptoss");
-    }
-  }, [isPremiumPlan]);
 
   // ── Derived ────────────────────────────────────────────
 
   const activeParams = useMemo(() => {
-    const modeConfig = activeMode === "agent" ? MODELS.agent : MODELS.chat;
-    const key        = activeMode === "agent" ? agentModel : chatModel;
-    return modeConfig[key] || modeConfig.gemini;
-  }, [activeMode, chatModel, agentModel]);
+    if (activeMode === "agent") {
+      return MODELS.agent.gemini;
+    }
+    // Chat mode
+    if (chatModel === "gptoss") {
+      // PREMIUM: dùng GPT-OSS 120B. BASIC/FREE: fallback dùng Gemini 3.1 Flash-Lite
+      return isPremiumPlan ? MODELS.chat.gptoss : MODELS.chat.gemini;
+    }
+    return MODELS.chat.gemini;
+  }, [activeMode, chatModel, isPremiumPlan]);
 
   const modelOptions = useMemo(() => {
     const options = activeMode === "chat" ? CHAT_OPTIONS : AGENT_OPTIONS;
@@ -71,7 +68,10 @@ export default function useModelConfig() {
     );
   }, [activeMode, isPremiumPlan]);
 
-  const modelValue = activeMode === "chat" ? chatModel : agentModel;
+  const modelValue = useMemo(() => {
+    if (activeMode === "agent") return agentModel;
+    return activeParams.provider;
+  }, [activeMode, agentModel, activeParams.provider]);
 
   const inputPlaceholder = activeMode === "agent"
     ? "Tạo/sửa/xóa dữ liệu, xuất excel..."

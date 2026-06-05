@@ -9,7 +9,7 @@ import {
 import { useRoute } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AuthContext } from "../../contexts/AuthContext";
-import { COLORS, useAppColors } from "../../constants/colors";
+import { useAppColors } from "../../constants/colors";
 import { TREND_CONFIG } from "../../utils/forecast";
 import { formatMoney } from "../../utils/format";
 import { getSafeAreaContentStyle } from "../../utils/safeArea";
@@ -149,7 +149,6 @@ export default function ForecastScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.BG,
   },
   content: {
     paddingHorizontal: 16,
@@ -164,7 +163,6 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 12,
-    color: COLORS.TEXT_SECONDARY,
     fontSize: 14,
   },
   summaryRow: {

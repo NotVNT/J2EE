@@ -10,7 +10,7 @@ import {
   View
 } from "react-native";
 import { API_ENDPOINTS } from "../../constants/api";
-import { COLORS } from "../../constants/colors";
+import { COLORS, useAppColors } from "../../constants/colors";
 import apiClient from "../../services/apiClient";
 import { scale, clampScale, useDynamicViewport } from "../../utils/layoutScale";
 
@@ -34,36 +34,37 @@ function formatRelativeTime(value) {
   return `${diffDays} ngày trước`;
 }
 
-function getTypeMeta(type) {
+function getTypeMeta(type, colors) {
   switch (type) {
     case "EXPENSE":
     case "BUDGET_EXCEEDED":
     case "SPENDING_ALERT":
-      return { icon: "!", color: COLORS.EXPENSE, bg: COLORS.EXPENSE_LIGHT };
+      return { icon: "!", color: colors.EXPENSE, bg: colors.EXPENSE_LIGHT };
     case "INCOME":
     case "GOAL_PROGRESS":
-      return { icon: "+", color: COLORS.INCOME, bg: COLORS.INCOME_LIGHT };
+      return { icon: "+", color: colors.INCOME, bg: colors.INCOME_LIGHT };
     case "BUDGET_ALERT":
     case "BUDGET_WARNING":
-      return { icon: "!", color: COLORS.WARNING, bg: COLORS.WARNING_LIGHT };
+      return { icon: "!", color: colors.WARNING, bg: colors.WARNING_LIGHT };
     case "PAYMENT":
     case "SAVING_STREAK":
-      return { icon: "✓", color: COLORS.PRIMARY, bg: COLORS.ROSE_MIST };
+      return { icon: "✓", color: colors.PRIMARY, bg: colors.ROSE_MIST };
     case "MONTHLY_REPORT":
     case "ADMIN":
     case "SYSTEM":
     default:
-      return { icon: "i", color: COLORS.INFO, bg: COLORS.INFO_LIGHT };
+      return { icon: "i", color: colors.INFO, bg: colors.INFO_LIGHT };
   }
 }
 
 function NotificationItem({ item, onPress }) {
-  const meta = getTypeMeta(item?.type);
+  const colors = useAppColors();
+  const meta = getTypeMeta(item?.type, colors);
   const unread = !item?.isRead;
 
   return (
     <Pressable
-      style={[styles.item, unread && styles.itemUnread]}
+      style={[styles.item, { borderBottomColor: colors.BG }, unread && styles.itemUnread]}
       onPress={() => onPress(item)}
     >
       <View style={[styles.itemIcon, { backgroundColor: meta.bg }]}>
@@ -72,15 +73,15 @@ function NotificationItem({ item, onPress }) {
 
       <View style={styles.itemBody}>
         <View style={styles.itemTitleRow}>
-          <Text style={[styles.itemTitle, unread && styles.itemTitleUnread]} numberOfLines={2}>
+          <Text style={[styles.itemTitle, { color: colors.TEXT }, unread && styles.itemTitleUnread]} numberOfLines={2}>
             {item?.title || "Thông báo"}
           </Text>
-          {unread ? <View style={styles.unreadDot} /> : null}
+          {unread ? <View style={[styles.unreadDot, { backgroundColor: colors.PRIMARY }]} /> : null}
         </View>
-        <Text style={styles.itemMessage} numberOfLines={3}>
+        <Text style={[styles.itemMessage, { color: colors.TEXT_SECONDARY }]} numberOfLines={3}>
           {item?.message || ""}
         </Text>
-        <Text style={styles.itemTime}>{formatRelativeTime(item?.createdAt)}</Text>
+        <Text style={[styles.itemTime, { color: colors.TEXT_MUTED }]}>{formatRelativeTime(item?.createdAt)}</Text>
       </View>
     </Pressable>
   );
@@ -91,6 +92,7 @@ export default function NotificationModal({
   onClose,
   onUnreadCountChange
 }) {
+  const colors = useAppColors();
   const { insets } = useDynamicViewport();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -191,38 +193,38 @@ export default function NotificationModal({
           importantForAccessibility="no"
         />
 
-        <View style={styles.sheet} pointerEvents="auto">
-          <View style={styles.header}>
+        <View style={[styles.sheet, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]} pointerEvents="auto">
+          <View style={[styles.header, { backgroundColor: colors.INFO_LIGHT }]}>
             <View>
-              <Text style={styles.title}>Thông báo</Text>
+              <Text style={[styles.title, { color: colors.TEXT }]}>Thông báo</Text>
             </View>
             <Pressable
-              style={styles.closeButton}
+              style={[styles.closeButton, { backgroundColor: colors.CARD }]}
               onPress={onClose}
               accessibilityRole="button"
               accessibilityLabel="Đóng"
             >
-              <Text style={styles.closeText}>×</Text>
+              <Text style={[styles.closeText, { color: colors.TEXT }]}>×</Text>
             </Pressable>
           </View>
 
-          <View style={styles.toolbar}>
-            <Text style={styles.countText}>
+          <View style={[styles.toolbar, { borderBottomColor: colors.CARD_BORDER }]}>
+            <Text style={[styles.countText, { color: colors.TEXT_SECONDARY }]}>
               {unreadCount > 0 ? `${unreadCount} thông báo chưa đọc` : "Bạn đã đọc hết thông báo"}
             </Text>
             {unreadCount > 0 ? (
               <Pressable onPress={markAllAsRead}>
-                <Text style={styles.markAllText}>Đọc tất cả</Text>
+                <Text style={[styles.markAllText, { color: colors.PRIMARY }]}>Đọc tất cả</Text>
               </Pressable>
             ) : null}
           </View>
 
-          {error ? <Text style={styles.errorText}>{error}</Text> : null}
+          {error ? <Text style={[styles.errorText, { color: colors.EXPENSE, backgroundColor: colors.EXPENSE_LIGHT }]}>{error}</Text> : null}
 
           {loading ? (
             <View style={styles.loadingWrap}>
-              <ActivityIndicator color={COLORS.PRIMARY} />
-              <Text style={styles.loadingText}>Đang tải thông báo...</Text>
+              <ActivityIndicator color={colors.PRIMARY} />
+              <Text style={[styles.loadingText, { color: colors.TEXT_SECONDARY }]}>Đang tải thông báo...</Text>
             </View>
           ) : (
             <FlatList
@@ -239,16 +241,17 @@ export default function NotificationModal({
                 <RefreshControl
                   refreshing={refreshing}
                   onRefresh={() => fetchNotifications({ silent: true })}
-                  tintColor={COLORS.PRIMARY}
+                  tintColor={colors.PRIMARY}
+                  colors={[colors.PRIMARY]}
                 />
               }
               ListEmptyComponent={
                 <View style={styles.emptyState}>
-                  <View style={styles.emptyIcon}>
+                  <View style={[styles.emptyIcon, { backgroundColor: colors.ROSE_MIST }]}>
                     <Text style={styles.emptyIconText}>🔔</Text>
                   </View>
-                  <Text style={styles.emptyTitle}>Chưa có thông báo nào</Text>
-                  <Text style={styles.emptyMessage}>
+                  <Text style={[styles.emptyTitle, { color: colors.TEXT }]}>Chưa có thông báo nào</Text>
+                  <Text style={[styles.emptyMessage, { color: colors.TEXT_SECONDARY }]}>
                     Khi có cập nhật mới từ hệ thống, thông báo sẽ xuất hiện tại đây.
                   </Text>
                 </View>

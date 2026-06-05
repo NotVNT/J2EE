@@ -23,17 +23,17 @@ export default function IncomeSummaryCard({
       <Text style={[styles.summaryHint, { color: colors.TEXT_SECONDARY }]}>{incomeCount} giao dịch</Text>
 
       <View style={styles.actionRowMain}>
-        <Pressable style={[styles.addButtonMain, { backgroundColor: colors.PRIMARY }]} onPress={onAddIncome}>
+        <Pressable style={[styles.addButtonMain, { backgroundColor: colors.ACTION_INCOME || colors.INCOME }]} onPress={onAddIncome}>
           <Text style={styles.addButtonText}>+ Thêm thu nhập</Text>
         </Pressable>
         <VoiceInputButton onResult={onVoiceResult} />
       </View>
       <Pressable
-        style={[styles.exportButton, { backgroundColor: colors.BG, borderColor: colors.PRIMARY_LIGHT }, isExporting && styles.exportButtonDisabled]}
+        style={[styles.exportButton, { backgroundColor: colors.BG, borderColor: colors.INCOME_LIGHT }, isExporting && styles.exportButtonDisabled]}
         onPress={onExport}
         disabled={isExporting}
       >
-        <Text style={[styles.exportText, { color: colors.PRIMARY }]}> 
+        <Text style={[styles.exportText, { color: colors.ACTION_INCOME || colors.INCOME }]}> 
           {isExporting
             ? "Đang tạo báo cáo..."
             : filterType === INCOME_FILTER_TYPES.all

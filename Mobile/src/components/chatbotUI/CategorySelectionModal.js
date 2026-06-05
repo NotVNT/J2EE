@@ -1,16 +1,18 @@
 import React from "react";
 import { FlatList, Modal, Pressable, StyleSheet, Text, View } from "react-native";
-import { COLORS } from "../../constants/colors";
+import { COLORS, useAppColors } from "../../constants/colors";
 
 export default function CategorySelectionModal({ categories, onClose, onSelect, visible }) {
+  const colors = useAppColors();
+
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Chọn Danh mục</Text>
+      <View style={[styles.modalOverlay, { backgroundColor: colors.OVERLAY }]}>
+        <View style={[styles.modalContent, { backgroundColor: colors.CARD }]}>
+          <View style={[styles.modalHeader, { borderBottomColor: colors.CARD_BORDER }]}>
+            <Text style={[styles.modalTitle, { color: colors.TEXT }]}>Chọn Danh mục</Text>
             <Pressable style={styles.modalCloseBtn} onPress={onClose}>
-              <Text style={styles.modalCloseText}>✕</Text>
+              <Text style={[styles.modalCloseText, { color: colors.TEXT_MUTED }]}>✕</Text>
             </Pressable>
           </View>
 
@@ -19,12 +21,12 @@ export default function CategorySelectionModal({ categories, onClose, onSelect, 
             keyExtractor={(item) => String(item.id)}
             contentContainerStyle={styles.categoryList}
             renderItem={({ item }) => (
-              <Pressable style={styles.categoryItem} onPress={() => onSelect(item.name)}>
+              <Pressable style={[styles.categoryItem, { borderBottomColor: colors.CARD_BORDER }]} onPress={() => onSelect(item.name)}>
                 <Text style={styles.categoryIcon}>{item.icon || "📁"}</Text>
-                <Text style={styles.categoryName}>{item.name}</Text>
+                <Text style={[styles.categoryName, { color: colors.TEXT }]}>{item.name}</Text>
               </Pressable>
             )}
-            ListEmptyComponent={<Text style={styles.emptyCategories}>Không có danh mục nào.</Text>}
+            ListEmptyComponent={<Text style={[styles.emptyCategories, { color: colors.TEXT_MUTED }]}>Không có danh mục nào.</Text>}
           />
         </View>
       </View>

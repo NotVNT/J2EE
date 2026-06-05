@@ -24,11 +24,11 @@ export default function IncomeFilterTabs({ filterType, onChange }) {
                 styles.filterChip,
                 { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER },
                 index === FILTER_OPTIONS.length - 1 && styles.filterChipLast,
-                isActive && { backgroundColor: colors.ROSE_MIST, borderColor: colors.PRIMARY }
+                isActive && { backgroundColor: colors.INCOME_LIGHT, borderColor: colors.ACTION_INCOME || colors.INCOME }
               ]}
               onPress={() => onChange(option.value)}
             >
-              <Text style={[styles.filterChipText, { color: isActive ? colors.PRIMARY : colors.TEXT }]}>{option.label}</Text>
+              <Text style={[styles.filterChipText, { color: isActive ? (colors.ACTION_INCOME || colors.INCOME) : colors.TEXT }]}>{option.label}</Text>
             </Pressable>
           );
         })}
@@ -69,8 +69,8 @@ const styles = StyleSheet.create({
     marginRight: 0
   },
   filterChipActive: {
-    borderColor: COLORS.PRIMARY,
-    backgroundColor: COLORS.ROSE_MIST
+    borderColor: "#22C55E",
+    backgroundColor: "rgba(34,197,94,0.15)"
   },
   filterChipText: {
     color: COLORS.TEXT,
@@ -78,6 +78,6 @@ const styles = StyleSheet.create({
     fontSize: 12
   },
   filterChipTextActive: {
-    color: COLORS.PRIMARY
+    color: "#22C55E"
   }
 });

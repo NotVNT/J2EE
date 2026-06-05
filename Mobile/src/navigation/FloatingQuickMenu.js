@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
   Easing,
@@ -9,66 +9,91 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAppColors } from "../constants/colors";
+import AppIcon from "../components/ui/AppIcon";
+import { LinearGradient } from "expo-linear-gradient";
 
-// ─── Speed Dial sub-actions ──────────────────────────────
+// ─── Speed Dial sub-actions with SpendBee colors & icons ───
 const SUB_ACTIONS = [
   {
     key: "Income",
-    icon: "💰",
-    label: "Thêm thu nhập",
-    tx: -160,
-    ty: -80,
-    color: "#43A047",
+    icon: "wallet-outline",
+    label: "Thu nhập",
+    tx: -110,
+    ty: -25,
+    color: "#22C55E", // SpendBee green
   },
   {
     key: "Budget",
-    icon: "🎯",
+    icon: "pie-chart-outline",
     label: "Ngân sách",
-    tx: -80,
-    ty: -125,
-    color: "#7E57C2",
+    tx: -75,
+    ty: -85,
+    color: "#A855F7", // SpendBee purple
   },
   {
     key: "Forecast",
-    icon: "🔮",
+    icon: "trending-up-outline",
     label: "Dự báo",
     tx: 0,
-    ty: -148,
-    color: "#26A69A",
+    ty: -115,
+    color: "#26A69A", // SpendBee teal
   },
   {
     key: "Goal",
-    icon: "🎯",
-    label: "Thêm mục tiêu",
-    tx: 80,
-    ty: -125,
-    color: "#E53935",
+    icon: "flag-outline",
+    label: "Mục tiêu",
+    tx: 75,
+    ty: -85,
+    color: "#3B82F6", // SpendBee blue
   },
   {
     key: "Chat",
-    icon: "🤖",
+    icon: "chatbubble-ellipses-outline",
     label: "Chat AI",
-    tx: 160,
-    ty: -80,
-    color: "#8E24AA",
+    tx: 110,
+    ty: -25,
+    color: "#7C4DFF", // SpendBee violet
   },
 ];
 
 // ─── FAB button (inside tab bar) ─────────────────────────
 export function FloatingTabButton({ onPress, isOpen }) {
   const colors = useAppColors();
+  
+  // Staggered rotate animation for main FAB icon
+  const rotateAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(rotateAnim, {
+      toValue: isOpen ? 1 : 0,
+      duration: 220,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [isOpen]);
+
+  const rotation = rotateAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0deg", "135deg"],
+  });
+
   return (
-    <Pressable
-      style={[
-        styles.fabMain,
-        {
-          backgroundColor: colors.PRIMARY,
-          shadowColor: colors.PRIMARY,
-        },
-      ]}
-      onPress={onPress}
-    >
-      <Text style={[styles.fabMainIcon, { color: colors.DARK_TEXT }]}>{isOpen ? "✕" : "＋"}</Text>
+    <Pressable onPress={onPress}>
+      <LinearGradient
+        colors={['#7C4DFF', '#A855F7']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[
+          styles.fabMain,
+          {
+            shadowColor: '#7C4DFF',
+          },
+        ]}
+      >
+        <Animated.View style={{ transform: [{ rotate: rotation }] }}>
+          <AppIcon name="add" size={28} color={colors.WHITE || '#FFFFFF'} />
+        </Animated.View>
+      </LinearGradient>
     </Pressable>
   );
 }
@@ -79,7 +104,10 @@ export default function FloatingQuickMenu({ visible, onClose, onSelectRoute, foc
   const insets = useSafeAreaInsets();
   const colors = useAppColors();
 
-  // one animated value set per sub-button
+  // Control mount state to play closing animation before unmounting
+  const [active, setActive] = useState(false);
+
+  // Staggered animated values for each sub-button
   const animations = useRef(
     SUB_ACTIONS.map(() => ({
       tx: new Animated.Value(0),
@@ -91,64 +119,96 @@ export default function FloatingQuickMenu({ visible, onClose, onSelectRoute, foc
 
   useEffect(() => {
     if (visible) {
-      Animated.timing(overlayOpacity, {
-        toValue: 1,
-        duration: 200,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }).start();
-
-      const fanOut = animations.map((anim, i) => {
-        const delay = i * 60;
-        return Animated.sequence([
-          Animated.delay(delay),
-          Animated.parallel([
-            Animated.spring(anim.tx, {
-              toValue: SUB_ACTIONS[i].tx,
-              friction: 6,
-              tension: 100,
-              useNativeDriver: true,
-            }),
-            Animated.spring(anim.ty, {
-              toValue: SUB_ACTIONS[i].ty,
-              friction: 6,
-              tension: 100,
-              useNativeDriver: true,
-            }),
-            Animated.spring(anim.scale, {
-              toValue: 1,
-              friction: 6,
-              tension: 100,
-              useNativeDriver: true,
-            }),
-            Animated.timing(anim.opacity, {
-              toValue: 1,
-              duration: 180,
-              useNativeDriver: true,
-            }),
-          ]),
-        ]);
-      });
-
-      Animated.parallel(fanOut).start();
+      setActive(true);
+      
+      // Fan out animation (springy & staggered)
+      Animated.parallel([
+        Animated.timing(overlayOpacity, {
+          toValue: 1,
+          duration: 200,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.stagger(
+          40,
+          animations.map((anim, i) =>
+            Animated.parallel([
+              Animated.spring(anim.tx, {
+                toValue: SUB_ACTIONS[i].tx,
+                friction: 6.5,
+                tension: 80,
+                useNativeDriver: true,
+              }),
+              Animated.spring(anim.ty, {
+                toValue: SUB_ACTIONS[i].ty,
+                friction: 6.5,
+                tension: 80,
+                useNativeDriver: true,
+              }),
+              Animated.spring(anim.scale, {
+                toValue: 1,
+                friction: 6.5,
+                tension: 80,
+                useNativeDriver: true,
+              }),
+              Animated.timing(anim.opacity, {
+                toValue: 1,
+                duration: 180,
+                useNativeDriver: true,
+              }),
+            ])
+          )
+        ),
+      ]).start();
     } else {
-      Animated.timing(overlayOpacity, {
-        toValue: 0,
-        duration: 150,
-        easing: Easing.in(Easing.cubic),
-        useNativeDriver: true,
-      }).start();
-
-      animations.forEach((anim) => {
-        anim.tx.setValue(0);
-        anim.ty.setValue(0);
-        anim.scale.setValue(0);
-        anim.opacity.setValue(0);
+      // Fan in animation
+      Animated.parallel([
+        Animated.timing(overlayOpacity, {
+          toValue: 0,
+          duration: 180,
+          easing: Easing.in(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.stagger(
+          30,
+          animations.map((anim) =>
+            Animated.parallel([
+              Animated.timing(anim.tx, {
+                toValue: 0,
+                duration: 180,
+                easing: Easing.in(Easing.cubic),
+                useNativeDriver: true,
+              }),
+              Animated.timing(anim.ty, {
+                toValue: 0,
+                duration: 180,
+                easing: Easing.in(Easing.cubic),
+                useNativeDriver: true,
+              }),
+              Animated.timing(anim.scale, {
+                toValue: 0,
+                duration: 180,
+                easing: Easing.in(Easing.cubic),
+                useNativeDriver: true,
+              }),
+              Animated.timing(anim.opacity, {
+                toValue: 0,
+                duration: 150,
+                useNativeDriver: true,
+              }),
+            ])
+          )
+        ),
+      ]).start(() => {
+        setActive(false);
       });
     }
-  }, [visible, overlayOpacity, animations]);
+  }, [visible]);
 
-  if (!visible) return null;
+  if (!visible && !active) return null;
+
+  // Calculate bottom anchor centered with the FAB button
+  const bottomOffset = Math.max(insets.bottom, 8) + 36;
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
@@ -158,63 +218,71 @@ export default function FloatingQuickMenu({ visible, onClose, onSelectRoute, foc
       </Animated.View>
 
       {/* Safe area for interactive floating buttons */}
-      <View
-        style={[
-          styles.safeArea,
-          {
-            paddingTop: insets.top,
-            paddingBottom: insets.bottom,
-            paddingLeft: insets.left,
-            paddingRight: insets.right,
-          },
-        ]}
-        pointerEvents="box-none"
-      >
-        {/* Sub-buttons anchored at center-bottom, above tab bar */}
-        <View style={styles.subButtonsContainer} pointerEvents="box-none">
-        {SUB_ACTIONS.map((action, i) => {
-          const anim = animations[i];
-          return (
-            <Animated.View
-              key={action.key}
-              style={[
-                styles.subButtonWrapper,
-                {
-                  transform: [
-                    { translateX: anim.tx },
-                    { translateY: anim.ty },
-                    { scale: anim.scale },
-                  ],
-                  opacity: anim.opacity,
-                },
-              ]}
-            >
-              <Pressable
+      <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+        <View style={[styles.subButtonsContainer, { bottom: bottomOffset }]} pointerEvents="box-none">
+          {SUB_ACTIONS.map((action, i) => {
+            const anim = animations[i];
+            const isFocused = focusedKey === action.key;
+
+            return (
+              <Animated.View
+                key={action.key}
                 style={[
-                  styles.subButton,
-                  styles[`blob${i}`],
-                  { backgroundColor: action.color },
-                  focusedKey === action.key && styles.subButtonFocused,
+                  styles.subButtonWrapper,
+                  {
+                    transform: [
+                      { translateX: anim.tx },
+                      { translateY: anim.ty },
+                      { scale: anim.scale },
+                    ],
+                    opacity: anim.opacity,
+                  },
                 ]}
-                onPress={() => onSelectRoute(action.key)}
+                pointerEvents="box-none"
               >
-                <Text style={styles.subIcon}>{action.icon}</Text>
-              </Pressable>
-              <View style={[styles.labelBubble, { backgroundColor: colors.CARD }, focusedKey === action.key && styles.labelBubbleFocused]}>
-                <Text
-                  style={[styles.subLabel, { color: colors.TEXT }]}
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                  minimumFontScale={0.72}
-                  allowFontScaling={false}
+                {/* Responsive Label - Centered above the button */}
+                <View
+                  style={[
+                    styles.labelBubble,
+                    {
+                      backgroundColor: colors.CARD,
+                      borderColor: colors.CARD_BORDER,
+                      shadowColor: colors.SHADOW_COLOR || "#000",
+                    },
+                    isFocused && { backgroundColor: action.color, borderColor: action.color },
+                  ]}
                 >
-                  {action.label}
-                </Text>
-              </View>
-            </Animated.View>
-          );
-        })}
-      </View>
+                  <Text
+                    style={[
+                      styles.subLabel,
+                      { color: colors.TEXT },
+                      isFocused && { color: "#FFFFFF" },
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {action.label}
+                  </Text>
+                </View>
+
+                {/* Sub Action Circle Button */}
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.subButton,
+                    {
+                      backgroundColor: action.color,
+                      shadowColor: action.color,
+                    },
+                    isFocused && styles.subButtonFocused,
+                    pressed && { opacity: 0.85, transform: [{ scale: 0.92 }] },
+                  ]}
+                  onPress={() => onSelectRoute(action.key)}
+                >
+                  <AppIcon name={action.icon} size={22} color="#FFFFFF" />
+                </Pressable>
+              </Animated.View>
+            );
+          })}
+        </View>
       </View>
     </View>
   );
@@ -239,120 +307,69 @@ const styles = StyleSheet.create({
     elevation: 8,
     alignSelf: "center",
   },
-  fabMainIcon: {
-    fontSize: 22,
-    fontWeight: "700",
-    marginTop: -1,
-  },
 
   // ── Backdrop ──────────────────────────────────────────
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0, 0, 0, 0.35)",
-  },
-
-  // ── Safe area wrapper ─────────────────────────────────
-  safeArea: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: "flex-end",
-    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.45)",
   },
 
   // ── Sub-buttons area ──────────────────────────────────
   subButtonsContainer: {
     position: "absolute",
-    bottom: 72,
     left: 0,
     right: 0,
     alignItems: "center",
     justifyContent: "center",
-    flexDirection: "row",
   },
 
   subButtonWrapper: {
     position: "absolute",
     alignItems: "center",
+    justifyContent: "center",
+    width: 48,
+    height: 48,
   },
 
-  // ── Blob / organic shaped buttons ─────────────────────
+  // ── Circular button ────────────────────────────────────
   subButton: {
-    width: 56,
-    height: 56,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 4,
     },
     shadowOpacity: 0.22,
     shadowRadius: 6,
-    elevation: 6,
-  },
-  blob0: {
-    borderRadius: 40,
-    borderTopLeftRadius: 46,
-    borderBottomRightRadius: 32,
-    borderTopRightRadius: 28,
-    borderBottomLeftRadius: 44,
-  },
-  blob1: {
-    borderRadius: 38,
-    borderTopLeftRadius: 28,
-    borderBottomRightRadius: 46,
-    borderTopRightRadius: 44,
-    borderBottomLeftRadius: 30,
-  },
-  blob2: {
-    borderRadius: 42,
-    borderTopLeftRadius: 44,
-    borderBottomRightRadius: 28,
-    borderTopRightRadius: 32,
-    borderBottomLeftRadius: 46,
-  },
-  blob3: {
-    borderRadius: 36,
-    borderTopLeftRadius: 30,
-    borderBottomRightRadius: 48,
-    borderTopRightRadius: 40,
-    borderBottomLeftRadius: 28,
-  },
-  blob4: {
-    borderRadius: 44,
-    borderTopLeftRadius: 32,
-    borderBottomRightRadius: 40,
-    borderTopRightRadius: 46,
-    borderBottomLeftRadius: 34,
-  },
-  blob5: {
-    borderRadius: 34,
-    borderTopLeftRadius: 42,
-    borderBottomRightRadius: 34,
-    borderTopRightRadius: 28,
-    borderBottomLeftRadius: 46,
+    elevation: 5,
   },
 
-  subIcon: {
-    fontSize: 24,
-  },
-
+  // ── Label bubble centered above button ────────────────
   labelBubble: {
-    borderRadius: 12,
+    position: "absolute",
+    bottom: 54, // Perfectly elevated above the 48px button
+    alignSelf: "center",
+    borderRadius: 999,
     paddingHorizontal: 10,
-    paddingVertical: 4,
-    marginTop: 16,
-    shadowColor: "#000",
+    paddingVertical: 3.5,
+    borderWidth: 1,
     shadowOffset: {
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.12,
-    shadowRadius: 4,
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
     elevation: 3,
+    minWidth: 72,
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   subLabel: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "700",
     textAlign: "center",
   },
@@ -360,13 +377,10 @@ const styles = StyleSheet.create({
   // ── Focused sub-action ────────────────────────────────
   subButtonFocused: {
     borderWidth: 3,
-    borderColor: "#FFF",
+    borderColor: "#FFFFFF",
     transform: [{ scale: 1.1 }],
     shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 10,
-  },
-  labelBubbleFocused: {
-    backgroundColor: "#ef5e83",
+    shadowRadius: 10,
+    elevation: 8,
   },
 });

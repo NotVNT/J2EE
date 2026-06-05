@@ -17,6 +17,7 @@ export default function ForgotPasswordScreen() {
   const navigation = useNavigation();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isFocusedEmail, setIsFocusedEmail] = useState(false);
 
   const showActivationOption = (activationEmail) => {
     Alert.alert(
@@ -82,7 +83,7 @@ export default function ForgotPasswordScreen() {
         <Text style={styles.subtitle}>Nhập email để nhận liên kết đặt lại mật khẩu.</Text>
 
         <View style={styles.formCard}>
-          <View style={styles.inputWrap}>
+          <View style={[styles.inputWrap, isFocusedEmail && { borderColor: COLORS.PRIMARY }]}>
             <TextInput
               style={styles.input}
               value={email}
@@ -91,6 +92,8 @@ export default function ForgotPasswordScreen() {
               autoCapitalize="none"
               placeholder="Nhập email"
               placeholderTextColor="#7f9085"
+              onFocus={() => setIsFocusedEmail(true)}
+              onBlur={() => setIsFocusedEmail(false)}
             />
           </View>
 
@@ -139,16 +142,21 @@ const styles = StyleSheet.create({
   },
   brandRow: {
     alignSelf: "center",
-    marginBottom: scale(20)
+    marginBottom: scale(20),
+    shadowColor: COLORS.PRIMARY,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    elevation: 10,
   },
   brandLogo: {
-    width: 90,
-    height: 90
+    width: scale(100),
+    height: scale(100)
   },
   title: {
     color: COLORS.DARK_TEXT,
     fontSize: clampScale(24, 20, 28),
-    fontWeight: "700",
+    fontWeight: "800",
     textAlign: "center"
   },
   subtitle: {
@@ -163,42 +171,51 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.DARK_BORDER_LIGHT,
     backgroundColor: COLORS.DARK_CARD,
-    padding: scale(14)
+    padding: scale(16),
+    gap: scale(16)
   },
   inputWrap: {
-    borderRadius: scale(10),
-    borderWidth: 1,
-    borderColor: COLORS.DARK_BORDER,
     backgroundColor: COLORS.DARK_INPUT_BG,
-    marginBottom: scale(10)
+    borderRadius: scale(12),
+    borderWidth: 1.5,
+    borderColor: COLORS.DARK_BORDER,
+    paddingHorizontal: scale(14),
+    height: scale(48),
+    justifyContent: "center",
+    marginBottom: scale(4)
   },
   input: {
-    paddingVertical: scale(12),
-    paddingHorizontal: scale(12),
-    color: COLORS.DARK_TEXT
+    color: COLORS.DARK_TEXT,
+    fontSize: 16
   },
   actionButton: {
-    marginTop: scale(4),
-    borderRadius: scale(10),
     backgroundColor: COLORS.PRIMARY,
-    paddingVertical: scale(12),
-    alignItems: "center"
+    borderRadius: scale(12),
+    height: scale(50),
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: scale(4),
+    shadowColor: COLORS.PRIMARY,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 4,
   },
   actionButtonDisabled: {
     opacity: 0.7
   },
   actionButtonText: {
-    color: COLORS.DARK_TEXT,
-    fontSize: clampScale(15, 13, 17),
+    color: COLORS.WHITE || "#FFFFFF",
+    fontSize: clampScale(16, 14, 18),
     fontWeight: "800"
   },
   backButton: {
-    marginTop: scale(12),
+    marginTop: scale(4),
     alignItems: "center"
   },
   backButtonText: {
     color: COLORS.PRIMARY_LIGHT,
-    fontSize: clampScale(12, 10, 14),
+    fontSize: clampScale(13, 11, 15),
     fontWeight: "700"
   }
 });

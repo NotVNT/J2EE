@@ -9,33 +9,35 @@ import JarDetailView from "../../components/Jars/JarDetailView";
 import JarFormView from "../../components/Jars/JarFormView";
 import JarOverview from "../../components/Jars/JarOverview";
 import JarTransferView from "../../components/Jars/JarTransferView";
-import { COLORS, useAppColors } from "../../constants/colors";
+import { useAppColors } from "../../constants/colors";
 import useJarList from "../../hooks/useJarList";
 import { getSafeAreaBottom, getSafeAreaTop } from "../../utils/safeArea";
+import AppIcon from "../../components/ui/AppIcon";
+import EmptyState from "../../components/ui/EmptyState";
+import { scale } from "../../utils/layoutScale";
 
 function JarActions({ colors, jarCount, onCreate, onTransfer }) {
   return (
     <View style={styles.actionsRow}>
       {jarCount >= 2 && (
-        <Pressable style={[styles.secondaryButton, { backgroundColor: colors.ROSE_MIST, borderColor: colors.CARD_BORDER }]} onPress={onTransfer}>
-          <Text style={[styles.secondaryButtonText, { color: colors.PRIMARY }]}>⇅ Chuyển tiền</Text>
+        <Pressable
+          style={[styles.secondaryButton, { backgroundColor: colors.ROSE_MIST, borderColor: colors.CARD_BORDER }]}
+          onPress={onTransfer}
+        >
+          <View style={styles.btnContentRow}>
+            <AppIcon name="swap-vertical" size={16} color={colors.PRIMARY} style={styles.btnIconSpacing} />
+            <Text style={[styles.secondaryButtonText, { color: colors.PRIMARY }]}>Chuyển tiền</Text>
+          </View>
         </Pressable>
       )}
-      <Pressable style={styles.primaryButton} onPress={onCreate}>
-        <Text style={styles.primaryButtonText}>+ Tạo hũ mới</Text>
-      </Pressable>
-    </View>
-  );
-}
-
-function JarEmptyState({ colors, onCreate }) {
-  return (
-    <View style={styles.emptyState}>
-      <Text style={styles.emptyIcon}>🏺</Text>
-      <Text style={[styles.emptyTitle, { color: colors.TEXT }]}>Chưa có hũ chi tiêu nào</Text>
-      <Text style={[styles.emptyText, { color: colors.TEXT_SECONDARY }]}>Phân bổ thu nhập của bạn thành các hũ nhỏ (ví dụ: ăn uống, đi lại, tiết kiệm) để quản lý ngân sách thông minh hơn.</Text>
-      <Pressable style={styles.emptyAction} onPress={onCreate}>
-        <Text style={styles.emptyActionText}>+ Tạo hũ đầu tiên</Text>
+      <Pressable
+        style={[styles.primaryButton, { backgroundColor: colors.PRIMARY }]}
+        onPress={onCreate}
+      >
+        <View style={styles.btnContentRow}>
+          <AppIcon name="add" size={16} color="#FFF" style={styles.btnIconSpacing} />
+          <Text style={styles.primaryButtonText}>Tạo hũ mới</Text>
+        </View>
       </Pressable>
     </View>
   );
@@ -110,15 +112,29 @@ function JarListRoute() {
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.BG, paddingTop: getSafeAreaTop(insets) }]}> 
+    <View style={[styles.container, { backgroundColor: colors.BG, paddingTop: getSafeAreaTop(insets) }]}>
       <FlatList
         data={jarList.jars}
         keyExtractor={(item) => String(item.id)}
         renderItem={renderJar}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: getSafeAreaBottom(insets) }]}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: getSafeAreaBottom(insets) + scale(100) },
+          (!jarList.jars || !jarList.jars.length) && styles.listContentEmpty,
+        ]}
         refreshControl={<RefreshControl refreshing={jarList.refreshing} onRefresh={jarList.onRefresh} />}
         ListHeaderComponent={renderHeader}
-        ListEmptyComponent={!jarList.loading && <JarEmptyState colors={colors} onCreate={handleCreateJar} />}
+        ListEmptyComponent={
+          !jarList.loading && (
+            <EmptyState
+              title="Chưa có hũ chi tiêu nào"
+              description="Phân bổ thu nhập của bạn thành các hũ nhỏ (ví dụ: ăn uống, đi lại, tiết kiệm) để quản lý ngân sách thông minh hơn."
+              icon="archive-outline"
+              actionTitle="Tạo hũ đầu tiên"
+              onActionPress={handleCreateJar}
+            />
+          )
+        }
       />
     </View>
   );
@@ -127,85 +143,58 @@ function JarListRoute() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.BG
   },
   scrollContent: {
-    padding: 16,
-    paddingBottom: 40
+    padding: scale(14),
+    paddingBottom: scale(100)
+  },
+  listContentEmpty: {
+    flexGrow: 1,
+    justifyContent: "center",
   },
   listHeader: {
-    marginTop: 8,
-    marginBottom: 10
+    marginTop: scale(8),
+    marginBottom: scale(10)
   },
   listTitle: {
     fontSize: 16,
     fontWeight: "800",
-    color: COLORS.TEXT
   },
   actionsRow: {
     flexDirection: "row",
-    gap: 8,
-    marginBottom: 12
+    gap: scale(8),
+    marginBottom: scale(12)
   },
   primaryButton: {
     flex: 1,
-    backgroundColor: COLORS.PRIMARY,
-    borderRadius: 12,
-    paddingVertical: 12,
+    borderRadius: scale(12),
+    paddingVertical: scale(12),
     alignItems: "center",
     justifyContent: "center"
   },
   primaryButtonText: {
-    color: COLORS.WHITE,
+    color: "#FFF",
     fontWeight: "800",
     fontSize: 14
   },
   secondaryButton: {
     flex: 1,
-    backgroundColor: COLORS.ROSE_MIST,
     borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
-    borderRadius: 12,
-    paddingVertical: 12,
+    borderRadius: scale(12),
+    paddingVertical: scale(12),
     alignItems: "center",
     justifyContent: "center"
   },
   secondaryButtonText: {
-    color: COLORS.PRIMARY,
     fontWeight: "800",
     fontSize: 14
   },
-  emptyState: {
+  btnContentRow: {
+    flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 24,
-    paddingVertical: 40
+    justifyContent: "center",
   },
-  emptyIcon: {
-    fontSize: 48,
-    marginBottom: 12
+  btnIconSpacing: {
+    marginRight: scale(4),
   },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: "800",
-    color: COLORS.TEXT,
-    marginBottom: 6
-  },
-  emptyText: {
-    fontSize: 13,
-    color: COLORS.TEXT_SECONDARY,
-    lineHeight: 20,
-    textAlign: "center",
-    marginBottom: 18
-  },
-  emptyAction: {
-    backgroundColor: COLORS.PRIMARY,
-    borderRadius: 12,
-    paddingHorizontal: 20,
-    paddingVertical: 11
-  },
-  emptyActionText: {
-    color: COLORS.WHITE,
-    fontWeight: "800",
-    fontSize: 14
-  }
 });

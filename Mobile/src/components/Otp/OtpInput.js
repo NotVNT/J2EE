@@ -1,18 +1,26 @@
-import React from "react";
+import React, { useState } from "react";
 import { StyleSheet, TextInput, View } from "react-native";
 import { COLORS } from "../../constants/colors";
 
 export default function OtpInput({ otp, inputRefs, onChange, onKeyDown }) {
+  const [focusedIndex, setFocusedIndex] = useState(null);
+
   return (
     <View style={styles.otpRow}>
       {otp.map((digit, index) => (
         <TextInput
           key={index}
           ref={(ref) => (inputRefs.current[index] = ref)}
-          style={[styles.otpInput, digit ? styles.otpInputFilled : null]}
+          style={[
+            styles.otpInput,
+            digit ? styles.otpInputFilled : null,
+            focusedIndex === index ? styles.otpInputFocused : null
+          ]}
           value={digit}
           onChangeText={(value) => onChange(index, value)}
           onKeyPress={({ nativeEvent }) => onKeyDown(index, nativeEvent.key)}
+          onFocus={() => setFocusedIndex(index)}
+          onBlur={() => setFocusedIndex(null)}
           keyboardType="number-pad"
           maxLength={1}
           selectTextOnFocus
@@ -33,7 +41,7 @@ const styles = StyleSheet.create({
     height: 56,
     backgroundColor: COLORS.DARK_INPUT_BG,
     borderRadius: 12,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: COLORS.DARK_BORDER,
     textAlign: "center",
     fontSize: 22,
@@ -42,6 +50,15 @@ const styles = StyleSheet.create({
   },
   otpInputFilled: {
     borderColor: COLORS.PRIMARY,
+    borderWidth: 1.5,
+  },
+  otpInputFocused: {
+    borderColor: COLORS.PRIMARY,
     borderWidth: 2,
+    backgroundColor: COLORS.DARK_BG,
+    shadowColor: COLORS.PRIMARY,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
   },
 });

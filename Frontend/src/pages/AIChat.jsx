@@ -7,7 +7,14 @@ import { useUser } from "../hooks/useUser.jsx";
 import axiosConfig from "../util/axiosConfig.jsx";
 import Dashboard from "../components/Dashboard.jsx";
 import { API_ENDPOINTS } from "../util/apiEndpoints.js";
-import { parseIntentResponse, isCrudIntent, isActionIntent, clientTelemetry, isExportEmailIntent } from "../util/aiIntentParser.js";
+import {
+  parseIntentResponse,
+  isCrudIntent,
+  isActionIntent,
+  clientTelemetry,
+  isExportEmailIntent,
+  shouldPreferQuestionFlow,
+} from "../util/aiIntentParser.js";
 import { useNavigate } from "react-router-dom";
 import { Sparkles, TrendingUp, Zap, MessageSquare } from "lucide-react";
 import aiIcon from "../assets/logo/AI_favicon.png";
@@ -164,8 +171,8 @@ const AIChat = () => {
       abortControllerRef.current = new AbortController();
       const signal = abortControllerRef.current.signal;
       const conversationHistory = buildHistory(updatedMessages);
-      const replaceEditedSessionHistory = async (sessionId, nextMessages) => {
-        if (!isEditingExistingMessage || !sessionId) return;
+      const syncSessionHistory = async (sessionId, nextMessages) => {
+        if (!sessionId) return;
         try {
           await axiosConfig.put(
             API_ENDPOINTS.AI_CHAT_REPLACE_MESSAGES(sessionId),
@@ -183,6 +190,10 @@ const AIChat = () => {
             }
           ]);
         }
+      };
+      const replaceEditedSessionHistory = async (sessionId, nextMessages) => {
+        if (!isEditingExistingMessage) return;
+        await syncSessionHistory(sessionId, nextMessages);
       };
 
       if (selectedProvider === "gptoss") {
@@ -238,7 +249,36 @@ const AIChat = () => {
         clientTelemetry.logMissingFields(parsed.intent, parsed.missingFields, currentPage);
       }
 
-      if (isCrudIntent(parsed.intent) || isActionIntent(parsed.intent, parsed.intentType)) {
+      if (shouldPreferQuestionFlow(parsed.intent, parsed.intentType, trimmedMessage)) {
+        clientTelemetry.logQuestionFallbackOverride(parsed.intent, trimmedMessage, currentPage);
+        const { data } = await axiosConfig.post(API_ENDPOINTS.AI_CHAT, {
+          provider: activeProvider,
+          model: activeModel,
+          sessionId: resolvedSessionId,
+          saveHistory: true,
+          messages: conversationHistory,
+        }, { signal, _skipGlobalLoading: true });
+
+        const nextMessages = [
+          ...updatedMessages,
+          {
+            id: `assistant-${Date.now()}`,
+            role: "assistant",
+            content: data.reply || "Tôi đã nhận câu hỏi nhưng hiện chưa tạo được câu trả lời phù hợp.",
+            provider: data.provider || activeProvider,
+            modelUsed: data.modelUsed,
+            modelLabel: activeModelLabel,
+            isGuarded: data.provider === "nova-guard"
+          }
+        ];
+        setMessages(nextMessages);
+
+        const fallbackSessionId = data.sessionId || resolvedSessionId || activeSessionId;
+        if (data.sessionId && !activeSessionId) {
+          setActiveSessionId(data.sessionId);
+        }
+        await syncSessionHistory(fallbackSessionId, nextMessages);
+      } else if (isCrudIntent(parsed.intent) || isActionIntent(parsed.intent, parsed.intentType)) {
         // If action intent but missing required fields, still show confirmation form
         // (backend already populated missingFields Ã¢â‚¬â€ frontend should highlight them)
         setPendingIntent(parsed);

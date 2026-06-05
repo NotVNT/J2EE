@@ -1,7 +1,9 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { COLORS, useAppColors } from "../../constants/colors";
 import { formatDate } from "../../utils/format";
+import SectionHeader from "../ui/SectionHeader";
 
 export default function ForecastAISection({
   narrative,
@@ -13,7 +15,7 @@ export default function ForecastAISection({
   if (narrative) {
     return (
       <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.TEXT }]}>🤖 Phân tích AI</Text>
+        <SectionHeader title="Phân tích AI" />
         <View style={[styles.insightCard, { backgroundColor: colors.CARD, borderColor: colors.PRIMARY_LIGHT }]}> 
           <Text style={[styles.insightText, { color: colors.TEXT }]}>{narrative}</Text>
           {generatedAt ? (
@@ -28,9 +30,12 @@ export default function ForecastAISection({
     return (
       <View style={styles.section}>
         <View style={[styles.insightFallback, { backgroundColor: colors.WARNING_LIGHT, borderColor: colors.WARNING }]}> 
-          <Text style={[styles.insightFallbackText, { color: colors.TEXT }]}> 
-            ⚠️ Không thể tạo phân tích AI lúc này. Vui lòng thử lại sau.
-          </Text>
+          <View style={styles.errorRow}>
+            <Ionicons name="alert-circle-outline" size={16} color={colors.WARNING} />
+            <Text style={[styles.insightFallbackText, { color: colors.TEXT }]}> 
+              Không thể tạo phân tích AI lúc này. Vui lòng thử lại sau.
+            </Text>
+          </View>
         </View>
       </View>
     );
@@ -43,40 +48,41 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: 20,
   },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "800",
-    color: COLORS.TEXT,
-    marginBottom: 10,
-  },
   insightCard: {
-    backgroundColor: COLORS.CARD,
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: COLORS.PRIMARY_LIGHT,
-    padding: 14,
+    padding: 16,
+    shadowColor: "#000",
+    shadowOpacity: 0.03,
+    shadowRadius: 6,
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
+    elevation: 2,
   },
   insightText: {
     fontSize: 14,
-    color: COLORS.TEXT,
-    lineHeight: 21,
+    lineHeight: 22,
   },
   insightTime: {
-    fontSize: 11,
-    color: COLORS.TEXT_MUTED,
-    marginTop: 8,
+    fontSize: 10,
+    marginTop: 10,
     textAlign: "right",
   },
   insightFallback: {
-    backgroundColor: COLORS.WARNING_LIGHT,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: COLORS.WARNING,
     padding: 12,
   },
+  errorRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
   insightFallbackText: {
+    flex: 1,
     fontSize: 13,
-    color: COLORS.TEXT,
     lineHeight: 19,
   },
 });

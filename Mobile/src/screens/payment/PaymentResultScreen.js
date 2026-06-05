@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
 import { AuthContext } from "../../contexts/AuthContext";
 import { API_ENDPOINTS } from "../../constants/api";
 import apiClient from "../../services/apiClient";
@@ -80,13 +81,27 @@ export default function PaymentResultScreen() {
     };
   }, [orderCode, refreshUser, returnedStatus]);
 
+  const isSuccess = displayStatus === "PAID";
+
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.BG }]} contentContainerStyle={[styles.content, getSafeAreaContentStyle(insets)]}>
       <View style={[styles.statusCard, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}> 
-        <Text style={[styles.sectionTitle, { color: colors.TEXT }]}>Trạng thái hiện tại</Text>
-        <Text style={[styles.statusValue, { color: displayStatus === "PAID" ? colors.INCOME : colors.TEXT }]}> 
+        <View style={styles.iconContainer}>
+          <View style={[styles.statusIconWrap, { backgroundColor: isSuccess ? "rgba(42, 157, 143, 0.1)" : "rgba(231, 111, 81, 0.1)" }]}>
+            <Ionicons 
+              name={isSuccess ? "checkmark-circle" : "close-circle"} 
+              size={64} 
+              color={isSuccess ? colors.INCOME : colors.EXPENSE} 
+            />
+          </View>
+        </View>
+
+        <Text style={[styles.sectionTitle, { color: colors.TEXT }]}>Trạng thái giao dịch</Text>
+        <Text style={[styles.statusValue, { color: isSuccess ? colors.INCOME : colors.EXPENSE }]}> 
           {PAYMENT_STATUS_LABELS[displayStatus] || displayStatus}
         </Text>
+
+        <View style={[styles.divider, { backgroundColor: colors.CARD_BORDER }]} />
 
         <View style={styles.detailRow}>
           <Text style={[styles.detailLabel, { color: colors.TEXT_SECONDARY }]}>Mã đơn hàng</Text>
@@ -110,7 +125,10 @@ export default function PaymentResultScreen() {
         </View>
       ) : null}
 
-      <Pressable style={styles.homeButton} onPress={() => navigation.navigate("HomeTab")}>
+      <Pressable 
+        style={[styles.homeButton, { backgroundColor: colors.PRIMARY, shadowColor: colors.PRIMARY }]} 
+        onPress={() => navigation.navigate("HomeTab")}
+      >
         <Text style={styles.homeButtonText}>Về trang chủ</Text>
       </Pressable>
     </ScrollView>
@@ -120,66 +138,88 @@ export default function PaymentResultScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.BG
   },
   content: {
     padding: 16,
     gap: 14
   },
   statusCard: {
-    backgroundColor: COLORS.CARD,
     borderRadius: 18,
-    padding: 18,
+    padding: 24,
     borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
-    gap: 12
+    gap: 12,
+    shadowColor: "#000",
+    shadowOpacity: 0.02,
+    shadowRadius: 6,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    elevation: 2,
+  },
+  iconContainer: {
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  statusIconWrap: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    alignItems: "center",
+    justifyContent: "center",
   },
   sectionTitle: {
-    color: COLORS.TEXT,
-    fontWeight: "600"
+    fontWeight: "700",
+    textAlign: "center",
   },
   statusValue: {
-    fontSize: 20,
-    fontWeight: "700"
+    fontSize: 18,
+    fontWeight: "800",
+    textAlign: "center",
+    marginBottom: 8,
   },
-  statusPaid: {
-    color: COLORS.INCOME
-  },
-  statusNormal: {
-    color: COLORS.TEXT
+  divider: {
+    height: 1,
+    marginVertical: 8,
   },
   detailRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    gap: 12
+    gap: 12,
+    paddingVertical: 4,
   },
   detailLabel: {
-    color: COLORS.TEXT_SECONDARY
+    fontSize: 13,
   },
   detailValue: {
     flex: 1,
     textAlign: "right",
-    color: COLORS.TEXT,
-    fontWeight: "600"
+    fontWeight: "600",
+    fontSize: 13,
   },
   errorBox: {
-    backgroundColor: COLORS.EXPENSE_LIGHT,
     borderWidth: 1,
-    borderColor: "#fecaca",
     borderRadius: 14,
     padding: 14
   },
   errorText: {
-    color: COLORS.EXPENSE
+    fontSize: 13,
   },
   homeButton: {
-    backgroundColor: COLORS.PRIMARY,
     borderRadius: 12,
-    paddingVertical: 13,
-    alignItems: "center"
+    paddingVertical: 14,
+    alignItems: "center",
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    elevation: 2,
   },
   homeButtonText: {
     color: COLORS.WHITE,
-    fontWeight: "700"
+    fontWeight: "800",
+    fontSize: 15
   }
 });

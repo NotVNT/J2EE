@@ -4,19 +4,19 @@ import { COLORS, useAppColors } from "../../constants/colors";
 
 const QUICK_ACTIONS = [
   {
-    label: "💰 Gợi ý tiết kiệm",
+    label: "Gợi ý tiết kiệm",
     text: "Gợi ý cách tiết kiệm dựa trên thói quen chi tiêu của tôi",
   },
   {
-    label: "🧠 Tâm lý chi tiêu",
+    label: "Tâm lý chi tiêu",
     text: "Tại sao tôi hay mua sắm bốc đồng và làm sao để kiểm soát?",
   },
   {
-    label: "💬 Đang lo về tiền",
+    label: "Đang lo về tiền",
     text: "Tôi đang stress và lo lắng về tài chính, bạn có thể lắng nghe không?",
   },
   {
-    label: "🎯 Lên kế hoạch",
+    label: "Lên kế hoạch",
     text: "Giúp tôi lên kế hoạch tiết kiệm cho một mục tiêu lớn",
   },
 ];

@@ -17,7 +17,9 @@ import {
   DEFAULT_ALERT_TITLE,
   resolveAlertVariant
 } from "../utils/appAlertConfig";
-import { COLORS } from "../constants/colors";
+import { useAppColors } from "../constants/colors";
+import AppIcon from "../components/ui/AppIcon";
+import { scale } from "../utils/layoutScale";
 
 const originalAlert = NativeAlert.alert.bind(NativeAlert);
 let presenter = null;
@@ -63,6 +65,7 @@ NativeAlert.alert = showAlert;
 
 export function AppAlertProvider({ children }) {
   const insets = useSafeAreaInsets();
+  const colors = useAppColors();
   const [alertConfig, setAlertConfig] = useState(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.92)).current;
@@ -170,35 +173,43 @@ export function AppAlertProvider({ children }) {
               style={[
                 styles.card,
                 {
+                  backgroundColor: colors.CARD,
+                  borderColor: colors.CARD_BORDER,
                   shadowColor: visual.accent,
                   transform: [{ translateY: slideAnim }, { scale: scaleAnim }]
                 }
               ]}
             >
+              {/* Top Beam */}
               <View style={[styles.topBeam, { backgroundColor: visual.accent }]} />
+              
+              {/* Soft glow background under header */}
               <View style={[styles.glowPanel, { backgroundColor: visual.glow }]} />
 
               <View style={styles.header}>
-                <View style={[styles.iconShell, { borderColor: visual.accent }]}>
-                  <View style={[styles.iconGlow, { backgroundColor: visual.soft }]}>
-                    <View style={[styles.iconCircle, { backgroundColor: visual.accent }]}>
-                      <Text style={styles.iconText}>{visual.icon}</Text>
-                    </View>
-                  </View>
+                {/* Sleek, modern 48px circle container for vector icon */}
+                <View style={[styles.iconContainer, { backgroundColor: visual.soft }]}>
+                  <AppIcon name={visual.icon} size={24} color={visual.accent} />
                 </View>
 
                 <View style={styles.headerTextWrap}>
-                  <Text style={[styles.variantLabel, { color: visual.accent }]} numberOfLines={1}>
-                    {visual.label}
-                  </Text>
-                  <Text style={[styles.title, { color: visual.title }]} numberOfLines={2}>
+                  {/* Elegant pill badge for alert context type */}
+                  <View style={[styles.badgeContainer, { backgroundColor: visual.soft }]}>
+                    <Text style={[styles.badgeText, { color: visual.accent }]} numberOfLines={1}>
+                      {visual.label}
+                    </Text>
+                  </View>
+                  
+                  <Text style={[styles.title, { color: colors.TEXT }]} numberOfLines={2}>
                     {alertConfig.title}
                   </Text>
                 </View>
               </View>
 
               {alertConfig.message ? (
-                <Text style={styles.message}>{alertConfig.message}</Text>
+                <Text style={[styles.message, { color: colors.TEXT_SECONDARY }]}>
+                  {alertConfig.message}
+                </Text>
               ) : null}
 
               <View style={[styles.actions, actionButtons.length > 1 && styles.actionsMulti]}>
@@ -214,8 +225,12 @@ export function AppAlertProvider({ children }) {
                       key={`${button.text}-${index}`}
                       style={({ pressed }) => [
                         styles.actionButton,
+                        {
+                          backgroundColor: colors.BG,
+                          borderColor: colors.CARD_BORDER,
+                        },
                         actionButtons.length > 1 && styles.actionButtonMulti,
-                        isCancel && styles.cancelButton,
+                        isCancel && { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER },
                         (isPrimary || isDestructive) && {
                           backgroundColor: buttonAccent,
                           borderColor: buttonAccentDark
@@ -227,7 +242,8 @@ export function AppAlertProvider({ children }) {
                       <Text
                         style={[
                           styles.actionText,
-                          isCancel && styles.cancelText,
+                          { color: colors.TEXT },
+                          isCancel && { color: colors.TEXT_SECONDARY },
                           (isPrimary || isDestructive) && styles.primaryText
                         ]}
                         numberOfLines={1}
@@ -260,110 +276,84 @@ const styles = StyleSheet.create({
   },
   card: {
     width: "100%",
-    maxWidth: 390,
-    borderRadius: 26,
+    maxWidth: 340,
+    borderRadius: 24,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.34)",
-    backgroundColor: COLORS.CARD,
     overflow: "hidden",
     shadowOffset: {
       width: 0,
-      height: 22,
+      height: 12,
     },
-    shadowOpacity: Platform.OS === "ios" ? 0.26 : 0.36,
-    shadowRadius: 30,
-    elevation: 24
+    shadowOpacity: Platform.OS === "ios" ? 0.15 : 0.25,
+    shadowRadius: 16,
+    elevation: 10
   },
   topBeam: {
-    height: 7
+    height: 5
   },
   glowPanel: {
     position: "absolute",
-    top: 7,
+    top: 5,
     left: 0,
     right: 0,
-    height: 86
+    height: 76
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 20,
-    paddingTop: 22,
-    paddingBottom: 12
+    paddingTop: 20,
+    paddingBottom: 10
   },
-  iconShell: {
-    width: 72,
-    height: 72,
+  iconContainer: {
+    width: 48,
+    height: 48,
     borderRadius: 24,
-    borderWidth: 1,
-    backgroundColor: "rgba(255, 255, 255, 0.78)",
     alignItems: "center",
     justifyContent: "center",
     marginRight: 14
   },
-  iconGlow: {
-    width: 58,
-    height: 58,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center"
-  },
-  iconCircle: {
-    width: 42,
-    height: 42,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowOffset: {
-      width: 0,
-      height: 10,
-    },
-    shadowOpacity: 0.18,
-    shadowRadius: 14,
-    elevation: 8
-  },
-  iconText: {
-    color: COLORS.WHITE,
-    fontSize: 24,
-    fontWeight: "900"
-  },
   headerTextWrap: {
-    flex: 1
+    flex: 1,
+    alignItems: "flex-start",
   },
-  variantLabel: {
-    fontSize: 12,
-    fontWeight: "900",
+  badgeContainer: {
+    paddingHorizontal: 8,
+    paddingVertical: 3.5,
+    borderRadius: 999,
+    marginBottom: 6,
+  },
+  badgeText: {
+    fontSize: 9.5,
+    fontWeight: "800",
     textTransform: "uppercase",
-    marginBottom: 4
+    letterSpacing: 0.5,
   },
   title: {
-    fontSize: 21,
-    fontWeight: "900",
-    lineHeight: 26
+    fontSize: 18,
+    fontWeight: "800",
+    lineHeight: 22
   },
   message: {
     marginHorizontal: 20,
-    marginTop: 2,
-    color: COLORS.TEXT_SECONDARY,
-    fontSize: 15,
-    lineHeight: 22
+    marginTop: 4,
+    fontSize: 14,
+    lineHeight: 20
   },
   actions: {
     width: "100%",
     paddingHorizontal: 20,
-    paddingTop: 22,
-    paddingBottom: 20
+    paddingTop: 18,
+    paddingBottom: 18
   },
   actionsMulti: {
     flexDirection: "row",
     gap: 10
   },
   actionButton: {
-    minHeight: 48,
-    borderRadius: 16,
+    minHeight: 44,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
-    backgroundColor: COLORS.BG,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 14
@@ -371,20 +361,12 @@ const styles = StyleSheet.create({
   actionButtonMulti: {
     flex: 1
   },
-  cancelButton: {
-    backgroundColor: COLORS.CARD,
-    borderColor: COLORS.CARD_BORDER
-  },
   actionText: {
-    color: COLORS.TEXT,
     fontSize: 14,
-    fontWeight: "900"
-  },
-  cancelText: {
-    color: COLORS.TEXT_SECONDARY
+    fontWeight: "800"
   },
   primaryText: {
-    color: COLORS.WHITE
+    color: "#FFFFFF"
   },
   buttonPressed: {
     opacity: 0.86,

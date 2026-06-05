@@ -826,6 +826,7 @@ const Jars = () => {
                     key={jar.id}
                     jar={jar}
                     totalBalance={totalBalance}
+                    totalAbsBalance={totalAbsBalance}
                     onClick={() => setSelectedJarId(jar.id)}
                     onEdit={() => setEditJar(jar)}
                     onDelete={() => setDeleteAlert({ show: true, id: jar.id })}

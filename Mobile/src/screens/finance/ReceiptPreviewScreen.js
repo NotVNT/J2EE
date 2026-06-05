@@ -8,6 +8,7 @@ import ReceiptSummaryCard from "../../components/Receipt/ReceiptSummaryCard";
 import { COLORS, useAppColors } from "../../constants/colors";
 import useReceiptPreview from "../../hooks/useReceiptPreview";
 import { getSafeAreaBottom, getSafeAreaTop } from "../../utils/safeArea";
+import { scale } from "../../utils/layoutScale";
 
 export default function ReceiptPreviewScreen() {
   const navigation = useNavigation();
@@ -44,7 +45,7 @@ export default function ReceiptPreviewScreen() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.BG, paddingTop: getSafeAreaTop(insets) }]}> 
+    <View style={[styles.container, { backgroundColor: colors.APP_BACKGROUND || colors.BG, paddingTop: getSafeAreaTop(insets) }]}> 
       <ReceiptSummaryCard
         itemCount={items.length}
         location={receiptMeta.location}
@@ -92,15 +93,15 @@ function ReceiptPreviewEmptyState({ onBack }) {
   const colors = useAppColors();
 
   return (
-    <View style={[styles.emptyContainer, { backgroundColor: colors.BG }]}> 
+    <View style={[styles.emptyContainer, { backgroundColor: colors.APP_BACKGROUND || colors.BG }]}> 
       <Text style={styles.emptyIcon}>🧾</Text>
       <Text style={[styles.emptyTitle, { color: colors.TEXT }]}>Không nhận diện được khoản chi</Text>
       <Text style={[styles.emptyText, { color: colors.TEXT_SECONDARY }]}> 
         Gemini không tìm thấy mặt hàng nào trong ảnh.{"\n"}
         Hãy thử lại với ảnh rõ hơn hoặc nhập tay.
       </Text>
-      <Pressable style={styles.backButton} onPress={onBack}>
-        <Text style={styles.backButtonText}>← Quay lại</Text>
+      <Pressable style={[styles.backButton, { backgroundColor: colors.PRIMARY }]} onPress={onBack}>
+        <Text style={[styles.backButtonText, { color: colors.WHITE || "#FFFFFF" }]}>← Quay lại</Text>
       </Pressable>
     </View>
   );
@@ -111,15 +112,15 @@ function ReceiptPreviewFooter({ itemCount, onCancel, onConfirm, submitting }) {
 
   return (
     <View style={[styles.footer, { backgroundColor: colors.CARD, borderTopColor: colors.CARD_BORDER }]}> 
-      <Pressable style={styles.confirmButton} onPress={onConfirm} disabled={submitting}>
+      <Pressable style={[styles.confirmButton, { backgroundColor: colors.PRIMARY }]} onPress={onConfirm} disabled={submitting}>
         {submitting ? (
-          <ActivityIndicator color={colors.WHITE} size="small" />
+          <ActivityIndicator color={colors.WHITE || "#FFFFFF"} size="small" />
         ) : (
-          <Text style={styles.confirmButtonText}>✅ Xác nhận lưu ({itemCount} mục)</Text>
+          <Text style={[styles.confirmButtonText, { color: colors.WHITE || "#FFFFFF" }]}>✅ Xác nhận lưu ({itemCount} mục)</Text>
         )}
       </Pressable>
 
-      <Pressable style={[styles.cancelButton, { borderColor: colors.CARD_BORDER }]} onPress={onCancel} disabled={submitting}>
+      <Pressable style={[styles.cancelButton, { borderColor: colors.BORDER || colors.CARD_BORDER }]} onPress={onCancel} disabled={submitting}>
         <Text style={[styles.cancelButtonText, { color: colors.TEXT_SECONDARY }]}>Hủy</Text>
       </Pressable>
     </View>
@@ -129,88 +130,75 @@ function ReceiptPreviewFooter({ itemCount, onCancel, onConfirm, submitting }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.BG
   },
   list: {
     flex: 1
   },
   listContent: {
-    padding: 16,
-    paddingTop: 8,
-    gap: 12,
-    paddingBottom: 24
+    padding: scale(16),
+    paddingTop: scale(8),
+    gap: scale(12),
+    paddingBottom: scale(24)
   },
   emptyContainer: {
     flex: 1,
-    backgroundColor: COLORS.BG,
     justifyContent: "center",
     alignItems: "center",
-    padding: 32
+    padding: scale(32)
   },
   emptyIcon: {
-    fontSize: 56,
-    marginBottom: 16
+    fontSize: scale(56),
+    marginBottom: scale(16)
   },
   emptyTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: COLORS.TEXT,
-    marginBottom: 8,
+    marginBottom: scale(8),
     textAlign: "center"
   },
   emptyText: {
     fontSize: 14,
-    color: COLORS.TEXT_SECONDARY,
     textAlign: "center",
-    marginBottom: 24,
-    lineHeight: 20
+    marginBottom: scale(24),
+    lineHeight: scale(20)
   },
   backButton: {
-    backgroundColor: COLORS.PRIMARY,
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 28
+    borderRadius: scale(12),
+    paddingVertical: scale(12),
+    paddingHorizontal: scale(28)
   },
   backButtonText: {
-    color: COLORS.WHITE,
     fontWeight: "700",
     fontSize: 15
   },
   footer: {
-    padding: 16,
-    backgroundColor: COLORS.CARD,
+    padding: scale(16),
     borderTopWidth: 1,
-    borderTopColor: COLORS.CARD_BORDER,
-    gap: 10
+    gap: scale(10)
   },
   confirmButton: {
-    backgroundColor: COLORS.PRIMARY,
-    borderRadius: 14,
-    paddingVertical: 14,
+    borderRadius: scale(14),
+    paddingVertical: scale(14),
     alignItems: "center",
-    shadowColor: COLORS.PRIMARY,
     shadowOpacity: 0.25,
-    shadowRadius: 8,
+    shadowRadius: scale(8),
     shadowOffset: {
       width: 0,
-      height: 4,
+      height: scale(4),
     },
     elevation: 3
   },
   confirmButtonText: {
-    color: COLORS.WHITE,
     fontWeight: "800",
     fontSize: 16
   },
   cancelButton: {
-    borderRadius: 14,
-    paddingVertical: 12,
+    borderRadius: scale(14),
+    paddingVertical: scale(12),
     alignItems: "center",
     borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER
   },
   cancelButtonText: {
-    color: COLORS.TEXT_SECONDARY,
     fontWeight: "600",
     fontSize: 14
   }

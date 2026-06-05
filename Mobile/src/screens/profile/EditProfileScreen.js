@@ -45,7 +45,7 @@ export default function EditProfileScreen() {
         />
 
         <Pressable
-          style={[styles.saveButton, form.saving && styles.saveButtonDisabled]}
+          style={[styles.saveButton, { backgroundColor: colors.PRIMARY, shadowColor: colors.PRIMARY }, form.saving && styles.saveButtonDisabled]}
           onPress={form.onSave}
           disabled={form.saving}
         >

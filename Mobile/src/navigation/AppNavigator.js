@@ -15,8 +15,10 @@ import ForgotPasswordOtpScreen from "../screens/auth/ForgotPasswordOtpScreen";
 import ResetPasswordScreen from "../screens/auth/ResetPasswordScreen";
 import VerifyOtpScreen from "../screens/auth/VerifyOtpScreen";
 import OnboardingScreen, { ONBOARDING_KEY } from "../screens/onboarding/OnboardingScreen";
+import { appNavigationRef } from "./navigationRef";
 
 const Stack = createNativeStackNavigator();
+
 
 const linking = {
   prefixes: ["moneymanager://"],
@@ -152,7 +154,10 @@ export default function AppNavigator() {
   }
 
   return (
-    <NavigationContainer linking={linking}>
+    <NavigationContainer
+      linking={linking}
+      ref={(nav) => { appNavigationRef.current = nav; }}
+    >
       {user ? <MainTabs /> : <AuthStack shouldShowOnboarding={shouldShowOnboarding} />}
     </NavigationContainer>
   );

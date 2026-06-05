@@ -1,5 +1,6 @@
 import React from "react";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { COLORS, useAppColors } from "../../constants/colors";
 import AIConfirmationForm from "./AIConfirmationForm";
 import appLogo from "../../assets/applogo.png";
@@ -28,13 +29,13 @@ export default function MessageBubble({ message, onConfirm, onCancel, onUndo, on
       
       {isUser && onEditMessage && (
         <Pressable
-          style={styles.editButton}
+          style={[styles.editButton, { borderColor: colors.CARD_BORDER }]}
           onPress={() => onEditMessage(message)}
           hitSlop={8}
           accessibilityRole="button"
           accessibilityLabel="Chỉnh sửa tin nhắn"
         >
-          <Text style={styles.editIcon}>✏️</Text>
+          <Ionicons name="create-outline" size={14} color={colors.TEXT_MUTED} />
         </Pressable>
       )}
 
@@ -42,7 +43,7 @@ export default function MessageBubble({ message, onConfirm, onCancel, onUndo, on
         <View
           style={[
             styles.bubble,
-            isUser ? styles.userBubble : [styles.botBubble, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }],
+            isUser ? [styles.userBubble, { backgroundColor: colors.PRIMARY, borderColor: colors.PRIMARY }] : [styles.botBubble, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }],
             isSystem && [styles.systemBubble, { backgroundColor: colors.ROSE_MIST, borderColor: colors.CARD_BORDER }],
             isError && styles.errorBubble,
           ]}
@@ -72,9 +73,12 @@ export default function MessageBubble({ message, onConfirm, onCancel, onUndo, on
           {/* Action Undo Button */}
           {message.isUndoAction && (
             <View style={styles.undoContainer}>
-              <Text style={styles.undoText}>{message.text}</Text>
+              <Text style={[styles.undoText, { color: colors.TEXT }]}>{message.text}</Text>
               <Pressable style={styles.undoBtn} onPress={() => onUndo(message.operationId)}>
-                <Text style={styles.undoBtnText}>↩ Hoàn tác</Text>
+                <View style={styles.btnIconRow}>
+                  <Ionicons name="arrow-undo-outline" size={14} color="#4cdad9" />
+                  <Text style={styles.undoBtnText}> Hoàn tác</Text>
+                </View>
               </Pressable>
             </View>
           )}
@@ -84,7 +88,7 @@ export default function MessageBubble({ message, onConfirm, onCancel, onUndo, on
             <Text
               style={[
                 styles.messageText,
-                isUser ? [styles.userText, { color: colors.TEXT }] : isError ? styles.errorText : [styles.botText, { color: colors.TEXT }],
+                isUser ? [styles.userText, { color: COLORS.WHITE }] : isError ? styles.errorText : [styles.botText, { color: colors.TEXT }],
               ]}
             >
               {isUser ? message.text : cleanMarkdown(message.text)}
@@ -104,7 +108,8 @@ export default function MessageBubble({ message, onConfirm, onCancel, onUndo, on
               accessibilityRole="button"
               accessibilityLabel="Thử lại tin nhắn"
             >
-              <Text style={styles.retryBtnText}>🔄 Thử lại</Text>
+              <Ionicons name="refresh-outline" size={14} color={colors.PRIMARY} />
+              <Text style={[styles.retryBtnText, { color: colors.PRIMARY }]}> Thử lại</Text>
             </Pressable>
           )}
         </View>
@@ -120,7 +125,7 @@ function AssistantAvatar() {
   const colors = useAppColors();
 
   return (
-    <View style={[styles.assistantAvatar, { backgroundColor: colors.ROSE_MIST, shadowColor: colors.PRIMARY }]}> 
+    <View style={[styles.assistantAvatar, { backgroundColor: colors.ROSE_MIST, borderColor: colors.PRIMARY_LIGHT, shadowColor: colors.PRIMARY }]}> 
       <Image source={appLogo} style={styles.assistantAvatarImage} resizeMode="cover" />
     </View>
   );
@@ -141,16 +146,12 @@ const styles = StyleSheet.create({
   },
   editButton: {
     padding: 8,
-    marginRight: 4,
+    marginRight: 8,
     borderRadius: 16,
     backgroundColor: "rgba(255, 255, 255, 0.05)",
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.08)"
-  },
-  editIcon: {
-    fontSize: 12
   },
   messageColumn: {
     maxWidth: "80%",
@@ -160,61 +161,56 @@ const styles = StyleSheet.create({
     alignItems: "flex-end"
   },
   bubble: {
-    borderRadius: 20,
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderWidth: 1,
     shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
     shadowOffset: {
       width: 0,
-      height: 3,
+      height: 2,
     },
     elevation: 1
   },
   botBubble: {
-    backgroundColor: COLORS.CARD,
-    borderColor: COLORS.CARD_BORDER,
-    borderTopLeftRadius: 4
+    borderTopLeftRadius: 4,
+    borderTopRightRadius: 20,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
   },
   userBubble: {
-    backgroundColor: "rgba(232, 89, 126, 0.16)", // Blushing pink translucent from mockup brand pink
-    borderColor: "rgba(232, 89, 126, 0.28)",
-    borderTopRightRadius: 4
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 4,
   },
   systemBubble: {
-    backgroundColor: COLORS.ROSE_MIST,
-    borderColor: COLORS.CARD_BORDER,
-    borderStyle: "dashed"
+    borderStyle: "dashed",
+    borderRadius: 16,
   },
   errorBubble: {
-    backgroundColor: "rgba(231, 111, 81, 0.15)",
-    borderColor: "rgba(231, 111, 81, 0.25)"
+    backgroundColor: "rgba(231, 111, 81, 0.12)",
+    borderColor: "rgba(231, 111, 81, 0.22)",
+    borderRadius: 16,
   },
   messageText: {
     fontSize: 14,
     lineHeight: 20
   },
-  botText: {
-    color: COLORS.TEXT
-  },
-  userText: {
-    color: COLORS.TEXT
-  },
+  botText: {},
+  userText: {},
   errorText: {
-    color: "#ffb4ab" // error text color from mockup
+    color: "#ff847c"
   },
   modelFootprint: {
     fontSize: 9,
-    fontWeight: "750",
-    color: COLORS.PRIMARY, // active pink accent
+    fontWeight: "700",
     marginTop: 8,
     alignSelf: "flex-end"
   },
   timeText: {
     fontSize: 10,
-    color: COLORS.TEXT_MUTED,
     marginTop: 4,
     marginHorizontal: 4
   },
@@ -227,7 +223,7 @@ const styles = StyleSheet.create({
   confirmedStatusText: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#4cdad9" // tertiary active indicator (turquoise/teal) from mockup
+    color: "#4cdad9"
   },
   undoContainer: {
     flexDirection: "column",
@@ -235,7 +231,6 @@ const styles = StyleSheet.create({
   },
   undoText: {
     fontSize: 14,
-    color: COLORS.TEXT
   },
   undoBtn: {
     alignSelf: "flex-start",
@@ -246,6 +241,10 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 12
   },
+  btnIconRow: {
+    flexDirection: "row",
+    alignItems: "center"
+  },
   undoBtnText: {
     color: "#4cdad9",
     fontSize: 12,
@@ -254,9 +253,9 @@ const styles = StyleSheet.create({
   retryBtn: {
     marginTop: 8,
     alignSelf: "flex-start",
-    backgroundColor: "rgba(232, 89, 122, 0.1)",
+    backgroundColor: "rgba(232, 89, 122, 0.08)",
     borderWidth: 1,
-    borderColor: "rgba(232, 89, 122, 0.25)",
+    borderColor: "rgba(232, 89, 122, 0.22)",
     borderRadius: 10,
     paddingVertical: 6,
     paddingHorizontal: 12,
@@ -265,7 +264,6 @@ const styles = StyleSheet.create({
     gap: 4
   },
   retryBtnText: {
-    color: COLORS.PRIMARY,
     fontSize: 12,
     fontWeight: "700"
   },
@@ -276,10 +274,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginRight: 10,
-    backgroundColor: COLORS.ROSE_MIST,
     borderWidth: 1,
-    borderColor: "rgba(239, 94, 131, 0.18)",
-    shadowColor: COLORS.PRIMARY,
     shadowOpacity: 0.12,
     shadowRadius: 4,
     shadowOffset: {

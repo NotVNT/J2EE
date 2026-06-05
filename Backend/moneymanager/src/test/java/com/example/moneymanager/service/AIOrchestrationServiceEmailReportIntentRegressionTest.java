@@ -146,6 +146,16 @@ class AIOrchestrationServiceEmailReportIntentRegressionTest {
         assertTrue(prompt.contains("75000"));
         assertTrue(prompt.contains("1.5tr"));
         assertTrue(prompt.contains("1500000"));
+        assertTrue(prompt.contains("thu nhập tháng này"));
+        assertTrue(prompt.contains("Tổng thu nhập tháng này là bao nhiêu?"));
+        assertTrue(prompt.contains("Chi tiêu hôm nay là bao nhiêu?"));
+        assertTrue(prompt.contains("Lương tháng trước của tôi thế nào?"));
+        assertTrue(prompt.contains("Ngân sách tuần này còn bao nhiêu?"));
+        assertTrue(prompt.contains("Tháng này tôi kiếm được bao nhiêu?"));
+        assertTrue(prompt.contains("Hôm nay tiêu hết bao nhiêu rồi?"));
+        assertTrue(prompt.contains("Còn dư ngân sách không?"));
+        assertTrue(prompt.contains("tiếng Việt có dấu và không dấu"));
+        assertTrue(prompt.contains("cũng là câu hỏi tra cứu"));
     }
 
     @Test

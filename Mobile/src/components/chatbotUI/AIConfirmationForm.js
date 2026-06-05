@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
   Platform
 } from "react-native";
-import { COLORS } from "../../constants/colors";
+import { COLORS, useAppColors } from "../../constants/colors";
 import { getFieldsForIntent, INTENT_ICONS, INTENT_LABELS } from "../../utils/aiIntent";
 import { fetchCategoriesByType } from "../../services/categoryService";
 import CategorySelectionModal from "./CategorySelectionModal";
@@ -22,6 +22,7 @@ export default function AIConfirmationForm({
   onCancel,
   isProcessing = false
 }) {
+  const colors = useAppColors();
   const [fields, setFields] = useState([]);
   const [formData, setFormData] = useState({});
   const [categories, setCategories] = useState([]);
@@ -90,16 +91,16 @@ export default function AIConfirmationForm({
   const intentLabel = INTENT_LABELS[intent] || intent;
 
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, { backgroundColor: colors.BG, borderColor: colors.ROSE_MIST, shadowColor: colors.PRIMARY }]}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerIcon}>{intentIcon}</Text>
-        <Text style={styles.headerTitle}>{intentLabel}</Text>
+        <Text style={[styles.headerTitle, { color: colors.PRIMARY }]}>{intentLabel}</Text>
       </View>
 
       {/* Confirmation prompt */}
       {!!confirmationPrompt && (
-        <Text style={styles.promptText}>{confirmationPrompt}</Text>
+        <Text style={[styles.promptText, { color: colors.TEXT }]}>{confirmationPrompt}</Text>
       )}
 
       {/* Fields */}
@@ -108,36 +109,37 @@ export default function AIConfirmationForm({
           const value = formData[field.key] || "";
           return (
             <View key={field.key} style={styles.fieldWrapper}>
-              <Text style={styles.fieldLabel}>
+              <Text style={[styles.fieldLabel, { color: colors.TEXT_SECONDARY }]}>
                 {field.label}
-                {field.required && <Text style={styles.requiredAsterisk}> *</Text>}
+                {field.required && <Text style={{ color: colors.PRIMARY }}> *</Text>}
               </Text>
 
               {field.type === "category_select" ? (
                 <Pressable
-                  style={[styles.input, styles.pickerButton]}
+                  style={[styles.input, styles.pickerButton, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}
                   onPress={() => openCategoryModal(field.key)}
                   disabled={isProcessing || loadingCategories}
                 >
                   <Text
                     style={[
                       styles.pickerButtonText,
-                      !value && styles.pickerPlaceholder
+                      { color: colors.TEXT },
+                      !value && { color: colors.TEXT_MUTED }
                     ]}
                   >
                     {loadingCategories
                       ? "Đang tải danh mục..."
                       : value || "-- Chọn danh mục --"}
                   </Text>
-                  <Text style={styles.pickerArrow}>▼</Text>
+                  <Text style={[styles.pickerArrow, { color: colors.TEXT_MUTED }]}>▼</Text>
                 </Pressable>
               ) : (
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER, color: colors.TEXT }]}
                   value={value}
                   onChangeText={(text) => handleFieldChange(field.key, text)}
                   placeholder={field.label}
-                  placeholderTextColor={COLORS.TEXT_MUTED}
+                  placeholderTextColor={colors.TEXT_MUTED}
                   keyboardType={field.type === "number" ? "numeric" : "default"}
                   editable={!isProcessing}
                 />
@@ -150,23 +152,23 @@ export default function AIConfirmationForm({
       {/* Actions */}
       <View style={styles.actionsContainer}>
         <Pressable
-          style={[styles.actionBtn, styles.confirmBtn, isProcessing && styles.btnDisabled]}
+          style={[styles.actionBtn, styles.confirmBtn, { backgroundColor: colors.INCOME }, isProcessing && styles.btnDisabled]}
           onPress={handleSubmit}
           disabled={isProcessing}
         >
           {isProcessing ? (
-            <ActivityIndicator size="small" color={COLORS.WHITE} />
+            <ActivityIndicator size="small" color={colors.WHITE} />
           ) : (
             <Text style={styles.confirmBtnText}>✓ Xác nhận</Text>
           )}
         </Pressable>
 
         <Pressable
-          style={[styles.actionBtn, styles.cancelBtn, isProcessing && styles.btnDisabled]}
+          style={[styles.actionBtn, styles.cancelBtn, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }, isProcessing && styles.btnDisabled]}
           onPress={onCancel}
           disabled={isProcessing}
         >
-          <Text style={styles.cancelBtnText}>✕ Hủy</Text>
+          <Text style={[styles.cancelBtnText, { color: colors.TEXT_SECONDARY }]}>✕ Hủy</Text>
         </Pressable>
       </View>
 

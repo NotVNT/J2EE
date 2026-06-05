@@ -1,8 +1,10 @@
 import React, { useRef, useState } from "react";
 import { Dimensions, Modal, Pressable, StyleSheet, Text, View } from "react-native";
-import { COLORS, useAppColors } from "../../constants/colors";
-import { CategoryVectorIcon, getIconColor } from "../../utils/categoryIcons";
+import { useAppColors } from "../../constants/colors";
+import { getIconColor } from "../../utils/categoryIcons";
 import { CATEGORY_TYPE_META } from "./categoryTypeMeta";
+import AppIcon from "../ui/AppIcon";
+import TransactionIcon from "../ui/TransactionIcon";
 
 const MENU_HEIGHT = 116;
 const MENU_BOTTOM_MARGIN = 88;
@@ -14,8 +16,8 @@ export default function CategoryItem({ item, onEditCategory, onDeleteCategory })
   const iconColor = getIconColor(item?.icon);
   const meta = CATEGORY_TYPE_META[normalizedType] || {
     label: (item?.type || "-").toString().toUpperCase(),
-    chipBg: COLORS.BG,
-    chipText: COLORS.TEXT_SECONDARY
+    chipBg: colors.BG,
+    chipText: colors.TEXT_SECONDARY
   };
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ top: 0, right: 16 });
@@ -41,32 +43,38 @@ export default function CategoryItem({ item, onEditCategory, onDeleteCategory })
   };
 
   return (
-    <View style={[styles.itemCard, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}> 
-      <View style={styles.itemLeft}>
-        <View style={[styles.itemIconBubble, { backgroundColor: `${iconColor}18` }]}>
-          <CategoryVectorIcon iconValue={item?.icon} size={18} color={iconColor} style={styles.itemIconText} />
-        </View>
-        <Text style={[styles.itemName, { color: colors.TEXT }]}>{item?.name || "Chưa đặt tên"}</Text>
-      </View>
+    <View
+      style={[
+        styles.itemCard,
+        {
+          backgroundColor: colors.CARD,
+          borderColor: colors.CARD_BORDER,
+          shadowColor: colors.SHADOW_COLOR || "#000",
+        },
+      ]}
+    >
+      <Pressable
+        ref={menuButtonRef}
+        style={styles.menuDots}
+        onPress={openMenu}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      >
+        <Text style={[styles.menuDotsText, { color: colors.TEXT_SECONDARY }]}>⋮</Text>
+      </Pressable>
 
-      <View style={styles.itemRight}>
-        <View style={[styles.typeChip, { backgroundColor: meta.chipBg }]}>
-          <Text style={[styles.typeChipText, { color: meta.chipText }]}>{meta.label}</Text>
-        </View>
+      <TransactionIcon iconValue={item?.icon} size={24} containerSize={48} color={iconColor} />
 
-        <Pressable
-          ref={menuButtonRef}
-          style={styles.menuDots}
-          onPress={openMenu}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Text style={[styles.menuDotsText, { color: colors.TEXT_SECONDARY }]}>⋮</Text>
-        </Pressable>
+      <Text numberOfLines={1} style={[styles.itemName, { color: colors.TEXT }]}>
+        {item?.name || "Chưa đặt tên"}
+      </Text>
+
+      <View style={[styles.typeChip, { backgroundColor: meta.chipBg }]}>
+        <Text style={[styles.typeChipText, { color: meta.chipText }]}>{meta.label}</Text>
       </View>
 
       <Modal visible={menuVisible} transparent animationType="fade" onRequestClose={() => setMenuVisible(false)}>
         <Pressable style={styles.menuOverlay} onPress={() => setMenuVisible(false)}>
-          <View style={[styles.menuDropdown, menuPosition, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER, shadowColor: colors.TEXT }]}> 
+          <View style={[styles.menuDropdown, menuPosition, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER, shadowColor: colors.TEXT }]}>
             <Pressable
               style={styles.menuItem}
               onPress={() => {
@@ -74,7 +82,7 @@ export default function CategoryItem({ item, onEditCategory, onDeleteCategory })
                 onEditCategory(item);
               }}
             >
-              <Text style={styles.menuItemIcon}>✏️</Text>
+              <AppIcon name="pencil-outline" size={16} color={colors.TEXT} />
               <Text style={[styles.menuItemText, { color: colors.TEXT }]}>Chỉnh sửa</Text>
             </Pressable>
             <View style={[styles.menuDivider, { backgroundColor: colors.CARD_BORDER }]} />
@@ -85,7 +93,7 @@ export default function CategoryItem({ item, onEditCategory, onDeleteCategory })
                 onDeleteCategory(item);
               }}
             >
-              <Text style={styles.menuItemIcon}>🗑️</Text>
+              <AppIcon name="trash-outline" size={16} color={colors.EXPENSE} />
               <Text style={[styles.menuItemText, { color: colors.EXPENSE }]}>Xóa</Text>
             </Pressable>
           </View>
@@ -97,62 +105,48 @@ export default function CategoryItem({ item, onEditCategory, onDeleteCategory })
 
 const styles = StyleSheet.create({
   itemCard: {
-    backgroundColor: COLORS.CARD,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
-    borderRadius: 14,
-    padding: 12,
-    flexDirection: "row",
-    justifyContent: "space-between",
+    padding: 16,
+    flexDirection: "column",
     alignItems: "center",
-    marginBottom: 10
-  },
-  itemLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
-    paddingRight: 10
-  },
-  itemIconBubble: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
-    backgroundColor: COLORS.ROSE_MIST,
     justifyContent: "center",
-    alignItems: "center",
-    marginRight: 10
+    flex: 1,
+    margin: 6,
+    position: "relative",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 1.5,
   },
-  itemIconText: {
-    fontSize: 18
+  menuDots: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    zIndex: 10,
+  },
+  menuDotsText: {
+    fontSize: 18,
+    fontWeight: "800",
   },
   itemName: {
-    color: COLORS.TEXT,
-    fontWeight: "700",
-    fontSize: 15,
-    flexShrink: 1
-  },
-  itemRight: {
-    alignItems: "flex-end"
+    fontWeight: "600",
+    fontSize: 14,
+    marginTop: 10,
+    marginBottom: 6,
+    textAlign: "center",
+    width: "90%",
   },
   typeChip: {
     borderRadius: 999,
-    paddingVertical: 5,
-    paddingHorizontal: 10
+    paddingVertical: 3,
+    paddingHorizontal: 8,
   },
   typeChipText: {
-    fontWeight: "800",
-    fontSize: 12
-  },
-  menuDots: {
-    marginTop: 8,
-    paddingHorizontal: 6,
-    paddingVertical: 2
-  },
-  menuDotsText: {
-    fontSize: 20,
-    fontWeight: "800",
-    color: COLORS.TEXT_SECONDARY,
-    letterSpacing: 1
+    fontWeight: "700",
+    fontSize: 10,
   },
   menuOverlay: {
     flex: 1,
@@ -160,13 +154,10 @@ const styles = StyleSheet.create({
   },
   menuDropdown: {
     position: "absolute",
-    backgroundColor: COLORS.CARD,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
     minWidth: 120,
     overflow: "hidden",
-    shadowColor: COLORS.TEXT,
     shadowOpacity: 0.12,
     shadowRadius: 16,
     shadowOffset: {
@@ -182,17 +173,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     gap: 10
   },
-  menuItemIcon: {
-    fontSize: 16
-  },
   menuItemText: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "600",
-    color: COLORS.TEXT
   },
   menuDivider: {
     height: 1,
-    backgroundColor: COLORS.CARD_BORDER,
     marginHorizontal: 18
   }
 });

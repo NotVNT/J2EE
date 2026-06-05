@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import { Text, Pressable, StyleSheet, View } from "react-native";
-import { useNavigation } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAppColors } from "../constants/colors";
 import FloatingQuickMenu, { FloatingTabButton } from "./FloatingQuickMenu";
+import AppIcon from "../components/ui/AppIcon";
+import { appNavigationRef } from "./navigationRef";
 import DashboardScreen from "../screens/dashboard/DashboardScreen";
 import CategoryScreen from "../screens/finance/CategoryScreen";
 import ExpenseScreen from "../screens/finance/ExpenseScreen";
@@ -32,15 +33,23 @@ function EmptyScreen() {
   return <View style={{ flex: 1 }} />;
 }
 
-function PillTabButton({ children, onPress, accessibilityState, suppressActive }) {
+function PillTabButton({ children, onPress, accessibilityState, suppressActive, style }) {
   const focused = accessibilityState?.selected && !suppressActive;
   const colors = useAppColors();
+  const activeBg = colors.ACTION_VOICE || "#A855F7";
+  const isDark = colors.BG === '#0F0D0C';
+  const hoverBg = isDark ? "rgba(168, 85, 247, 0.3)" : "#E9D5FF";
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [
+      style={({ pressed, hovered }) => [
         styles.pillButton,
-        (focused || pressed) && [styles.pillButtonActive, { backgroundColor: colors.TAB_ACTIVE_BG }],
+        style,
+        focused && { backgroundColor: activeBg },
+        pressed && { opacity: 0.85 },
+        hovered && {
+          backgroundColor: focused ? activeBg : hoverBg
+        }
       ]}
       unstable_pressDelay={0}
     >
@@ -89,7 +98,7 @@ function HomeStack() {
 function CategoryStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="CategoryMain" component={CategoryScreen} />
+      <Stack.Screen name="CategoryMain" component={ReportsScreen} />
     </Stack.Navigator>
   );
 }
@@ -119,7 +128,6 @@ function SettingStack() {
 // ─── Main Tabs ──────────────────────────────────────────────
 
 export default function MainTabs() {
-  const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const colors = useAppColors();
   const [isQuickMenuVisible, setIsQuickMenuVisible] = useState(false);
@@ -138,11 +146,13 @@ export default function MainTabs() {
       Chat: "Chat",
     };
     const screen = routeMap[routeName] || routeName;
-    navigation.navigate("HomeTab", { screen });
+    appNavigationRef.current?.navigate("HomeTab", { screen });
   };
 
   const pillTabBarButton = (props) => {
     const originalOnPress = props.onPress;
+    const focused = props.accessibilityState?.selected && !suppressTabFocus;
+    const activeBg = colors.ACTION_VOICE || "#A855F7";
     return (
       <PillTabButton
         {...props}
@@ -152,6 +162,10 @@ export default function MainTabs() {
           setFloatingFocusedKey(null);
           originalOnPress?.(e);
         }}
+        style={[
+          styles.pillButton,
+          focused && { backgroundColor: activeBg }
+        ]}
       />
     );
   };
@@ -167,10 +181,17 @@ export default function MainTabs() {
 
   // Override icon/label color when floating menu suppresses tab focus
   const tabColor = (focused, originalColor) =>
-    focused && suppressTabFocus ? colors.TAB_INACTIVE : originalColor;
+    focused && !suppressTabFocus
+      ? colors.TAB_ACTIVE_FG || colors.TEXT || "#1A0F14"
+      : colors.TAB_INACTIVE || originalColor;
 
-  const tabIcon = (emoji) => ({ focused, color }) => (
-    <Text style={{ color: tabColor(focused, color), fontSize: 17, marginTop: 4 }}>{emoji}</Text>
+  const tabIcon = (focusedName, outlineName) => ({ focused, color }) => (
+    <AppIcon
+      name={focused ? focusedName : outlineName}
+      size={20}
+      color={tabColor(focused, color)}
+      style={{ marginTop: 2 }}
+    />
   );
 
   const tabLabel = (label) => ({ focused, color }) => (
@@ -182,35 +203,35 @@ export default function MainTabs() {
       <Tab.Navigator
         screenOptions={{
           headerShown: false,
-          tabBarActiveTintColor: colors.TAB_ACTIVE,
+          tabBarActiveTintColor: colors.TAB_ACTIVE_FG || colors.TEXT || "#1A0F14",
           tabBarInactiveTintColor: colors.TAB_INACTIVE,
           tabBarLabelStyle: {
             fontSize: 10,
             fontWeight: "600",
-            marginBottom: 4,
+            marginBottom: 2,
           },
           tabBarStyle: {
-            height: 70,
-            backgroundColor: colors.TAB_BG,
-            borderTopWidth: 1,
-            borderTopColor: colors.TAB_BORDER,
-            borderLeftWidth: 1,
-            borderLeftColor: colors.TAB_BORDER,
-            borderRightWidth: 1,
-            borderRightColor: colors.TAB_BORDER,
-            borderRadius: 20,
+            height: 72,
+            backgroundColor: colors.SURFACE,
+            borderTopWidth: 0.5,
+            borderTopColor: colors.BORDER,
+            borderLeftWidth: 0.5,
+            borderLeftColor: colors.BORDER,
+            borderRightWidth: 0.5,
+            borderRightColor: colors.BORDER,
+            borderRadius: 24,
             marginHorizontal: 16,
             marginBottom: Math.max(insets.bottom, 8),
-            paddingBottom: 6,
+            paddingBottom: 4,
             position: "absolute",
-            shadowColor: "#000",
+            shadowColor: colors.SHADOW_COLOR || "#000",
             shadowOffset: {
               width: 0,
-              height: 2,
+              height: 4,
             },
-            shadowOpacity: 0.06,
-            shadowRadius: 8,
-            elevation: 3,
+            shadowOpacity: 0.08,
+            shadowRadius: 10,
+            elevation: 4,
           },
           tabBarItemStyle: {
             flex: 1,
@@ -221,8 +242,8 @@ export default function MainTabs() {
           name="HomeTab"
           component={HomeStack}
           options={{
-            tabBarLabel: tabLabel("Trang chủ"),
-            tabBarIcon: tabIcon("🏠"),
+            tabBarLabel: tabLabel("Tổng quan"),
+            tabBarIcon: tabIcon("home", "home-outline"),
             tabBarButton: pillTabBarButton,
           }}
         />
@@ -231,8 +252,8 @@ export default function MainTabs() {
           name="CategoryTab"
           component={CategoryStack}
           options={{
-            tabBarLabel: tabLabel("Danh mục"),
-            tabBarIcon: tabIcon("📂"),
+            tabBarLabel: tabLabel("Thống kê"),
+            tabBarIcon: tabIcon("bar-chart", "bar-chart-outline"),
             tabBarButton: pillTabBarButton,
           }}
         />
@@ -263,8 +284,8 @@ export default function MainTabs() {
           name="ExpenseTab"
           component={ExpenseStack}
           options={{
-            tabBarLabel: tabLabel("Chi tiêu"),
-            tabBarIcon: tabIcon("💸"),
+            tabBarLabel: tabLabel("Lịch sử"),
+            tabBarIcon: tabIcon("calendar", "calendar-outline"),
             tabBarButton: pillTabBarButton,
           }}
         />
@@ -273,8 +294,8 @@ export default function MainTabs() {
           name="SettingTab"
           component={SettingStack}
           options={{
-            tabBarLabel: tabLabel("Hồ sơ"),
-            tabBarIcon: tabIcon("👤"),
+            tabBarLabel: tabLabel("Cài đặt"),
+            tabBarIcon: tabIcon("settings", "settings-outline"),
             tabBarButton: pillTabBarButton,
           }}
         />
@@ -298,10 +319,9 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    marginHorizontal: 2,
-    marginVertical: 6,
-    borderRadius: 999,
-    paddingHorizontal: 5,
+    marginHorizontal: 4,
+    marginVertical: 10,
+    borderRadius: 16,
     backgroundColor: "transparent",
   },
   pillButtonActive: {
@@ -312,7 +332,7 @@ const styles = StyleSheet.create({
     maxWidth: 64,
     fontSize: 10,
     fontWeight: "700",
-    marginBottom: 4,
+    marginBottom: 2,
     textAlign: "center",
   },
   fabTabSlot: {
