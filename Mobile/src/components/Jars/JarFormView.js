@@ -9,6 +9,7 @@ import { getApiErrorMessage } from "../../utils/format";
 import { JAR_COLORS, JAR_EMOJI_CATEGORIES } from "../../utils/jar";
 import { getSafeAreaContentStyle } from "../../utils/safeArea";
 import { scale } from "../../utils/layoutScale";
+import ScreenBackHeader from "../common/ScreenBackHeader";
 
 export default function JarFormView() {
   const navigation = useNavigation();
@@ -77,15 +78,17 @@ export default function JarFormView() {
   const isParentWallet = name === "Ví tổng";
 
   return (
-    <ScrollView 
-      style={[styles.container, { backgroundColor: colors.BG }]} 
+    <ScrollView
+      style={[styles.container, { backgroundColor: colors.BG }]}
       contentContainerStyle={[styles.content, getSafeAreaContentStyle(insets)]}
       showsVerticalScrollIndicator={false}
     >
+      <ScreenBackHeader title={isEditing ? "Chỉnh sửa ví phụ" : "Tạo ví phụ"} />
+
       <Text style={[styles.label, { color: colors.TEXT }]}>Tên hũ chi tiêu</Text>
       <TextInput
         style={[
-          styles.input, 
+          styles.input,
           { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER, color: colors.TEXT },
           isParentWallet && { backgroundColor: colors.BG, color: colors.TEXT_MUTED }
         ]}
@@ -152,7 +155,7 @@ export default function JarFormView() {
 
       <Pressable
         style={[
-          styles.saveButton, 
+          styles.saveButton,
           { backgroundColor: color || colors.PRIMARY, shadowColor: color || colors.PRIMARY },
           submitting && styles.saveButtonDisabled
         ]}

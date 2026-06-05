@@ -10,6 +10,7 @@ import { formatJarMoney } from "../../utils/jar";
 import { getSafeAreaBottom, getSafeAreaTop } from "../../utils/safeArea";
 import AppIcon from "../ui/AppIcon";
 import { scale } from "../../utils/layoutScale";
+import ScreenBackHeader from "../common/ScreenBackHeader";
 
 export default function JarTransferView() {
   const navigation = useNavigation();
@@ -37,7 +38,7 @@ export default function JarTransferView() {
       const res = await apiClient.get(API_ENDPOINTS.GET_JARS);
       const data = Array.isArray(res.data) ? res.data : [];
       setJars(data);
-      
+
       // Auto select first and second jar if available
       if (data.length >= 2) {
         setFromJar(data[0]);
@@ -135,7 +136,8 @@ export default function JarTransferView() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.BG, paddingTop: getSafeAreaTop(insets) }]}>
-      <ScrollView 
+      <ScreenBackHeader title="Chuyển tiền ví phụ" style={styles.screenHeader} />
+      <ScrollView
         contentContainerStyle={[styles.scrollContent, { paddingBottom: getSafeAreaBottom(insets) + scale(100) }]}
         showsVerticalScrollIndicator={false}
       >
@@ -260,6 +262,10 @@ export default function JarTransferView() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  screenHeader: {
+    marginHorizontal: scale(16),
+    marginBottom: 0,
   },
   scrollContent: {
     padding: scale(16),

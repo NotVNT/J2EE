@@ -60,24 +60,8 @@ export default function DashboardScreen() {
     navigation.navigate("Goal");
   }, [navigation]);
 
-  // Calculate today's income and expense from recentTransactions
-  const todayStr = new Date().toDateString();
-  let todayIncome = 0;
-  let todayExpense = 0;
-
-  if (Array.isArray(dashboard.recentTransactions)) {
-    dashboard.recentTransactions.forEach((tx) => {
-      const txDateStr = new Date(tx.createdAt || tx.updatedAt || tx.date).toDateString();
-      if (txDateStr === todayStr) {
-        const isInc = String(tx.type || "").toUpperCase().includes("INCOME");
-        if (isInc) {
-          todayIncome += Number(tx.amount || 0);
-        } else {
-          todayExpense += Number(tx.amount || 0);
-        }
-      }
-    });
-  }
+  const totalIncome = Number(dashboard.dashboard?.totalIncome || 0);
+  const totalExpense = Number(dashboard.dashboard?.totalExpense || 0);
 
   return (
     <>
@@ -101,7 +85,7 @@ export default function DashboardScreen() {
           monthlySeries={dashboard.monthlySeries}
         />
         <QuickActions />
-        <DailySummaryCards todayIncome={todayIncome} todayExpense={todayExpense} />
+        <DailySummaryCards totalIncome={totalIncome} totalExpense={totalExpense} />
 
         <FinanceOverviewSection
           dashboard={dashboard.dashboard}

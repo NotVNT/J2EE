@@ -12,7 +12,7 @@ export default function IncomeFilterTabs({ filterType, onChange }) {
   const colors = useAppColors();
 
   return (
-    <View style={[styles.filterCard, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}> 
+    <View style={[styles.filterCard, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}>
       <Text style={[styles.filterTitle, { color: colors.TEXT }]}>Khung thời gian</Text>
       <View style={styles.filterRow}>
         {FILTER_OPTIONS.map((option, index) => {

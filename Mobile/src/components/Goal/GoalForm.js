@@ -67,7 +67,7 @@ export default function GoalForm({
       </View>
 
       <Pressable
-        style={[styles.saveButton, { backgroundColor: colors.ACTION_GOAL || colors.PRIMARY }, loading && styles.saveButtonDisabled]}
+        style={[styles.saveButton, { backgroundColor: colors.PRIMARY }, loading && styles.saveButtonDisabled]}
         onPress={onSubmit}
         disabled={loading}
       >

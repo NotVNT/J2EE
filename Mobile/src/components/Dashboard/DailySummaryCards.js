@@ -4,7 +4,7 @@ import { useAppColors } from '../../constants/colors';
 import AppIcon from '../ui/AppIcon';
 import AmountText from '../ui/AmountText';
 
-export default function DailySummaryCards({ todayIncome = 0, todayExpense = 0 }) {
+export default function DailySummaryCards({ totalIncome = 0, totalExpense = 0 }) {
   const colors = useAppColors();
 
   return (
@@ -14,9 +14,9 @@ export default function DailySummaryCards({ todayIncome = 0, todayExpense = 0 })
           <View style={[styles.iconContainer, { backgroundColor: 'rgba(239, 68, 68, 0.1)' }]}>
             <AppIcon name="arrow-down-circle-outline" size={18} color="#EF4444" />
           </View>
-          <Text style={[styles.label, { color: colors.TEXT_SECONDARY }]}>Chi phí hôm nay</Text>
+          <Text style={[styles.label, { color: colors.TEXT_SECONDARY }]}>Chi tiêu</Text>
         </View>
-        <AmountText value={todayExpense} type="expense" style={styles.amount} />
+        <AmountText value={totalExpense} type="expense" style={styles.amount} />
       </View>
 
       <View style={[styles.card, { backgroundColor: colors.SURFACE, borderColor: colors.BORDER }]}>
@@ -24,9 +24,9 @@ export default function DailySummaryCards({ todayIncome = 0, todayExpense = 0 })
           <View style={[styles.iconContainer, { backgroundColor: 'rgba(34, 197, 94, 0.1)' }]}>
             <AppIcon name="arrow-up-circle-outline" size={18} color="#22C55E" />
           </View>
-          <Text style={[styles.label, { color: colors.TEXT_SECONDARY }]}>Thu nhập hôm nay</Text>
+          <Text style={[styles.label, { color: colors.TEXT_SECONDARY }]}>Thu nhập</Text>
         </View>
-        <AmountText value={todayIncome} type="income" style={styles.amount} />
+        <AmountText value={totalIncome} type="income" style={styles.amount} />
       </View>
     </View>
   );

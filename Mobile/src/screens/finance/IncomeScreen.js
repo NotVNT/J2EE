@@ -1,16 +1,16 @@
 import React, { useCallback } from "react";
-import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
+import { FlatList, RefreshControl, StyleSheet, View } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import IncomeEmptyState from "../../components/Incomes/IncomeEmptyState";
 import IncomeForm from "../../components/Incomes/IncomeForm";
 import IncomeItem from "../../components/Incomes/IncomeItem";
 import IncomeListHeader from "../../components/Incomes/IncomeListHeader";
-import { COLORS, useAppColors } from "../../constants/colors";
+import { useAppColors } from "../../constants/colors";
 import useIncomeForm from "../../hooks/useIncomeForm";
 import useIncomes from "../../hooks/useIncomes";
 import { getSafeAreaBottom, getSafeAreaContentStyle, getSafeAreaTop } from "../../utils/safeArea";
-import AppIcon from "../../components/ui/AppIcon";
+import ScreenBackHeader from "../../components/common/ScreenBackHeader";
 import { scale } from "../../utils/layoutScale";
 
 export default function IncomeScreen() {
@@ -27,13 +27,14 @@ function IncomeFormRoute() {
   const navigation = useNavigation();
   const route = useRoute();
   const insets = useSafeAreaInsets();
+  const title = route.params?.initialData ? "Chỉnh sửa thu nhập" : "Thêm thu nhập";
 
   const form = useIncomeForm({
     initialData: route.params?.initialData,
     onSaved: () => navigation.goBack()
   });
 
-  return <IncomeForm form={form} insetsStyle={getSafeAreaContentStyle(insets)} />;
+  return <IncomeForm form={form} insetsStyle={getSafeAreaContentStyle(insets)} title={title} />;
 }
 
 function IncomeListRoute() {
@@ -64,8 +65,8 @@ function IncomeListRoute() {
   );
 
   const renderIncome = useCallback(
-    ({ item }) => <IncomeItem item={item} onDelete={onDelete} />,
-    [onDelete]
+    ({ item }) => <IncomeItem item={item} onDelete={onDelete} onEdit={navigateToAddIncome} />,
+    [navigateToAddIncome, onDelete]
   );
 
   const renderHeader = useCallback(
@@ -85,15 +86,8 @@ function IncomeListRoute() {
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.APP_BACKGROUND || colors.BG, paddingTop: getSafeAreaTop(insets, 12) }]}> 
-      {/* Top Header */}
-      <View style={styles.topHeader}>
-        <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
-          <AppIcon name="chevron-back" size={24} color={colors.TEXT} />
-        </Pressable>
-        <Text style={[styles.headerTitle, { color: colors.TEXT }]}>Lịch sử thu nhập</Text>
-        <View style={{ width: 24 }} /> {/* spacing placeholder */}
-      </View>
+    <View style={[styles.container, { backgroundColor: colors.APP_BACKGROUND || colors.BG, paddingTop: getSafeAreaTop(insets, 12) }]}>
+      <ScreenBackHeader title="Lịch sử thu nhập" />
 
       <FlatList
         data={incomes}
@@ -116,19 +110,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: scale(16)
-  },
-  topHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: scale(12),
-  },
-  backButton: {
-    padding: scale(4),
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: "700",
   },
   listContent: {
     paddingBottom: scale(24)

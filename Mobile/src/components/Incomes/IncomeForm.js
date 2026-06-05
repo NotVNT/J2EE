@@ -5,18 +5,21 @@ import { useAppColors } from "../../constants/colors";
 import { formatCurrencyInput, formatMoney } from "../../utils/format";
 import { PickDateField } from "../../utils/datePicker";
 import { scale } from "../../utils/layoutScale";
+import ScreenBackHeader from "../common/ScreenBackHeader";
 
-export default function IncomeForm({ form, insetsStyle }) {
+export default function IncomeForm({ form, insetsStyle, title = "Thêm thu nhập" }) {
   const colors = useAppColors();
   const primaryThemeColor = colors.INCOME; // Teal palette for income
   const lightThemeColor = colors.INCOME_LIGHT;
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.BG }]} contentContainerStyle={[styles.content, insetsStyle]} keyboardShouldPersistTaps="handled">
+      <ScreenBackHeader title={title} />
+
       {/* SECTION 1: THÔNG TIN GIAO DỊCH */}
       <View style={[styles.sectionContainer, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER, shadowColor: colors.SHADOW_COLOR || "#000" }]}>
         <Text style={[styles.sectionTitle, { color: primaryThemeColor }]}>Thông tin thu nhập</Text>
-        
+
         <Text style={[styles.amountLabel, { color: colors.TEXT_SECONDARY }]}>Số tiền thu nhập</Text>
         <TextInput
           style={[styles.amountInput, { borderBottomColor: primaryThemeColor, color: colors.TEXT }]}
@@ -42,7 +45,7 @@ export default function IncomeForm({ form, insetsStyle }) {
       {form.jars.length > 0 && form.incomeAmount > 0 && (
         <View style={[styles.sectionContainer, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER, shadowColor: colors.SHADOW_COLOR || "#000" }]}>
           <Text style={[styles.sectionTitle, { color: primaryThemeColor }]}>Phân bổ hũ tài chính</Text>
-          
+
           <Pressable style={[styles.allocHeader, { backgroundColor: lightThemeColor, borderRadius: 10 }]} onPress={() => form.setShowAllocations(!form.showAllocations)}>
             <Text style={[styles.allocHeaderTitle, { color: primaryThemeColor }]}>
               💰 Phân bổ vào {form.jars.length} hũ ({formatMoney(form.totalAllocated)} / {formatMoney(form.incomeAmount)})

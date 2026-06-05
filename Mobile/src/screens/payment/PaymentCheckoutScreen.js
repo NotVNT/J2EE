@@ -23,9 +23,10 @@ export default function PaymentCheckoutScreen() {
   const isDark = colors.BG === '#0F0D0C';
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.BG, paddingTop: getSafeAreaTop(insets), paddingBottom: getSafeAreaBottom(insets, 86) }]}> 
+    <View style={[styles.container, { backgroundColor: colors.BG, paddingTop: getSafeAreaTop(insets), paddingBottom: getSafeAreaBottom(insets, 86) }]}>
       <PaymentCheckoutHeader
         canGoBack={checkout.canGoBack}
+        onExit={checkout.goBackToPayment}
         onGoBack={checkout.goBackInWebView}
         title={checkout.title}
       />
@@ -37,7 +38,7 @@ export default function PaymentCheckoutScreen() {
         </View>
       ) : null}
 
-      <View style={[styles.checkoutFrame, { backgroundColor: colors.CARD }]}> 
+      <View style={[styles.checkoutFrame, { backgroundColor: colors.CARD }]}>
         <WebView
           ref={checkout.webViewRef}
           style={styles.checkoutWebView}

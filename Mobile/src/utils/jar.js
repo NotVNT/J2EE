@@ -44,6 +44,12 @@ export const JAR_EMOJI_CATEGORIES = [
 export const formatJarMoney = (value) =>
   new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(value ?? 0);
 
+export function getJarBalanceAmount(jar = {}) {
+  const rawBalance = jar?.currentBalance ?? jar?.balance ?? 0;
+  const balance = Number(rawBalance);
+  return Number.isFinite(balance) ? balance : 0;
+}
+
 export function polarToCartesian(cx, cy, radius, angleDeg) {
   const rad = ((angleDeg - 90) * Math.PI) / 180;
   return { x: cx + radius * Math.cos(rad), y: cy + radius * Math.sin(rad) };

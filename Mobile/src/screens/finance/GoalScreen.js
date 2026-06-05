@@ -13,6 +13,7 @@ import GoalDetailModal from "../../components/Goal/GoalDetailModal";
 import ContributionModal from "../../components/Goal/ContributionModal";
 import AppIcon from "../../components/ui/AppIcon";
 import EmptyState from "../../components/ui/EmptyState";
+import ScreenBackHeader from "../../components/common/ScreenBackHeader";
 import { scale } from "../../utils/layoutScale";
 
 export default function GoalScreen() {
@@ -55,6 +56,7 @@ export default function GoalScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.BG, paddingTop: getSafeAreaTop(insets) }]}>
+      <ScreenBackHeader title="Mục tiêu" />
       <FlatList
         data={visibleGoals}
         keyExtractor={(item) => String(item?.id)}
@@ -68,10 +70,10 @@ export default function GoalScreen() {
         ListHeaderComponent={
           <View>
             <LinearGradient
-              colors={[colors.ACTION_EXPENSE || "#F97316", colors.GOLD || "#FFB84D"]}
+              colors={colors.PRIMARY_GRADIENT || ["#ef5e83", "#f190ab"]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
-              style={[styles.overviewCard, { shadowColor: colors.ACTION_EXPENSE || "#F97316" }]}
+              style={[styles.overviewCard, { shadowColor: colors.PRIMARY || "#ef5e83" }]}
             >
               <View style={styles.overviewBadgeRow}>
                 <View style={styles.overviewBadge}>

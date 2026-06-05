@@ -7,60 +7,51 @@ import {
   Text,
   View,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAppColors } from "../constants/colors";
 import AppIcon from "../components/ui/AppIcon";
-import { LinearGradient } from "expo-linear-gradient";
 
-// ─── Speed Dial sub-actions with SpendBee colors & icons ───
 const SUB_ACTIONS = [
   {
     key: "Income",
     icon: "wallet-outline",
     label: "Thu nhập",
-    tx: -110,
-    ty: -25,
-    color: "#22C55E", // SpendBee green
+    color: "#22C55E",
+    gradient: ["#22C55E", "#16A34A"],
   },
   {
     key: "Budget",
     icon: "pie-chart-outline",
     label: "Ngân sách",
-    tx: -75,
-    ty: -85,
-    color: "#A855F7", // SpendBee purple
+    color: "#A855F7",
+    gradient: ["#A855F7", "#7C3AED"],
   },
   {
     key: "Forecast",
     icon: "trending-up-outline",
     label: "Dự báo",
-    tx: 0,
-    ty: -115,
-    color: "#26A69A", // SpendBee teal
+    color: "#26A69A",
+    gradient: ["#2DD4BF", "#0F766E"],
   },
   {
     key: "Goal",
     icon: "flag-outline",
     label: "Mục tiêu",
-    tx: 75,
-    ty: -85,
-    color: "#3B82F6", // SpendBee blue
+    color: "#3B82F6",
+    gradient: ["#60A5FA", "#2563EB"],
   },
   {
     key: "Chat",
     icon: "chatbubble-ellipses-outline",
     label: "Chat AI",
-    tx: 110,
-    ty: -25,
-    color: "#7C4DFF", // SpendBee violet
+    color: "#7C4DFF",
+    gradient: ["#8B5CF6", "#6D22E8"],
   },
 ];
 
-// ─── FAB button (inside tab bar) ─────────────────────────
 export function FloatingTabButton({ onPress, isOpen }) {
   const colors = useAppColors();
-  
-  // Staggered rotate animation for main FAB icon
   const rotateAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -70,7 +61,7 @@ export function FloatingTabButton({ onPress, isOpen }) {
       easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
     }).start();
-  }, [isOpen]);
+  }, [isOpen, rotateAnim]);
 
   const rotation = rotateAnim.interpolate({
     inputRange: [0, 1],
@@ -78,40 +69,31 @@ export function FloatingTabButton({ onPress, isOpen }) {
   });
 
   return (
-    <Pressable onPress={onPress}>
+    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel="Mở menu nhanh">
       <LinearGradient
-        colors={['#7C4DFF', '#A855F7']}
+        colors={["#7C4DFF", "#A855F7"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={[
-          styles.fabMain,
-          {
-            shadowColor: '#7C4DFF',
-          },
-        ]}
+        style={[styles.fabMain, { shadowColor: "#7C4DFF" }]}
       >
         <Animated.View style={{ transform: [{ rotate: rotation }] }}>
-          <AppIcon name="add" size={28} color={colors.WHITE || '#FFFFFF'} />
+          <AppIcon name="add" size={28} color={colors.WHITE || "#FFFFFF"} />
         </Animated.View>
       </LinearGradient>
     </Pressable>
   );
 }
 
-// ─── Speed Dial overlay + sub-buttons ────────────────────
 export default function FloatingQuickMenu({ visible, onClose, onSelectRoute, focusedKey }) {
   const overlayOpacity = useRef(new Animated.Value(0)).current;
+  const dockTranslateY = useRef(new Animated.Value(18)).current;
   const insets = useSafeAreaInsets();
   const colors = useAppColors();
-
-  // Control mount state to play closing animation before unmounting
+  const isDark = colors.BG === "#0F0D0C";
   const [active, setActive] = useState(false);
 
-  // Staggered animated values for each sub-button
   const animations = useRef(
     SUB_ACTIONS.map(() => ({
-      tx: new Animated.Value(0),
-      ty: new Animated.Value(0),
       scale: new Animated.Value(0),
       opacity: new Animated.Value(0),
     }))
@@ -120,8 +102,7 @@ export default function FloatingQuickMenu({ visible, onClose, onSelectRoute, foc
   useEffect(() => {
     if (visible) {
       setActive(true);
-      
-      // Fan out animation (springy & staggered)
+
       Animated.parallel([
         Animated.timing(overlayOpacity, {
           toValue: 1,
@@ -129,26 +110,20 @@ export default function FloatingQuickMenu({ visible, onClose, onSelectRoute, foc
           easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
+        Animated.timing(dockTranslateY, {
+          toValue: 0,
+          duration: 240,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
         Animated.stagger(
-          40,
-          animations.map((anim, i) =>
+          34,
+          animations.map((anim, index) =>
             Animated.parallel([
-              Animated.spring(anim.tx, {
-                toValue: SUB_ACTIONS[i].tx,
-                friction: 6.5,
-                tension: 80,
-                useNativeDriver: true,
-              }),
-              Animated.spring(anim.ty, {
-                toValue: SUB_ACTIONS[i].ty,
-                friction: 6.5,
-                tension: 80,
-                useNativeDriver: true,
-              }),
               Animated.spring(anim.scale, {
                 toValue: 1,
-                friction: 6.5,
-                tension: 80,
+                friction: 7,
+                tension: 90 + index * 5,
                 useNativeDriver: true,
               }),
               Animated.timing(anim.opacity, {
@@ -161,7 +136,6 @@ export default function FloatingQuickMenu({ visible, onClose, onSelectRoute, foc
         ),
       ]).start();
     } else {
-      // Fan in animation
       Animated.parallel([
         Animated.timing(overlayOpacity, {
           toValue: 0,
@@ -169,31 +143,25 @@ export default function FloatingQuickMenu({ visible, onClose, onSelectRoute, foc
           easing: Easing.in(Easing.cubic),
           useNativeDriver: true,
         }),
+        Animated.timing(dockTranslateY, {
+          toValue: 18,
+          duration: 180,
+          easing: Easing.in(Easing.cubic),
+          useNativeDriver: true,
+        }),
         Animated.stagger(
-          30,
+          24,
           animations.map((anim) =>
             Animated.parallel([
-              Animated.timing(anim.tx, {
-                toValue: 0,
-                duration: 180,
-                easing: Easing.in(Easing.cubic),
-                useNativeDriver: true,
-              }),
-              Animated.timing(anim.ty, {
-                toValue: 0,
-                duration: 180,
-                easing: Easing.in(Easing.cubic),
-                useNativeDriver: true,
-              }),
               Animated.timing(anim.scale, {
                 toValue: 0,
-                duration: 180,
+                duration: 170,
                 easing: Easing.in(Easing.cubic),
                 useNativeDriver: true,
               }),
               Animated.timing(anim.opacity, {
                 toValue: 0,
-                duration: 150,
+                duration: 140,
                 useNativeDriver: true,
               }),
             ])
@@ -203,94 +171,127 @@ export default function FloatingQuickMenu({ visible, onClose, onSelectRoute, foc
         setActive(false);
       });
     }
-  }, [visible]);
+  }, [animations, dockTranslateY, overlayOpacity, visible]);
 
   if (!visible && !active) return null;
 
-  // Calculate bottom anchor centered with the FAB button
-  const bottomOffset = Math.max(insets.bottom, 8) + 36;
+  const dockBottomOffset = Math.max(insets.bottom, 8) + 92;
+  const inactiveActionBackground = isDark ? "rgba(255,255,255,0.055)" : "#FFF9FB";
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
-      {/* Semi-transparent backdrop */}
-      <Animated.View style={[styles.backdrop, { opacity: overlayOpacity }]}>
+      <Animated.View
+        style={[
+          styles.backdrop,
+          {
+            opacity: overlayOpacity,
+            backgroundColor: isDark ? "rgba(0, 0, 0, 0.58)" : "rgba(15, 23, 42, 0.34)",
+          },
+        ]}
+      >
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
       </Animated.View>
 
-      {/* Safe area for interactive floating buttons */}
       <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
-        <View style={[styles.subButtonsContainer, { bottom: bottomOffset }]} pointerEvents="box-none">
-          {SUB_ACTIONS.map((action, i) => {
-            const anim = animations[i];
-            const isFocused = focusedKey === action.key;
+        <Animated.View
+          pointerEvents="auto"
+          style={[
+            styles.quickDock,
+            {
+              bottom: dockBottomOffset,
+              backgroundColor: isDark ? "rgba(31, 27, 25, 0.96)" : "rgba(255, 255, 255, 0.98)",
+              borderColor: isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(239, 226, 230, 0.95)",
+              shadowColor: colors.SHADOW_COLOR || "#000",
+              opacity: overlayOpacity,
+              transform: [{ translateY: dockTranslateY }],
+            },
+          ]}
+        >
+          <View style={styles.dockHeader}>
+            <View style={styles.dockTitleBlock}>
+              <Text style={[styles.dockTitle, { color: colors.TEXT }]}>Thao tác nhanh</Text>
+              <Text style={[styles.dockSubtitle, { color: colors.TEXT_SECONDARY }]}>
+                Mở nhanh các mục thường dùng
+              </Text>
+            </View>
+            <Pressable
+              onPress={onClose}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Đóng menu nhanh"
+              style={({ pressed }) => [
+                styles.closeButton,
+                {
+                  backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "#F8F2F5",
+                  borderColor: colors.CARD_BORDER,
+                },
+                pressed && { opacity: 0.7 },
+              ]}
+            >
+              <AppIcon name="close" size={16} color={colors.TEXT_SECONDARY} />
+            </Pressable>
+          </View>
 
-            return (
-              <Animated.View
-                key={action.key}
-                style={[
-                  styles.subButtonWrapper,
-                  {
-                    transform: [
-                      { translateX: anim.tx },
-                      { translateY: anim.ty },
-                      { scale: anim.scale },
-                    ],
-                    opacity: anim.opacity,
-                  },
-                ]}
-                pointerEvents="box-none"
-              >
-                {/* Responsive Label - Centered above the button */}
-                <View
+          <View style={styles.actionRow}>
+            {SUB_ACTIONS.map((action, index) => {
+              const anim = animations[index];
+              const isFocused = focusedKey === action.key;
+              const actionBackground = isFocused ? `${action.color}18` : inactiveActionBackground;
+              const actionBorderColor = isFocused ? action.color : colors.CARD_BORDER;
+              const actionLabelColor = isFocused ? action.color : colors.TEXT;
+
+              return (
+                <Animated.View
+                  key={action.key}
                   style={[
-                    styles.labelBubble,
+                    styles.actionSlot,
                     {
-                      backgroundColor: colors.CARD,
-                      borderColor: colors.CARD_BORDER,
-                      shadowColor: colors.SHADOW_COLOR || "#000",
+                      opacity: anim.opacity,
+                      transform: [{ scale: anim.scale }],
                     },
-                    isFocused && { backgroundColor: action.color, borderColor: action.color },
                   ]}
                 >
-                  <Text
-                    style={[
-                      styles.subLabel,
-                      { color: colors.TEXT },
-                      isFocused && { color: "#FFFFFF" },
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`Mở ${action.label}`}
+                    style={({ pressed }) => [
+                      styles.actionCard,
+                      {
+                        backgroundColor: actionBackground,
+                        borderColor: actionBorderColor,
+                      },
+                      pressed && { opacity: 0.82, transform: [{ translateY: 1 }] },
                     ]}
-                    numberOfLines={1}
+                    onPress={() => onSelectRoute(action.key)}
                   >
-                    {action.label}
-                  </Text>
-                </View>
-
-                {/* Sub Action Circle Button */}
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.subButton,
-                    {
-                      backgroundColor: action.color,
-                      shadowColor: action.color,
-                    },
-                    isFocused && styles.subButtonFocused,
-                    pressed && { opacity: 0.85, transform: [{ scale: 0.92 }] },
-                  ]}
-                  onPress={() => onSelectRoute(action.key)}
-                >
-                  <AppIcon name={action.icon} size={22} color="#FFFFFF" />
-                </Pressable>
-              </Animated.View>
-            );
-          })}
-        </View>
+                    <LinearGradient
+                      colors={action.gradient}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={[styles.actionIcon, { shadowColor: action.color }]}
+                    >
+                      <AppIcon name={action.icon} size={22} color="#FFFFFF" />
+                    </LinearGradient>
+                    <Text
+                      style={[styles.actionLabel, { color: actionLabelColor }]}
+                      numberOfLines={2}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.78}
+                    >
+                      {action.label}
+                    </Text>
+                  </Pressable>
+                </Animated.View>
+              );
+            })}
+          </View>
+        </Animated.View>
       </View>
     </View>
   );
 }
 
-// ─── Styles ──────────────────────────────────────────────
 const styles = StyleSheet.create({
-  // ── Main FAB ──────────────────────────────────────────
   fabMain: {
     width: 52,
     height: 52,
@@ -307,80 +308,88 @@ const styles = StyleSheet.create({
     elevation: 8,
     alignSelf: "center",
   },
-
-  // ── Backdrop ──────────────────────────────────────────
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0, 0, 0, 0.45)",
   },
-
-  // ── Sub-buttons area ──────────────────────────────────
-  subButtonsContainer: {
+  quickDock: {
     position: "absolute",
-    left: 0,
-    right: 0,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  subButtonWrapper: {
-    position: "absolute",
-    alignItems: "center",
-    justifyContent: "center",
-    width: 48,
-    height: 48,
-  },
-
-  // ── Circular button ────────────────────────────────────
-  subButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: "center",
-    alignItems: "center",
+    left: 18,
+    right: 18,
+    borderRadius: 28,
+    borderWidth: 1,
+    padding: 14,
     shadowOffset: {
       width: 0,
-      height: 4,
+      height: 12,
+    },
+    shadowOpacity: 0.18,
+    shadowRadius: 22,
+    elevation: 14,
+  },
+  dockHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  dockTitleBlock: {
+    flex: 1,
+    paddingRight: 12,
+  },
+  dockTitle: {
+    fontSize: 15,
+    fontWeight: "800",
+  },
+  dockSubtitle: {
+    marginTop: 2,
+    fontSize: 11,
+    fontWeight: "600",
+  },
+  closeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  actionRow: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  actionSlot: {
+    flex: 1,
+  },
+  actionCard: {
+    minHeight: 82,
+    borderRadius: 20,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 3,
+    paddingVertical: 8,
+  },
+  actionIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowOffset: {
+      width: 0,
+      height: 5,
     },
     shadowOpacity: 0.22,
-    shadowRadius: 6,
+    shadowRadius: 8,
     elevation: 5,
   },
-
-  // ── Label bubble centered above button ────────────────
-  labelBubble: {
-    position: "absolute",
-    bottom: 54, // Perfectly elevated above the 48px button
-    alignSelf: "center",
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 3.5,
-    borderWidth: 1,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 3,
-    minWidth: 72,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  subLabel: {
+  actionLabel: {
+    marginTop: 7,
+    width: "100%",
+    minHeight: 24,
     fontSize: 10,
-    fontWeight: "700",
+    fontWeight: "800",
+    lineHeight: 12,
     textAlign: "center",
-  },
-
-  // ── Focused sub-action ────────────────────────────────
-  subButtonFocused: {
-    borderWidth: 3,
-    borderColor: "#FFFFFF",
-    transform: [{ scale: 1.1 }],
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
-    elevation: 8,
   },
 });

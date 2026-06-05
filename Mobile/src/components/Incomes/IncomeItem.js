@@ -5,9 +5,8 @@ import { formatDate } from "../../utils/format";
 import AppIcon from "../ui/AppIcon";
 import TransactionIcon from "../ui/TransactionIcon";
 import AmountText from "../ui/AmountText";
-import { scale } from "../../utils/layoutScale";
 
-export default function IncomeItem({ item, onDelete }) {
+export default function IncomeItem({ item, onDelete, onEdit }) {
   const colors = useAppColors();
   const amount = Number(item?.amount || 0);
 
@@ -35,14 +34,24 @@ export default function IncomeItem({ item, onDelete }) {
 
       <View style={styles.itemRight}>
         <AmountText value={amount} type="income" showSign={true} style={styles.itemAmount} />
-        <Pressable
-          onPress={() => onDelete(item?.id)}
-          style={styles.deleteButton}
-          accessibilityRole="button"
-          accessibilityLabel="Xóa thu nhập"
-        >
-          <AppIcon name="trash-outline" size={15} color={colors.EXPENSE_COLOR || "#EF4444"} />
-        </Pressable>
+        <View style={styles.actionRow}>
+          <Pressable
+            onPress={() => onEdit?.(item)}
+            style={styles.iconButton}
+            accessibilityRole="button"
+            accessibilityLabel="Chỉnh sửa thu nhập"
+          >
+            <AppIcon name="create-outline" size={15} color={colors.PRIMARY || "#7C4DFF"} />
+          </Pressable>
+          <Pressable
+            onPress={() => onDelete(item?.id)}
+            style={styles.iconButton}
+            accessibilityRole="button"
+            accessibilityLabel="Xóa thu nhập"
+          >
+            <AppIcon name="trash-outline" size={15} color={colors.EXPENSE_COLOR || "#EF4444"} />
+          </Pressable>
+        </View>
       </View>
     </View>
   );
@@ -85,8 +94,13 @@ const styles = StyleSheet.create({
   itemAmount: {
     fontWeight: "800",
   },
-  deleteButton: {
+  actionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
     marginTop: 8,
+  },
+  iconButton: {
     borderRadius: 999,
     paddingHorizontal: 8,
     paddingVertical: 4,

@@ -4,9 +4,10 @@ import InfoCard from "../components/InfoCard.jsx";
 import {
   Coins, PiggyBank, Target, Wallet, WalletCards, Sparkles,
   ChevronDown, ChevronUp, TrendingUp, AlertTriangle, PieChart,
-  Settings2, Lightbulb, X, Crown, CheckCircle2,
+  Settings2, Lightbulb, X, Crown, CheckCircle2, Eye, EyeOff,
 } from "lucide-react";
 import { addThousandsSeparator } from "../util/util.js";
+import { maskMoneyText } from "../util/dashboardPrivacy.js";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState, useContext, useCallback, useMemo } from "react";
 import { AppContext } from "../context/AppContext.jsx";
@@ -51,6 +52,7 @@ const Home = () => {
   const [detailedInsight, setDetailedInsight] = useState(null);
   const [detailedLoading, setDetailedLoading] = useState(false);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
+  const [isBalanceVisible, setIsBalanceVisible] = useState(true);
 
   const { user } = useContext(AppContext);
 
@@ -244,21 +246,49 @@ const Home = () => {
   }, []);
 
   const safeNumber = useCallback((value) => (!value && value !== 0 ? 0 : value), []);
+  const formatPrivateCompact = useCallback(
+    (amount) => maskMoneyText(formatCompact(amount), isBalanceVisible),
+    [formatCompact, isBalanceVisible]
+  );
+  const renderPrivacyPlaceholder = useCallback((title, description) => (
+    <div className="rounded-2xl border border-dashed border-slate-200 dark:border-white/10 bg-white/70 dark:bg-white/[0.03] p-6 text-center">
+      <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 text-slate-400 dark:bg-white/5 dark:text-slate-500">
+        <EyeOff size={20} />
+      </div>
+      <h3 className="text-base font-bold text-slate-900 dark:text-white">{title}</h3>
+      <p className="mx-auto mt-1 max-w-md text-xs text-slate-400 dark:text-slate-500">{description}</p>
+      <button
+        type="button"
+        onClick={() => setIsBalanceVisible(true)}
+        className="mt-4 inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
+      >
+        <Eye size={14} />
+        Hiển thị số tiền
+      </button>
+    </div>
+  ), []);
 
   // ─── Widget Renderers ──────────────────────────────────────
   const WIDGET_RENDERERS = useMemo(
     () => ({
       kpi_cards: () => (
         <section className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          <InfoCard onClick={() => navigate("/income")} icon={<WalletCards size={22} />} label="Số dư" value={formatCompact(safeNumber(dashboardData?.totalBalance))} color="bg-blue-500/10 text-blue-400" />
-          <InfoCard onClick={() => navigate("/income")} icon={<TrendingUp size={22} />} label="Thu nhập" value={formatCompact(safeNumber(dashboardData?.totalIncome))} color="bg-emerald-500/10 text-emerald-400" />
-          <InfoCard onClick={() => navigate("/expense")} icon={<AlertTriangle size={22} />} label="Chi tiêu" value={formatCompact(safeNumber(dashboardData?.totalExpense))} color="bg-red-500/10 text-red-400" />
+          <InfoCard onClick={() => navigate("/income")} icon={<WalletCards size={22} />} label="Số dư" value={formatPrivateCompact(safeNumber(dashboardData?.totalBalance))} color="bg-blue-500/10 text-blue-400" />
+          <InfoCard onClick={() => navigate("/income")} icon={<TrendingUp size={22} />} label="Thu nhập" value={formatPrivateCompact(safeNumber(dashboardData?.totalIncome))} color="bg-emerald-500/10 text-emerald-400" />
+          <InfoCard onClick={() => navigate("/expense")} icon={<AlertTriangle size={22} />} label="Chi tiêu" value={formatPrivateCompact(safeNumber(dashboardData?.totalExpense))} color="bg-red-500/10 text-red-400" />
           <InfoCard onClick={() => navigate("/saving-goals")} icon={<Target size={22} />} label="Đang thực hiện" value={safeNumber(dashboardData?.savingGoalActiveCount)} color="bg-violet-500/10 text-violet-400" />
-          <InfoCard onClick={() => navigate("/saving-goals")} icon={<PiggyBank size={22} />} label="Tích lũy" value={formatCompact(safeNumber(dashboardData?.savingGoalTotalSaved))} color="bg-amber-500/10 text-amber-400" />
+          <InfoCard onClick={() => navigate("/saving-goals")} icon={<PiggyBank size={22} />} label="Tích lũy" value={formatPrivateCompact(safeNumber(dashboardData?.savingGoalTotalSaved))} color="bg-amber-500/10 text-amber-400" />
           <InfoCard onClick={() => navigate("/saving-goals")} icon={<PieChart size={22} />} label="Hoàn thành" value={safeNumber(dashboardData?.savingGoalCompletedCount)} color="bg-emerald-500/10 text-emerald-400" />
         </section>
       ),
       monthly_history: () => {
+        if (!isBalanceVisible) {
+          return renderPrivacyPlaceholder(
+            "Đã ẩn biểu đồ thu chi",
+            "Biểu đồ có trục, cột và tooltip chứa số tiền nên được che khi bật chế độ riêng tư."
+          );
+        }
+
         const isDark = theme === "dark";
         const gridStroke = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)";
         const tickColor = isDark ? "rgba(255, 255, 255, 0.4)" : "rgba(0, 0, 0, 0.4)";
@@ -444,17 +474,28 @@ const Home = () => {
       },
 
       recent_transactions: () => (
-        <RecentTransactions transactions={dashboardData?.recentTransactions || []} onMore={() => navigate("/expense")} />
+        isBalanceVisible ? (
+          <RecentTransactions transactions={dashboardData?.recentTransactions || []} onMore={() => navigate("/expense")} />
+        ) : renderPrivacyPlaceholder(
+          "Đã ẩn giao dịch gần đây",
+          "Danh sách giao dịch có thể hiển thị số tiền chi tiết."
+        )
       ),
       finance_overview: () => (
-        <FinanceOverview
-          totalBalance={safeNumber(dashboardData?.totalBalance)}
-          totalIncome={safeNumber(dashboardData?.totalIncome)}
-          totalExpense={safeNumber(dashboardData?.totalExpense)}
-        />
+        isBalanceVisible ? (
+          <FinanceOverview
+            totalBalance={safeNumber(dashboardData?.totalBalance)}
+            totalIncome={safeNumber(dashboardData?.totalIncome)}
+            totalExpense={safeNumber(dashboardData?.totalExpense)}
+          />
+        ) : renderPrivacyPlaceholder(
+          "Đã ẩn cơ cấu tài chính",
+          "Widget này hiển thị tổng số dư, thu nhập và chi tiêu."
+        )
       ),
       budget_progress: () => (
-        <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-6">
+        isBalanceVisible ? (
+          <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-6">
           <div className="flex justify-between items-center mb-5">
             <h3 className="text-base font-bold text-slate-900 dark:text-white">Ngân sách tháng này</h3>
             <button onClick={() => navigate("/budget")} className="text-xs font-semibold text-amber-600 dark:text-amber-400 hover:underline">
@@ -496,10 +537,19 @@ const Home = () => {
               </div>
             )}
           </div>
-        </div>
+          </div>
+        ) : renderPrivacyPlaceholder(
+          "Đã ẩn ngân sách tháng này",
+          "Tiến độ ngân sách có chứa số tiền đã chi và hạn mức."
+        )
       ),
       priority_goal: () =>
-        dashboardData?.priorityGoal ? (
+        !isBalanceVisible && dashboardData?.priorityGoal ? (
+          renderPrivacyPlaceholder(
+            "Đã ẩn mục tiêu ưu tiên",
+            "Mục tiêu tiết kiệm có chứa số tiền hiện tại và số tiền cần đạt."
+          )
+        ) : dashboardData?.priorityGoal ? (
           <div className="rounded-2xl p-6 relative overflow-hidden text-white
             bg-linear-to-br from-[#0F172A] to-[#1E1040] border border-violet-500/20">
             <div className="absolute -top-8 -right-8 w-28 h-28 bg-violet-600 rounded-full blur-2xl opacity-40" />
@@ -545,24 +595,38 @@ const Home = () => {
           </div>
         ),
     }),
-    [dashboardData, navigate, formatCurrency, formatCompact, safeNumber, chartData, formatYAxis, theme]
+    [dashboardData, navigate, formatCurrency, formatPrivateCompact, safeNumber, chartData, chartView, formatYAxis, theme, isBalanceVisible, renderPrivacyPlaceholder]
   );
 
   return (
     <Dashboard activeMenu="Tổng quan">
       {/* Header với nút Tùy chỉnh */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
         <h2 className="text-xl font-bold text-slate-900 dark:text-white">Tổng quan</h2>
-        <button
-          onClick={() => setSettingsOpen(true)}
-          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold
-            bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300
-            hover:bg-slate-200 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10
-            transition"
-        >
-          <Settings2 size={15} />
-          Tùy chỉnh
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            aria-pressed={!isBalanceVisible}
+            onClick={() => setIsBalanceVisible((visible) => !visible)}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold
+              bg-slate-900 text-white dark:bg-white dark:text-slate-900
+              hover:bg-slate-800 dark:hover:bg-slate-200 border border-slate-900/10 dark:border-white/10
+              transition"
+          >
+            {isBalanceVisible ? <EyeOff size={15} /> : <Eye size={15} />}
+            {isBalanceVisible ? "Ẩn số tiền" : "Hiện số tiền"}
+          </button>
+          <button
+            onClick={() => setSettingsOpen(true)}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold
+              bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300
+              hover:bg-slate-200 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10
+              transition"
+          >
+            <Settings2 size={15} />
+            Tùy chỉnh
+          </button>
+        </div>
       </div>
 
       {/* AI Assistant Banner — thiết kế mới rõ ràng & trực quan */}
@@ -596,9 +660,11 @@ const Home = () => {
               </div>
               <button
                 onClick={toggleDetailedInsight}
+                disabled={!isBalanceVisible}
+                title={!isBalanceVisible ? "Bật hiển thị số tiền để xem phân tích chi tiết" : undefined}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold
                   bg-white/15 border border-white/20 text-white hover:bg-white/25
-                  transition whitespace-nowrap active:scale-95"
+                  transition whitespace-nowrap active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {showDetailedInsight ? (
                   <>
@@ -617,7 +683,19 @@ const Home = () => {
 
           {/* Insight content */}
           <div className="p-6">
-            {aiLoading ? (
+            {!isBalanceVisible ? (
+              <div className="flex items-start gap-3 rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+                <div className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-400 dark:bg-white/5 dark:text-slate-500">
+                  <EyeOff size={16} />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">Đã ẩn nhận định AI</p>
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                    Nội dung phân tích có thể chứa số tiền hoặc chi tiết giao dịch, nên được che khi bật chế độ riêng tư.
+                  </p>
+                </div>
+              </div>
+            ) : aiLoading ? (
               <div className="space-y-3 animate-pulse">
                 <div className="h-4 bg-slate-200 dark:bg-white/10 rounded-full w-3/4" />
                 <div className="h-4 bg-slate-200 dark:bg-white/10 rounded-full w-1/2" />
@@ -643,6 +721,7 @@ const Home = () => {
             )}
 
             {/* Detailed insight expandable */}
+            {isBalanceVisible && (
             <div className={`transition-[max-height,opacity] duration-500 ease-in-out overflow-hidden ${
               showDetailedInsight ? "max-h-[800px] opacity-100 mt-6" : "max-h-0 opacity-0 mt-0"
             }`}>
@@ -777,6 +856,7 @@ const Home = () => {
                 )}
               </div>
             </div>
+            )}
           </div>
         </section>
       )}

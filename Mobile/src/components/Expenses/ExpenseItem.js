@@ -31,7 +31,7 @@ function HighlightText({ colors, text, keyword }) {
   );
 }
 
-export default function ExpenseItem({ item, onDelete, searchKeyword }) {
+export default function ExpenseItem({ item, onDelete, onEdit, searchKeyword }) {
   const colors = useAppColors();
   const amount = Number(item?.amount || 0);
   const note = item?.note || "";
@@ -66,14 +66,24 @@ export default function ExpenseItem({ item, onDelete, searchKeyword }) {
 
       <View style={styles.itemRight}>
         <AmountText value={amount} type="expense" showSign={true} style={styles.itemAmount} />
-        <Pressable
-          onPress={() => onDelete(item?.id)}
-          style={styles.deleteButton}
-          accessibilityRole="button"
-          accessibilityLabel="Xóa chi tiêu"
-        >
-          <AppIcon name="trash-outline" size={15} color={colors.EXPENSE_COLOR || "#EF4444"} />
-        </Pressable>
+        <View style={styles.actionRow}>
+          <Pressable
+            onPress={() => onEdit?.(item)}
+            style={styles.iconButton}
+            accessibilityRole="button"
+            accessibilityLabel="Chỉnh sửa chi tiêu"
+          >
+            <AppIcon name="create-outline" size={15} color={colors.PRIMARY || "#7C4DFF"} />
+          </Pressable>
+          <Pressable
+            onPress={() => onDelete(item?.id)}
+            style={styles.iconButton}
+            accessibilityRole="button"
+            accessibilityLabel="Xóa chi tiêu"
+          >
+            <AppIcon name="trash-outline" size={15} color={colors.EXPENSE_COLOR || "#EF4444"} />
+          </Pressable>
+        </View>
       </View>
     </View>
   );
@@ -116,8 +126,13 @@ const styles = StyleSheet.create({
   itemAmount: {
     fontWeight: "800",
   },
-  deleteButton: {
+  actionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
     marginTop: 8,
+  },
+  iconButton: {
     borderRadius: 999,
     paddingHorizontal: 8,
     paddingVertical: 4,

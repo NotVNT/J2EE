@@ -10,7 +10,9 @@ export const SUCCESS_ALERT_MESSAGES = {
   update: {
     profile: "Đã cập nhật hồ sơ thành công.",
     budget: "Đã lưu hạn mức ngân sách thành công.",
-    category: "Đã cập nhật danh mục thành công."
+    category: "Đã cập nhật danh mục thành công.",
+    income: "Đã cập nhật khoản thu thành công.",
+    expense: "Đã cập nhật khoản chi thành công."
   },
   delete: {
     income: "Đã xóa khoản thu thành công.",

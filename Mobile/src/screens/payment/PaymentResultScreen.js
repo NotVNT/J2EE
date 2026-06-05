@@ -9,6 +9,7 @@ import apiClient from "../../services/apiClient";
 import { formatMoney, getApiErrorMessage } from "../../utils/format";
 import { COLORS, useAppColors } from "../../constants/colors";
 import { getSafeAreaContentStyle } from "../../utils/safeArea";
+import ScreenBackHeader from "../../components/common/ScreenBackHeader";
 
 const PAYMENT_STATUS_LABELS = {
   PAID: "Đã thanh toán thành công",
@@ -85,19 +86,20 @@ export default function PaymentResultScreen() {
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.BG }]} contentContainerStyle={[styles.content, getSafeAreaContentStyle(insets)]}>
-      <View style={[styles.statusCard, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}> 
+      <ScreenBackHeader title="Kết quả thanh toán" />
+      <View style={[styles.statusCard, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}>
         <View style={styles.iconContainer}>
           <View style={[styles.statusIconWrap, { backgroundColor: isSuccess ? "rgba(42, 157, 143, 0.1)" : "rgba(231, 111, 81, 0.1)" }]}>
-            <Ionicons 
-              name={isSuccess ? "checkmark-circle" : "close-circle"} 
-              size={64} 
-              color={isSuccess ? colors.INCOME : colors.EXPENSE} 
+            <Ionicons
+              name={isSuccess ? "checkmark-circle" : "close-circle"}
+              size={64}
+              color={isSuccess ? colors.INCOME : colors.EXPENSE}
             />
           </View>
         </View>
 
         <Text style={[styles.sectionTitle, { color: colors.TEXT }]}>Trạng thái giao dịch</Text>
-        <Text style={[styles.statusValue, { color: isSuccess ? colors.INCOME : colors.EXPENSE }]}> 
+        <Text style={[styles.statusValue, { color: isSuccess ? colors.INCOME : colors.EXPENSE }]}>
           {PAYMENT_STATUS_LABELS[displayStatus] || displayStatus}
         </Text>
 
@@ -120,13 +122,13 @@ export default function PaymentResultScreen() {
       </View>
 
       {error ? (
-        <View style={[styles.errorBox, { backgroundColor: colors.EXPENSE_LIGHT, borderColor: colors.EXPENSE }]}> 
+        <View style={[styles.errorBox, { backgroundColor: colors.EXPENSE_LIGHT, borderColor: colors.EXPENSE }]}>
           <Text style={[styles.errorText, { color: colors.EXPENSE }]}>{error}</Text>
         </View>
       ) : null}
 
-      <Pressable 
-        style={[styles.homeButton, { backgroundColor: colors.PRIMARY, shadowColor: colors.PRIMARY }]} 
+      <Pressable
+        style={[styles.homeButton, { backgroundColor: colors.PRIMARY, shadowColor: colors.PRIMARY }]}
         onPress={() => navigation.navigate("HomeTab")}
       >
         <Text style={styles.homeButtonText}>Về trang chủ</Text>

@@ -10,8 +10,8 @@ export default function QuickActions() {
 
   const ACTION_ITEMS = [
     { icon: 'chatbubble-ellipses-outline', label: 'Trò chuyện\nAI', color: colors.ACTION_VOICE || '#A855F7', route: 'Chat' },
-    { icon: 'cart-outline', label: 'Nhập\nChi tiêu', color: colors.ACTION_EXPENSE || '#F97316', route: 'AddExpense' },
-    { icon: 'wallet-outline', label: 'Nhập\nThu nhập', color: colors.ACTION_INCOME || '#22C55E', route: 'AddIncome' },
+    { icon: 'cart-outline', label: 'Thêm\nChi tiêu', color: colors.ACTION_EXPENSE || '#F97316', route: 'AddExpense' },
+    { icon: 'wallet-outline', label: 'Thêm\nThu nhập', color: colors.ACTION_INCOME || '#22C55E', route: 'AddIncome' },
     { icon: 'flag-outline', label: 'Thiết lập\nMục tiêu', color: colors.ACTION_GOAL || '#3B82F6', route: 'Goal' },
   ];
 

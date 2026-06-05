@@ -3,8 +3,9 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS, useAppColors } from "../../constants/colors";
 
-export default function PaymentCheckoutHeader({ canGoBack, onGoBack, title }) {
+export default function PaymentCheckoutHeader({ canGoBack, onExit, onGoBack, title }) {
   const colors = useAppColors();
+  const handleBack = canGoBack ? onGoBack : onExit;
 
   return (
     <View style={[styles.header, { backgroundColor: colors.CARD, borderBottomColor: colors.CARD_BORDER }]}>
@@ -12,11 +13,14 @@ export default function PaymentCheckoutHeader({ canGoBack, onGoBack, title }) {
         <Text style={[styles.headerTitle, { color: colors.TEXT }]}>{title}</Text>
         <Text style={[styles.headerSubtitle, { color: colors.TEXT_SECONDARY }]}>Bạn có thể thanh toán ngay trong app. Nếu cần mở app ngân hàng, ứng dụng sẽ bật liên kết ngoài.</Text>
       </View>
-      {canGoBack ? (
-        <Pressable style={[styles.secondaryButton, { borderColor: colors.CARD_BORDER, backgroundColor: colors.CARD }]} onPress={onGoBack}>
-          <Ionicons name="arrow-back-outline" size={16} color={colors.TEXT} />
-        </Pressable>
-      ) : null}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Quay lại"
+        style={[styles.secondaryButton, { borderColor: colors.CARD_BORDER, backgroundColor: colors.CARD }]}
+        onPress={handleBack}
+      >
+        <Ionicons name="arrow-back-outline" size={16} color={colors.TEXT} />
+      </Pressable>
     </View>
   );
 }

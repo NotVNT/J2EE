@@ -12,6 +12,7 @@ export default function CategoryBreakdownCard({ categories }) {
   if (!categories || categories.length === 0) return null;
 
   const totalAmount = categories.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+  const isLight = colors.CARD === '#FFFFFF';
   
   // Custom colors preset if category color is not provided
   const categoryPresets = ["#7C4DFF", "#FFB84D", "#22C55E", "#3B82F6", "#EF4444", "#EC4899", "#06B6D4"];
@@ -20,17 +21,17 @@ export default function CategoryBreakdownCard({ categories }) {
     name: item.name || "Khác",
     amount: Number(item.amount || 0),
     color: item.color || categoryPresets[idx % categoryPresets.length],
-    legendFontColor: "#FFFFFF",
+    legendFontColor: colors.TEXT,
     legendFontSize: 10
   }));
 
   const chartWidth = Math.max(screenWidth - 48, 300);
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.CHART_BG || "#1C1C1E", borderColor: "#2C2C2E" }]}> 
+    <View style={[styles.card, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}> 
       <View style={styles.cardHeader}>
-        <Ionicons name="pie-chart-outline" size={18} color="#7C4DFF" />
-        <Text style={[styles.cardTitle, { color: "#FFFFFF" }]}>Chi phí theo danh mục</Text>
+        <Ionicons name="pie-chart-outline" size={18} color={colors.PRIMARY} />
+        <Text style={[styles.cardTitle, { color: colors.TEXT }]}>Chi phí theo danh mục</Text>
       </View>
 
       {/* Donut Chart Container */}
@@ -49,11 +50,11 @@ export default function CategoryBreakdownCard({ categories }) {
           }}
         />
         {/* Absolute positioned Donut Hole overlay */}
-        <View style={[styles.donutHole, { backgroundColor: colors.CHART_BG || "#1C1C1E" }]}>
-          <Text style={styles.donutValueText} numberOfLines={1} adjustsFontSizeToFit>
+        <View style={[styles.donutHole, { backgroundColor: colors.CARD }]}>
+          <Text style={[styles.donutValueText, { color: colors.TEXT }]} numberOfLines={1} adjustsFontSizeToFit>
             {formatMoney(totalAmount)}
           </Text>
-          <Text style={styles.donutLabelText}>Tổng chi</Text>
+          <Text style={[styles.donutLabelText, { color: colors.TEXT_SECONDARY }]}>Tổng chi</Text>
         </View>
       </View>
 
@@ -67,15 +68,15 @@ export default function CategoryBreakdownCard({ categories }) {
               <View style={styles.categoryHeader}>
                 <View style={styles.categoryInfo}>
                   <View style={[styles.legendDot, { backgroundColor: itemColor }]} />
-                  <Text style={[styles.categoryName, { color: "#FFFFFF" }]}>{item.name}</Text>
+                  <Text style={[styles.categoryName, { color: colors.TEXT }]}>{item.name}</Text>
                 </View>
                 <View style={styles.amountWrap}>
-                  <Text style={[styles.categoryAmount, { color: "#FFFFFF" }]}>{formatMoney(item.amount)}</Text>
-                  <Text style={[styles.percentText, { color: "rgba(255, 255, 255, 0.6)" }]}>{Math.round(percentVal)}%</Text>
+                  <Text style={[styles.categoryAmount, { color: colors.TEXT }]}>{formatMoney(item.amount)}</Text>
+                  <Text style={[styles.percentText, { color: colors.TEXT_SECONDARY }]}>{Math.round(percentVal)}%</Text>
                 </View>
               </View>
               {/* Subtle visual progress bar */}
-              <View style={[styles.progressContainer, { backgroundColor: "rgba(255, 255, 255, 0.08)" }]}>
+              <View style={[styles.progressContainer, { backgroundColor: isLight ? "rgba(0, 0, 0, 0.05)" : "rgba(255, 255, 255, 0.08)" }]}>
                 <View style={[styles.progressBar, { width: `${percentVal}%`, backgroundColor: itemColor }]} />
               </View>
             </View>
@@ -88,14 +89,14 @@ export default function CategoryBreakdownCard({ categories }) {
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 20,
+    borderRadius: 16,
     borderWidth: 1,
     padding: 16,
     shadowColor: "#000",
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
+    shadowOpacity: 0.02,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
     marginBottom: 16,
   },
   cardHeader: {
@@ -106,7 +107,7 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: 15,
-    fontWeight: "700",
+    fontWeight: "750",
   },
   chartContainer: {
     alignItems: "center",
@@ -125,19 +126,17 @@ const styles = StyleSheet.create({
     elevation: 2,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.05,
     shadowRadius: 2,
   },
   donutValueText: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "800",
     textAlign: "center",
     width: 80,
   },
   donutLabelText: {
-    fontSize: 10,
-    color: "rgba(255, 255, 255, 0.6)",
+    fontSize: 9,
     marginTop: 2,
     textTransform: "uppercase",
     fontWeight: "600",

@@ -14,6 +14,7 @@ import useJarList from "../../hooks/useJarList";
 import { getSafeAreaBottom, getSafeAreaTop } from "../../utils/safeArea";
 import AppIcon from "../../components/ui/AppIcon";
 import EmptyState from "../../components/ui/EmptyState";
+import ScreenBackHeader from "../../components/common/ScreenBackHeader";
 import { scale } from "../../utils/layoutScale";
 
 function JarActions({ colors, jarCount, onCreate, onTransfer }) {
@@ -113,6 +114,7 @@ function JarListRoute() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.BG, paddingTop: getSafeAreaTop(insets) }]}>
+      <ScreenBackHeader title="Ví phụ" style={styles.screenHeader} />
       <FlatList
         data={jarList.jars}
         keyExtractor={(item) => String(item.id)}
@@ -143,6 +145,10 @@ function JarListRoute() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  screenHeader: {
+    marginHorizontal: scale(14),
+    marginBottom: 0,
   },
   scrollContent: {
     padding: scale(14),

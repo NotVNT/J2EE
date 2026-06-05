@@ -7,6 +7,7 @@ import ProfileInfoFields from "../../components/Profile/ProfileInfoFields";
 import { COLORS, useAppColors } from "../../constants/colors";
 import useEditProfileForm from "../../hooks/useEditProfileForm";
 import { getSafeAreaContentStyle } from "../../utils/safeArea";
+import ScreenBackHeader from "../../components/common/ScreenBackHeader";
 
 export default function EditProfileScreen() {
   const insets = useSafeAreaInsets();
@@ -15,7 +16,8 @@ export default function EditProfileScreen() {
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.BG }]} contentContainerStyle={[styles.content, getSafeAreaContentStyle(insets)]}>
-      <View style={[styles.card, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}> 
+      <ScreenBackHeader title="Chỉnh sửa hồ sơ" />
+      <View style={[styles.card, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}>
         <Text style={[styles.title, { color: colors.TEXT }]}>Chỉnh sửa hồ sơ</Text>
         <Text style={[styles.subtitle, { color: colors.TEXT_SECONDARY }]}>Cập nhật thông tin cá nhân và mật khẩu theo nhu cầu của bạn.</Text>
 

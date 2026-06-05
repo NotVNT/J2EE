@@ -6,6 +6,7 @@ import { AuthContext } from "../../contexts/AuthContext";
 import { COLORS, useAppColors } from "../../constants/colors";
 import { getSafeAreaBottom, getSafeAreaTop } from "../../utils/safeArea";
 import StatusBadge from "../../components/ui/StatusBadge";
+import ScreenBackHeader from "../../components/common/ScreenBackHeader";
 
 function InfoRow({ colors, label, value, showChevron = false, isLast = false }) {
   return (
@@ -32,14 +33,10 @@ export default function ProfileScreen() {
 
   return (
     <View style={[styles.safeArea, { backgroundColor: colors.BG, paddingTop: getSafeAreaTop(insets, 0) }]}>
-      
-      {/* Top Application Bar matching mockup */}
-      <View style={[styles.topAppBar, { backgroundColor: colors.BG }]}>
-        <Text style={[styles.appBarTitle, { color: colors.TEXT }]}>Hồ sơ</Text>
-      </View>
+      <ScreenBackHeader title="Hồ sơ" style={styles.screenHeader} />
 
       <ScrollView style={[styles.container, { backgroundColor: colors.BG }]} contentContainerStyle={[styles.content, { paddingBottom: getSafeAreaBottom(insets) }]} showsVerticalScrollIndicator={false}>
-        
+
         {/* User Profile Header Card */}
         <View style={[styles.heroCard, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}>
           {profileImageUrl ? (
@@ -99,6 +96,10 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     textAlign: "center",
     flex: 1,
+  },
+  screenHeader: {
+    marginHorizontal: 16,
+    marginBottom: 0,
   },
   container: {
     flex: 1,

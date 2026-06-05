@@ -17,7 +17,7 @@ export default function IncomeSummaryCard({
   const colors = useAppColors();
 
   return (
-    <View style={[styles.summaryCard, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER, shadowColor: colors.TEXT }]}> 
+    <View style={[styles.summaryCard, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER, shadowColor: colors.TEXT }]}>
       <Text style={[styles.summaryLabel, { color: colors.TEXT_SECONDARY }]}>Tổng thu nhập</Text>
       <Text style={[styles.summaryAmount, { color: colors.INCOME }]}>{formatMoney(totalIncome)}</Text>
       <Text style={[styles.summaryHint, { color: colors.TEXT_SECONDARY }]}>{incomeCount} giao dịch</Text>
@@ -33,7 +33,7 @@ export default function IncomeSummaryCard({
         onPress={onExport}
         disabled={isExporting}
       >
-        <Text style={[styles.exportText, { color: colors.ACTION_INCOME || colors.INCOME }]}> 
+        <Text style={[styles.exportText, { color: colors.ACTION_INCOME || colors.INCOME }]}>
           {isExporting
             ? "Đang tạo báo cáo..."
             : filterType === INCOME_FILTER_TYPES.all

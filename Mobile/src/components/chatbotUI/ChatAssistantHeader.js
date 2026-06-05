@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { Image, Platform, Pressable, StatusBar, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -9,16 +9,13 @@ import appLogo from "../../assets/applogo.png";
 export default function ChatAssistantHeader({
   activeMode,
   isFreePlan,
-  modelOptions = [],
-  modelValue,
   modelLabel,
   onChangeMode,
-  onModelChange,
+  onBack,
   onOpenSessions,
 }) {
   const colors = useAppColors();
   const insets = useSafeAreaInsets();
-  const [isModelOpen, setIsModelOpen] = useState(false);
   const statusBarTop = Platform.OS === "android" ? StatusBar.currentHeight || 0 : 0;
   const topInset = Math.max(insets.top, statusBarTop);
   const safeTopPadding = topInset + 8;
@@ -26,16 +23,26 @@ export default function ChatAssistantHeader({
     ? "Trợ lý tự động tài chính"
     : "Trợ lý tài chính AI";
 
-  const handleModelSelect = (option) => {
-    if (option.disabled) return;
-    setIsModelOpen(false);
-    onModelChange?.(option.value);
-  };
-
   return (
-    <View style={[styles.headerCard, { marginTop: safeTopPadding, backgroundColor: colors.CARD, borderColor: colors.CHAT_BORDER, shadowColor: colors.PRIMARY }]}> 
+    <View style={[styles.headerCard, { marginTop: safeTopPadding, backgroundColor: colors.CARD, borderColor: colors.CHAT_BORDER, shadowColor: colors.PRIMARY }]}>
       <View style={styles.topRow}>
-        <View style={[styles.avatarFrame, { backgroundColor: colors.ROSE_MIST }]}> 
+        {onBack ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Quay lại"
+            hitSlop={8}
+            onPress={onBack}
+            style={({ pressed }) => [
+              styles.backButton,
+              { backgroundColor: colors.CHAT_PURPLE_LIGHT, borderColor: colors.CHAT_BORDER },
+              pressed && styles.backButtonPressed,
+            ]}
+          >
+            <Ionicons name="chevron-back" size={20} color={colors.PRIMARY} />
+          </Pressable>
+        ) : null}
+
+        <View style={[styles.avatarFrame, { backgroundColor: colors.ROSE_MIST }]}>
           <Image source={appLogo} style={styles.avatarImage} resizeMode="cover" />
         </View>
 
@@ -60,17 +67,9 @@ export default function ChatAssistantHeader({
             <View style={styles.onlineDot} />
             <Text style={[styles.metaText, { color: colors.TEXT_SECONDARY }]}>Trực tuyến</Text>
             <View style={[styles.metaDivider, { backgroundColor: colors.CARD_BORDER }]} />
-            <Pressable
-              style={styles.modelInline}
-              onPress={() => setIsModelOpen((current) => !current)}
-            >
+            <View style={styles.modelInline}>
               <Text style={[styles.metaText, { color: colors.TEXT_SECONDARY }]} numberOfLines={1}>{modelLabel}</Text>
-              <Ionicons
-                name={isModelOpen ? "chevron-up" : "chevron-down"}
-                size={15}
-                color={colors.TEXT_SECONDARY}
-              />
-            </Pressable>
+            </View>
           </View>
         </View>
 
@@ -82,62 +81,6 @@ export default function ChatAssistantHeader({
         onChangeMode={onChangeMode}
         embedded
       />
-
-      {isModelOpen ? (
-        <View style={[styles.modelDropdown, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}> 
-          <Text style={[styles.dropdownTitle, { color: colors.PRIMARY }]}>Model đang dùng</Text>
-          {modelOptions.map((option) => {
-            const selected = option.value === modelValue;
-
-            return (
-              <Pressable
-                key={option.value}
-                style={[
-                  styles.optionRow,
-                  selected && [styles.optionRowSelected, { backgroundColor: colors.ROSE_MIST, borderColor: colors.PRIMARY_LIGHT }],
-                  option.disabled && styles.optionRowDisabled,
-                ]}
-                onPress={() => handleModelSelect(option)}
-              >
-                <View style={styles.optionIcon}>
-                  <Ionicons
-                    name={selected ? "checkmark-circle" : "radio-button-off"}
-                    size={18}
-                    color={selected ? colors.PRIMARY : colors.TEXT_MUTED}
-                  />
-                </View>
-                <View style={styles.optionCopy}>
-                  <Text
-                    style={[
-                      styles.optionLabel,
-                      { color: colors.TEXT },
-                      option.disabled && styles.optionLabelDisabled,
-                    ]}
-                    numberOfLines={1}
-                  >
-                    {option.label}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.optionDescription,
-                      { color: colors.TEXT_SECONDARY },
-                      option.disabled && styles.optionLabelDisabled,
-                    ]}
-                    numberOfLines={1}
-                  >
-                    {option.disabled ? "Cần gói Premium" : "Sẵn sàng sử dụng"}
-                  </Text>
-                </View>
-                {option.badge ? (
-                  <View style={styles.badge}>
-                    <Text style={styles.badgeText}>{option.badge}</Text>
-                  </View>
-                ) : null}
-              </Pressable>
-            );
-          })}
-        </View>
-      ) : null}
     </View>
   );
 }
@@ -165,6 +108,18 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 18,
+  },
+  backButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 10,
+  },
+  backButtonPressed: {
+    opacity: 0.72,
   },
   avatarFrame: {
     width: 64,

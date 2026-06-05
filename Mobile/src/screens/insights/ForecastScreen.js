@@ -23,6 +23,7 @@ import ForecastTrendChart from "../../components/Forecast/ForecastTrendChart";
 import ForecastAnomalySection from "../../components/Forecast/ForecastAnomalySection";
 import ForecastAISection from "../../components/Forecast/ForecastAISection";
 import ForecastEmptyState from "../../components/Forecast/ForecastEmptyState";
+import ScreenBackHeader from "../../components/common/ScreenBackHeader";
 
 export default function ForecastScreen() {
   const route = useRoute();
@@ -60,7 +61,14 @@ export default function ForecastScreen() {
   } = useForecastData({ route, isPremium, currentMonth, currentYear });
 
   if (!isPremium) {
-    return <ForecastPaywall />;
+    return (
+      <View style={[styles.container, { backgroundColor: colors.BG }]}>
+        <View style={[styles.paywallContent, getSafeAreaContentStyle(insets, { bottom: 24 })]}>
+          <ScreenBackHeader title="Dự báo" />
+          <ForecastPaywall />
+        </View>
+      </View>
+    );
   }
 
   return (
@@ -69,6 +77,8 @@ export default function ForecastScreen() {
       contentContainerStyle={[styles.content, getSafeAreaContentStyle(insets)]}
       showsVerticalScrollIndicator={false}
     >
+      <ScreenBackHeader title="Dự báo" />
+
       <ForecastMonthPicker
         label={monthPickerLabel}
         hint={monthPickerHint}
@@ -154,6 +164,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 40,
+  },
+  paywallContent: {
+    flex: 1,
+    paddingHorizontal: 16,
   },
   loadingWrap: {
     flex: 1,

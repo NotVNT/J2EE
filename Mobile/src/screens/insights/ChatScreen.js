@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
 import {
-  StyleSheet,
   Text,
   View,
   FlatList,
@@ -11,7 +10,8 @@ import {
   Pressable,
   Animated
 } from "react-native";
-import { COLORS, useAppColors } from "../../constants/colors";
+import { useNavigation } from "@react-navigation/native";
+import { useAppColors } from "../../constants/colors";
 import ChatAssistantHeader from "../../components/chatbotUI/ChatAssistantHeader";
 import MessageBubble from "../../components/chatbotUI/MessageBubble";
 import QuickPromptChips from "../../components/chatbotUI/QuickPromptChips";
@@ -22,6 +22,7 @@ import useChatMessages from "../../components/chatbotUI/useChatMessages";
 import useModelConfig from "../../components/chatbotUI/useModelConfig";
 import useVoiceInput from "../../components/chatbotUI/useVoiceInput";
 import AppIcon from "../../components/ui/AppIcon";
+import styles from "./ChatScreenStyles";
 
 function WaveformBar({ color }) {
   const anim = React.useRef(new Animated.Value(1)).current;
@@ -58,6 +59,7 @@ function WaveformBar({ color }) {
 }
 
 export default function ChatScreen() {
+  const navigation = useNavigation();
   const colors = useAppColors();
   const [inputText, setInputText] = useState("");
   const [isSessionsVisible, setIsSessionsVisible] = useState(false);
@@ -69,13 +71,10 @@ export default function ChatScreen() {
     activeProvider,
     activeModel,
     activeModelLabel,
-    modelOptions,
-    modelValue,
     modelLabel,
     inputPlaceholder,
     isFreePlan,
     handleModeSwitch,
-    handleModelChange
   } = useModelConfig();
 
   const {
@@ -132,6 +131,15 @@ export default function ChatScreen() {
     sendMessage(prompt.text);
   }, [sendMessage]);
 
+  const handleBack = useCallback(() => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+      return;
+    }
+
+    navigation.navigate("Dashboard");
+  }, [navigation]);
+
   const handleEditMessage = useCallback((message) => {
     setEditingMessage(message);
     setIsEditModalVisible(true);
@@ -154,15 +162,13 @@ export default function ChatScreen() {
   ), [handleConfirmAction, handleCancelConfirmation, handleUndo, handleEditMessage, retryLastMessage, isProcessingCrud]);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.CHAT_BG }]}> 
+    <View style={[styles.container, { backgroundColor: colors.CHAT_BG }]}>
       <ChatAssistantHeader
         activeMode={activeMode}
         isFreePlan={isFreePlan}
-        modelOptions={modelOptions}
-        modelValue={modelValue}
         modelLabel={modelLabel}
         onChangeMode={handleModeSwitch}
-        onModelChange={handleModelChange}
+        onBack={handleBack}
         onOpenSessions={() => setIsSessionsVisible(true)}
       />
 
@@ -179,9 +185,9 @@ export default function ChatScreen() {
           contentContainerStyle={styles.listContent}
           ListFooterComponent={
             loading ? (
-              <View style={[styles.loadingContainer, { backgroundColor: colors.CHAT_BUBBLE, borderColor: colors.CHAT_BORDER }]}> 
+              <View style={[styles.loadingContainer, { backgroundColor: colors.CHAT_BUBBLE, borderColor: colors.CHAT_BORDER }]}>
                 <ActivityIndicator color={colors.PRIMARY} size="small" />
-                <Text style={[styles.loadingText, { color: colors.CHAT_MUTED }]}> 
+                <Text style={[styles.loadingText, { color: colors.CHAT_MUTED }]}>
                   Trợ lý AI đang suy nghĩ...
                 </Text>
               </View>
@@ -267,92 +273,3 @@ export default function ChatScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.CHAT_BG
-  },
-  keyboardView: {
-    flex: 1
-  },
-  listContent: {
-    paddingHorizontal: 24,
-    paddingTop: 20,
-    paddingBottom: 20
-  },
-  loadingContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    alignSelf: "flex-start",
-    backgroundColor: COLORS.CHAT_BUBBLE,
-    borderWidth: 1,
-    borderColor: COLORS.CHAT_BORDER,
-    borderRadius: 22,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    gap: 8,
-    marginTop: 6
-  },
-  loadingText: {
-    color: COLORS.CHAT_MUTED,
-    fontSize: 12
-  },
-  voiceModalContainer: {
-    flex: 1,
-    padding: 24,
-    justifyContent: "space-between",
-  },
-  voiceHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: Platform.OS === "ios" ? 40 : 20,
-  },
-  voiceTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-  },
-  voiceCloseBtn: {
-    padding: 8,
-  },
-  voiceBody: {
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 16,
-  },
-  waveformContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    height: 80,
-    marginBottom: 40,
-  },
-  voiceDisclaimerText: {
-    fontSize: 13,
-    lineHeight: 20,
-    textAlign: "center",
-    fontStyle: "italic",
-  },
-  voiceFooter: {
-    alignItems: "center",
-    marginBottom: Platform.OS === "ios" ? 40 : 20,
-  },
-  voiceHintText: {
-    fontSize: 14,
-    marginBottom: 16,
-    fontWeight: "500",
-  },
-  voiceMicButton: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    alignItems: "center",
-    justifyContent: "center",
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-  },
-});

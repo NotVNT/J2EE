@@ -8,6 +8,7 @@ import { COLORS, useAppColors } from "../../constants/colors";
 import useBudget from "../../hooks/useBudget";
 import { getSafeAreaBottom, getSafeAreaTop } from "../../utils/safeArea";
 import AppIcon from "../../components/ui/AppIcon";
+import ScreenBackHeader from "../../components/common/ScreenBackHeader";
 import { scale } from "../../utils/layoutScale";
 
 function BudgetEmptyState({ colors }) {
@@ -48,7 +49,8 @@ export default function BudgetScreen() {
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.BG, paddingTop: getSafeAreaTop(insets) }]}> 
+    <View style={[styles.container, { backgroundColor: colors.BG, paddingTop: getSafeAreaTop(insets) }]}>
+      <ScreenBackHeader title="Ngân sách" />
       <FlatList
         data={budget.budgets}
         keyExtractor={(item) => String(item?.id)}

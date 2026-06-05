@@ -16,6 +16,7 @@ import {
 } from "../../utils/jar";
 import { CategoryVectorIcon, getIconColor } from "../../utils/categoryIcons";
 import { getSafeAreaBottom, getSafeAreaTop } from "../../utils/safeArea";
+import ScreenBackHeader from "../common/ScreenBackHeader";
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -215,6 +216,7 @@ export default function JarDetailView() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.BG, paddingTop: getSafeAreaTop(insets) }]}>
+      <ScreenBackHeader title={selectedJar.name || "Chi tiết ví phụ"} style={styles.screenHeader} />
       <FlatList
         data={jarExpenses}
         keyExtractor={(item) => String(item.id)}
@@ -367,6 +369,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.BG,
+  },
+  screenHeader: {
+    marginHorizontal: 16,
+    marginBottom: 0,
   },
   scrollContent: {
     padding: 16,
