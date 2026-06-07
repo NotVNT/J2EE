@@ -1,11 +1,25 @@
 import { useCallback, useMemo, useState } from "react";
 import { Alert } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
+import { API_ENDPOINTS } from "../constants/api";
 import { SUCCESS_ALERT_MESSAGES, SUCCESS_ALERT_TITLE } from "../constants/alertMessages";
-import { deleteBudgetById, fetchBudgets, saveBudget } from "../services/budgetService";
+import apiClient from "../services/apiClient";
 import { fetchCategoriesByType } from "../services/categoryService";
 import { formatCurrencyInput, getApiErrorMessage, parseCurrencyInput } from "../utils/format";
 import { summarizeBudgets } from "../utils/budget";
+
+async function fetchBudgets() {
+  const response = await apiClient.get(API_ENDPOINTS.GET_BUDGETS);
+  return Array.isArray(response.data) ? response.data : [];
+}
+
+async function saveBudget(payload) {
+  return apiClient.post(API_ENDPOINTS.SET_BUDGET, payload);
+}
+
+async function deleteBudgetById(id) {
+  return apiClient.delete(API_ENDPOINTS.DELETE_BUDGET(id));
+}
 
 export default function useBudget() {
   const now = new Date();

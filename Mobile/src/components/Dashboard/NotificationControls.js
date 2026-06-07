@@ -1,9 +1,24 @@
 import React from "react";
-import { Pressable, Text, View } from "react-native";
-import { COLORS } from "../../../constants/colors";
-import AppIcon from "../../ui/AppIcon";
-import { CATEGORY_FILTER_OPTIONS, READ_FILTER_OPTIONS } from "./constants";
-import styles from "./styles";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { COLORS } from "../../constants/colors";
+import AppIcon from "../ui/AppIcon";
+import { clampScale, scale } from "../../utils/layoutScale";
+import {
+  NOTIFICATION_CATEGORY_FILTERS,
+  NOTIFICATION_READ_FILTERS
+} from "../../utils/notificationFilters";
+
+const READ_FILTER_OPTIONS = [
+  { id: NOTIFICATION_READ_FILTERS.ALL, label: "Tất cả" },
+  { id: NOTIFICATION_READ_FILTERS.UNREAD, label: "Chưa đọc" }
+];
+
+const CATEGORY_FILTER_OPTIONS = [
+  { id: NOTIFICATION_CATEGORY_FILTERS.ALL, label: "Tất cả", compactLabel: "Tất cả", icon: "notifications-outline" },
+  { id: NOTIFICATION_CATEGORY_FILTERS.FINANCIAL, label: "Biến động số dư", compactLabel: "Số dư", icon: "trending-up-outline" },
+  { id: NOTIFICATION_CATEGORY_FILTERS.BUDGET, label: "Ngân sách", compactLabel: "Ngân sách", icon: "shield-checkmark-outline" },
+  { id: NOTIFICATION_CATEGORY_FILTERS.SYSTEM, label: "Hệ thống / Gói", compactLabel: "Hệ thống", icon: "sparkles-outline" }
+];
 
 export function NotificationFilters({ categoryFilter, colors, readFilter, setCategoryFilter, setReadFilter }) {
   return (
@@ -91,3 +106,95 @@ export function SelectionBar({ allVisibleSelected, colors, onDeleteSelected, onT
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  filterPanel: {
+    paddingHorizontal: scale(14),
+    paddingVertical: scale(10),
+    borderBottomWidth: 1,
+    gap: scale(9)
+  },
+  readFilterGroup: {
+    flexDirection: "row",
+    borderWidth: 1,
+    borderRadius: scale(12),
+    padding: scale(3),
+    gap: scale(3)
+  },
+  readFilterButton: {
+    flex: 1,
+    minHeight: scale(32),
+    borderRadius: scale(9),
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: scale(10),
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 1
+  },
+  readFilterText: {
+    fontSize: clampScale(12, 10, 14),
+    fontWeight: "800"
+  },
+  categoryFilters: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: scale(8)
+  },
+  categoryChip: {
+    flexBasis: "48%",
+    flexGrow: 1,
+    minHeight: scale(36),
+    borderRadius: scale(12),
+    borderWidth: 1,
+    paddingHorizontal: scale(10),
+    flexDirection: "row",
+    alignItems: "center",
+    gap: scale(6)
+  },
+  categoryChipText: {
+    fontSize: clampScale(12, 10, 14),
+    fontWeight: "800"
+  },
+  selectionBar: {
+    minHeight: scale(44),
+    paddingHorizontal: scale(14),
+    paddingVertical: scale(8),
+    borderBottomWidth: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: scale(12)
+  },
+  selectAllRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1
+  },
+  selectAllText: {
+    fontSize: clampScale(12, 10, 14),
+    fontWeight: "800"
+  },
+  selectButton: {
+    width: scale(22),
+    aspectRatio: 1,
+    borderRadius: scale(7),
+    borderWidth: 1.5,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: scale(10)
+  },
+  deleteSelectedButton: {
+    borderRadius: scale(12),
+    paddingHorizontal: scale(10),
+    paddingVertical: scale(8),
+    flexDirection: "row",
+    alignItems: "center",
+    gap: scale(5)
+  },
+  deleteSelectedText: {
+    fontSize: clampScale(12, 10, 14),
+    fontWeight: "900"
+  }
+});

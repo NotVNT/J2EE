@@ -1,145 +1,176 @@
 import { useCallback, useMemo, useState } from "react";
 import { Alert } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
-import { SUCCESS_ALERT_MESSAGES, SUCCESS_ALERT_TITLE } from "../constants/alertMessages";
-import { useVisibleItems } from "../components/common/ShowMoreButton";
-import {
-  deleteExpenseById,
-  exportExpenseReport,
-  fetchExpensesByFilter,
-  parseExpenseVoice
-} from "../services/expenseService";
+import { deleteExpenseById, fetchExpensesByFilter } from "../services/expenseService";
+import { deleteIncomeById, fetchIncomesByFilter } from "../services/incomeService";
 import { getApiErrorMessage } from "../utils/format";
 
-const CURRENT_EXPENSE_FILTER = "current";
-
-function searchExpenses(expenses, searchQuery) {
-  const keyword = searchQuery.toLowerCase().trim();
-  if (!keyword) {
-    return expenses;
-  }
-
-  return expenses.filter(
-    (item) =>
-      (item.name || "").toLowerCase().includes(keyword) ||
-      (item.note || "").toLowerCase().includes(keyword) ||
-      (item.categoryName || "").toLowerCase().includes(keyword)
-  );
-}
-
 export default function useExpenses() {
-  const [expenses, setExpenses] = useState([]);
+  const [allTransactions, setAllTransactions] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [selectedDay, setSelectedDay] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterType, setFilterType] = useState(CURRENT_EXPENSE_FILTER);
-  const [isExporting, setIsExporting] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const [activeType, setActiveType] = useState("expense");
 
-  const filteredExpenses = useMemo(
-    () => searchExpenses(expenses, searchQuery),
-    [expenses, searchQuery]
-  );
-
-  const totalExpense = useMemo(() => {
-    return expenses.reduce((sum, item) => sum + Number(item?.amount || 0), 0);
-  }, [expenses]);
-
-  const {
-    visibleItems: visibleExpenses,
-    canToggle: canToggleExpenses,
-    expanded: expandedExpenses,
-    toggle: toggleExpenses
-  } = useVisibleItems(filteredExpenses, {
-    initialCount: 3,
-    mode: "toggle",
-    resetKey: `${filterType}|${searchQuery.trim()}`
-  });
-
-  const fetchExpenses = useCallback(async () => {
-    const data = await fetchExpensesByFilter(filterType);
-    setExpenses(data);
-  }, [filterType]);
-
-  const onRefresh = useCallback(async () => {
+  const loadData = useCallback(async () => {
     setRefreshing(true);
     try {
-      await fetchExpenses();
+      const [expenses, incomes] = await Promise.all([
+        fetchExpensesByFilter("all"),
+        fetchIncomesByFilter("all")
+      ]);
+
+      const merged = [
+        ...expenses.map((expense) => ({ ...expense, type: "expense" })),
+        ...incomes.map((income) => ({ ...income, type: "income" }))
+      ];
+
+      merged.sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
+      setAllTransactions(merged);
     } catch (error) {
-      Alert.alert("Lỗi", getApiErrorMessage(error, "Không tải được danh sách chi tiêu"));
+      Alert.alert("Lỗi", getApiErrorMessage(error, "Không tải được lịch sử giao dịch"));
     } finally {
       setRefreshing(false);
     }
-  }, [fetchExpenses]);
-
-  const onDelete = useCallback(
-    async (id) => {
-      if (!id) return;
-
-      Alert.alert("Xác nhận", "Bạn có chắc muốn xóa khoản chi này?", [
-        { text: "Hủy", style: "cancel" },
-        {
-          text: "Xóa",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await deleteExpenseById(id);
-              await fetchExpenses();
-              Alert.alert(SUCCESS_ALERT_TITLE, SUCCESS_ALERT_MESSAGES.delete.expense);
-            } catch (error) {
-              Alert.alert("Xóa thất bại", getApiErrorMessage(error, "Không thể xóa khoản chi này"));
-            }
-          }
-        }
-      ]);
-    },
-    [fetchExpenses]
-  );
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
-      onRefresh();
-    }, [onRefresh])
+      loadData();
+    }, [loadData])
   );
 
-  const handleVoiceResult = useCallback(async (text, onParsed) => {
-    try {
-      const data = await parseExpenseVoice(text);
-      if (data) {
-        onParsed?.(data);
+  const handleDelete = useCallback((item) => {
+    const isIncome = item.type === "income";
+    Alert.alert("Xác nhận", `Bạn có chắc muốn xóa khoản ${isIncome ? "thu nhập" : "chi tiêu"} này?`, [
+      { text: "Hủy", style: "cancel" },
+      {
+        text: "Xóa",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            if (isIncome) {
+              await deleteIncomeById(item.id);
+            } else {
+              await deleteExpenseById(item.id);
+            }
+            loadData();
+          } catch (error) {
+            Alert.alert("Thất bại", getApiErrorMessage(error, "Không thể xóa giao dịch"));
+          }
+        }
       }
-    } catch (error) {
-      Alert.alert("Lỗi AI", getApiErrorMessage(error, "Không thể phân tích nội dung giọng nói"));
-    }
-  }, []);
+    ]);
+  }, [loadData]);
 
-  const handleExport = useCallback(async () => {
-    setIsExporting(true);
-    try {
-      await exportExpenseReport(filterType);
-    } catch (error) {
-      Alert.alert("Lỗi xuất file", getApiErrorMessage(error, "Không thể xuất báo cáo"));
-    } finally {
-      setIsExporting(false);
+  const nextMonth = () => {
+    setCurrentMonth((previous) => new Date(previous.getFullYear(), previous.getMonth() + 1, 1));
+    setSelectedDay(null);
+  };
+
+  const prevMonth = () => {
+    setCurrentMonth((previous) => new Date(previous.getFullYear(), previous.getMonth() - 1, 1));
+    setSelectedDay(null);
+  };
+
+  const filteredTransactions = useMemo(() => {
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth();
+    const keyword = searchQuery.toLowerCase().trim();
+
+    return allTransactions.filter((transaction) => {
+      if (transaction.type !== activeType) return false;
+
+      const transactionDate = new Date(transaction.createdAt || transaction.date);
+      const isSameMonth = transactionDate.getFullYear() === year && transactionDate.getMonth() === month;
+      if (!isSameMonth) return false;
+
+      if (!keyword) return true;
+
+      return (
+        (transaction.name || "").toLowerCase().includes(keyword) ||
+        (transaction.note || "").toLowerCase().includes(keyword) ||
+        (transaction.categoryName || "").toLowerCase().includes(keyword)
+      );
+    });
+  }, [activeType, allTransactions, currentMonth, searchQuery]);
+
+  const displayedTransactions = useMemo(() => {
+    if (selectedDay === null) return filteredTransactions;
+    return filteredTransactions.filter((transaction) => {
+      const transactionDate = new Date(transaction.createdAt || transaction.date);
+      return transactionDate.getDate() === selectedDay;
+    });
+  }, [filteredTransactions, selectedDay]);
+
+  const monthlySummary = useMemo(() => {
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth();
+    let income = 0;
+    let expense = 0;
+
+    allTransactions.forEach((transaction) => {
+      const transactionDate = new Date(transaction.createdAt || transaction.date);
+      if (transactionDate.getFullYear() !== year || transactionDate.getMonth() !== month) return;
+      if (transaction.type === "income") income += Number(transaction.amount || 0);
+      else expense += Number(transaction.amount || 0);
+    });
+
+    return { income, expense, net: income - expense };
+  }, [allTransactions, currentMonth]);
+
+  const groupedTransactions = useMemo(() => {
+    const groups = {};
+    displayedTransactions.forEach((transaction) => {
+      const transactionDate = new Date(transaction.createdAt || transaction.date);
+      const dateKey = transactionDate.toDateString();
+      if (!groups[dateKey]) {
+        groups[dateKey] = { date: transactionDate, items: [], totalIncome: 0, totalExpense: 0 };
+      }
+      groups[dateKey].items.push(transaction);
+      if (transaction.type === "income") groups[dateKey].totalIncome += Number(transaction.amount || 0);
+      else groups[dateKey].totalExpense += Number(transaction.amount || 0);
+    });
+
+    return Object.values(groups).sort((a, b) => b.date - a.date);
+  }, [displayedTransactions]);
+
+  const daysInMonth = useMemo(() => {
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth();
+    const firstDayIndex = new Date(year, month, 1).getDay();
+    const totalDays = new Date(year, month + 1, 0).getDate();
+    const days = [];
+
+    for (let index = 0; index < firstDayIndex; index += 1) {
+      days.push({ id: `empty-${index}`, day: null });
     }
-  }, [filterType]);
+    for (let day = 1; day <= totalDays; day += 1) {
+      days.push({ id: `day-${day}`, day });
+    }
+    return days;
+  }, [currentMonth]);
 
   return {
-    expenses,
-    expandedExpenses,
-    filteredExpenses,
-    filterType,
-    handleExport,
-    handleVoiceResult,
-    isExporting,
-    onDelete,
-    onRefresh,
+    activeType,
+    currentMonth,
+    daysInMonth,
+    filteredTransactions,
+    groupedTransactions,
+    monthlySummary,
     refreshing,
     searchQuery,
-    setFilterType,
+    selectedDay,
+    showSearch,
+    handleDelete,
+    loadData,
+    nextMonth,
+    prevMonth,
+    setActiveType,
     setSearchQuery,
-    totalExpense,
-    toggleExpenses,
-    canToggleExpenses,
-    visibleExpenses,
-    fetchExpenses
+    setSelectedDay,
+    setShowSearch
   };
 }

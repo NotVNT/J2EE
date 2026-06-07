@@ -1,5 +1,11 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { fetchReportByMonth } from "../services/reportService";
+import { API_ENDPOINTS } from "../constants/api";
+import apiClient from "../services/apiClient";
+
+async function fetchReportByMonth(year, month) {
+  const response = await apiClient.get(API_ENDPOINTS.MONTHLY_REPORT_BY_MONTH(year, month));
+  return response.data;
+}
 
 export default function useMonthlyReport() {
   const now = useMemo(() => new Date(), []);

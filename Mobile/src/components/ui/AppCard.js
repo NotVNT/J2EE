@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { useAppColors } from '../../constants/colors';
-import { RADIUS } from '../../constants/spacing';
 import { scale } from '../../utils/layoutScale';
 
 /**
@@ -46,7 +45,7 @@ export default function AppCard({
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: RADIUS.md,
+    borderRadius: 12,
     padding: scale(16),
   },
 });

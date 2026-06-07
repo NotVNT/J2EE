@@ -3,10 +3,31 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text } from "react-native";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import PaymentHistorySection from "../../components/Payment/PaymentHistorySection";
+import { API_ENDPOINTS } from "../../constants/api";
 import { useAppColors } from "../../constants/colors";
 import { AuthContext } from "../../contexts/AuthContext";
-import { createPaymentLink, deletePayment, fetchPaymentHistory, syncPaymentStatus } from "../../services/paymentService";
+import apiClient from "../../services/apiClient";
 import { formatMoney, getApiErrorMessage } from "../../utils/format";
+
+async function createPaymentLink(payload) {
+  const response = await apiClient.post(API_ENDPOINTS.CREATE_PAYMENT, payload);
+  return response.data;
+}
+
+async function fetchPaymentHistory() {
+  const response = await apiClient.get(API_ENDPOINTS.GET_PAYMENTS);
+  return Array.isArray(response.data) ? response.data : [];
+}
+
+async function syncPaymentStatus(orderCode) {
+  const response = await apiClient.get(API_ENDPOINTS.SYNC_PAYMENT_STATUS(orderCode));
+  return response.data;
+}
+
+async function deletePayment(orderCode) {
+  const response = await apiClient.delete(API_ENDPOINTS.DELETE_PAYMENT(orderCode));
+  return response.data;
+}
 import { getSafeAreaContentStyle } from "../../utils/safeArea";
 import { PAYMENT_PLANS } from "./paymentPlans";
 import ScreenBackHeader from "../../components/common/ScreenBackHeader";

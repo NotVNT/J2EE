@@ -1,8 +1,6 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, View } from 'react-native';
 import { useAppColors } from '../../constants/colors';
-import { RADIUS, SPACE } from '../../constants/spacing';
-import { FONTS, TEXT_SIZE } from '../../constants/typography';
 import { scale } from '../../utils/layoutScale';
 import AppIcon from './AppIcon';
 
@@ -66,18 +64,18 @@ export default function AppButton({
       case 'sm':
         return {
           button: { paddingVertical: scale(8), paddingHorizontal: scale(12) },
-          text: { fontSize: TEXT_SIZE.sm },
+          text: { fontSize: 12 },
         };
       case 'lg':
         return {
           button: { paddingVertical: scale(14), paddingHorizontal: scale(24) },
-          text: { fontSize: TEXT_SIZE.lg },
+          text: { fontSize: 17 },
         };
       case 'md':
       default:
         return {
           button: { paddingVertical: scale(12), paddingHorizontal: scale(16) },
-          text: { fontSize: TEXT_SIZE.base },
+          text: { fontSize: 15 },
         };
     }
   };
@@ -130,7 +128,7 @@ export default function AppButton({
 
 const styles = StyleSheet.create({
   button: {
-    borderRadius: RADIUS.md,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
@@ -142,13 +140,12 @@ const styles = StyleSheet.create({
   },
   text: {
     fontWeight: '600',
-    fontFamily: FONTS.bold,
   },
   leftIcon: {
-    marginRight: SPACE.sm,
+    marginRight: 8,
   },
   rightIcon: {
-    marginLeft: SPACE.sm,
+    marginLeft: 8,
   },
   disabledButton: {
     opacity: 0.5,

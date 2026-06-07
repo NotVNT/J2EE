@@ -1,8 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useAppColors } from '../../constants/colors';
-import { SPACE } from '../../constants/spacing';
-import { FONTS, TEXT_SIZE } from '../../constants/typography';
 import { scale } from '../../utils/layoutScale';
 import AppIcon from './AppIcon';
 import AppButton from './AppButton';
@@ -22,10 +20,10 @@ export default function ErrorState({
       <View style={[styles.iconContainer, { backgroundColor: COLORS.EXPENSE_LIGHT }]}>
         <AppIcon name="alert-circle-outline" size={scale(36)} color={COLORS.EXPENSE} />
       </View>
-      <Text style={[styles.title, { color: COLORS.TEXT, fontFamily: FONTS.bold }]}>
+      <Text style={[styles.title, { color: COLORS.TEXT }]}>
         Lỗi kết nối
       </Text>
-      <Text style={[styles.description, { color: COLORS.TEXT_SECONDARY, fontFamily: FONTS.regular }]}>
+      <Text style={[styles.description, { color: COLORS.TEXT_SECONDARY }]}>
         {error}
       </Text>
       {onRetry && (
@@ -53,20 +51,20 @@ const styles = StyleSheet.create({
     borderRadius: scale(36),
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: SPACE.md,
+    marginBottom: 12,
   },
   title: {
-    fontSize: TEXT_SIZE.base,
+    fontSize: 15,
     fontWeight: '600',
     textAlign: 'center',
-    marginBottom: SPACE.xs,
+    marginBottom: 4,
   },
   description: {
-    fontSize: TEXT_SIZE.sm,
+    fontSize: 12,
     textAlign: 'center',
-    marginBottom: SPACE.md,
+    marginBottom: 12,
   },
   button: {
-    marginTop: SPACE.xs,
+    marginTop: 4,
   },
 });

@@ -1,7 +1,6 @@
 import React from "react";
-import { Text, View } from "react-native";
-import { parseChatMarkdown } from "../../../utils/chatMarkdown";
-import styles from "./styles";
+import { StyleSheet, Text, View } from "react-native";
+import { parseChatMarkdown } from "../../utils/chatMarkdown";
 
 function InlineMarkdown({ colors, segments, style }) {
   return (
@@ -82,3 +81,66 @@ export default function MarkdownContent({ colors, isError, text }) {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  markdownContainer: {
+    gap: 8
+  },
+  markdownText: {
+    fontSize: 14,
+    lineHeight: 21
+  },
+  markdownHeading: {
+    fontSize: 16,
+    lineHeight: 22,
+    fontWeight: "900",
+    marginBottom: 2
+  },
+  markdownSubheading: {
+    fontSize: 15,
+    lineHeight: 21
+  },
+  markdownBold: {
+    fontWeight: "900"
+  },
+  inlineCode: {
+    fontFamily: "monospace",
+    fontSize: 13,
+    borderRadius: 6,
+    paddingHorizontal: 4
+  },
+  markdownList: {
+    gap: 6
+  },
+  markdownListItem: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8
+  },
+  markdownBullet: {
+    width: 22,
+    fontSize: 14,
+    lineHeight: 21,
+    fontWeight: "900",
+    textAlign: "right"
+  },
+  markdownQuote: {
+    borderLeftWidth: 3,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8
+  },
+  codeBlock: {
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 10
+  },
+  codeBlockText: {
+    fontFamily: "monospace",
+    fontSize: 12,
+    lineHeight: 18
+  },
+  errorText: {
+    color: "#ff847c"
+  }
+});

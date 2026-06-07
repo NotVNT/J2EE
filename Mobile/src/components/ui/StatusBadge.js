@@ -1,8 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useAppColors } from '../../constants/colors';
-import { RADIUS } from '../../constants/spacing';
-import { FONTS, TEXT_SIZE } from '../../constants/typography';
 import { scale } from '../../utils/layoutScale';
 
 /**
@@ -63,14 +61,13 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: scale(8),
     paddingVertical: scale(2),
-    borderRadius: RADIUS.sm,
+    borderRadius: 8,
     borderWidth: 1,
     alignSelf: 'flex-start',
   },
   text: {
-    fontSize: TEXT_SIZE.xs,
+    fontSize: 11,
     fontWeight: '700',
-    fontFamily: FONTS.bold,
     letterSpacing: 0.5,
   },
 });
