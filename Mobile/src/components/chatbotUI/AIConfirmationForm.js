@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from "react";
 import {
-  StyleSheet,
+  Alert,
   Text,
   View,
   TextInput,
   Pressable,
-  ActivityIndicator,
-  Platform
+  ActivityIndicator
 } from "react-native";
-import { COLORS } from "../../constants/colors";
+import { useAppColors } from "../../constants/colors";
 import { getFieldsForIntent, INTENT_ICONS, INTENT_LABELS } from "../../utils/aiIntent";
 import { fetchCategoriesByType } from "../../services/categoryService";
 import CategorySelectionModal from "./CategorySelectionModal";
+import styles from "./AIConfirmationFormStyles";
 
 export default function AIConfirmationForm({
   intent,
@@ -22,6 +22,7 @@ export default function AIConfirmationForm({
   onCancel,
   isProcessing = false
 }) {
+  const colors = useAppColors();
   const [fields, setFields] = useState([]);
   const [formData, setFormData] = useState({});
   const [categories, setCategories] = useState([]);
@@ -78,10 +79,9 @@ export default function AIConfirmationForm({
     // Basic validation
     const missingField = fields.find((f) => f.required && !formData[f.key]);
     if (missingField) {
-      alert(`Vui lòng nhập ${missingField.label}`);
+      Alert.alert("Thiếu thông tin", `Vui lòng nhập ${missingField.label}`);
       return;
     }
-    
     // Call parent handler
     onConfirm(intent, { ...suggestedValues, ...extractedFields, ...formData });
   };
@@ -90,16 +90,16 @@ export default function AIConfirmationForm({
   const intentLabel = INTENT_LABELS[intent] || intent;
 
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, { backgroundColor: colors.BG, borderColor: colors.ROSE_MIST, shadowColor: colors.PRIMARY }]}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerIcon}>{intentIcon}</Text>
-        <Text style={styles.headerTitle}>{intentLabel}</Text>
+        <Text style={[styles.headerTitle, { color: colors.PRIMARY }]}>{intentLabel}</Text>
       </View>
 
       {/* Confirmation prompt */}
       {!!confirmationPrompt && (
-        <Text style={styles.promptText}>{confirmationPrompt}</Text>
+        <Text style={[styles.promptText, { color: colors.TEXT }]}>{confirmationPrompt}</Text>
       )}
 
       {/* Fields */}
@@ -108,36 +108,37 @@ export default function AIConfirmationForm({
           const value = formData[field.key] || "";
           return (
             <View key={field.key} style={styles.fieldWrapper}>
-              <Text style={styles.fieldLabel}>
+              <Text style={[styles.fieldLabel, { color: colors.TEXT_SECONDARY }]}>
                 {field.label}
-                {field.required && <Text style={styles.requiredAsterisk}> *</Text>}
+                {field.required && <Text style={{ color: colors.PRIMARY }}> *</Text>}
               </Text>
 
               {field.type === "category_select" ? (
                 <Pressable
-                  style={[styles.input, styles.pickerButton]}
+                  style={[styles.input, styles.pickerButton, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}
                   onPress={() => openCategoryModal(field.key)}
                   disabled={isProcessing || loadingCategories}
                 >
                   <Text
                     style={[
                       styles.pickerButtonText,
-                      !value && styles.pickerPlaceholder
+                      { color: colors.TEXT },
+                      !value && { color: colors.TEXT_MUTED }
                     ]}
                   >
                     {loadingCategories
                       ? "Đang tải danh mục..."
                       : value || "-- Chọn danh mục --"}
                   </Text>
-                  <Text style={styles.pickerArrow}>▼</Text>
+                  <Text style={[styles.pickerArrow, { color: colors.TEXT_MUTED }]}>▼</Text>
                 </Pressable>
               ) : (
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER, color: colors.TEXT }]}
                   value={value}
                   onChangeText={(text) => handleFieldChange(field.key, text)}
                   placeholder={field.label}
-                  placeholderTextColor={COLORS.TEXT_MUTED}
+                  placeholderTextColor={colors.TEXT_MUTED}
                   keyboardType={field.type === "number" ? "numeric" : "default"}
                   editable={!isProcessing}
                 />
@@ -150,23 +151,23 @@ export default function AIConfirmationForm({
       {/* Actions */}
       <View style={styles.actionsContainer}>
         <Pressable
-          style={[styles.actionBtn, styles.confirmBtn, isProcessing && styles.btnDisabled]}
+          style={[styles.actionBtn, styles.confirmBtn, { backgroundColor: colors.INCOME }, isProcessing && styles.btnDisabled]}
           onPress={handleSubmit}
           disabled={isProcessing}
         >
           {isProcessing ? (
-            <ActivityIndicator size="small" color={COLORS.WHITE} />
+            <ActivityIndicator size="small" color={colors.WHITE} />
           ) : (
             <Text style={styles.confirmBtnText}>✓ Xác nhận</Text>
           )}
         </Pressable>
 
         <Pressable
-          style={[styles.actionBtn, styles.cancelBtn, isProcessing && styles.btnDisabled]}
+          style={[styles.actionBtn, styles.cancelBtn, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }, isProcessing && styles.btnDisabled]}
           onPress={onCancel}
           disabled={isProcessing}
         >
-          <Text style={styles.cancelBtnText}>✕ Hủy</Text>
+          <Text style={[styles.cancelBtnText, { color: colors.TEXT_SECONDARY }]}>✕ Hủy</Text>
         </Pressable>
       </View>
 
@@ -179,121 +180,3 @@ export default function AIConfirmationForm({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: COLORS.BG,
-    borderWidth: 1,
-    borderColor: COLORS.ROSE_MIST,
-    borderRadius: 16,
-    padding: 14,
-    marginTop: 8,
-    width: "100%",
-    shadowColor: COLORS.PRIMARY,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 8,
-    gap: 6
-  },
-  headerIcon: {
-    fontSize: 18
-  },
-  headerTitle: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: COLORS.PRIMARY_DARK
-  },
-  promptText: {
-    fontSize: 12,
-    color: COLORS.TEXT,
-    lineHeight: 16,
-    marginBottom: 10,
-    fontStyle: "italic"
-  },
-  fieldsContainer: {
-    gap: 8,
-    marginBottom: 12
-  },
-  fieldWrapper: {
-    flexDirection: "column",
-    gap: 4
-  },
-  fieldLabel: {
-    fontSize: 11,
-    fontWeight: "600",
-    color: COLORS.TEXT_SECONDARY
-  },
-  requiredAsterisk: {
-    color: COLORS.PRIMARY
-  },
-  input: {
-    backgroundColor: COLORS.CARD,
-    borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: Platform.OS === "ios" ? 10 : 8,
-    fontSize: 13,
-    color: COLORS.TEXT
-  },
-  pickerButton: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center"
-  },
-  pickerButtonText: {
-    flex: 1,
-    fontSize: 13,
-    color: COLORS.TEXT
-  },
-  pickerPlaceholder: {
-    color: COLORS.TEXT_MUTED
-  },
-  pickerArrow: {
-    fontSize: 10,
-    color: COLORS.TEXT_MUTED,
-    marginLeft: 6
-  },
-  actionsContainer: {
-    flexDirection: "row",
-    gap: 8,
-    marginTop: 4
-  },
-  actionBtn: {
-    flex: 1,
-    borderRadius: 10,
-    paddingVertical: 10,
-    justifyContent: "center",
-    alignItems: "center"
-  },
-  confirmBtn: {
-    backgroundColor: COLORS.INCOME
-  },
-  confirmBtnText: {
-    color: COLORS.WHITE,
-    fontWeight: "700",
-    fontSize: 13
-  },
-  cancelBtn: {
-    backgroundColor: COLORS.CARD,
-    borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER
-  },
-  cancelBtnText: {
-    color: COLORS.TEXT_SECONDARY,
-    fontWeight: "700",
-    fontSize: 13
-  },
-  btnDisabled: {
-    opacity: 0.5
-  }
-});

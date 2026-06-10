@@ -1,4 +1,5 @@
 import { useMemo, useState, useContext, useEffect, useRef } from "react";
+import * as Lucide from "lucide-react";
 import InfoCard from "./InfoCard";
 import CustomPieChart from "./CustomPieChart";
 import ReactMarkdown from "react-markdown";
@@ -100,13 +101,20 @@ const MonthlyReportCard = ({ report }) => {
       }
     } catch (err) {
       if (analysisRequestIdRef.current === requestId) {
-        const timeoutMessage = err.code === "ECONNABORTED"
-          ? "AI đang phản hồi chậm hơn dự kiến. Vui lòng thử lại sau ít phút."
-          : null;
+        const isTimeout = err.code === "ECONNABORTED";
+        const rawMsg = err.response?.data?.message || err.message || "";
+        // Ẩn raw technical error từ upstream provider, chỉ hiển thị friendly message
+        const isUpstreamError = rawMsg.toLowerCase().includes("upstream") ||
+          rawMsg.toLowerCase().includes("provider") ||
+          rawMsg.toLowerCase().includes("503") ||
+          rawMsg.toLowerCase().includes("openinference") ||
+          rawMsg.toLowerCase().includes("gpt-oss");
         setAnalysisError(
-          timeoutMessage ||
-          err.response?.data?.message ||
-          "Không thể kết nối AI. Vui lòng thử lại."
+          isTimeout
+            ? "AI đang phản hồi chậm hơn dự kiến. Vui lòng thử lại sau ít phút."
+            : isUpstreamError
+            ? "AI đang bảo trì, vui lòng thử lại sau."
+            : "Không thể kết nối AI. Vui lòng thử lại."
         );
       }
     } finally {
@@ -232,7 +240,15 @@ const MonthlyReportCard = ({ report }) => {
                     className="w-8 h-8 rounded-lg flex items-center justify-center text-base shrink-0"
                     style={{ backgroundColor: `${item.color}20`, color: item.color }}
                   >
-                    {item.icon}
+                    {(() => {
+                      if (!item.icon) return "📦";
+                      if (item.icon.length <= 2) return item.icon; // probably an emoji
+                      const LucideIcon = Lucide[item.icon];
+                      if (LucideIcon) {
+                        return <LucideIcon size={16} />;
+                      }
+                      return "📦";
+                    })()}
                   </div>
                   <div className="truncate">
                     <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{item.name}</p>

@@ -7,14 +7,17 @@ import { useUser } from "../hooks/useUser.jsx";
 import axiosConfig from "../util/axiosConfig.jsx";
 import Dashboard from "../components/Dashboard.jsx";
 import { API_ENDPOINTS } from "../util/apiEndpoints.js";
-import { parseIntentResponse, isCrudIntent, isActionIntent, clientTelemetry, isExportEmailIntent } from "../util/aiIntentParser.js";
+import {
+  parseIntentResponse,
+  isCrudIntent,
+  isActionIntent,
+  clientTelemetry,
+  isExportEmailIntent,
+  shouldPreferQuestionFlow,
+} from "../util/aiIntentParser.js";
 import { useNavigate } from "react-router-dom";
 import { Sparkles, TrendingUp, Zap, MessageSquare } from "lucide-react";
 import aiIcon from "../assets/logo/AI_favicon.png";
-
-const AGENT_MODEL_OPTIONS = [
-  { value: "gemini", label: "Gemini 3.1 Flash-Lite", description: "Phản hồi nhanh, tiết kiệm", icon: "🤖" },
-];
 
 const buildHistory = (msgs) =>
   msgs
@@ -50,7 +53,7 @@ const AIChat = () => {
   const fetchSessionsTimerRef = useRef(null);
   const abortControllerRef = useRef(null);
 
-  // Reset isSending khi đổi session hoặc unmount — tránh spinner stuck
+  // Reset isSending khi Ã„â€˜Ã¡Â»â€¢i session hoÃ¡ÂºÂ·c unmount Ã¢â‚¬â€ trÃƒÂ¡nh spinner stuck
   useEffect(() => {
     setIsSending(false);
     if (abortControllerRef.current) {
@@ -60,20 +63,12 @@ const AIChat = () => {
   }, [activeSessionId]);
 
   // Model / provider state
-  const [selectedProvider, setProvider] = useState("gptoss");
-  const [agentModel, setAgentModel] = useState("gemini");
+  const [selectedProvider, setSelectedProvider] = useState("gptoss");
 
   // Intent handling state
   const [isProcessingCrud, setIsProcessingCrud] = useState(false);
   const [pendingIntent, setPendingIntent] = useState(null);
 
-  // Sync model defaults when plan changes
-  useEffect(() => {
-    if (isPremiumPlan) {
-      setAgentModel("gemini");
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.subscriptionPlan]);
 
   // Sessions fetching
   const fetchSessions = useCallback(async () => {
@@ -106,7 +101,7 @@ const AIChat = () => {
   // Resolve active provider / model / label
   const resolveModel = () => {
     if (selectedProvider === "gemini") {
-      // Agent mode — luôn dùng Gemini
+      // Agent mode Ã¢â‚¬â€ luÃƒÂ´n dÃƒÂ¹ng Gemini
       return {
         activeProvider: "gemini",
         activeModel: "gemini-3.1-flash-lite",
@@ -147,7 +142,7 @@ const AIChat = () => {
         {
           id: `system-warn-${Date.now()}`,
           role: "assistant",
-          content: "⚠️ Vui lòng xác nhận hoặc hủy thao tác hiện tại trước khi gửi lệnh mới.",
+          content: "[Cần xác nhận] Vui lòng xác nhận hoặc hủy thao tác hiện tại trước khi gửi lệnh mới.",
           isSystem: true
         }
       ]);
@@ -176,8 +171,8 @@ const AIChat = () => {
       abortControllerRef.current = new AbortController();
       const signal = abortControllerRef.current.signal;
       const conversationHistory = buildHistory(updatedMessages);
-      const replaceEditedSessionHistory = async (sessionId, nextMessages) => {
-        if (!isEditingExistingMessage || !sessionId) return;
+      const syncSessionHistory = async (sessionId, nextMessages) => {
+        if (!sessionId) return;
         try {
           await axiosConfig.put(
             API_ENDPOINTS.AI_CHAT_REPLACE_MESSAGES(sessionId),
@@ -196,6 +191,10 @@ const AIChat = () => {
           ]);
         }
       };
+      const replaceEditedSessionHistory = async (sessionId, nextMessages) => {
+        if (!isEditingExistingMessage) return;
+        await syncSessionHistory(sessionId, nextMessages);
+      };
 
       if (selectedProvider === "gptoss") {
         const { data } = await axiosConfig.post(API_ENDPOINTS.AI_CHAT, {
@@ -213,6 +212,7 @@ const AIChat = () => {
           provider: data.provider || activeProvider,
           modelUsed: data.modelUsed,
           modelLabel: activeModelLabel,
+          isGuarded: data.provider === "nova-guard",
           timestamp: new Date().toISOString(),
         }];
         setMessages(nextMessages);
@@ -223,7 +223,7 @@ const AIChat = () => {
         }
         await replaceEditedSessionHistory(resolvedSessionId, nextMessages);
         debouncedFetchSessions();
-        // Không return sớm — để finally xử lý setIsSending(false) thống nhất
+        // KhÃƒÂ´ng return sÃ¡Â»â€ºm Ã¢â‚¬â€ Ã„â€˜Ã¡Â»Æ’ finally xÃ¡Â»Â­ lÃƒÂ½ setIsSending(false) thÃ¡Â»â€˜ng nhÃ¡ÂºÂ¥t
         return;
       }
 
@@ -249,9 +249,38 @@ const AIChat = () => {
         clientTelemetry.logMissingFields(parsed.intent, parsed.missingFields, currentPage);
       }
 
-      if (isCrudIntent(parsed.intent) || isActionIntent(parsed.intent, parsed.intentType)) {
+      if (shouldPreferQuestionFlow(parsed.intent, parsed.intentType, trimmedMessage)) {
+        clientTelemetry.logQuestionFallbackOverride(parsed.intent, trimmedMessage, currentPage);
+        const { data } = await axiosConfig.post(API_ENDPOINTS.AI_CHAT, {
+          provider: activeProvider,
+          model: activeModel,
+          sessionId: resolvedSessionId,
+          saveHistory: true,
+          messages: conversationHistory,
+        }, { signal, _skipGlobalLoading: true });
+
+        const nextMessages = [
+          ...updatedMessages,
+          {
+            id: `assistant-${Date.now()}`,
+            role: "assistant",
+            content: data.reply || "Tôi đã nhận câu hỏi nhưng hiện chưa tạo được câu trả lời phù hợp.",
+            provider: data.provider || activeProvider,
+            modelUsed: data.modelUsed,
+            modelLabel: activeModelLabel,
+            isGuarded: data.provider === "nova-guard"
+          }
+        ];
+        setMessages(nextMessages);
+
+        const fallbackSessionId = data.sessionId || resolvedSessionId || activeSessionId;
+        if (data.sessionId && !activeSessionId) {
+          setActiveSessionId(data.sessionId);
+        }
+        await syncSessionHistory(fallbackSessionId, nextMessages);
+      } else if (isCrudIntent(parsed.intent) || isActionIntent(parsed.intent, parsed.intentType)) {
         // If action intent but missing required fields, still show confirmation form
-        // (backend already populated missingFields — frontend should highlight them)
+        // (backend already populated missingFields Ã¢â‚¬â€ frontend should highlight them)
         setPendingIntent(parsed);
         const nextMessages = [
           ...updatedMessages,
@@ -271,7 +300,7 @@ const AIChat = () => {
         await replaceEditedSessionHistory(resolvedSessionId, updatedMessages);
       } else if (parsed.intent === "ANSWER_QUESTION") {
         // Telemetry: if message looks like agent command but got ANSWER_QUESTION, log it
-        const agentVerbPattern = /\b(thêm|tạo|ghi|nhập|xóa|bỏ|hủy|sửa|chỉnh|đổi|cập nhật|xuất|tải|chuyển|gửi mail|gửi email|gửi qua email|gửi qua mail|add|delete|remove|update|export|transfer)\b/i;
+        const agentVerbPattern = /\b(them|tao|ghi|nhap|xoa|bo|huy|sua|chinh|doi|cap nhat|xuat|tai|chuyen|gui mail|gui email|gui qua email|gui qua mail|add|delete|remove|update|export|transfer)\b/i;
         if (agentVerbPattern.test(trimmedMessage)) {
           clientTelemetry.logAgentCommandFallback(trimmedMessage, currentPage);
         }
@@ -280,29 +309,34 @@ const AIChat = () => {
           {
             id: `assistant-${Date.now()}`,
             role: "assistant",
-            content: parsed.answer || intentResponse.data?.reply || "Tôi đã nhận câu hỏi nhưng chưa tạo được câu trả lời phù hợp.",
-            provider: activeProvider,
+            content: parsed.answer || intentResponse.data?.reply || "Tôi đã nhận câu hỏi nhưng hiện chưa tạo được câu trả lời phù hợp.",
+            provider: intentResponse.data?.provider || activeProvider,
             modelUsed: intentResponse.data?.modelUsed,
-            modelLabel: activeModelLabel
+            modelLabel: activeModelLabel,
+            isGuarded: intentResponse.data?.provider === "nova-guard"
           }
         ];
         setMessages(nextMessages);
         await replaceEditedSessionHistory(resolvedSessionId, nextMessages);
       } else if (parsed.intent === "INVALID_REQUEST") {
+        const isGuardedResponse = intentResponse.data?.provider === "nova-guard";
         const nextMessages = [
           ...updatedMessages,
           {
-            id: `assistant-error-${Date.now()}`,
+            id: `${isGuardedResponse ? "assistant-guarded" : "assistant-error"}-${Date.now()}`,
             role: "assistant",
-            content: parsed.validationErrors?.[0] || "Yêu cầu không hợp lệ hoặc ngoài phạm vi hỗ trợ.",
-            isError: true,
-            provider: activeProvider
+            content: parsed.answer || intentResponse.data?.reply || parsed.validationErrors?.[0] || "Yêu cầu không hợp lệ hoặc ngoài phạm vi hỗ trợ.",
+            isError: !isGuardedResponse,
+            isGuarded: isGuardedResponse,
+            provider: intentResponse.data?.provider || activeProvider,
+            modelUsed: intentResponse.data?.modelUsed,
+            modelLabel: activeModelLabel
           }
         ];
         setMessages(nextMessages);
         await replaceEditedSessionHistory(resolvedSessionId, updatedMessages);
       } else {
-        // Unrecognized intent — fall back to regular chat (only for genuine QUESTION-type intents)
+        // Unrecognized intent Ã¢â‚¬â€ fall back to regular chat (only for genuine QUESTION-type intents)
         const { data } = await axiosConfig.post(API_ENDPOINTS.AI_CHAT, {
           provider: activeProvider,
           model: activeModel,
@@ -319,7 +353,8 @@ const AIChat = () => {
             content: data.reply || "Tôi đã nhận câu hỏi nhưng hiện chưa tạo được câu trả lời phù hợp.",
             provider: data.provider || activeProvider,
             modelUsed: data.modelUsed,
-            modelLabel: activeModelLabel
+            modelLabel: activeModelLabel,
+            isGuarded: data.provider === "nova-guard"
           }
         ];
         setMessages(nextMessages);
@@ -381,8 +416,8 @@ const AIChat = () => {
       link.parentNode.removeChild(link);
       window.URL.revokeObjectURL(url);
       return intent === "EXPORT_EXCEL_INCOME"
-        ? "📥 Đã tải xuống báo cáo Excel thu nhập tháng này!"
-        : "📥 Đã tải xuống báo cáo Excel chi tiêu tháng này!";
+        ? "Đã tải xuống báo cáo Excel thu nhập tháng này!"
+        : "Đã tải xuống báo cáo Excel chi tiêu tháng này!";
     }
     if (intent === "EMAIL_INCOME_REPORT" || intent === "EMAIL_EXPENSE_REPORT") {
       const endpoint = intent === "EMAIL_INCOME_REPORT"
@@ -390,8 +425,8 @@ const AIChat = () => {
         : API_ENDPOINTS.EMAIL_EXPENSE;
       await axiosConfig.get(endpoint);
       return intent === "EMAIL_INCOME_REPORT"
-        ? "📧 Đã gửi báo cáo thu nhập tháng này đến email của bạn!"
-        : "📧 Đã gửi báo cáo chi tiêu tháng này đến email của bạn!";
+        ? "Đã gửi báo cáo thu nhập tháng này đến email của bạn!"
+        : "Đã gửi báo cáo chi tiêu tháng này đến email của bạn!";
     }
     throw new Error("Không xác định được hành động.");
   };
@@ -410,7 +445,7 @@ const AIChat = () => {
           sessionId: activeSessionId,
           extractedData: confirmedData
         });
-        resultContent = `✅ ${data.message || "Thao tác thành công!"}`;
+        resultContent = data.message || "Thao tác thành công!";
         if (data.undoable && data.operationId) undoData = data;
       }
 
@@ -443,7 +478,7 @@ const AIChat = () => {
       }
       setMessages((prev) => [
         ...prev,
-        { id: `result-error-${Date.now()}`, role: "assistant", content: `❌ ${errorMsg}`, isError: true }
+        { id: `result-error-${Date.now()}`, role: "assistant", content: `Lỗi: ${errorMsg}`, isError: true }
       ]);
       debouncedFetchSessions();
     } finally {
@@ -481,7 +516,7 @@ const AIChat = () => {
         {
           id: `undo-result-${Date.now()}`,
           role: "assistant",
-          content: "↩️ Đã hoàn tác thao tác thành công.",
+          content: "Đã hoàn tác thao tác thành công.",
           isSystem: true
         }
       ]);
@@ -491,7 +526,7 @@ const AIChat = () => {
         {
           id: `undo-error-${Date.now()}`,
           role: "assistant",
-          content: "❌ Không thể hoàn tác. Có thể đã quá thời gian cho phép.",
+          content: "Không thể hoàn tác. Có thể đã quá thời gian cho phép.",
           isError: true
         }
       ]);
@@ -535,23 +570,13 @@ const AIChat = () => {
 
   // Model change handlers
   const handleProviderSwitch = (provider) => {
-    if (provider === selectedProvider) return;
-    if (provider === "gemini" && isFreePlan) {
-      // silently block; user sees a locked Agent tab
-      return;
-    }
-    setProvider(provider);
+    setSelectedProvider(provider);
   };
 
-  const handleAgentModelChange = (newModel) => {
-    if (newModel === agentModel) return;
-    if (!isPremiumPlan) return;
-    setAgentModel(newModel);
-  };
 
   if (isFreePlan) {
     return (
-      <Dashboard activeMenu="Trợ lý AI">
+      <Dashboard activeMenu={"Trợ lý AI"}>
         <div className="flex items-center justify-center min-h-[75vh] px-4 relative overflow-hidden">
           {/* Glow orb background */}
           <div className="absolute top-1/4 left-1/4 -translate-x-1/2 w-72 h-72 rounded-full bg-purple-600/15 blur-3xl pointer-events-none" />
@@ -573,15 +598,15 @@ const AIChat = () => {
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold
                 bg-purple-500/10 border border-purple-500/30 text-purple-300 mb-4 uppercase tracking-wider">
                 <Sparkles size={12} className="text-amber-400" />
-                Trợ lý Đặc quyền
+                {"Trợ lý Đặc quyền"}
               </div>
 
               <h2 className="text-2xl font-extrabold text-white leading-tight">
-                Nova Money — Trợ lý AI
+                {"Nova Money - Trợ lý AI"}
               </h2>
               
               <p className="text-sm text-slate-300 mt-2 mb-6 leading-relaxed max-w-sm mx-auto">
-                Tính năng Trợ lý AI đặc quyền chỉ khả dụng từ gói hội viên <span className="font-semibold text-purple-400">BASIC</span> và <span className="font-semibold text-purple-400">PREMIUM</span>.
+                {"Tính năng Trợ lý AI đặc quyền chỉ khả dụng từ gói hội viên "}<span className="font-semibold text-purple-400">BASIC</span>{" và "}<span className="font-semibold text-purple-400">PREMIUM</span>{"."}
               </p>
 
               {/* AI Features Grid */}
@@ -591,8 +616,8 @@ const AIChat = () => {
                     <MessageSquare size={14} />
                   </div>
                   <div>
-                    <h4 className="text-sm font-semibold text-white">Trò chuyện & Tư vấn Tài chính</h4>
-                    <p className="text-xs text-slate-400 mt-0.5">Tâm sự chi tiêu, nhận lời khuyên thông minh cho cuộc sống cá nhân.</p>
+                    <h4 className="text-sm font-semibold text-white">{"Tr\u00f2 chuy\u1ec7n & T\u01b0 v\u1ea5n T\u00e0i ch\u00ednh"}</h4>
+                    <p className="text-xs text-slate-400 mt-0.5">{"T\u00f3m t\u1eaft chi ti\u00eau, nh\u1eadn l\u1eddi khuy\u00ean th\u00f4ng minh cho cu\u1ed9c s\u1ed1ng c\u00e1 nh\u00e2n."}</p>
                   </div>
                 </div>
 
@@ -601,8 +626,8 @@ const AIChat = () => {
                     <Sparkles size={14} />
                   </div>
                   <div>
-                    <h4 className="text-sm font-semibold text-white">Chế độ Agent đắc lực (Premium)</h4>
-                    <p className="text-xs text-slate-400 mt-0.5">Tự động thêm, sửa, xoá giao dịch, quản lý hũ chi tiêu bằng ngôn ngữ tự nhiên.</p>
+                    <h4 className="text-sm font-semibold text-white">{"Ch\u1ebf \u0111\u1ed9 Agent \u0111\u1eafc l\u1ef1c (Premium)"}</h4>
+                    <p className="text-xs text-slate-400 mt-0.5">{"T\u1ef1 \u0111\u1ed9ng th\u00eam, s\u1eeda, x\u00f3a giao d\u1ecbch v\u00e0 qu\u1ea3n l\u00fd h\u1ed3 s\u01a1 chi ti\u00eau b\u1eb1ng ng\u00f4n ng\u1eef t\u1ef1 nhi\u00ean."}</p>
                   </div>
                 </div>
 
@@ -611,8 +636,8 @@ const AIChat = () => {
                     <TrendingUp size={14} />
                   </div>
                   <div>
-                    <h4 className="text-sm font-semibold text-white">Báo cáo & Phân tích thông minh</h4>
-                    <p className="text-xs text-slate-400 mt-0.5">Nhận gợi ý tiết kiệm thông minh cá nhân hóa giúp bạn tối ưu hóa dòng tiền.</p>
+                    <h4 className="text-sm font-semibold text-white">{"B\u00e1o c\u00e1o & Ph\u00e2n t\u00edch th\u00f4ng minh"}</h4>
+                    <p className="text-xs text-slate-400 mt-0.5">{"Nh\u1eadn g\u1ee3i \u00fd ti\u1ebft ki\u1ec7m th\u00f4ng minh, c\u00e1 nh\u00e2n h\u00f3a \u0111\u1ec3 t\u1ed1i \u01b0u h\u00f3a d\u00f2ng ti\u1ec1n."}</p>
                   </div>
                 </div>
               </div>
@@ -624,7 +649,7 @@ const AIChat = () => {
                   className="w-full sm:order-1 px-5 py-3 rounded-2xl text-sm font-medium
                     bg-slate-800 hover:bg-slate-700 active:scale-98 transition duration-150 text-slate-300 hover:text-white"
                 >
-                  Quay lại Trang chủ
+                  {"Quay lại Trang chủ"}
                 </button>
                 <button
                   onClick={() => navigate("/payment")}
@@ -634,7 +659,7 @@ const AIChat = () => {
                     flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <Zap size={16} />
-                  Nâng cấp ngay
+                  {"Nâng cấp ngay"}
                 </button>
               </div>
             </div>
@@ -684,19 +709,13 @@ const AIChat = () => {
         messagesEndRef={messagesEndRef}
         onToggleSidebar={() => setShowMobileSidebar(!showMobileSidebar)}
         onStopGenerating={handleStopGenerating}
-        /* Model selector props */
         selectedProvider={selectedProvider}
-        agentModel={agentModel}
-        agentModelOptions={AGENT_MODEL_OPTIONS}
-        plan={user?.subscriptionPlan || "FREE"}
         isFreePlan={isFreePlan}
+        isProcessingCrud={isProcessingCrud}
         onProviderSwitch={handleProviderSwitch}
-        onAgentModelChange={handleAgentModelChange}
-        /* Intent handling props */
         onConfirmAction={handleConfirmAction}
         onCancelConfirmation={handleCancelConfirmation}
         onUndo={handleUndo}
-        isProcessingCrud={isProcessingCrud}
       />
 
     </div>

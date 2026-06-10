@@ -18,6 +18,10 @@ export async function createExpense(payload) {
   return apiClient.post(API_ENDPOINTS.ADD_EXPENSE, payload);
 }
 
+export async function updateExpense(id, payload) {
+  return apiClient.put(API_ENDPOINTS.UPDATE_EXPENSE(id), payload);
+}
+
 export async function deleteExpenseById(id) {
   return apiClient.delete(API_ENDPOINTS.DELETE_EXPENSE(id));
 }

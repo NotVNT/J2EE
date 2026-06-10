@@ -458,6 +458,45 @@ html[data-performance="low"] .global-spinner-wrapper {
   background: rgba(245, 158, 11, 0.3);
 }
 
+.hide-scrollbar-until-hover {
+  scrollbar-width: none;
+}
+
+.hide-scrollbar-until-hover:hover {
+  scrollbar-width: thin;
+}
+
+.hide-scrollbar-until-hover::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.hide-scrollbar-until-hover::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.hide-scrollbar-until-hover::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 9999px;
+  transition: background 0.2s ease;
+}
+
+.hide-scrollbar-until-hover:hover::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.2);
+}
+
+.hide-scrollbar-until-hover:hover::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.4);
+}
+
+.dark .hide-scrollbar-until-hover:hover::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.dark .hide-scrollbar-until-hover:hover::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
 /* ───────────────────────────────────────────────────────────── */
 /* RECHARTS PREMIUM MICRO-ANIMATIONS                             */
 /* ───────────────────────────────────────────────────────────── */

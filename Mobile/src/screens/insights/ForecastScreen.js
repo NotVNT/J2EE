@@ -9,7 +9,7 @@ import {
 import { useRoute } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AuthContext } from "../../contexts/AuthContext";
-import { COLORS, useAppColors } from "../../constants/colors";
+import { useAppColors } from "../../constants/colors";
 import { TREND_CONFIG } from "../../utils/forecast";
 import { formatMoney } from "../../utils/format";
 import { getSafeAreaContentStyle } from "../../utils/safeArea";
@@ -23,6 +23,7 @@ import ForecastTrendChart from "../../components/Forecast/ForecastTrendChart";
 import ForecastAnomalySection from "../../components/Forecast/ForecastAnomalySection";
 import ForecastAISection from "../../components/Forecast/ForecastAISection";
 import ForecastEmptyState from "../../components/Forecast/ForecastEmptyState";
+import ScreenBackHeader from "../../components/common/ScreenBackHeader";
 
 export default function ForecastScreen() {
   const route = useRoute();
@@ -60,7 +61,14 @@ export default function ForecastScreen() {
   } = useForecastData({ route, isPremium, currentMonth, currentYear });
 
   if (!isPremium) {
-    return <ForecastPaywall />;
+    return (
+      <View style={[styles.container, { backgroundColor: colors.BG }]}>
+        <View style={[styles.paywallContent, getSafeAreaContentStyle(insets, { bottom: 24 })]}>
+          <ScreenBackHeader title="Dự báo" />
+          <ForecastPaywall />
+        </View>
+      </View>
+    );
   }
 
   return (
@@ -69,6 +77,8 @@ export default function ForecastScreen() {
       contentContainerStyle={[styles.content, getSafeAreaContentStyle(insets)]}
       showsVerticalScrollIndicator={false}
     >
+      <ScreenBackHeader title="Dự báo" />
+
       <ForecastMonthPicker
         label={monthPickerLabel}
         hint={monthPickerHint}
@@ -149,12 +159,15 @@ export default function ForecastScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.BG,
   },
   content: {
     paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 40,
+  },
+  paywallContent: {
+    flex: 1,
+    paddingHorizontal: 16,
   },
   loadingWrap: {
     flex: 1,
@@ -164,7 +177,6 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 12,
-    color: COLORS.TEXT_SECONDARY,
     fontSize: 14,
   },
   summaryRow: {

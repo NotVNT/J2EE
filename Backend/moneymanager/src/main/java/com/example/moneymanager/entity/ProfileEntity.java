@@ -55,6 +55,16 @@ public class ProfileEntity {
     private OtpPurpose otpPurpose;
     private Integer otpAttempts;              // failed attempt counter (max 5)
 
+    @Builder.Default
+    @Column(name = "ai_violation_score")
+    private Integer aiViolationScore = 0;
+
+    @Column(name = "ai_blocked_reason", length = 500)
+    private String aiBlockedReason;
+
+    @Column(name = "ai_blocked_at")
+    private LocalDateTime aiBlockedAt;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id")
     private RoleEntity role;
@@ -72,6 +82,9 @@ public class ProfileEntity {
         }
         if (this.autoRenew == null) {
             autoRenew = false;
+        }
+        if (this.aiViolationScore == null) {
+            aiViolationScore = 0;
         }
     }
 }

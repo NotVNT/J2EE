@@ -45,6 +45,7 @@ class ReceiptImportServiceOcrRoutingRegressionTest {
     @Mock private CategoryRepository categoryRepository;
     @Mock private ExpenseService expenseService;
     @Mock private SubscriptionService subscriptionService;
+    @Mock private AiViolationService aiViolationService;
 
     @Mock private RestClient.RequestBodyUriSpec ocrRequestBodyUriSpec;
     @Mock private RestClient.RequestBodySpec ocrRequestBodySpec;
@@ -87,7 +88,8 @@ class ReceiptImportServiceOcrRoutingRegressionTest {
                 profileService,
                 categoryRepository,
                 expenseService,
-                subscriptionService
+                subscriptionService,
+                aiViolationService
         );
     }
 
@@ -105,6 +107,7 @@ class ReceiptImportServiceOcrRoutingRegressionTest {
         );
 
         when(profileService.getCurrentProfile()).thenReturn(profile);
+        when(aiViolationService.isAiBlocked(profile)).thenReturn(false);
         when(categoryRepository.findByTypeAndProfileId("expense", 7L)).thenReturn(List.of(foodCategory, otherCategory));
         when(categoryRepository.findByNameIgnoreCaseAndTypeAndProfileId(anyString(), eq("expense"), eq(7L))).thenReturn(Optional.of(otherCategory));
 
@@ -178,7 +181,8 @@ class ReceiptImportServiceOcrRoutingRegressionTest {
                 profileService,
                 categoryRepository,
                 expenseService,
-                subscriptionService
+                subscriptionService,
+                aiViolationService
         );
 
         ProfileEntity profile = ProfileEntity.builder().id(7L).build();
@@ -192,6 +196,7 @@ class ReceiptImportServiceOcrRoutingRegressionTest {
         );
 
         when(profileService.getCurrentProfile()).thenReturn(profile);
+        when(aiViolationService.isAiBlocked(profile)).thenReturn(false);
         when(categoryRepository.findByTypeAndProfileId("expense", 7L)).thenReturn(List.of(foodCategory, otherCategory));
         when(categoryRepository.findByNameIgnoreCaseAndTypeAndProfileId(anyString(), eq("expense"), eq(7L))).thenReturn(Optional.of(otherCategory));
 

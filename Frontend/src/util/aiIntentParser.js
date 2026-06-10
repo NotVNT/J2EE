@@ -146,6 +146,68 @@ export const isExportEmailIntent = (intent) => {
   ));
 };
 
+const normalizeIntentMessage = (message) => String(message || "")
+  .normalize("NFD")
+  .replace(/\p{Diacritic}/gu, "")
+  .replace(/đ/giu, "d")
+  .toLowerCase()
+  .replace(/\s+/g, " ")
+  .trim();
+
+const ACTION_PHRASES = [
+  "cap nhat",
+  "ghi nhan",
+  "gui qua email",
+  "gui qua mail",
+  "gui email",
+  "gui mail",
+];
+
+const ACTION_WORD_PATTERN = /\b(them|tao|ghi|nap|xoa|bo|huy|sua|chinh|doi|update|xuat|tai|download|export|chuyen|transfer|add|delete|remove)\b/i;
+const QUESTION_HINT_PATTERN = /\b(bao nhieu|tong|thong ke|liet ke|xem|cho biet|hien|tom tat|phan tich|bao cao|tinh hinh|dong tien|tra cuu|the nao|con bao nhieu|con du|het bao nhieu|kiem duoc)\b/i;
+const FINANCIAL_DOMAIN_PATTERN = /\b(thu nhap|luong|income|chi tieu|expense|ngan sach|budget|tiet kiem|saving|muc tieu|goal|hu|jar|so du|tieu|kiem duoc)\b/i;
+const TIME_RANGE_PATTERN = /\b(hom nay|hom qua|tuan nay|tuan qua|tuan truoc|thang nay|thang qua|thang truoc|quy nay|quy truoc|nam nay|nam truoc|gan day)\b/i;
+const AMOUNT_PATTERN = /\b\d+(?:[.,]\d+)?\s*(?:k|nghin|ngan|tr|trieu|m|cu|dong)?\b/i;
+
+export const hasExplicitActionVerb = (message) => {
+  const normalizedMessage = normalizeIntentMessage(message);
+
+  if (!normalizedMessage) {
+    return false;
+  }
+
+  if (ACTION_WORD_PATTERN.test(normalizedMessage)) {
+    return true;
+  }
+
+  return ACTION_PHRASES.some((phrase) => normalizedMessage.includes(phrase));
+};
+
+export const isLikelyFinancialQuestion = (message) => {
+  const normalizedMessage = normalizeIntentMessage(message);
+
+  if (!normalizedMessage || !FINANCIAL_DOMAIN_PATTERN.test(normalizedMessage)) {
+    return false;
+  }
+
+  if (hasExplicitActionVerb(normalizedMessage)) {
+    return false;
+  }
+
+  if (QUESTION_HINT_PATTERN.test(normalizedMessage)) {
+    return true;
+  }
+
+  const hasTimeRange = TIME_RANGE_PATTERN.test(normalizedMessage);
+  const hasAmount = AMOUNT_PATTERN.test(normalizedMessage);
+
+  return hasTimeRange && !hasAmount;
+};
+
+export const shouldPreferQuestionFlow = (intent, intentType, message) => {
+  return isActionIntent(intent, intentType) && isLikelyFinancialQuestion(message);
+};
+
 export const normalizeAmountInput = (value) => {
   if (value === null || value === undefined || value === "") {
     return value;
@@ -230,6 +292,15 @@ export const clientTelemetry = {
         timestamp: new Date().toISOString()
       });
     }
+  },
+
+  logQuestionFallbackOverride: (intent, userMessage, pageContext) => {
+    console.warn('[AI Telemetry] ACTION intent overridden to question flow', {
+      intent,
+      userMessage: userMessage?.substring(0, 80),
+      pageContext,
+      timestamp: new Date().toISOString()
+    });
   }
 };
 

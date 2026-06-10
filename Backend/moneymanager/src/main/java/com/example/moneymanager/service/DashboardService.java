@@ -2,9 +2,15 @@ package com.example.moneymanager.service;
 
 import com.example.moneymanager.dto.*;
 import com.example.moneymanager.entity.ProfileEntity;
+import com.example.moneymanager.entity.ExpenseEntity;
+import com.example.moneymanager.entity.IncomeEntity;
+import com.example.moneymanager.repository.ExpenseRepository;
+import com.example.moneymanager.repository.IncomeRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,8 +40,20 @@ public class DashboardService {
     private final ProfileService profileService;
     private final SavingGoalService savingGoalService;
     private final BudgetService budgetService;
-    private final GeminiService geminiService;
-    private final GptOssService gptOssService;
+    private final ExpenseRepository expenseRepository;
+    private final IncomeRepository incomeRepository;
+
+    @Lazy
+    @Autowired
+    private GeminiService geminiService;
+
+    @Lazy
+    @Autowired
+    private GptOssService gptOssService;
+
+    @Lazy
+    @Autowired
+    private AiViolationService aiViolationService;
 
     @Transactional(readOnly = true)
     @Cacheable(value = "dashboard", key = "#root.target.getProfileId()", unless = "#result == null or #result.isEmpty()")
@@ -86,9 +104,12 @@ public class DashboardService {
                 return cmp;
             }).collect(Collectors.toList());
 
-            // Tối ưu: gọi 1 lần thay vì 2 lần
-            java.math.BigDecimal totalIncome = incomeService.getTotalIncomeForCurrentUser();
-            java.math.BigDecimal totalExpense = expenseService.getTotalExpenseForCurrentUser();
+            // Thống kê theo tháng hiện tại
+            LocalDate currentLocalDate = LocalDate.now();
+            LocalDate startOfMonth = currentLocalDate.withDayOfMonth(1);
+            LocalDate endOfMonth = currentLocalDate.withDayOfMonth(currentLocalDate.lengthOfMonth());
+            java.math.BigDecimal totalIncome = incomeService.getIncomeTotalForCurrentUserBetween(startOfMonth, endOfMonth);
+            java.math.BigDecimal totalExpense = expenseService.getExpenseTotalForCurrentUserBetween(startOfMonth, endOfMonth);
             
             returnValue.put("totalBalance", totalIncome.subtract(totalExpense));
             returnValue.put("totalIncome", totalIncome);
@@ -125,14 +146,93 @@ public class DashboardService {
                 String monthKey = date.getYear() + "-" + String.format("%02d", date.getMonthValue());
                 
                 Map<String, Object> history = new HashMap<>();
-                history.put("month", "T" + date.getMonthValue());
+                history.put("month", "Tháng " + date.getMonthValue());
+                history.put("fullLabel", "Tháng " + date.getMonthValue() + "/" + date.getYear());
                 history.put("income", incomeByMonth.getOrDefault(monthKey, java.math.BigDecimal.ZERO));
                 history.put("expense", expenseByMonth.getOrDefault(monthKey, java.math.BigDecimal.ZERO));
                 monthlyHistory.add(history);
             }
             returnValue.put("monthlyHistory", monthlyHistory);
 
+            // 1. Daily History (Thứ/Ngày/Tháng của tuần hiện tại)
+            List<Map<String, Object>> dailyHistory = new ArrayList<>();
+            LocalDate startOfWeek = now.with(java.time.DayOfWeek.MONDAY);
+            LocalDate endOfWeek = now.with(java.time.DayOfWeek.SUNDAY);
+
+            List<ExpenseEntity> weekExpenses = expenseRepository.findByProfileIdAndDateBetween(
+                    profile.getId(), startOfWeek, endOfWeek);
+            List<IncomeEntity> weekIncomes = incomeRepository.findByProfileIdAndDateBetween(
+                    profile.getId(), startOfWeek, endOfWeek);
+
+            Map<LocalDate, java.math.BigDecimal> expenseByDate = weekExpenses.stream()
+                    .filter(e -> e.getDate() != null && e.getAmount() != null)
+                    .collect(Collectors.groupingBy(ExpenseEntity::getDate,
+                            Collectors.reducing(java.math.BigDecimal.ZERO, ExpenseEntity::getAmount, java.math.BigDecimal::add)));
+
+            Map<LocalDate, java.math.BigDecimal> incomeByDate = weekIncomes.stream()
+                    .filter(i -> i.getDate() != null && i.getAmount() != null)
+                    .collect(Collectors.groupingBy(IncomeEntity::getDate,
+                            Collectors.reducing(java.math.BigDecimal.ZERO, IncomeEntity::getAmount, java.math.BigDecimal::add)));
+
+            String[] dayNames = {"T2", "T3", "T4", "T5", "T6", "T7", "CN"};
+            String[] fullDayNames = {"Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy", "Chủ Nhật"};
+
+            for (int i = 0; i < 7; i++) {
+                LocalDate date = startOfWeek.plusDays(i);
+                Map<String, Object> dayData = new HashMap<>();
+                dayData.put("label", dayNames[i] + " (" + String.format("%02d/%02d", date.getDayOfMonth(), date.getMonthValue()) + ")");
+                dayData.put("fullLabel", fullDayNames[i] + ", ngày " + String.format("%02d/%02d/%d", date.getDayOfMonth(), date.getMonthValue(), date.getYear()));
+                dayData.put("income", incomeByDate.getOrDefault(date, java.math.BigDecimal.ZERO));
+                dayData.put("expense", expenseByDate.getOrDefault(date, java.math.BigDecimal.ZERO));
+                dailyHistory.add(dayData);
+            }
+            returnValue.put("dailyHistory", dailyHistory);
+
+            // 2. Weekly History of Current Month ("Tháng này")
+            List<Map<String, Object>> weeklyHistory = new ArrayList<>();
+            LocalDate weekStartOfMonth = now.withDayOfMonth(1);
+            LocalDate weekEndOfMonth = now.withDayOfMonth(now.lengthOfMonth());
+
+            List<ExpenseEntity> monthExpenses = expenseRepository.findByProfileIdAndDateBetween(
+                    profile.getId(), weekStartOfMonth, weekEndOfMonth);
+            List<IncomeEntity> monthIncomes = incomeRepository.findByProfileIdAndDateBetween(
+                    profile.getId(), weekStartOfMonth, weekEndOfMonth);
+
+            for (int w = 1; w <= 5; w++) {
+                LocalDate wStart = weekStartOfMonth.plusDays((w - 1) * 7);
+                if (wStart.isAfter(weekEndOfMonth)) {
+                    break;
+                }
+                LocalDate wEnd = weekStartOfMonth.plusDays(w * 7 - 1);
+                if (wEnd.isAfter(weekEndOfMonth)) {
+                    wEnd = weekEndOfMonth;
+                }
+
+                final LocalDate finalWStart = wStart;
+                final LocalDate finalWEnd = wEnd;
+
+                java.math.BigDecimal wExpense = monthExpenses.stream()
+                        .filter(e -> e.getDate() != null && !e.getDate().isBefore(finalWStart) && !e.getDate().isAfter(finalWEnd) && e.getAmount() != null)
+                        .map(ExpenseEntity::getAmount)
+                        .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+
+                java.math.BigDecimal wIncome = monthIncomes.stream()
+                        .filter(in -> in.getDate() != null && !in.getDate().isBefore(finalWStart) && !in.getDate().isAfter(finalWEnd) && in.getAmount() != null)
+                        .map(IncomeEntity::getAmount)
+                        .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+
+                Map<String, Object> weekData = new HashMap<>();
+                weekData.put("label", "Tuần " + w);
+                weekData.put("fullLabel", "Tuần " + w + " (" + String.format("%02d/%02d", wStart.getDayOfMonth(), wStart.getMonthValue()) + " - " + String.format("%02d/%02d", wEnd.getDayOfMonth(), wEnd.getMonthValue()) + ")");
+                weekData.put("income", wIncome);
+                weekData.put("expense", wExpense);
+                weeklyHistory.add(weekData);
+            }
+            returnValue.put("weeklyHistory", weeklyHistory);
+
             return returnValue;
+
+
 
         } catch (Exception e) {
             log.error("Error getting dashboard data: {}", e.getMessage(), e);
@@ -150,6 +250,9 @@ public class DashboardService {
             }
 
             String userName = profile.getFullName() != null ? profile.getFullName() : "bạn";
+            if (aiViolationService.isAiBlocked(profile)) {
+                return Map.of("insight", "Tính năng AI tạm thời không khả dụng.");
+            }
             Map<String, Object> currentData = getDashboardData();
 
             if (currentData == null || currentData.isEmpty()) {
@@ -184,6 +287,12 @@ public class DashboardService {
             }
 
             String userName = profile.getFullName() != null ? profile.getFullName() : "bạn";
+            if (aiViolationService.isAiBlocked(profile)) {
+                Map<String, Object> blockedResponse = new HashMap<>();
+                blockedResponse.put("message", "Tính năng AI tạm thời không khả dụng.");
+                blockedResponse.put("status", "ai_blocked");
+                return blockedResponse;
+            }
             log.info("Getting detailed insight for user: {}", userName);
 
             Map<String, Object> currentData = getDashboardData();

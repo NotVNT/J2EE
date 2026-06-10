@@ -236,6 +236,50 @@ public class MailTemplateService {
         return wrapInTemplate("Chào mừng đến với Money Manager", content);
     }
 
+    public String buildAiBlockEmail(String fullName, String reason) {
+        String name = fullName != null && !fullName.isBlank() ? escape(fullName) : "b&#7841;n";
+        String safeReason = reason != null && !reason.isBlank() ? escape(reason) : "Vi phạm chính sách sử dụng AI.";
+        String content =
+            "<h2 style=\"margin:0 0 6px;font-size:22px;font-weight:700;color:#b91c1c;\">&#128274; T&#237;nh n&#259;ng AI t&#7841;m th&#7901;i b&#7883; kh&#243;a</h2>"
+            + "<p style=\"margin:0 0 20px;font-size:15px;color:#6b7280;\">Xin ch&#224;o <strong style=\"color:#374151;\">" + name + "</strong>,</p>"
+            + "<p style=\"margin:0 0 20px;font-size:15px;color:#6b7280;line-height:1.7;\">T&#237;nh n&#259;ng AI c&#7911;a t&#224;i kho&#7843;n Money Manager c&#7911;a b&#7841;n &#273;&#227; b&#7883; t&#7841;m kh&#243;a v&#7899;i l&#253; do:</p>"
+            + "<blockquote style=\"margin:0 0 24px;border-left:4px solid #ef4444;padding:12px 16px;background:#fef2f2;color:#7f1d1d;border-radius:8px;\">"
+            + safeReason
+            + "</blockquote>"
+            + "<p style=\"margin:0;font-size:14px;color:#6b7280;line-height:1.7;\">N&#7871;u b&#7841;n cho r&#7857;ng &#273;&#226;y l&#224; nh&#7847;m l&#7851;n, vui l&#242;ng li&#234;n h&#7879; h&#7895; tr&#7907; qua email &#273;&#7875; &#273;&#432;&#7907;c xem x&#233;t.</p>";
+        return wrapInTemplate("Tính năng AI tạm thời bị khóa", content);
+    }
+
+    public String buildAiWarningEmail(String fullName, String warningMessage, int pointsUntilBlock) {
+        String name = fullName != null && !fullName.isBlank() ? escape(fullName) : "b&#7841;n";
+        String safeWarning = warningMessage != null && !warningMessage.isBlank()
+                ? escape(warningMessage)
+                : "T&#224;i kho&#7843;n c&#7911;a b&#7841;n v&#7915;a b&#7883; ghi nh&#7853;n vi ph&#7841;m ch&#237;nh s&#225;ch s&#7917; d&#7909;ng AI.";
+        String content =
+            "<h2 style=\"margin:0 0 6px;font-size:22px;font-weight:700;color:#b45309;\">&#9888;&#65039; C&#7843;nh b&#225;o s&#7917; d&#7909;ng AI</h2>"
+            + "<p style=\"margin:0 0 20px;font-size:15px;color:#6b7280;\">Xin ch&#224;o <strong style=\"color:#374151;\">" + name + "</strong>,</p>"
+            + "<p style=\"margin:0 0 18px;font-size:15px;color:#6b7280;line-height:1.7;\">Money Manager v&#7915;a ghi nh&#7853;n m&#7897;t y&#234;u c&#7847;u AI kh&#244;ng ph&#249; h&#7907;p v&#7899;i ch&#237;nh s&#225;ch s&#7917; d&#7909;ng:</p>"
+            + "<blockquote style=\"margin:0 0 22px;border-left:4px solid #f59e0b;padding:12px 16px;background:#fffbeb;color:#78350f;border-radius:8px;\">"
+            + safeWarning
+            + "</blockquote>"
+            + "<div style=\"background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:16px 18px;margin-bottom:22px;\">"
+            + "<p style=\"margin:0;font-size:14px;color:#92400e;line-height:1.7;\"><strong>C&#242;n " + Math.max(pointsUntilBlock, 0) + " &#273;i&#7875;m tr&#432;&#7899;c khi t&#237;nh n&#259;ng AI b&#7883; kh&#243;a.</strong><br>"
+            + "Vui l&#242;ng ch&#7881; s&#7917; d&#7909;ng Nova Money cho t&#224;i ch&#237;nh c&#225; nh&#226;n, qu&#7843;n l&#253; chi ti&#234;u, ti&#7871;t ki&#7879;m v&#224; h&#432;&#7899;ng d&#7851;n s&#7917; d&#7909;ng &#7913;ng d&#7909;ng.</p>"
+            + "</div>"
+            + "<p style=\"margin:0;font-size:13px;color:#9ca3af;line-height:1.7;\">N&#7871;u b&#7841;n cho r&#7857;ng &#273;&#226;y l&#224; nh&#7847;m l&#7851;n, vui l&#242;ng li&#234;n h&#7879; h&#7895; tr&#7907;.</p>";
+        return wrapInTemplate("Cảnh báo sử dụng AI", content);
+    }
+
+    public String buildAccountDeletionEmail(String fullName) {
+        String name = fullName != null && !fullName.isBlank() ? escape(fullName) : "b&#7841;n";
+        String content =
+            "<h2 style=\"margin:0 0 6px;font-size:22px;font-weight:700;color:#991b1b;\">&#9940; T&#224;i kho&#7843;n Money Manager &#273;&#227; b&#7883; x&#243;a</h2>"
+            + "<p style=\"margin:0 0 20px;font-size:15px;color:#6b7280;\">Xin ch&#224;o <strong style=\"color:#374151;\">" + name + "</strong>,</p>"
+            + "<p style=\"margin:0 0 18px;font-size:15px;color:#6b7280;line-height:1.7;\">Do vi ph&#7841;m nghi&#234;m tr&#7885;ng v&#224; l&#7863;p &#273;i l&#7863;p l&#7841;i ch&#237;nh s&#225;ch s&#7917; d&#7909;ng AI c&#7911;a Money Manager, t&#224;i kho&#7843;n v&#224; to&#224;n b&#7897; d&#7919; li&#7879;u c&#7911;a b&#7841;n &#273;&#227; b&#7883; x&#243;a v&#297;nh vi&#7877;n kh&#7887;i h&#7879; th&#7889;ng.</p>"
+            + "<p style=\"margin:0;font-size:14px;color:#991b1b;font-weight:700;\">Quy&#7871;t &#273;&#7883;nh n&#224;y kh&#244;ng th&#7875; ho&#224;n t&#225;c.</p>";
+        return wrapInTemplate("Tài khoản Money Manager đã bị xóa", content);
+    }
+
     private String buildFeatureRow(String icon, String text) {
         return "<tr><td style=\"padding:4px 0;\">"
             + "<table role=\"presentation\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\">"

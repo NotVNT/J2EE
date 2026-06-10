@@ -2,6 +2,12 @@ import { useEffect, useState, useCallback } from "react";
 import { Search, UserCircle2, Shield, Trash2, Edit2, X, Check, LoaderCircle, ChevronDown, RefreshCw, AlertTriangle } from "lucide-react";
 import axiosConfig from "../../util/axiosConfig.jsx";
 import { API_ENDPOINTS } from "../../util/apiEndpoints.js";
+import {
+  buildAiViolationDisplay,
+  buildAiUnblockConfirmMessage,
+  getAiViolationScoreTone,
+  isAiBlockedUser,
+} from "../../util/adminAiUiState.js";
 import toast from "react-hot-toast";
 import { usePageTitle } from "../../hooks/usePageTitle.js";
 
@@ -67,12 +73,41 @@ const ConfirmModal = ({ isOpen, title, message, onConfirm, onClose, confirmText 
 };
 
 // ─── Edit Modal ──────────────────────────────────────────────────────────────
-const EditModal = ({ user, onClose, onSaved }) => {
+const EditModal = ({ user, onClose, onSaved, onUserRefresh }) => {
+  const [currentUser, setCurrentUser] = useState(user);
   const [fullName, setFullName] = useState(user.fullName || "");
   const [isActive, setIsActive] = useState(user.isActive ?? true);
   const [plan, setPlan] = useState(user.subscriptionPlan || "FREE");
   const [role, setRole] = useState(user.role || "user");
   const [saving, setSaving] = useState(false);
+  const [violations, setViolations] = useState([]);
+  const [loadingViolations, setLoadingViolations] = useState(true);
+  const [unblocking, setUnblocking] = useState(false);
+
+  useEffect(() => {
+    setCurrentUser(user);
+    setFullName(user.fullName || "");
+    setIsActive(user.isActive ?? true);
+    setPlan(user.subscriptionPlan || "FREE");
+    setRole(user.role || "user");
+  }, [user]);
+
+  const fetchViolations = useCallback(async () => {
+    setLoadingViolations(true);
+    try {
+      const res = await axiosConfig.get(API_ENDPOINTS.ADMIN_USER_AI_VIOLATIONS(user.id));
+      setViolations(Array.isArray(res.data) ? res.data : []);
+    } catch {
+      setViolations([]);
+      toast.error("Không thể tải lịch sử vi phạm AI.");
+    } finally {
+      setLoadingViolations(false);
+    }
+  }, [user.id]);
+
+  useEffect(() => {
+    fetchViolations();
+  }, [fetchViolations]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -83,12 +118,38 @@ const EditModal = ({ user, onClose, onSaved }) => {
         subscriptionPlan: plan,
         role,
       });
-      toast.success("Đã cập nhật người dùng.");
+      toast.success("\u0110\u00e3 c\u1eadp nh\u1eadt ng\u01b0\u1eddi d\u00f9ng.");
+      setCurrentUser(res.data);
+      onUserRefresh?.(res.data);
       onSaved(res.data);
     } catch (err) {
-      toast.error(err.response?.data?.message || "Cập nhật thất bại.");
+      toast.error(err.response?.data?.message || "C\u1eadp nh\u1eadt th\u1ea5t b\u1ea1i.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleUnblockAi = async () => {
+    if (!window.confirm(buildAiUnblockConfirmMessage(user.fullName || user.email))) {
+      return;
+    }
+
+    setUnblocking(true);
+    try {
+      await axiosConfig.post(API_ENDPOINTS.ADMIN_USER_AI_UNBLOCK(user.id));
+      const detailRes = await axiosConfig.get(API_ENDPOINTS.ADMIN_USER_DETAIL(user.id));
+      setCurrentUser(detailRes.data);
+      setFullName(detailRes.data.fullName || "");
+      setIsActive(detailRes.data.isActive ?? true);
+      setPlan(detailRes.data.subscriptionPlan || "FREE");
+      setRole(detailRes.data.role || "user");
+      onUserRefresh?.(detailRes.data);
+      await fetchViolations();
+      toast.success("\u0110\u00e3 m\u1edf kh\u00f3a AI th\u00e0nh c\u00f4ng.");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Kh\u00f4ng th\u1ec3 m\u1edf kh\u00f3a AI.");
+    } finally {
+      setUnblocking(false);
     }
   };
 
@@ -104,12 +165,12 @@ const EditModal = ({ user, onClose, onSaved }) => {
         <div className="p-6 space-y-5">
           {/* Avatar + email (read-only) */}
           <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
-            {user.profileImageUrl
-              ? <img src={user.profileImageUrl} alt="" className="w-10 h-10 rounded-full object-cover" />
+            {currentUser.profileImageUrl
+              ? <img src={currentUser.profileImageUrl} alt="" className="w-10 h-10 rounded-full object-cover" />
               : <UserCircle2 size={40} className="text-slate-400" />}
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{user.email}</p>
-              <p className="text-xs text-slate-400 truncate mt-0.5">ID: {user.id}</p>
+              <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{currentUser.email}</p>
+              <p className="text-xs text-slate-400 truncate mt-0.5">ID: {currentUser.id}</p>
             </div>
           </div>
 
@@ -167,6 +228,84 @@ const EditModal = ({ user, onClose, onSaved }) => {
             >
               <span className={`inline-block h-4.5 w-4.5 rounded-full bg-white shadow-sm transition-transform ${isActive ? "translate-x-6" : "translate-x-1"}`} />
             </button>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 dark:border-white/10 p-4 space-y-3">
+            <h4 className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+              Trạng thái AI
+            </h4>
+
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-slate-500 dark:text-slate-400">Điểm vi phạm</span>
+              <span
+                className={`font-bold ${
+                  getAiViolationScoreTone(currentUser.aiViolationScore || 0) === "danger"
+                    ? "text-red-500"
+                    : getAiViolationScoreTone(currentUser.aiViolationScore || 0) === "warning"
+                      ? "text-amber-500"
+                      : "text-green-500"
+                }`}
+              >
+                {currentUser.aiViolationScore || 0} / 6 điểm
+              </span>
+            </div>
+
+            {isAiBlockedUser(currentUser) ? (
+              <div className="rounded-2xl border border-red-200 bg-red-50/70 dark:border-red-500/30 dark:bg-red-500/10 p-3 space-y-2">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-red-700 dark:text-red-300">AI đang bị khóa</p>
+                    <p className="text-xs text-red-600 dark:text-red-400 mt-1">{currentUser.aiBlockedReason}</p>
+                    {currentUser.aiBlockedAt && (
+                      <p className="text-[11px] text-red-500 dark:text-red-400 mt-1">
+                        Từ: {new Date(currentUser.aiBlockedAt).toLocaleString("vi-VN")}
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleUnblockAi}
+                    disabled={unblocking}
+                    className="shrink-0 rounded-xl bg-red-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
+                  >
+                    {unblocking ? "Đang mở khóa..." : "Mở khóa AI"}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-2xl bg-green-50/70 dark:bg-green-500/10 px-3 py-2 text-sm text-green-700 dark:text-green-300">
+                AI hoạt động bình thường
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                Lịch sử vi phạm gần nhất
+              </p>
+              {loadingViolations ? (
+                <p className="text-xs text-slate-400">Đang tải...</p>
+              ) : violations.length === 0 ? (
+                <p className="text-xs text-slate-400">Chưa có vi phạm nào.</p>
+              ) : (
+                <div className="space-y-2">
+                  {violations.slice(0, 5).map((violation) => {
+                    const violationDisplay = buildAiViolationDisplay(violation);
+                    return (
+                      <div
+                        key={violation.id}
+                        className="rounded-xl border border-slate-200/70 dark:border-white/10 px-3 py-2 text-xs text-slate-600 dark:text-slate-300"
+                      >
+                        <p className="font-semibold text-slate-700 dark:text-slate-200">{violationDisplay.type}</p>
+                        <p className="mt-1">{violationDisplay.snippet}</p>
+                        <p className="mt-1 text-[11px] text-slate-400">
+                          {violationDisplay.source} · {violation.createdAt ? new Date(violation.createdAt).toLocaleString("vi-VN") : "Không rõ thời gian"}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -240,6 +379,11 @@ const AdminUsers = () => {
   const handleSaved = (updated) => {
     setUsers(prev => prev.map(u => u.id === updated.id ? updated : u));
     setEditingUser(null);
+  };
+
+  const handleUserRefresh = (updated) => {
+    setUsers(prev => prev.map(u => u.id === updated.id ? updated : u));
+    setEditingUser(updated);
   };
 
   return (
@@ -468,6 +612,7 @@ const AdminUsers = () => {
           user={editingUser}
           onClose={() => setEditingUser(null)}
           onSaved={handleSaved}
+          onUserRefresh={handleUserRefresh}
         />
       )}
 

@@ -10,7 +10,7 @@ import {
   Platform,
   ScrollView
 } from "react-native";
-import { COLORS } from "../../constants/colors";
+import { COLORS, useAppColors } from "../../constants/colors";
 import { scale, clampScale } from "../../utils/layoutScale";
 
 export default function EditMessageModal({
@@ -19,6 +19,7 @@ export default function EditMessageModal({
   message,
   onSave
 }) {
+  const colors = useAppColors();
   const [editText, setEditText] = useState("");
 
   useEffect(() => {
@@ -57,22 +58,22 @@ export default function EditMessageModal({
             accessibilityLabel="Đóng hộp thoại chỉnh sửa"
           />
 
-          <View style={styles.sheet}>
-            <View style={styles.header}>
-              <Text style={styles.title}>Chỉnh sửa tin nhắn</Text>
-              <Pressable style={styles.closeButton} onPress={onClose}>
-                <Text style={styles.closeText}>×</Text>
+          <View style={[styles.sheet, { backgroundColor: colors.BG, borderColor: colors.CARD_BORDER }]}>
+            <View style={[styles.header, { borderBottomColor: colors.CARD_BORDER }]}>
+              <Text style={[styles.title, { color: colors.PRIMARY }]}>Chỉnh sửa tin nhắn</Text>
+              <Pressable style={[styles.closeButton, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]} onPress={onClose}>
+                <Text style={[styles.closeText, { color: colors.TEXT }]}>×</Text>
               </Pressable>
             </View>
 
             <ScrollView contentContainerStyle={styles.content}>
-              <View style={styles.inputWrapper}>
+              <View style={[styles.inputWrapper, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}>
                 <TextInput
-                  style={styles.textInput}
+                  style={[styles.textInput, { color: colors.TEXT }]}
                   value={editText}
                   onChangeText={setEditText}
                   placeholder="Nhập nội dung tin nhắn mới..."
-                  placeholderTextColor="#9ca3af"
+                  placeholderTextColor={colors.TEXT_MUTED}
                   multiline
                   autoFocus
                   maxLength={1000}
@@ -80,11 +81,15 @@ export default function EditMessageModal({
               </View>
 
               <View style={styles.footer}>
-                <Pressable style={styles.cancelBtn} onPress={onClose}>
-                  <Text style={styles.cancelBtnText}>Hủy</Text>
+                <Pressable style={[styles.cancelBtn, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]} onPress={onClose}>
+                  <Text style={[styles.cancelBtnText, { color: colors.TEXT }]}>Hủy</Text>
                 </Pressable>
                 <Pressable
-                  style={[styles.saveBtn, !editText.trim() && styles.saveBtnDisabled]}
+                  style={[
+                    styles.saveBtn,
+                    { backgroundColor: colors.PRIMARY, shadowColor: colors.PRIMARY },
+                    !editText.trim() && styles.saveBtnDisabled
+                  ]}
                   onPress={handleSave}
                   disabled={!editText.trim()}
                 >

@@ -3,6 +3,7 @@ package com.example.moneymanager.service;
 import com.example.moneymanager.dto.ForecastDTOs.CategoryForecastItem;
 import com.example.moneymanager.dto.ForecastDTOs.ForecastInsightDTO;
 import com.example.moneymanager.dto.ForecastDTOs.MonthlyForecastDTO;
+import com.example.moneymanager.entity.ProfileEntity;
 import com.example.moneymanager.repository.ExpenseRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,6 +29,7 @@ class ForecastServiceAiInsightRegressionTest {
     @Mock private ExpenseRepository expenseRepository;
     @Mock private ProfileService profileService;
     @Mock private GptOssService gptOssService;
+    @Mock private AiViolationService aiViolationService;
 
     @InjectMocks
     private ForecastService forecastService;
@@ -54,6 +56,8 @@ class ForecastServiceAiInsightRegressionTest {
                 anyString(),
                 eq(512)
         )).thenReturn("Forecast analysis");
+        when(profileService.getCurrentProfile()).thenReturn(ProfileEntity.builder().id(1L).build());
+        when(aiViolationService.isAiBlocked(org.mockito.ArgumentMatchers.any(ProfileEntity.class))).thenReturn(false);
 
         ForecastInsightDTO result = forecastService.analyzeForecastWithAi(forecast);
 

@@ -1,60 +1,56 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { COLORS } from "../../constants/colors";
+import { useAppColors } from "../../constants/colors";
 import { formatDate, formatMoney } from "../../utils/format";
+import { scale } from "../../utils/layoutScale";
 
 export default function ReceiptSummaryCard({ itemCount, location, merchant, receiptDate, totalAmount }) {
+  const colors = useAppColors();
+
   return (
-    <View style={styles.summaryCard}>
-      <Text style={styles.summaryTitle}>🧾 {merchant || "Hóa đơn"}</Text>
-      {location ? <Text style={styles.summaryLocation}>📍 {location}</Text> : null}
+    <View style={[styles.summaryCard, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}>
+      <Text style={[styles.summaryTitle, { color: colors.TEXT }]}>🧾 {merchant || "Hóa đơn"}</Text>
+      {location ? <Text style={[styles.summaryLocation, { color: colors.TEXT_SECONDARY }]}>📍 {location}</Text> : null}
       <View style={styles.summaryRow}>
-        <Text style={styles.summaryDate}>📅 {formatDate(receiptDate)}</Text>
-        <Text style={styles.summaryCount}>{itemCount} mục</Text>
+        <Text style={[styles.summaryDate, { color: colors.TEXT_SECONDARY }]}>📅 {formatDate(receiptDate)}</Text>
+        <Text style={[styles.summaryCount, { color: colors.PRIMARY }]}>{itemCount} mục</Text>
       </View>
-      <Text style={styles.summaryTotal}>Tổng: {formatMoney(totalAmount)}</Text>
+      <Text style={[styles.summaryTotal, { color: colors.EXPENSE_COLOR || colors.EXPENSE }]}>Tổng: {formatMoney(totalAmount)}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   summaryCard: {
-    backgroundColor: COLORS.CARD,
-    margin: 16,
-    marginBottom: 4,
-    borderRadius: 16,
+    margin: scale(16),
+    marginBottom: scale(4),
+    borderRadius: scale(16),
     borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
-    padding: 16
+    padding: scale(16)
   },
   summaryTitle: {
     fontSize: 18,
     fontWeight: "800",
-    color: COLORS.TEXT,
-    marginBottom: 4
+    marginBottom: scale(4)
   },
   summaryLocation: {
     fontSize: 13,
-    color: COLORS.TEXT_SECONDARY,
-    marginBottom: 6
+    marginBottom: scale(6)
   },
   summaryRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 8
+    marginBottom: scale(8)
   },
   summaryDate: {
     fontSize: 13,
-    color: COLORS.TEXT_SECONDARY
   },
   summaryCount: {
     fontSize: 13,
-    color: COLORS.PRIMARY,
     fontWeight: "600"
   },
   summaryTotal: {
     fontSize: 20,
     fontWeight: "800",
-    color: COLORS.EXPENSE
   }
 });

@@ -91,6 +91,8 @@ export const API_ENDPOINTS = {
     ADMIN_USER_DETAIL: (id) => `/admin/users/${id}`,
     ADMIN_USER_UPDATE: (id) => `/admin/users/${id}`,
     ADMIN_USER_DELETE: (id) => `/admin/users/${id}`,
+    ADMIN_USER_AI_VIOLATIONS: (id) => `/admin/users/${id}/ai-violations`,
+    ADMIN_USER_AI_UNBLOCK: (id) => `/admin/users/${id}/ai-unblock`,
 
     // Subscription plan config endpoints
     GET_SUBSCRIPTION_PLANS: "/subscription-plans",

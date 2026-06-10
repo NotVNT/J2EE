@@ -5,18 +5,21 @@ import { hasDisplayImage } from "../util/imageDisplay.js";
 const fmt = (n) =>
   new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(n ?? 0);
 
-const JarCard = ({ jar, totalBalance, onEdit, onDelete, onClick, onAddExpenseClick, onTransferClick }) => {
+const JarCard = ({ jar, totalBalance, totalAbsBalance, onEdit, onDelete, onClick, onAddExpenseClick, onTransferClick }) => {
   const { name, icon, color, targetPercentage, currentBalance } = jar;
   const [hovered, setHovered] = useState(false);
 
-  const actualPercent = totalBalance > 0
-    ? ((currentBalance / totalBalance) * 100).toFixed(1)
+  // Tỷ trọng thực tế = |số dư hũ này| / tổng |số dư| tất cả hũ
+  // Dùng totalAbsBalance để tránh lỗi khi tổng số dư âm (totalBalance < 0)
+  const absBalanceRef = totalAbsBalance ?? Math.abs(totalBalance ?? 0);
+  const actualPercent = absBalanceRef > 0
+    ? ((Math.abs(currentBalance) / absBalanceRef) * 100).toFixed(1)
     : "0.0";
 
   const isNegative = currentBalance < 0;
 
   const progressWidth = Math.min(
-    Math.abs(currentBalance) / (totalBalance > 0 ? totalBalance : 1) * 100,
+    absBalanceRef > 0 ? (Math.abs(currentBalance) / absBalanceRef * 100) : 0,
     100
   );
 

@@ -201,11 +201,11 @@ function MonthSwitcher({ label, canPrev, canNext, onPrev, onNext }) {
 
   return (
     <View style={styles.monthSwitcherRow}>
-      <Pressable style={[styles.monthNavBtn, { backgroundColor: colors.ROSE_MIST, borderColor: colors.CARD_BORDER }, !canPrev && styles.monthNavBtnDisabled]} onPress={onPrev} disabled={!canPrev}>
+      <Pressable style={[styles.monthNavBtn, !canPrev && styles.monthNavBtnDisabled]} onPress={onPrev} disabled={!canPrev}>
         <Text style={[styles.monthNavText, { color: canPrev ? colors.TEXT : colors.TEXT_MUTED }]}>◀</Text>
       </Pressable>
       <Text style={[styles.monthYearText, { color: colors.TEXT_SECONDARY }]}>{label}</Text>
-      <Pressable style={[styles.monthNavBtn, { backgroundColor: colors.ROSE_MIST, borderColor: colors.CARD_BORDER }, !canNext && styles.monthNavBtnDisabled]} onPress={onNext} disabled={!canNext}>
+      <Pressable style={[styles.monthNavBtn, !canNext && styles.monthNavBtnDisabled]} onPress={onNext} disabled={!canNext}>
         <Text style={[styles.monthNavText, { color: canNext ? colors.TEXT : colors.TEXT_MUTED }]}>▶</Text>
       </Pressable>
     </View>
@@ -517,12 +517,8 @@ const styles = StyleSheet.create({
   monthNavBtn: {
     width: 28,
     height: 28,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: COLORS.ROSE_MIST,
   },
   monthNavBtnDisabled: {
     opacity: 0.4,

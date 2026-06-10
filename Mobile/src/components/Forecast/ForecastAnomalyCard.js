@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { COLORS, useAppColors } from "../../constants/colors";
 import { formatMoney, formatDate } from "../../utils/format";
 
@@ -20,9 +21,18 @@ export default function ForecastAnomalyCard({ item }) {
   }, [amount, meanAmount]);
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}> 
+    <View style={[
+      styles.card, 
+      { 
+        backgroundColor: colors.CARD, 
+        borderColor: colors.CARD_BORDER,
+        borderLeftColor: colors.WARNING 
+      }
+    ]}> 
       <View style={styles.left}>
-        <Text style={styles.warnIcon}>⚠️</Text>
+        <View style={[styles.warnIconContainer, { backgroundColor: colors.WARNING_LIGHT || "rgba(255,184,77,0.1)" }]}>
+          <Ionicons name="warning" size={16} color={colors.WARNING} />
+        </View>
         <View style={styles.info}>
           <Text style={[styles.category, { color: colors.TEXT }]}>{item?.categoryName || "Không rõ"}</Text>
           <Text style={[styles.date, { color: colors.TEXT_SECONDARY }]}>{formatDate(item?.date)}</Text>
@@ -40,14 +50,21 @@ export default function ForecastAnomalyCard({ item }) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: COLORS.CARD,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
+    borderLeftWidth: 4,
     padding: 12,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.02,
+    shadowRadius: 4,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    elevation: 1,
   },
   left: {
     flexDirection: "row",
@@ -55,8 +72,12 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 10,
   },
-  warnIcon: {
-    fontSize: 22,
+  warnIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
   },
   info: {
     flex: 1,
@@ -64,11 +85,9 @@ const styles = StyleSheet.create({
   category: {
     fontSize: 14,
     fontWeight: "700",
-    color: COLORS.TEXT,
   },
   date: {
     fontSize: 12,
-    color: COLORS.TEXT_SECONDARY,
     marginTop: 2,
   },
   right: {
@@ -77,11 +96,9 @@ const styles = StyleSheet.create({
   amount: {
     fontSize: 14,
     fontWeight: "800",
-    color: COLORS.EXPENSE,
   },
   deviation: {
     fontSize: 11,
-    color: COLORS.WARNING,
     fontWeight: "600",
     marginTop: 2,
   },

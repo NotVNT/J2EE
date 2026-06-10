@@ -7,11 +7,16 @@ import BudgetSummary from "../../components/Budgets/BudgetSummary";
 import { COLORS, useAppColors } from "../../constants/colors";
 import useBudget from "../../hooks/useBudget";
 import { getSafeAreaBottom, getSafeAreaTop } from "../../utils/safeArea";
+import AppIcon from "../../components/ui/AppIcon";
+import ScreenBackHeader from "../../components/common/ScreenBackHeader";
+import { scale } from "../../utils/layoutScale";
 
 function BudgetEmptyState({ colors }) {
   return (
     <View style={styles.emptyState}>
-      <Text style={styles.emptyIcon}>💸</Text>
+      <View style={[styles.iconContainer, { backgroundColor: colors.ROSE_MIST || "rgba(239,94,131,0.1)" }]}>
+        <AppIcon name="card-outline" size={28} color={colors.PRIMARY} />
+      </View>
       <Text style={[styles.emptyTitle, { color: colors.TEXT }]}>Chưa có hạn mức nào</Text>
       <Text style={[styles.emptyText, { color: colors.TEXT_SECONDARY }]}>Hãy tạo hạn mức đầu tiên để kiểm soát chi tiêu tốt hơn trong tháng.</Text>
     </View>
@@ -44,7 +49,8 @@ export default function BudgetScreen() {
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.BG, paddingTop: getSafeAreaTop(insets) }]}> 
+    <View style={[styles.container, { backgroundColor: colors.BG, paddingTop: getSafeAreaTop(insets) }]}>
+      <ScreenBackHeader title="Ngân sách" />
       <FlatList
         data={budget.budgets}
         keyExtractor={(item) => String(item?.id)}
@@ -86,11 +92,17 @@ const styles = StyleSheet.create({
   },
   emptyState: {
     alignItems: "center",
-    paddingHorizontal: 24
+    justifyContent: "center",
+    paddingHorizontal: scale(24),
+    paddingVertical: scale(40)
   },
-  emptyIcon: {
-    fontSize: 34,
-    marginBottom: 8
+  iconContainer: {
+    width: scale(56),
+    height: scale(56),
+    borderRadius: scale(28),
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: scale(12)
   },
   emptyTitle: {
     fontSize: 16,

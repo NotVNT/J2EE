@@ -3,6 +3,7 @@ package com.example.moneymanager.service;
 import com.example.moneymanager.dto.ForecastDTOs.*;
 import com.example.moneymanager.entity.ExpenseEntity;
 import com.example.moneymanager.entity.ProfileEntity;
+import com.example.moneymanager.exception.ForbiddenException;
 import com.example.moneymanager.repository.ExpenseRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +29,7 @@ public class ForecastService {
     private final ExpenseRepository expenseRepository;
     private final ProfileService profileService;
     private final GptOssService gptOssService;
+    private final AiViolationService aiViolationService;
 
     public MonthlyForecastDTO getMonthlyForecast(int year, int month) {
         ProfileEntity profile = profileService.getCurrentProfile();
@@ -237,6 +239,11 @@ public class ForecastService {
 
     public ForecastInsightDTO analyzeForecastWithAi(MonthlyForecastDTO forecast) {
         try {
+            if (aiViolationService.isAiBlocked(profileService.getCurrentProfile())) {
+                throw new ForbiddenException(
+                        "Tính năng AI dự báo tạm thời không khả dụng do vi phạm chính sách sử dụng."
+                );
+            }
             if (forecast == null || forecast.getCategories() == null || forecast.getCategories().isEmpty()) {
                 return ForecastInsightDTO.builder()
                         .narrative("Chưa có đủ dữ liệu lịch sử để tạo phân tích. Hãy thêm nhiều giao dịch hơn!")
@@ -268,6 +275,8 @@ public class ForecastService {
                     .narrative(narrative)
                     .generatedAt(LocalDateTime.now())
                     .build();
+        } catch (ForbiddenException forbiddenException) {
+            throw forbiddenException;
         } catch (Exception e) {
             log.error("Error generating GPT-OSS forecast insight: {}", e.getMessage(), e);
             return ForecastInsightDTO.builder()

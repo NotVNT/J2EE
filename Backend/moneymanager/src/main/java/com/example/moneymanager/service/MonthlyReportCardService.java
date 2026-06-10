@@ -4,6 +4,7 @@ import com.example.moneymanager.dto.MonthlyReportCardDTO;
 import com.example.moneymanager.dto.MonthlyReportAiAnalysisRequestDTO;
 import com.example.moneymanager.dto.MonthlyReportCardDTO.CategoryBreakdownItem;
 import com.example.moneymanager.entity.*;
+import com.example.moneymanager.exception.ForbiddenException;
 import com.example.moneymanager.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +32,7 @@ public class MonthlyReportCardService {
     private final SavingGoalContributionRepository savingGoalContributionRepository;
     private final SubscriptionService subscriptionService;
     private final GptOssService gptOssService;
+    private final AiViolationService aiViolationService;
 
     /**
      * Get report card for the current month.
@@ -156,6 +158,11 @@ public class MonthlyReportCardService {
     @Transactional(readOnly = true)
     public String analyzeReportWithAi(MonthlyReportAiAnalysisRequestDTO request) {
         ProfileEntity profile = profileService.getCurrentProfile();
+        if (aiViolationService.isAiBlocked(profile)) {
+            throw new ForbiddenException(
+                    "Tính năng AI báo cáo tháng tạm thời không khả dụng do vi phạm chính sách."
+            );
+        }
         subscriptionService.ensureCanUseDetailedAi(profile);
 
         String prompt = request != null ? request.getPrompt() : null;

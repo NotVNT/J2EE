@@ -3,19 +3,18 @@ package com.example.moneymanager.service;
 import com.example.moneymanager.config.GptOssKeyRotator;
 import com.example.moneymanager.config.GptOssProperties;
 import com.example.moneymanager.dto.AssistantChatResponseDTO;
+import com.example.moneymanager.util.AISystemPrompts;
 import com.example.moneymanager.util.OpenRouterResponseParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class GptOssService {
 
     private static final int MAX_ATTEMPTS = 3;
@@ -25,6 +24,31 @@ public class GptOssService {
     private final GptOssProperties gptOssProperties;
     private final GptOssKeyRotator gptOssKeyRotator;
     private final ObjectMapper objectMapper;
+    private final GeminiService geminiService;
+
+    // Primary constructor for Spring boot injection
+    @org.springframework.beans.factory.annotation.Autowired
+    public GptOssService(
+            RestClient gptOssRestClient,
+            GptOssProperties gptOssProperties,
+            GptOssKeyRotator gptOssKeyRotator,
+            ObjectMapper objectMapper,
+            @org.springframework.context.annotation.Lazy GeminiService geminiService) {
+        this.gptOssRestClient = gptOssRestClient;
+        this.gptOssProperties = gptOssProperties;
+        this.gptOssKeyRotator = gptOssKeyRotator;
+        this.objectMapper = objectMapper;
+        this.geminiService = geminiService;
+    }
+
+    // Overloaded constructor for manual instantiation in tests
+    public GptOssService(
+            RestClient gptOssRestClient,
+            GptOssProperties gptOssProperties,
+            GptOssKeyRotator gptOssKeyRotator,
+            ObjectMapper objectMapper) {
+        this(gptOssRestClient, gptOssProperties, gptOssKeyRotator, objectMapper, null);
+    }
 
     private String apiKey() {
         if (!gptOssKeyRotator.hasKeys()) {
@@ -36,33 +60,63 @@ public class GptOssService {
     public String callWithPrompt(String systemPrompt, String userMessage, int maxTokens) {
         RuntimeException lastFailure = null;
 
-        for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-            try {
-                return callWithPromptOnce(systemPrompt, userMessage, maxTokens, attempt);
-            } catch (RuntimeException exception) {
-                lastFailure = exception;
-                boolean shouldRetry = attempt < MAX_ATTEMPTS && isRetryable(exception);
-                if (!shouldRetry) {
-                    break;
-                }
+        if (gptOssKeyRotator.hasKeys()) {
+            for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+                try {
+                    return callWithPromptOnce(gptOssProperties.model(), systemPrompt, userMessage, maxTokens, attempt);
+                } catch (RuntimeException exception) {
+                    lastFailure = exception;
+                    boolean shouldRetry = attempt < MAX_ATTEMPTS && isRetryable(exception);
+                    if (!shouldRetry) {
+                        break;
+                    }
 
-                long delayMs = BASE_RETRY_DELAY_MS * attempt;
-                log.warn("GPT-OSS transient failure on attempt {}/{}. Retrying in {} ms. Cause: {}",
-                        attempt, MAX_ATTEMPTS, delayMs, exception.getMessage());
-                sleepBeforeRetry(delayMs);
+                    long delayMs = BASE_RETRY_DELAY_MS * attempt;
+                    log.warn("GPT-OSS transient failure on attempt {}/{}. Retrying in {} ms. Cause: {}",
+                            attempt, MAX_ATTEMPTS, delayMs, exception.getMessage());
+                    sleepBeforeRetry(delayMs);
+                }
+            }
+            
+            // Fallback to openrouter/free model if the primary model failed and is not already openrouter/free
+            if (lastFailure != null && !"openrouter/free".equalsIgnoreCase(gptOssProperties.model())) {
+                log.warn("Primary GPT-OSS model {} failed. Attempting fallback model openrouter/free...", gptOssProperties.model());
+                try {
+                    return callWithPromptOnce("openrouter/free", systemPrompt, userMessage, maxTokens, 1);
+                } catch (RuntimeException fallbackException) {
+                    log.error("GPT-OSS fallback model openrouter/free also failed.", fallbackException);
+                    lastFailure = fallbackException;
+                }
+            }
+        } else {
+            log.warn("GPT-OSS keys are missing. Redirecting request to fallback.");
+        }
+
+        if (geminiService != null) {
+            try {
+                log.info("Attempting fallback to Gemini Service...");
+                return geminiService.callGeminiWithPrompt(systemPrompt, userMessage, maxTokens);
+            } catch (Exception geminiException) {
+                log.error("Gemini fallback also failed: {}", geminiException.getMessage(), geminiException);
+                throw new RuntimeException(
+                    "AI hiện tại không khả dụng, vui lòng thử lại sau.",
+                    lastFailure != null ? lastFailure : geminiException
+                );
             }
         }
 
-        throw new RuntimeException("Không thể gọi GPT-OSS API ổn định sau nhiều lần thử. "
-                + (lastFailure != null ? lastFailure.getMessage() : "Vui lòng thử lại sau."));
+        throw new RuntimeException(
+            "AI hiện tại không khả dụng, vui lòng thử lại sau.",
+            lastFailure
+        );
     }
 
-    private String callWithPromptOnce(String systemPrompt, String userMessage, int maxTokens, int attempt) {
+    private String callWithPromptOnce(String model, String systemPrompt, String userMessage, int maxTokens, int attempt) {
         try {
             String apiKey = apiKey();
 
             ObjectNode requestBody = objectMapper.createObjectNode();
-            requestBody.put("model", gptOssProperties.model());
+            requestBody.put("model", model);
             requestBody.put("stream", false);
 
             ArrayNode msgArray = objectMapper.createArrayNode();
@@ -87,7 +141,7 @@ public class GptOssService {
 
             String rawResponse = gptOssRestClient.post()
                     .uri(uriBuilder -> uriBuilder.path("/chat/completions").build())
-                    .header("Authorization", "Bearer " + apiKey())
+                    .header("Authorization", "Bearer " + apiKey)
                     .body(requestJson)
                     .retrieve()
                     .onStatus(status -> !status.is2xxSuccessful(), (req, res) -> {
@@ -97,7 +151,11 @@ public class GptOssService {
                         } catch (Exception ignored) {
                         }
                         log.error("GPT-OSS HTTP error {}: {}", res.getStatusCode().value(), errorBody);
-                        throw new RuntimeException("GPT-OSS API HTTP " + res.getStatusCode().value() + ": " + errorBody);
+                        int statusCode = res.getStatusCode().value();
+                        if (statusCode == 503 || statusCode == 502 || statusCode == 429) {
+                            throw new RuntimeException("GPT-OSS tạm thời không khả dụng [" + statusCode + "]");
+                        }
+                        throw new RuntimeException("GPT-OSS API lỗi tạm thời [" + statusCode + "]");
                     })
                     .body(String.class);
 
@@ -147,7 +205,10 @@ public class GptOssService {
             throw new RuntimeException("GPT-OSS không trả về nội dung hợp lệ.");
         } catch (Exception exception) {
             log.error("GPT-OSS call error: {}", exception.getMessage(), exception);
-            throw new RuntimeException("Không thể gọi GPT-OSS API: " + exception.getMessage(), exception);
+            if (exception instanceof RuntimeException re) {
+                throw re;
+            }
+            throw new RuntimeException("Lỗi kết nối GPT-OSS, vui lòng thử lại sau.", exception);
         }
     }
 
@@ -188,7 +249,7 @@ public class GptOssService {
     public AssistantChatResponseDTO chat(String message) {
         try {
             String reply = callWithPrompt(
-                    "Bạn là chuyên gia tài chính AI của Money Manager. Trả lời bằng tiếng Việt, ngắn gọn, rõ ràng, không dùng markdown.",
+                    AISystemPrompts.CHAT_SYSTEM_PROMPT,
                     message,
                     800
             );

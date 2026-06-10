@@ -4,15 +4,18 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import apiClient from "../../services/apiClient";
 import { API_ENDPOINTS } from "../../constants/api";
-import { COLORS } from "../../constants/colors";
+import { useAppColors } from "../../constants/colors";
 import { getApiErrorMessage } from "../../utils/format";
 import { JAR_COLORS, JAR_EMOJI_CATEGORIES } from "../../utils/jar";
 import { getSafeAreaContentStyle } from "../../utils/safeArea";
+import { scale } from "../../utils/layoutScale";
+import ScreenBackHeader from "../common/ScreenBackHeader";
 
 export default function JarFormView() {
   const navigation = useNavigation();
   const route = useRoute();
   const insets = useSafeAreaInsets();
+  const colors = useAppColors();
 
   const isEditing = route.params?.isEditing ?? false;
   const initialData = route.params?.initialData ?? null;
@@ -75,53 +78,63 @@ export default function JarFormView() {
   const isParentWallet = name === "Ví tổng";
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={[styles.content, getSafeAreaContentStyle(insets)]}>
-      <Text style={styles.label}>Tên hũ chi tiêu</Text>
+    <ScrollView
+      style={[styles.container, { backgroundColor: colors.BG }]}
+      contentContainerStyle={[styles.content, getSafeAreaContentStyle(insets)]}
+      showsVerticalScrollIndicator={false}
+    >
+      <ScreenBackHeader title={isEditing ? "Chỉnh sửa ví phụ" : "Tạo ví phụ"} />
+
+      <Text style={[styles.label, { color: colors.TEXT }]}>Tên hũ chi tiêu</Text>
       <TextInput
-        style={[styles.input, isParentWallet && styles.disabledInput]}
+        style={[
+          styles.input,
+          { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER, color: colors.TEXT },
+          isParentWallet && { backgroundColor: colors.BG, color: colors.TEXT_MUTED }
+        ]}
         value={name}
         onChangeText={setName}
         placeholder="Ví dụ: Ăn uống, Giải trí, Mua sắm"
-        placeholderTextColor={COLORS.TEXT_MUTED}
+        placeholderTextColor={colors.TEXT_MUTED}
         editable={!isParentWallet}
       />
 
-      <Text style={styles.label}>Biểu tượng (Emoji)</Text>
-      <View style={styles.emojiPickerContainer}>
+      <Text style={[styles.label, { color: colors.TEXT }]}>Biểu tượng (Emoji)</Text>
+      <View style={[styles.emojiPickerContainer, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}>
         <Pressable
-          style={[styles.emojiBubble, { borderColor: color || COLORS.PRIMARY }]}
+          style={[styles.emojiBubble, { backgroundColor: colors.BG, borderColor: color || colors.PRIMARY }]}
           onPress={() => setShowEmojiPicker(true)}
         >
           <Text style={styles.emojiBubbleText}>{icon || "🏺"}</Text>
-          <View style={[styles.emojiEditBadge, { backgroundColor: color || COLORS.PRIMARY }]}>
+          <View style={[styles.emojiEditBadge, { backgroundColor: color || colors.PRIMARY, borderColor: colors.CARD }]}>
             <Text style={styles.emojiEditBadgeText}>✎</Text>
           </View>
         </Pressable>
-        <Text style={styles.emojiPickerDesc}>
+        <Text style={[styles.emojiPickerDesc, { color: colors.TEXT_SECONDARY }]}>
           Nhấn vào vòng tròn biểu tượng để chọn hình ảnh đại diện thích hợp nhất cho hũ chi tiêu của bạn.
         </Text>
       </View>
 
-      <Text style={styles.label}>Tỷ lệ phân bổ (%)</Text>
+      <Text style={[styles.label, { color: colors.TEXT }]}>Tỷ lệ phân bổ (%)</Text>
       {isParentWallet ? (
-        <View style={styles.parentWalletInfo}>
-          <Text style={styles.parentWalletText}>
-            Tỷ lệ của Ví tổng được **tự động tính** bằng phần trăm còn lại (100% - tổng các hũ khác).
+        <View style={[styles.parentWalletInfo, { backgroundColor: colors.INFO_LIGHT, borderColor: colors.BORDER }]}>
+          <Text style={[styles.parentWalletText, { color: colors.TEXT_SECONDARY }]}>
+            Tỷ lệ của Ví tổng được tự động tính bằng phần trăm còn lại (100% - tổng các hũ khác).
           </Text>
         </View>
       ) : (
         <TextInput
-          style={styles.input}
+          style={[styles.input, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER, color: colors.TEXT }]}
           value={targetPercentage}
           onChangeText={(val) => setTargetPercentage(val.replace(/[^0-9.]/g, ""))}
           placeholder="Ví dụ: 25"
-          placeholderTextColor={COLORS.TEXT_MUTED}
+          placeholderTextColor={colors.TEXT_MUTED}
           keyboardType="numeric"
         />
       )}
 
       {/* Premium Color Picker */}
-      <Text style={styles.label}>Màu sắc đại diện</Text>
+      <Text style={[styles.label, { color: colors.TEXT }]}>Màu sắc đại diện</Text>
       <View style={styles.colorsGrid}>
         {JAR_COLORS.map((c) => {
           const isSelected = color === c.value;
@@ -132,7 +145,7 @@ export default function JarFormView() {
               style={[
                 styles.colorCircle,
                 { backgroundColor: c.value },
-                isSelected && styles.selectedColorCircle,
+                isSelected && [styles.selectedColorCircle, { borderColor: colors.TEXT }],
               ]}
               title={c.label}
             />
@@ -141,7 +154,11 @@ export default function JarFormView() {
       </View>
 
       <Pressable
-        style={[styles.saveButton, submitting && styles.saveButtonDisabled]}
+        style={[
+          styles.saveButton,
+          { backgroundColor: color || colors.PRIMARY, shadowColor: color || colors.PRIMARY },
+          submitting && styles.saveButtonDisabled
+        ]}
         onPress={onSave}
         disabled={submitting}
       >
@@ -153,18 +170,18 @@ export default function JarFormView() {
       {/* Bộ Chọn Emoji Modal */}
       <Modal visible={showEmojiPicker} animationType="fade" transparent>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Chọn biểu tượng hũ</Text>
+          <View style={[styles.modalContent, { backgroundColor: colors.CARD }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: colors.CARD_BORDER }]}>
+              <Text style={[styles.modalTitle, { color: colors.TEXT }]}>Chọn biểu tượng hũ</Text>
               <Pressable onPress={() => setShowEmojiPicker(false)}>
-                <Text style={styles.closeBtn}>Đóng</Text>
+                <Text style={[styles.closeBtn, { color: colors.PRIMARY }]}>Đóng</Text>
               </Pressable>
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.modalScroll}>
               {JAR_EMOJI_CATEGORIES.map((cat, catIdx) => (
                 <View key={catIdx} style={styles.catSection}>
-                  <Text style={styles.catTitle}>{cat.title}</Text>
+                  <Text style={[styles.catTitle, { color: colors.TEXT_SECONDARY }]}>{cat.title}</Text>
                   <View style={styles.emojiGrid}>
                     {cat.emojis.map((emoji) => {
                       const isSelected = icon === emoji;
@@ -173,9 +190,10 @@ export default function JarFormView() {
                           key={emoji}
                           style={[
                             styles.emojiGridCell,
+                            { backgroundColor: colors.BG },
                             isSelected && {
-                              borderColor: color || COLORS.PRIMARY,
-                              backgroundColor: (color || COLORS.PRIMARY) + "18",
+                              borderColor: color || colors.PRIMARY,
+                              backgroundColor: (color || colors.PRIMARY) + "18",
                             },
                           ]}
                           onPress={() => {
@@ -201,41 +219,30 @@ export default function JarFormView() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.BG,
   },
   content: {
-    padding: 16,
+    padding: scale(16),
+    paddingBottom: scale(100), // Ensures form can scroll completely above bottom tab bar
   },
   label: {
-    color: COLORS.TEXT,
     fontSize: 14,
     fontWeight: "700",
     marginBottom: 6,
     marginTop: 12,
   },
   input: {
-    backgroundColor: COLORS.WHITE,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    color: COLORS.TEXT,
     fontSize: 14,
   },
-  disabledInput: {
-    backgroundColor: COLORS.BG,
-    color: COLORS.TEXT_MUTED,
-  },
   parentWalletInfo: {
-    backgroundColor: COLORS.INFO_LIGHT,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#d0e3f5",
     padding: 12,
   },
   parentWalletText: {
-    color: COLORS.TEXT_SECONDARY,
     fontSize: 13,
     lineHeight: 18,
   },
@@ -253,16 +260,14 @@ const styles = StyleSheet.create({
     borderColor: "transparent",
   },
   selectedColorCircle: {
-    borderColor: COLORS.PRIMARY,
-    transform: [{ scale: 1.1 }],
+    borderWidth: 2.5,
+    transform: [{ scale: 1.15 }],
   },
   saveButton: {
-    backgroundColor: COLORS.PRIMARY,
     borderRadius: 12,
     paddingVertical: 13,
     alignItems: "center",
     marginTop: 24,
-    shadowColor: COLORS.PRIMARY,
     shadowOpacity: 0.2,
     shadowRadius: 8,
     shadowOffset: {
@@ -275,7 +280,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   saveButtonText: {
-    color: COLORS.WHITE,
+    color: "#FFFFFF",
     fontWeight: "800",
     fontSize: 15,
   },
@@ -284,10 +289,8 @@ const styles = StyleSheet.create({
   emojiPickerContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: COLORS.WHITE,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
     padding: 12,
     gap: 14,
     marginBottom: 12,
@@ -299,7 +302,6 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: COLORS.BG,
     position: "relative",
     shadowColor: "#000",
     shadowOffset: {
@@ -323,29 +325,26 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1.5,
-    borderColor: COLORS.WHITE,
   },
   emojiEditBadgeText: {
-    color: COLORS.WHITE,
+    color: "#FFFFFF",
     fontSize: 10,
     fontWeight: "800",
   },
   emojiPickerDesc: {
     flex: 1,
     fontSize: 12,
-    color: COLORS.TEXT_SECONDARY,
     lineHeight: 18,
   },
 
   // Modal Centered Styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: COLORS.OVERLAY,
+    backgroundColor: "rgba(0, 0, 0, 0.45)",
     justifyContent: "center",
     padding: 16,
   },
   modalContent: {
-    backgroundColor: COLORS.WHITE,
     borderRadius: 20,
     maxHeight: "80%",
     padding: 16,
@@ -355,19 +354,16 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.CARD_BORDER,
     paddingBottom: 14,
     marginBottom: 12,
   },
   modalTitle: {
     fontSize: 16,
     fontWeight: "800",
-    color: COLORS.TEXT,
   },
   closeBtn: {
     fontSize: 14,
     fontWeight: "700",
-    color: COLORS.PRIMARY,
   },
   modalScroll: {
     paddingBottom: 24,
@@ -378,7 +374,6 @@ const styles = StyleSheet.create({
   catTitle: {
     fontSize: 13,
     fontWeight: "700",
-    color: COLORS.TEXT_SECONDARY,
     marginBottom: 10,
     letterSpacing: 0.3,
   },
@@ -395,7 +390,6 @@ const styles = StyleSheet.create({
     borderColor: "transparent",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: COLORS.BG,
   },
   emojiGridText: {
     fontSize: 24,

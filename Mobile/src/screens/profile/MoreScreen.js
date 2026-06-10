@@ -1,5 +1,5 @@
 import React, { useContext, useState } from "react";
-import { ScrollView, StyleSheet, Switch, Text, View } from "react-native";
+import { Alert, Image, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AuthContext } from "../../contexts/AuthContext";
@@ -9,6 +9,7 @@ import ProfileHero from "../../components/More/ProfileHero";
 import { useAppColors } from "../../constants/colors";
 import useEmailPreferences from "../../hooks/useEmailPreferences";
 import { getSafeAreaContentStyle } from "../../utils/safeArea";
+import darkModeIcon from "../../assets/accessories/dark-mode.png";
 
 export default function MoreScreen() {
   const navigation = useNavigation();
@@ -22,6 +23,14 @@ export default function MoreScreen() {
   const isDark = theme === THEME_MODES.DARK;
 
   const handleItemPress = (item) => {
+    if (item.key === "about") {
+      Alert.alert(
+        "Về ứng dụng Money Manager",
+        "Phiên bản: 1.5\n\nNền tảng tài chính thông minh nhất giúp bạn theo dõi chi tiêu, tiết kiệm và đầu tư hiệu quả cho tương lai.\n\nThiết kế bởi BotDev Team.",
+        [{ text: "Đóng", style: "cancel" }]
+      );
+      return;
+    }
     if (!item.route) return;
     navigation.navigate(item.route, item.params);
   };
@@ -41,18 +50,20 @@ export default function MoreScreen() {
       <View style={[styles.themeCard, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}>
         <View style={styles.themeRow}>
           <View style={styles.themeLeft}>
-            <Text style={styles.themeIcon}>{isDark ? "🌙" : "☀️"}</Text>
+            <View style={styles.iconWrap}>
+              <Image source={darkModeIcon} style={styles.themeIconImage} resizeMode="contain" />
+            </View>
             <View>
-              <Text style={[styles.themeTitle, { color: colors.TEXT }]}>Dark Mode</Text>
+              <Text style={[styles.themeTitle, { color: colors.TEXT }]}>Giao diện tối</Text>
               <Text style={[styles.themeSubtitle, { color: colors.TEXT_SECONDARY }]}>
-                {isDark ? "Dark mode is on" : "Light mode is on"}
+                {isDark ? "Đang bật chế độ tối" : "Đang bật chế độ sáng"}
               </Text>
             </View>
           </View>
           <Switch
             value={isDark}
             onValueChange={toggleTheme}
-            trackColor={{ false: colors.CARD_BORDER, true: colors.PRIMARY }}
+            trackColor={{ false: colors.CARD_BORDER, true: colors.ACTION_VOICE || '#A855F7' }}
             thumbColor={colors.WHITE}
           />
         </View>
@@ -76,24 +87,39 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 16,
     overflow: "hidden",
+    shadowColor: "#000",
+    shadowOpacity: 0.02,
+    shadowRadius: 6,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    elevation: 2,
   },
   themeRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingVertical: 12,
   },
   themeLeft: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
   },
-  themeIcon: {
-    fontSize: 22,
+  iconWrap: {
+    width: 34,
+    height: 34,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  themeIconImage: {
+    width: 26,
+    height: 26,
   },
   themeTitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "600",
   },
   themeSubtitle: {

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Alert } from "react-native";
 import { SUCCESS_ALERT_MESSAGES, SUCCESS_ALERT_TITLE } from "../constants/alertMessages";
 import { fetchCategoriesByType } from "../services/categoryService";
-import { createIncome } from "../services/incomeService";
+import { createIncome, updateIncome } from "../services/incomeService";
 import { fetchJars } from "../services/jarService";
 import { formatCurrencyInput, getApiErrorMessage, parseCurrencyInput, todayIso } from "../utils/format";
 
@@ -33,6 +33,24 @@ function buildAllocations(jars, total) {
   });
 }
 
+function buildExistingAllocations(jars, existingAllocations = []) {
+  if (!jars.length || !existingAllocations.length) {
+    return [];
+  }
+
+  return jars.map((jar) => {
+    const existing = existingAllocations.find((allocation) => Number(allocation.jarId) === Number(jar.id));
+    return {
+      jarId: jar.id,
+      jarName: jar.name,
+      jarIcon: jar.icon,
+      jarColor: jar.color,
+      amount: Number(existing?.amount || 0),
+      percentage: jar.targetPercentage ?? 0
+    };
+  });
+}
+
 export default function useIncomeForm({ initialData, onSaved }) {
   const [categories, setCategories] = useState([]);
   const [categoryLoading, setCategoryLoading] = useState(true);
@@ -43,6 +61,7 @@ export default function useIncomeForm({ initialData, onSaved }) {
   const [submitting, setSubmitting] = useState(false);
   const [jars, setJars] = useState([]);
   const [allocations, setAllocations] = useState([]);
+  const [amountTouched, setAmountTouched] = useState(false);
   const [showAllocations, setShowAllocations] = useState(true);
 
   useEffect(() => {
@@ -55,7 +74,7 @@ export default function useIncomeForm({ initialData, onSaved }) {
         if (!active) return;
         setCategories(data);
         if (data.length > 0) {
-          setCategoryId(String(data[0].id));
+          setCategoryId(String(initialData?.categoryId || data[0].id));
         }
       } catch (error) {
         Alert.alert("Lỗi", getApiErrorMessage(error, "Không tải được danh mục"));
@@ -70,7 +89,7 @@ export default function useIncomeForm({ initialData, onSaved }) {
     return () => {
       active = false;
     };
-  }, []);
+  }, [initialData?.categoryId]);
 
   useEffect(() => {
     let active = true;
@@ -93,8 +112,14 @@ export default function useIncomeForm({ initialData, onSaved }) {
   }, []);
 
   useEffect(() => {
+    const shouldUseExistingAllocations = initialData?.id && !amountTouched && initialData?.allocations?.length > 0;
+    if (shouldUseExistingAllocations) {
+      setAllocations(buildExistingAllocations(jars, initialData.allocations));
+      return;
+    }
+
     setAllocations(buildAllocations(jars, parseCurrencyInput(amount)));
-  }, [amount, jars]);
+  }, [amount, amountTouched, initialData, jars]);
 
   useEffect(() => {
     if (!initialData) return;
@@ -102,6 +127,7 @@ export default function useIncomeForm({ initialData, onSaved }) {
     if (initialData.name) setName(initialData.name);
     if (initialData.amount) setAmount(formatCurrencyInput(String(initialData.amount)));
     if (initialData.date) setDate(initialData.date);
+    if (initialData.categoryId) setCategoryId(String(initialData.categoryId));
 
     if (initialData.categoryHint && categories.length > 0) {
       const hint = initialData.categoryHint.toLowerCase();
@@ -117,6 +143,7 @@ export default function useIncomeForm({ initialData, onSaved }) {
   const allocationDiff = incomeAmount - totalAllocated;
 
   const setFormattedAmount = useCallback((value) => {
+    setAmountTouched(true);
     setAmount(formatCurrencyInput(value));
   }, []);
 
@@ -187,14 +214,21 @@ export default function useIncomeForm({ initialData, onSaved }) {
           .map((allocation) => ({ jarId: allocation.jarId, amount: allocation.amount }));
       }
 
-      await createIncome(payload);
-      Alert.alert(SUCCESS_ALERT_TITLE, SUCCESS_ALERT_MESSAGES.create.income, [{ text: "OK", onPress: onSaved }]);
+      const isEditing = Boolean(initialData?.id);
+      if (isEditing) {
+        await updateIncome(initialData.id, payload);
+      } else {
+        await createIncome(payload);
+      }
+
+      const successMessage = isEditing ? SUCCESS_ALERT_MESSAGES.update.income : SUCCESS_ALERT_MESSAGES.create.income;
+      Alert.alert(SUCCESS_ALERT_TITLE, successMessage, [{ text: "OK", onPress: onSaved }]);
     } catch (error) {
-      Alert.alert("Lưu thất bại", getApiErrorMessage(error, "Không thể tạo khoản thu"));
+      Alert.alert("Lưu thất bại", getApiErrorMessage(error, "Không thể lưu khoản thu"));
     } finally {
       setSubmitting(false);
     }
-  }, [allocations, amount, categoryId, date, jars.length, name, onSaved]);
+  }, [allocations, amount, categoryId, date, initialData, jars.length, name, onSaved]);
 
   return {
     allocationDiff,

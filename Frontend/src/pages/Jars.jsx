@@ -239,13 +239,15 @@ const Jars = () => {
   };
 
   const totalBalance = jars.reduce((sum, j) => sum + (j.currentBalance ?? 0), 0);
+  const totalAbsBalance = jars.reduce((sum, j) => sum + Math.abs(j.currentBalance ?? 0), 0);
   const totalPercentage = jars.reduce((sum, j) => sum + (j.targetPercentage ?? 0), 0);
 
+  // Biểu đồ tròn dùng giá trị tuyệt đối để luôn hiển thị phân bổ
   const pieData = jars
-    .filter((j) => j.currentBalance > 0)
+    .filter((j) => (j.currentBalance ?? 0) !== 0)
     .map((j) => ({
       name: j.name,
-      value: j.currentBalance,
+      value: Math.abs(j.currentBalance),
       color: j.color || "#8B5CF6",
     }));
 
@@ -274,11 +276,11 @@ const Jars = () => {
       (expense.categoryName && expense.categoryName.toLowerCase().includes(searchQuery.toLowerCase()))
     );
 
-    const actualPercent = totalBalance > 0
-      ? ((selectedJar.currentBalance / totalBalance) * 100).toFixed(1)
+    const actualPercent = totalAbsBalance > 0
+      ? ((Math.abs(selectedJar.currentBalance) / totalAbsBalance) * 100).toFixed(1)
       : "0.0";
     const progressWidth = Math.min(
-      Math.abs(selectedJar.currentBalance) / (totalBalance > 0 ? totalBalance : 1) * 100,
+      totalAbsBalance > 0 ? (Math.abs(selectedJar.currentBalance) / totalAbsBalance * 100) : 0,
       100
     );
     const isNegative = selectedJar.currentBalance < 0;
@@ -824,6 +826,7 @@ const Jars = () => {
                     key={jar.id}
                     jar={jar}
                     totalBalance={totalBalance}
+                    totalAbsBalance={totalAbsBalance}
                     onClick={() => setSelectedJarId(jar.id)}
                     onEdit={() => setEditJar(jar)}
                     onDelete={() => setDeleteAlert({ show: true, id: jar.id })}

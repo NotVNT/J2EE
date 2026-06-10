@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import {
   Modal,
-  StyleSheet,
   Text,
   View,
   FlatList,
@@ -9,8 +8,9 @@ import {
   Alert,
   TextInput
 } from "react-native";
-import { COLORS } from "../../constants/colors";
-import { scale, clampScale } from "../../utils/layoutScale";
+import { Ionicons } from "@expo/vector-icons";
+import { useAppColors } from "../../constants/colors";
+import styles from "./SessionsModalStyles";
 
 export default function SessionsModal({
   visible,
@@ -22,6 +22,7 @@ export default function SessionsModal({
   onRenameSession,
   onNewChat
 }) {
+  const colors = useAppColors();
   const [editingSessionId, setEditingSessionId] = useState(null);
   const [renameText, setRenameText] = useState("");
 
@@ -59,28 +60,32 @@ export default function SessionsModal({
     const isEditing = item.id === editingSessionId;
 
     return (
-      <View style={[styles.sessionItem, isActive && styles.sessionItemActive]}>
+      <View style={[
+        styles.sessionItem,
+        { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER },
+        isActive && [styles.sessionItemActive, { borderColor: colors.PRIMARY, backgroundColor: isDarkTheme(colors) ? "rgba(239, 94, 131, 0.08)" : "rgba(239, 94, 131, 0.05)" }]
+      ]}>
         {isEditing ? (
           <View style={styles.renameContainer}>
             <TextInput
-              style={styles.renameInput}
+              style={[styles.renameInput, { backgroundColor: colors.BG, borderColor: colors.CARD_BORDER, color: colors.TEXT }]}
               value={renameText}
               onChangeText={setRenameText}
               autoFocus
               placeholder="Nhập tên phiên..."
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={colors.TEXT_MUTED}
             />
             <Pressable
-              style={styles.confirmBtn}
+              style={[styles.confirmBtn, { backgroundColor: colors.PRIMARY }]}
               onPress={() => handleConfirmRename(item.id)}
             >
-              <Text style={styles.actionBtnText}>✓</Text>
+              <Ionicons name="checkmark" size={14} color="#ffffff" />
             </Pressable>
             <Pressable
-              style={styles.cancelBtn}
+              style={[styles.cancelBtn, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}
               onPress={() => setEditingSessionId(null)}
             >
-              <Text style={styles.actionBtnText}>×</Text>
+              <Ionicons name="close" size={14} color={colors.TEXT} />
             </Pressable>
           </View>
         ) : (
@@ -92,9 +97,9 @@ export default function SessionsModal({
                 onClose();
               }}
             >
-              <Text style={styles.sessionIcon}>💬</Text>
+              <Ionicons name="chatbubble-ellipses-outline" size={16} color={isActive ? colors.PRIMARY : colors.TEXT_MUTED} />
               <Text
-                style={[styles.sessionTitle, isActive && styles.sessionTitleActive]}
+                style={[styles.sessionTitle, { color: colors.TEXT }, isActive && [styles.sessionTitleActive, { color: colors.PRIMARY }]]}
                 numberOfLines={1}
               >
                 {item.title || "Cuộc trò chuyện"}
@@ -106,13 +111,13 @@ export default function SessionsModal({
                 style={styles.actionIconButton}
                 onPress={() => handleStartRename(item)}
               >
-                <Text style={styles.actionIcon}>✏️</Text>
+                <Ionicons name="create-outline" size={16} color={colors.TEXT_MUTED} />
               </Pressable>
               <Pressable
                 style={styles.actionIconButton}
                 onPress={() => handleDeleteConfirm(item)}
               >
-                <Text style={styles.actionIcon}>🗑️</Text>
+                <Ionicons name="trash-outline" size={16} color={colors.EXPENSE} />
               </Pressable>
             </View>
           </>
@@ -135,28 +140,31 @@ export default function SessionsModal({
         importantForAccessibility="yes"
       >
         <Pressable
-          style={StyleSheet.absoluteFill}
+          style={styles.backdrop}
           onPress={onClose}
           accessibilityRole="button"
           accessibilityLabel="Đóng lịch sử"
         />
 
-        <View style={styles.sheet}>
-          <View style={styles.header}>
-            <Text style={styles.title}>Lịch sử trò chuyện</Text>
-            <Pressable style={styles.closeButton} onPress={onClose}>
-              <Text style={styles.closeText}>×</Text>
+        <View style={[styles.sheet, { backgroundColor: colors.BG, borderColor: colors.CARD_BORDER }]}>
+          <View style={[styles.header, { borderBottomColor: colors.CARD_BORDER }]}>
+            <Text style={[styles.title, { color: colors.PRIMARY }]}>Lịch sử trò chuyện</Text>
+            <Pressable style={[styles.closeButton, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]} onPress={onClose}>
+              <Ionicons name="close" size={18} color={colors.TEXT} />
             </Pressable>
           </View>
 
           <Pressable
-            style={styles.newChatButton}
+            style={[styles.newChatButton, { backgroundColor: colors.PRIMARY }]}
             onPress={() => {
               onNewChat();
               onClose();
             }}
           >
-            <Text style={styles.newChatButtonText}>➕ Bắt đầu chat mới</Text>
+            <View style={styles.btnRow}>
+              <Ionicons name="add" size={18} color="#ffffff" />
+              <Text style={styles.newChatButtonText}>Bắt đầu chat mới</Text>
+            </View>
           </Pressable>
 
           <FlatList
@@ -166,8 +174,8 @@ export default function SessionsModal({
             contentContainerStyle={styles.listContent}
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
-                <Text style={styles.emptyIcon}>📭</Text>
-                <Text style={styles.emptyText}>Chưa có lịch sử trò chuyện nào.</Text>
+                <Ionicons name="chatbubbles-outline" size={40} color={colors.TEXT_MUTED} style={{ marginBottom: 8 }} />
+                <Text style={[styles.emptyText, { color: colors.TEXT_MUTED }]}>Chưa có lịch sử trò chuyện nào.</Text>
               </View>
             }
           />
@@ -177,177 +185,6 @@ export default function SessionsModal({
   );
 }
 
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: "rgba(9, 6, 10, 0.65)",
-    justifyContent: "center",
-    padding: scale(16)
-  },
-  sheet: {
-    backgroundColor: COLORS.BG,
-    borderRadius: scale(20),
-    maxHeight: "80%",
-    borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
-    paddingBottom: scale(20)
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: scale(20),
-    paddingTop: scale(20),
-    paddingBottom: scale(14),
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.CARD_BORDER
-  },
-  title: {
-    color: COLORS.PRIMARY,
-    fontSize: clampScale(18, 16, 20),
-    fontWeight: "900"
-  },
-  closeButton: {
-    width: scale(32),
-    aspectRatio: 1,
-    borderRadius: scale(16),
-    backgroundColor: COLORS.CARD,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER
-  },
-  closeText: {
-    color: COLORS.TEXT,
-    fontSize: clampScale(20, 18, 24),
-    fontWeight: "700",
-    marginTop: -2
-  },
-  newChatButton: {
-    backgroundColor: COLORS.PRIMARY,
-    marginHorizontal: scale(20),
-    marginTop: scale(14),
-    paddingVertical: scale(12),
-    borderRadius: scale(12),
-    alignItems: "center",
-    justifyContent: "center",
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    }
-  },
-  newChatButtonText: {
-    color: "#ffffff",
-    fontWeight: "800",
-    fontSize: clampScale(14, 12, 16)
-  },
-  listContent: {
-    paddingHorizontal: scale(20),
-    paddingTop: scale(10),
-    paddingBottom: scale(20)
-  },
-  sessionItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: scale(12),
-    paddingHorizontal: scale(14),
-    borderRadius: scale(12),
-    backgroundColor: COLORS.CARD,
-    borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
-    marginBottom: scale(8)
-  },
-  sessionItemActive: {
-    borderColor: COLORS.PRIMARY,
-    backgroundColor: "rgba(232, 89, 122, 0.05)"
-  },
-  sessionPressable: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: scale(10)
-  },
-  sessionIcon: {
-    fontSize: clampScale(16, 14, 18)
-  },
-  sessionTitle: {
-    color: COLORS.TEXT,
-    fontSize: clampScale(14, 12, 16),
-    fontWeight: "600",
-    flex: 1
-  },
-  sessionTitleActive: {
-    color: COLORS.PRIMARY,
-    fontWeight: "800"
-  },
-  actions: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: scale(8)
-  },
-  actionIconButton: {
-    padding: scale(4)
-  },
-  actionIcon: {
-    fontSize: clampScale(14, 12, 16)
-  },
-  renameContainer: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: scale(8)
-  },
-  renameInput: {
-    flex: 1,
-    backgroundColor: COLORS.BG,
-    borderRadius: scale(8),
-    borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
-    paddingVertical: scale(6),
-    paddingHorizontal: scale(10),
-    color: COLORS.TEXT,
-    fontSize: clampScale(13, 11, 15)
-  },
-  confirmBtn: {
-    width: scale(30),
-    aspectRatio: 1,
-    borderRadius: scale(6),
-    backgroundColor: COLORS.PRIMARY,
-    alignItems: "center",
-    justifyContent: "center"
-  },
-  cancelBtn: {
-    width: scale(30),
-    aspectRatio: 1,
-    borderRadius: scale(6),
-    backgroundColor: COLORS.CARD,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER
-  },
-  actionBtnText: {
-    color: "#ffffff",
-    fontWeight: "bold",
-    fontSize: clampScale(14, 12, 16)
-  },
-  emptyContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: scale(48)
-  },
-  emptyIcon: {
-    fontSize: clampScale(36, 32, 42),
-    marginBottom: scale(8)
-  },
-  emptyText: {
-    color: COLORS.TEXT_MUTED,
-    fontSize: clampScale(13, 11, 15),
-    fontWeight: "600"
-  }
-});
+function isDarkTheme(colors) {
+  return colors.BG === "#0F0D0C";
+}

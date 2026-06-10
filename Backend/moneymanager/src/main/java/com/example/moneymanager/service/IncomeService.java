@@ -283,6 +283,13 @@ public class IncomeService {
     }
 
     @Transactional(readOnly = true)
+    public BigDecimal getIncomeTotalForCurrentUserBetween(LocalDate startDate, LocalDate endDate) {
+        ProfileEntity profile = profileService.getCurrentProfile();
+        BigDecimal total = incomeRepository.findTotalIncomeByProfileIdAndDateBetween(profile.getId(), startDate, endDate);
+        return total != null ? total : BigDecimal.ZERO;
+    }
+
+    @Transactional(readOnly = true)
     public long getTotalIncomeCountForCurrentUser() {
         ProfileEntity profile = profileService.getCurrentProfile();
         return incomeRepository.countByProfileId(profile.getId());
@@ -364,9 +371,15 @@ public class IncomeService {
         
         Map<String, BigDecimal> totals = new java.util.HashMap<>();
         for (Object[] row : results) {
-            Integer month = (Integer) row[0];
-            Integer year = (Integer) row[1];
-            BigDecimal amount = (BigDecimal) row[2];
+            if (row[0] == null || row[1] == null) continue;
+            int month = ((Number) row[0]).intValue();
+            int year = ((Number) row[1]).intValue();
+            BigDecimal amount = BigDecimal.ZERO;
+            if (row[2] instanceof BigDecimal) {
+                amount = (BigDecimal) row[2];
+            } else if (row[2] instanceof Number) {
+                amount = new BigDecimal(row[2].toString());
+            }
             String key = year + "-" + String.format("%02d", month);
             totals.put(key, amount);
         }

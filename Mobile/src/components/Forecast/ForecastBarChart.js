@@ -1,7 +1,7 @@
 import React from "react";
 import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { BarChart } from "react-native-chart-kit";
-import { COLORS, useAppColors } from "../../constants/colors";
+import { useAppColors } from "../../constants/colors";
 
 export default function ForecastBarChart({ barChartData, categories }) {
   const colors = useAppColors();
@@ -42,11 +42,11 @@ export default function ForecastBarChart({ barChartData, categories }) {
         />
         <View style={styles.legendRow}>
           <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: COLORS.PRIMARY }]} />
+            <View style={[styles.legendDot, { backgroundColor: colors.PRIMARY }]} />
             <Text style={[styles.legendText, { color: colors.TEXT_SECONDARY }]}>Dự báo</Text>
           </View>
           <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: COLORS.INFO }]} />
+            <View style={[styles.legendDot, { backgroundColor: colors.INFO }]} />
             <Text style={[styles.legendText, { color: colors.TEXT_SECONDARY }]}>Trung bình lịch sử</Text>
           </View>
         </View>
@@ -62,14 +62,11 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: "800",
-    color: COLORS.TEXT,
     marginBottom: 10,
   },
   chartCard: {
-    backgroundColor: COLORS.CARD,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
     paddingTop: 12,
     paddingBottom: 8,
     alignItems: "center",
@@ -96,7 +93,6 @@ const styles = StyleSheet.create({
   },
   legendText: {
     fontSize: 12,
-    color: COLORS.TEXT_SECONDARY,
     fontWeight: "600",
   },
 });

@@ -4,9 +4,7 @@ import {
   Animated,
   Easing,
   Modal,
-  Platform,
   Pressable,
-  StyleSheet,
   Text,
   View
 } from "react-native";
@@ -17,7 +15,9 @@ import {
   DEFAULT_ALERT_TITLE,
   resolveAlertVariant
 } from "../utils/appAlertConfig";
-import { COLORS } from "../constants/colors";
+import { useAppColors } from "../constants/colors";
+import AppIcon from "../components/ui/AppIcon";
+import styles from "./AppAlertStyles";
 
 const originalAlert = NativeAlert.alert.bind(NativeAlert);
 let presenter = null;
@@ -63,6 +63,7 @@ NativeAlert.alert = showAlert;
 
 export function AppAlertProvider({ children }) {
   const insets = useSafeAreaInsets();
+  const colors = useAppColors();
   const [alertConfig, setAlertConfig] = useState(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.92)).current;
@@ -141,6 +142,8 @@ export function AppAlertProvider({ children }) {
   const actionButtons = useMemo(() => alertConfig?.buttons || [], [alertConfig]);
   const variant = alertConfig?.variant || "info";
   const visual = APP_ALERT_VARIANTS[variant] || APP_ALERT_VARIANTS.info;
+  const isDark = colors.BG === "#0F0D0C";
+  const shouldStackActions = actionButtons.length > 2;
 
   return (
     <>
@@ -163,45 +166,51 @@ export function AppAlertProvider({ children }) {
             }
           ]}
         >
-          <Pressable style={StyleSheet.absoluteFill} onPress={closeFromBackdrop} />
+          <Pressable style={styles.backdrop} onPress={closeFromBackdrop} />
 
           {alertConfig ? (
             <Animated.View
               style={[
                 styles.card,
                 {
+                  backgroundColor: colors.CARD,
+                  borderColor: colors.CARD_BORDER,
                   shadowColor: visual.accent,
                   transform: [{ translateY: slideAnim }, { scale: scaleAnim }]
                 }
               ]}
             >
               <View style={[styles.topBeam, { backgroundColor: visual.accent }]} />
-              <View style={[styles.glowPanel, { backgroundColor: visual.glow }]} />
 
-              <View style={styles.header}>
-                <View style={[styles.iconShell, { borderColor: visual.accent }]}>
-                  <View style={[styles.iconGlow, { backgroundColor: visual.soft }]}>
-                    <View style={[styles.iconCircle, { backgroundColor: visual.accent }]}>
-                      <Text style={styles.iconText}>{visual.icon}</Text>
-                    </View>
-                  </View>
+              <View style={[styles.header, { backgroundColor: isDark ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.72)" }]}>
+                <View style={[styles.iconContainer, { backgroundColor: visual.soft, borderColor: visual.accent }]}>
+                  <AppIcon name={visual.icon} size={24} color={visual.accent} />
                 </View>
 
                 <View style={styles.headerTextWrap}>
-                  <Text style={[styles.variantLabel, { color: visual.accent }]} numberOfLines={1}>
-                    {visual.label}
-                  </Text>
-                  <Text style={[styles.title, { color: visual.title }]} numberOfLines={2}>
+                  <View style={[styles.badgeContainer, { backgroundColor: visual.soft, borderColor: visual.accent }]}>
+                    <Text style={[styles.badgeText, { color: visual.accent }]} numberOfLines={1}>
+                      {visual.label}
+                    </Text>
+                  </View>
+
+                  <Text style={[styles.title, { color: colors.TEXT }]} numberOfLines={2}>
                     {alertConfig.title}
                   </Text>
                 </View>
               </View>
 
               {alertConfig.message ? (
-                <Text style={styles.message}>{alertConfig.message}</Text>
+                <Text style={[styles.message, { color: colors.TEXT_SECONDARY }]}>
+                  {alertConfig.message}
+                </Text>
               ) : null}
 
-              <View style={[styles.actions, actionButtons.length > 1 && styles.actionsMulti]}>
+              <View style={[
+                styles.actions,
+                actionButtons.length > 1 && !shouldStackActions && styles.actionsMulti,
+                shouldStackActions && styles.actionsStacked
+              ]}>
                 {actionButtons.map((button, index) => {
                   const isCancel = button.style === "cancel";
                   const isDestructive = button.style === "destructive";
@@ -214,8 +223,13 @@ export function AppAlertProvider({ children }) {
                       key={`${button.text}-${index}`}
                       style={({ pressed }) => [
                         styles.actionButton,
-                        actionButtons.length > 1 && styles.actionButtonMulti,
-                        isCancel && styles.cancelButton,
+                        {
+                          backgroundColor: isDark ? "rgba(255,255,255,0.06)" : colors.BG,
+                          borderColor: colors.CARD_BORDER,
+                        },
+                        actionButtons.length > 1 && !shouldStackActions && styles.actionButtonMulti,
+                        shouldStackActions && styles.actionButtonStacked,
+                        isCancel && { backgroundColor: isDark ? "rgba(255,255,255,0.04)" : colors.CARD, borderColor: colors.CARD_BORDER },
                         (isPrimary || isDestructive) && {
                           backgroundColor: buttonAccent,
                           borderColor: buttonAccentDark
@@ -227,7 +241,8 @@ export function AppAlertProvider({ children }) {
                       <Text
                         style={[
                           styles.actionText,
-                          isCancel && styles.cancelText,
+                          { color: colors.TEXT },
+                          isCancel && { color: colors.TEXT_SECONDARY },
                           (isPrimary || isDestructive) && styles.primaryText
                         ]}
                         numberOfLines={1}
@@ -249,145 +264,3 @@ export function AppAlertProvider({ children }) {
 export const AppAlert = {
   alert: showAlert
 };
-
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: "rgba(9, 6, 10, 0.72)",
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 20
-  },
-  card: {
-    width: "100%",
-    maxWidth: 390,
-    borderRadius: 26,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.34)",
-    backgroundColor: COLORS.CARD,
-    overflow: "hidden",
-    shadowOffset: {
-      width: 0,
-      height: 22,
-    },
-    shadowOpacity: Platform.OS === "ios" ? 0.26 : 0.36,
-    shadowRadius: 30,
-    elevation: 24
-  },
-  topBeam: {
-    height: 7
-  },
-  glowPanel: {
-    position: "absolute",
-    top: 7,
-    left: 0,
-    right: 0,
-    height: 86
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingTop: 22,
-    paddingBottom: 12
-  },
-  iconShell: {
-    width: 72,
-    height: 72,
-    borderRadius: 24,
-    borderWidth: 1,
-    backgroundColor: "rgba(255, 255, 255, 0.78)",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 14
-  },
-  iconGlow: {
-    width: 58,
-    height: 58,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center"
-  },
-  iconCircle: {
-    width: 42,
-    height: 42,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowOffset: {
-      width: 0,
-      height: 10,
-    },
-    shadowOpacity: 0.18,
-    shadowRadius: 14,
-    elevation: 8
-  },
-  iconText: {
-    color: COLORS.WHITE,
-    fontSize: 24,
-    fontWeight: "900"
-  },
-  headerTextWrap: {
-    flex: 1
-  },
-  variantLabel: {
-    fontSize: 12,
-    fontWeight: "900",
-    textTransform: "uppercase",
-    marginBottom: 4
-  },
-  title: {
-    fontSize: 21,
-    fontWeight: "900",
-    lineHeight: 26
-  },
-  message: {
-    marginHorizontal: 20,
-    marginTop: 2,
-    color: COLORS.TEXT_SECONDARY,
-    fontSize: 15,
-    lineHeight: 22
-  },
-  actions: {
-    width: "100%",
-    paddingHorizontal: 20,
-    paddingTop: 22,
-    paddingBottom: 20
-  },
-  actionsMulti: {
-    flexDirection: "row",
-    gap: 10
-  },
-  actionButton: {
-    minHeight: 48,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
-    backgroundColor: COLORS.BG,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 14
-  },
-  actionButtonMulti: {
-    flex: 1
-  },
-  cancelButton: {
-    backgroundColor: COLORS.CARD,
-    borderColor: COLORS.CARD_BORDER
-  },
-  actionText: {
-    color: COLORS.TEXT,
-    fontSize: 14,
-    fontWeight: "900"
-  },
-  cancelText: {
-    color: COLORS.TEXT_SECONDARY
-  },
-  primaryText: {
-    color: COLORS.WHITE
-  },
-  buttonPressed: {
-    opacity: 0.86,
-    transform: [{ scale: 0.98 }]
-  }
-});

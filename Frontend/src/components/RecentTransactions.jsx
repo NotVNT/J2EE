@@ -1,4 +1,5 @@
 import moment from "moment";
+import * as Lucide from "lucide-react";
 
 const RecentTransactions = ({ transactions, onMore }) => {
   return (
@@ -31,17 +32,26 @@ const RecentTransactions = ({ transactions, onMore }) => {
               const displayCategory = rawCategory
                 ? (rawCategory.toLowerCase() === "expense" ? "Chi tiêu" : (rawCategory.toLowerCase() === "income" ? "Thu nhập" : rawCategory))
                 : "";
+              
+              // Resolve icon
+              const renderIcon = () => {
+                if (item.icon && (item.icon.startsWith("data:image/") || item.icon.startsWith("http"))) {
+                  return <img src={item.icon} alt="" className="w-6 h-6 object-contain rounded" />;
+                }
+                const LucideIcon = Lucide[item.icon];
+                if (LucideIcon) {
+                  return <LucideIcon className="w-4 h-4 text-slate-500 dark:text-slate-400" />;
+                }
+                return <span>{item.icon || (isExpense ? "💳" : "💰")}</span>;
+              };
+
               return (
                 <tr key={item.id || index} className="hover:bg-slate-50 dark:hover:bg-white/3 transition-colors">
                   <td className="px-4 py-4">
                     <div className="flex items-center gap-3">
                       <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-base shrink-0
                         ${isExpense ? "bg-red-100 dark:bg-red-500/15" : "bg-emerald-100 dark:bg-emerald-500/15"}`}>
-                        {item.icon && (item.icon.startsWith("data:image/") || item.icon.startsWith("http")) ? (
-                           <img src={item.icon} alt="" className="w-6 h-6 object-contain rounded" />
-                        ) : (
-                          <span>{item.icon || (isExpense ? "💳" : "💰")}</span>
-                        )}
+                        {renderIcon()}
                       </div>
                       <span className="font-semibold text-sm text-slate-800 dark:text-slate-100 truncate max-w-35">
                         {item.name || item.title || "Giao dịch"}

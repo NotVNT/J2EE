@@ -9,6 +9,7 @@ import RecentTransactionsSection from "../../components/Dashboard/RecentTransact
 import GoalsPreview from "../../components/Dashboard/GoalsPreview";
 import HomeBanner from "../../components/Dashboard/HomeBanner";
 import HomeTopHeader from "../../components/Dashboard/HomeTopHeader";
+import DailySummaryCards from "../../components/Dashboard/DailySummaryCards";
 import NotificationModal from "../../components/Dashboard/NotificationModal";
 import { useVisibleItems } from "../../components/common/ShowMoreButton";
 import { COLORS, useAppColors } from "../../constants/colors";
@@ -25,6 +26,7 @@ export default function DashboardScreen() {
   const ai = useAiInsight();
   const [notificationVisible, setNotificationVisible] = useState(false);
   const [aiLockVisible, setAiLockVisible] = useState(false);
+  const [isBalanceVisible, setIsBalanceVisible] = useState(true);
 
   const {
     visibleItems: recentTransactions,
@@ -57,6 +59,9 @@ export default function DashboardScreen() {
     navigation.navigate("Goal");
   }, [navigation]);
 
+  const totalIncome = Number(dashboard.dashboard?.totalIncome || 0);
+  const totalExpense = Number(dashboard.dashboard?.totalExpense || 0);
+
   return (
     <>
       <ScrollView
@@ -69,8 +74,16 @@ export default function DashboardScreen() {
           onMenuPress={() => navigation.navigate("SettingTab", { screen: "Profile" })}
           onBellPress={() => setNotificationVisible(true)}
           unreadCount={dashboard.unreadCount}
+          balance={dashboard.dashboard?.totalBalance ?? 0}
+          isBalanceVisible={isBalanceVisible}
+          onToggleBalance={() => setIsBalanceVisible(prev => !prev)}
         />
-        <HomeBanner />
+        <HomeBanner
+          balanceData={dashboard.dashboard}
+          isBalanceVisible={isBalanceVisible}
+          monthlySeries={dashboard.monthlySeries}
+        />
+        <DailySummaryCards totalIncome={totalIncome} totalExpense={totalExpense} />
 
         <FinanceOverviewSection
           dashboard={dashboard.dashboard}
@@ -107,6 +120,7 @@ export default function DashboardScreen() {
         availableMonths={ai.availableMonths}
         goToPrevMonth={ai.goToPrevMonth}
         goToNextMonth={ai.goToNextMonth}
+        goToMonth={ai.goToMonth}
         canGoPrev={ai.canGoPrev}
         canGoNext={ai.canGoNext}
         result={ai.result}

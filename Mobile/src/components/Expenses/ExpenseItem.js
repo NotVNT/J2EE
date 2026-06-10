@@ -1,8 +1,10 @@
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { COLORS, useAppColors } from "../../constants/colors";
-import { formatDate, formatMoney } from "../../utils/format";
-import { CategoryVectorIcon, getIconColor } from "../../utils/categoryIcons";
+import { useAppColors } from "../../constants/colors";
+import { formatDate } from "../../utils/format";
+import AppIcon from "../ui/AppIcon";
+import TransactionIcon from "../ui/TransactionIcon";
+import AmountText from "../ui/AmountText";
 
 function escapeRegex(str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -29,25 +31,31 @@ function HighlightText({ colors, text, keyword }) {
   );
 }
 
-export default function ExpenseItem({ item, onDelete, searchKeyword }) {
+export default function ExpenseItem({ item, onDelete, onEdit, searchKeyword }) {
   const colors = useAppColors();
   const amount = Number(item?.amount || 0);
   const note = item?.note || "";
-  const iconColor = getIconColor(item?.icon);
 
   return (
-    <View style={[styles.itemCard, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}>
+    <View
+      style={[
+        styles.itemCard,
+        {
+          backgroundColor: colors.CARD,
+          borderColor: colors.CARD_BORDER,
+          shadowColor: colors.SHADOW_COLOR || "#000",
+        },
+      ]}
+    >
       <View style={styles.itemMain}>
-        <View style={[styles.iconBubble, { backgroundColor: `${iconColor}18` }]}>
-          <CategoryVectorIcon iconValue={item?.icon} size={18} color={iconColor} />
-        </View>
+        <TransactionIcon iconValue={item?.icon} containerSize={36} size={18} style={{ marginRight: 10 }} />
 
         <View style={styles.itemContent}>
           <HighlightText colors={colors} text={item?.name || "Chi tiêu"} keyword={searchKeyword} />
           <Text style={[styles.itemMeta, { color: colors.TEXT_SECONDARY }]}>{formatDate(item?.date)} • {item?.categoryName || "Khác"}</Text>
           {note ? (
             <View style={styles.noteRow}>
-              <Text style={styles.noteIcon}>📝</Text>
+              <AppIcon name="document-text-outline" size={12} color={colors.TEXT_SECONDARY} style={{ marginTop: 2 }} />
               <Text style={[styles.noteText, { color: colors.TEXT_SECONDARY }]} numberOfLines={2}>
                 {note}
               </Text>
@@ -57,15 +65,25 @@ export default function ExpenseItem({ item, onDelete, searchKeyword }) {
       </View>
 
       <View style={styles.itemRight}>
-        <Text style={[styles.itemAmount, { color: colors.EXPENSE }]}>- {formatMoney(amount)}</Text>
-        <Pressable
-          onPress={() => onDelete(item?.id)}
-          style={styles.deleteButton}
-          accessibilityRole="button"
-          accessibilityLabel="Xóa chi tiêu"
-        >
-          <Text style={[styles.deleteIcon, { color: colors.EXPENSE }]}>🗑️</Text>
-        </Pressable>
+        <AmountText value={amount} type="expense" showSign={true} style={styles.itemAmount} />
+        <View style={styles.actionRow}>
+          <Pressable
+            onPress={() => onEdit?.(item)}
+            style={styles.iconButton}
+            accessibilityRole="button"
+            accessibilityLabel="Chỉnh sửa chi tiêu"
+          >
+            <AppIcon name="create-outline" size={15} color={colors.PRIMARY || "#7C4DFF"} />
+          </Pressable>
+          <Pressable
+            onPress={() => onDelete(item?.id)}
+            style={styles.iconButton}
+            accessibilityRole="button"
+            accessibilityLabel="Xóa chi tiêu"
+          >
+            <AppIcon name="trash-outline" size={15} color={colors.EXPENSE_COLOR || "#EF4444"} />
+          </Pressable>
+        </View>
       </View>
     </View>
   );
@@ -73,81 +91,65 @@ export default function ExpenseItem({ item, onDelete, searchKeyword }) {
 
 const styles = StyleSheet.create({
   itemCard: {
-    backgroundColor: COLORS.CARD,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
     padding: 12,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 10
+    marginBottom: 10,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 1.5,
   },
   itemMain: {
     flexDirection: "row",
     alignItems: "center",
     flex: 1,
-    paddingRight: 10
-  },
-  iconBubble: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: COLORS.ROSE_MIST,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 10
+    paddingRight: 10,
   },
   itemContent: {
-    flex: 1
+    flex: 1,
   },
   itemName: {
     fontWeight: "700",
-    color: COLORS.TEXT,
-    fontSize: 15
+    fontSize: 15,
   },
   itemMeta: {
     marginTop: 4,
-    color: COLORS.TEXT_SECONDARY,
-    fontSize: 12
+    fontSize: 12,
   },
   itemRight: {
-    alignItems: "flex-end"
+    alignItems: "flex-end",
   },
   itemAmount: {
-    color: COLORS.EXPENSE,
-    fontWeight: "800"
+    fontWeight: "800",
   },
-  deleteButton: {
+  actionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
     marginTop: 8,
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 4
   },
-  deleteIcon: {
-    color: COLORS.EXPENSE,
-    fontSize: 14,
-    lineHeight: 16
+  iconButton: {
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
   },
   noteRow: {
     flexDirection: "row",
     alignItems: "flex-start",
     marginTop: 4,
-    gap: 4
-  },
-  noteIcon: {
-    fontSize: 11,
-    marginTop: 1
+    gap: 4,
   },
   noteText: {
     fontSize: 12,
-    color: COLORS.TEXT_SECONDARY,
     flex: 1,
-    lineHeight: 16
+    lineHeight: 16,
   },
   highlight: {
     backgroundColor: "#fff3b0",
     fontWeight: "700",
-    color: COLORS.TEXT
-  }
+  },
 });

@@ -4,14 +4,18 @@ import { useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import apiClient from "../../services/apiClient";
 import { API_ENDPOINTS } from "../../constants/api";
-import { COLORS } from "../../constants/colors";
+import { useAppColors } from "../../constants/colors";
 import { formatCurrencyInput, getApiErrorMessage, parseCurrencyInput } from "../../utils/format";
 import { formatJarMoney } from "../../utils/jar";
 import { getSafeAreaBottom, getSafeAreaTop } from "../../utils/safeArea";
+import AppIcon from "../ui/AppIcon";
+import { scale } from "../../utils/layoutScale";
+import ScreenBackHeader from "../common/ScreenBackHeader";
 
 export default function JarTransferView() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
+  const colors = useAppColors();
 
   const [jars, setJars] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -34,7 +38,7 @@ export default function JarTransferView() {
       const res = await apiClient.get(API_ENDPOINTS.GET_JARS);
       const data = Array.isArray(res.data) ? res.data : [];
       setJars(data);
-      
+
       // Auto select first and second jar if available
       if (data.length >= 2) {
         setFromJar(data[0]);
@@ -118,85 +122,89 @@ export default function JarTransferView() {
   };
 
   const renderJarSelectItem = ({ item, onSelect }) => (
-    <Pressable style={styles.pickerItem} onPress={() => onSelect(item)}>
-      <View style={[styles.itemIconBox, { backgroundColor: (item.color || COLORS.PRIMARY) + "18" }]}>
+    <Pressable style={[styles.pickerItem, { borderBottomColor: colors.CARD_BORDER }]} onPress={() => onSelect(item)}>
+      <View style={[styles.itemIconBox, { backgroundColor: (item.color || colors.PRIMARY) + "18" }]}>
         <Text style={styles.itemIcon}>{item.icon || "🏺"}</Text>
       </View>
       <View style={styles.itemInfo}>
-        <Text style={styles.itemName}>{item.name}</Text>
-        <Text style={styles.itemBalance}>Số dư: {formatJarMoney(item.currentBalance)}</Text>
+        <Text style={[styles.itemName, { color: colors.TEXT }]}>{item.name}</Text>
+        <Text style={[styles.itemBalance, { color: colors.TEXT_SECONDARY }]}>Số dư: {formatJarMoney(item.currentBalance)}</Text>
       </View>
-      <View style={[styles.colorIndicator, { backgroundColor: item.color || COLORS.PRIMARY }]} />
+      <View style={[styles.colorIndicator, { backgroundColor: item.color || colors.PRIMARY }]} />
     </Pressable>
   );
 
   return (
-    <View style={[styles.container, { paddingTop: getSafeAreaTop(insets) }]}>
-      <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: getSafeAreaBottom(insets) }]}>
-        <Text style={styles.descText}>
+    <View style={[styles.container, { backgroundColor: colors.BG, paddingTop: getSafeAreaTop(insets) }]}>
+      <ScreenBackHeader title="Chuyển tiền ví phụ" style={styles.screenHeader} />
+      <ScrollView
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: getSafeAreaBottom(insets) + scale(100) }]}
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={[styles.descText, { color: colors.TEXT_SECONDARY }]}>
           Chuyển số dư linh hoạt giữa các hũ chi tiêu để cân đối hạn mức và nguồn vốn chi tiêu của bạn.
         </Text>
 
         {/* Source Jar Selector */}
-        <Text style={styles.label}>Từ hũ (Nguồn chuyển)</Text>
-        <Pressable style={styles.selectorCard} onPress={() => setShowFromPicker(true)}>
+        <Text style={[styles.label, { color: colors.TEXT }]}>Từ hũ (Nguồn chuyển)</Text>
+        <Pressable style={[styles.selectorCard, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]} onPress={() => setShowFromPicker(true)}>
           {fromJar ? (
             <View style={styles.selectedRow}>
-              <View style={[styles.iconContainer, { backgroundColor: (fromJar.color || COLORS.PRIMARY) + "18" }]}>
+              <View style={[styles.iconContainer, { backgroundColor: (fromJar.color || colors.PRIMARY) + "18" }]}>
                 <Text style={styles.iconText}>{fromJar.icon || "🏺"}</Text>
               </View>
               <View style={styles.selectedInfo}>
-                <Text style={styles.selectedName}>{fromJar.name}</Text>
-                <Text style={styles.selectedBalance}>Số dư khả dụng: {formatJarMoney(fromJar.currentBalance)}</Text>
+                <Text style={[styles.selectedName, { color: colors.TEXT }]}>{fromJar.name}</Text>
+                <Text style={[styles.selectedBalance, { color: colors.TEXT_SECONDARY }]}>Số dư khả dụng: {formatJarMoney(fromJar.currentBalance)}</Text>
               </View>
-              <Text style={styles.arrowIcon}>▾</Text>
+              <AppIcon name="chevron-down" size={16} color={colors.TEXT_MUTED} />
             </View>
           ) : (
-            <Text style={styles.placeholderText}>Chọn hũ nguồn...</Text>
+            <Text style={[styles.placeholderText, { color: colors.TEXT_MUTED }]}>Chọn hũ nguồn...</Text>
           )}
         </Pressable>
 
         {/* Transfer Icon indicator */}
         <View style={styles.arrowWrapper}>
-          <View style={styles.arrowLine} />
-          <View style={styles.arrowCircle}>
-            <Text style={styles.arrowLabel}>⇅</Text>
+          <View style={[styles.arrowLine, { backgroundColor: colors.CARD_BORDER }]} />
+          <View style={[styles.arrowCircle, { backgroundColor: colors.ROSE_MIST || "rgba(239,94,131,0.1)", borderColor: colors.CARD_BORDER }]}>
+            <AppIcon name="swap-vertical" size={16} color={colors.PRIMARY} />
           </View>
-          <View style={styles.arrowLine} />
+          <View style={[styles.arrowLine, { backgroundColor: colors.CARD_BORDER }]} />
         </View>
 
         {/* Destination Jar Selector */}
-        <Text style={styles.label}>Đến hũ (Nhận chuyển)</Text>
-        <Pressable style={styles.selectorCard} onPress={() => setShowToPicker(true)}>
+        <Text style={[styles.label, { color: colors.TEXT }]}>Đến hũ (Nhận chuyển)</Text>
+        <Pressable style={[styles.selectorCard, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]} onPress={() => setShowToPicker(true)}>
           {toJar ? (
             <View style={styles.selectedRow}>
-              <View style={[styles.iconContainer, { backgroundColor: (toJar.color || COLORS.PRIMARY) + "18" }]}>
+              <View style={[styles.iconContainer, { backgroundColor: (toJar.color || colors.PRIMARY) + "18" }]}>
                 <Text style={styles.iconText}>{toJar.icon || "🏺"}</Text>
               </View>
               <View style={styles.selectedInfo}>
-                <Text style={styles.selectedName}>{toJar.name}</Text>
-                <Text style={styles.selectedBalance}>Số dư khả dụng: {formatJarMoney(toJar.currentBalance)}</Text>
+                <Text style={[styles.selectedName, { color: colors.TEXT }]}>{toJar.name}</Text>
+                <Text style={[styles.selectedBalance, { color: colors.TEXT_SECONDARY }]}>Số dư khả dụng: {formatJarMoney(toJar.currentBalance)}</Text>
               </View>
-              <Text style={styles.arrowIcon}>▾</Text>
+              <AppIcon name="chevron-down" size={16} color={colors.TEXT_MUTED} />
             </View>
           ) : (
-            <Text style={styles.placeholderText}>Chọn hũ nhận...</Text>
+            <Text style={[styles.placeholderText, { color: colors.TEXT_MUTED }]}>Chọn hũ nhận...</Text>
           )}
         </Pressable>
 
         {/* Amount Input */}
-        <Text style={[styles.label, { marginTop: 24 }]}>Số tiền chuyển (VND)</Text>
+        <Text style={[styles.label, { color: colors.TEXT, marginTop: 24 }]}>Số tiền chuyển (VND)</Text>
         <TextInput
-          style={styles.amountInput}
+          style={[styles.amountInput, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER, color: colors.PRIMARY }]}
           value={amount}
           onChangeText={(val) => setAmount(formatCurrencyInput(val))}
           keyboardType="numeric"
           placeholder="0"
-          placeholderTextColor={COLORS.TEXT_MUTED}
+          placeholderTextColor={colors.TEXT_MUTED}
         />
 
         <Pressable
-          style={[styles.transferButton, (submitting || loading) && styles.disabledButton]}
+          style={[styles.transferButton, { backgroundColor: colors.PRIMARY, shadowColor: colors.PRIMARY }, (submitting || loading) && styles.disabledButton]}
           onPress={onTransfer}
           disabled={submitting || loading}
         >
@@ -209,11 +217,11 @@ export default function JarTransferView() {
       {/* From Jar Picker Modal */}
       <Modal visible={showFromPicker} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Chọn hũ nguồn</Text>
+          <View style={[styles.modalContent, { backgroundColor: colors.CARD }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: colors.CARD_BORDER }]}>
+              <Text style={[styles.modalTitle, { color: colors.TEXT }]}>Chọn hũ nguồn</Text>
               <Pressable onPress={() => setShowFromPicker(false)}>
-                <Text style={styles.closeBtn}>Đóng</Text>
+                <Text style={[styles.closeBtn, { color: colors.PRIMARY }]}>Đóng</Text>
               </Pressable>
             </View>
             <FlatList
@@ -221,7 +229,7 @@ export default function JarTransferView() {
               keyExtractor={(item) => String(item.id)}
               renderItem={(props) => renderJarSelectItem({ ...props, onSelect: handleSelectFrom })}
               contentContainerStyle={styles.modalList}
-              ListEmptyComponent={<Text style={styles.emptyPickerText}>Không có hũ nào khả dụng</Text>}
+              ListEmptyComponent={<Text style={[styles.emptyPickerText, { color: colors.TEXT_MUTED }]}>Không có hũ nào khả dụng</Text>}
             />
           </View>
         </View>
@@ -230,11 +238,11 @@ export default function JarTransferView() {
       {/* To Jar Picker Modal */}
       <Modal visible={showToPicker} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Chọn hũ nhận</Text>
+          <View style={[styles.modalContent, { backgroundColor: colors.CARD }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: colors.CARD_BORDER }]}>
+              <Text style={[styles.modalTitle, { color: colors.TEXT }]}>Chọn hũ nhận</Text>
               <Pressable onPress={() => setShowToPicker(false)}>
-                <Text style={styles.closeBtn}>Đóng</Text>
+                <Text style={[styles.closeBtn, { color: colors.PRIMARY }]}>Đóng</Text>
               </Pressable>
             </View>
             <FlatList
@@ -242,7 +250,7 @@ export default function JarTransferView() {
               keyExtractor={(item) => String(item.id)}
               renderItem={(props) => renderJarSelectItem({ ...props, onSelect: handleSelectTo })}
               contentContainerStyle={styles.modalList}
-              ListEmptyComponent={<Text style={styles.emptyPickerText}>Không có hũ nào khả dụng</Text>}
+              ListEmptyComponent={<Text style={[styles.emptyPickerText, { color: colors.TEXT_MUTED }]}>Không có hũ nào khả dụng</Text>}
             />
           </View>
         </View>
@@ -254,29 +262,27 @@ export default function JarTransferView() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.BG,
+  },
+  screenHeader: {
+    marginHorizontal: scale(16),
+    marginBottom: 0,
   },
   scrollContent: {
-    padding: 16,
-    paddingBottom: 40,
+    padding: scale(16),
   },
   descText: {
     fontSize: 13,
-    color: COLORS.TEXT_SECONDARY,
     lineHeight: 18,
     marginBottom: 20,
   },
   label: {
-    color: COLORS.TEXT,
     fontSize: 14,
     fontWeight: "700",
     marginBottom: 6,
   },
   selectorCard: {
-    backgroundColor: COLORS.WHITE,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
     padding: 14,
   },
   selectedRow: {
@@ -300,20 +306,13 @@ const styles = StyleSheet.create({
   selectedName: {
     fontSize: 15,
     fontWeight: "800",
-    color: COLORS.TEXT,
   },
   selectedBalance: {
     fontSize: 12,
-    color: COLORS.TEXT_SECONDARY,
     marginTop: 2,
-  },
-  arrowIcon: {
-    fontSize: 18,
-    color: COLORS.TEXT_MUTED,
   },
   placeholderText: {
     fontSize: 14,
-    color: COLORS.TEXT_MUTED,
   },
   arrowWrapper: {
     flexDirection: "row",
@@ -324,42 +323,29 @@ const styles = StyleSheet.create({
   arrowLine: {
     flex: 1,
     height: 1,
-    backgroundColor: COLORS.CARD_BORDER,
   },
   arrowCircle: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: COLORS.ROSE_MIST,
     alignItems: "center",
     justifyContent: "center",
     marginHorizontal: 12,
     borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
-  },
-  arrowLabel: {
-    fontSize: 16,
-    color: COLORS.PRIMARY,
-    fontWeight: "800",
   },
   amountInput: {
-    backgroundColor: COLORS.WHITE,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 22,
     fontWeight: "800",
-    color: COLORS.PRIMARY,
   },
   transferButton: {
-    backgroundColor: COLORS.PRIMARY,
     borderRadius: 14,
     paddingVertical: 14,
     alignItems: "center",
     marginTop: 32,
-    shadowColor: COLORS.PRIMARY,
     shadowOpacity: 0.2,
     shadowRadius: 8,
     shadowOffset: {
@@ -372,17 +358,16 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   transferButtonText: {
-    color: COLORS.WHITE,
+    color: "#FFFFFF",
     fontWeight: "800",
     fontSize: 15,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: COLORS.OVERLAY,
+    backgroundColor: "rgba(0,0,0,0.45)",
     justifyContent: "flex-end",
   },
   modalContent: {
-    backgroundColor: COLORS.WHITE,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     maxHeight: "70%",
@@ -393,19 +378,16 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.CARD_BORDER,
     paddingBottom: 12,
     marginBottom: 8,
   },
   modalTitle: {
     fontSize: 16,
     fontWeight: "800",
-    color: COLORS.TEXT,
   },
   closeBtn: {
     fontSize: 14,
     fontWeight: "700",
-    color: COLORS.PRIMARY,
   },
   modalList: {
     paddingBottom: 24,
@@ -415,7 +397,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.CARD_BORDER,
   },
   itemIconBox: {
     width: 36,
@@ -434,11 +415,9 @@ const styles = StyleSheet.create({
   itemName: {
     fontSize: 14,
     fontWeight: "700",
-    color: COLORS.TEXT,
   },
   itemBalance: {
     fontSize: 11,
-    color: COLORS.TEXT_SECONDARY,
     marginTop: 2,
   },
   colorIndicator: {
@@ -449,7 +428,6 @@ const styles = StyleSheet.create({
   },
   emptyPickerText: {
     fontSize: 14,
-    color: COLORS.TEXT_MUTED,
     textAlign: "center",
     marginVertical: 24,
   },

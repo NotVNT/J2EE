@@ -21,6 +21,7 @@ import {
 } from "../../utils/authPassword";
 import PasswordInput from "../../components/auth/PasswordInput";
 import PasswordRequirement from "../../components/auth/PasswordRequirement";
+import { scale, clampScale } from "../../utils/layoutScale";
 
 export default function CreatePasswordScreen() {
   const navigation = useNavigation();
@@ -92,6 +93,9 @@ export default function CreatePasswordScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
+          <Text style={styles.title}>Thiết lập mật khẩu</Text>
+          <Text style={styles.subtitle}>Tạo mật khẩu mạnh để bảo vệ tài khoản của bạn.</Text>
+
           <PasswordInput
             value={password}
             onChangeText={setPassword}
@@ -127,42 +131,60 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: -120,
     left: -100,
-    width: 300,
-    height: 300,
-    borderRadius: 150,
+    width: scale(300),
+    height: scale(300),
+    borderRadius: scale(150),
     backgroundColor: COLORS.PRIMARY_GLOW,
   },
   bgGlowBottom: {
     position: "absolute",
     right: -140,
     bottom: -120,
-    width: 320,
-    height: 320,
-    borderRadius: 160,
+    width: scale(320),
+    height: scale(320),
+    borderRadius: scale(160),
     backgroundColor: COLORS.PRIMARY_GLOW,
   },
   scrollContent: {
     flexGrow: 1,
     justifyContent: "center",
-    paddingHorizontal: 28,
-    paddingBottom: 20,
+    paddingHorizontal: scale(28),
+    paddingBottom: scale(20),
+  },
+  title: {
+    fontSize: clampScale(26, 22, 30),
+    fontWeight: "800",
+    color: COLORS.DARK_TEXT,
+    marginBottom: scale(8),
+    textAlign: "center",
+  },
+  subtitle: {
+    fontSize: 14,
+    color: COLORS.DARK_TEXT_SECONDARY,
+    textAlign: "center",
+    marginBottom: scale(28),
   },
   nextButton: {
     backgroundColor: COLORS.PRIMARY,
-    borderRadius: 24,
-    height: 50,
+    borderRadius: scale(12),
+    height: scale(50),
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 24,
-    marginTop: 4,
+    marginBottom: scale(24),
+    marginTop: scale(4),
+    shadowColor: COLORS.PRIMARY,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 4,
   },
   nextButtonDisabled: {
     backgroundColor: COLORS.DARK_BORDER,
     opacity: 0.5,
   },
   nextButtonText: {
-    color: COLORS.DARK_TEXT,
-    fontSize: 16,
-    fontWeight: "700",
+    color: COLORS.WHITE || "#FFFFFF",
+    fontSize: clampScale(16, 14, 18),
+    fontWeight: "800",
   },
 });
