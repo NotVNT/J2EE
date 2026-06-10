@@ -1,8 +1,7 @@
 import React, { useContext, useState } from "react";
-import { Alert, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
+import { Alert, Image, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
 import { AuthContext } from "../../contexts/AuthContext";
 import { useTheme, THEME_MODES } from "../../contexts/ThemeContext";
 import MoreSettings, { LogoutButton } from "../../components/More/MoreSettings";
@@ -10,6 +9,7 @@ import ProfileHero from "../../components/More/ProfileHero";
 import { useAppColors } from "../../constants/colors";
 import useEmailPreferences from "../../hooks/useEmailPreferences";
 import { getSafeAreaContentStyle } from "../../utils/safeArea";
+import darkModeIcon from "../../assets/accessories/dark-mode.png";
 
 export default function MoreScreen() {
   const navigation = useNavigation();
@@ -50,8 +50,8 @@ export default function MoreScreen() {
       <View style={[styles.themeCard, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}>
         <View style={styles.themeRow}>
           <View style={styles.themeLeft}>
-            <View style={[styles.iconWrap, { backgroundColor: isDark ? "rgba(255, 255, 255, 0.05)" : "rgba(168, 85, 247, 0.05)" }]}>
-              <Ionicons name={isDark ? "moon-outline" : "sunny-outline"} size={18} color={colors.ACTION_VOICE || '#A855F7'} />
+            <View style={styles.iconWrap}>
+              <Image source={darkModeIcon} style={styles.themeIconImage} resizeMode="contain" />
             </View>
             <View>
               <Text style={[styles.themeTitle, { color: colors.TEXT }]}>Giao diện tối</Text>
@@ -109,11 +109,14 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   iconWrap: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
+    width: 34,
+    height: 34,
     alignItems: "center",
     justifyContent: "center",
+  },
+  themeIconImage: {
+    width: 26,
+    height: 26,
   },
   themeTitle: {
     fontSize: 14,

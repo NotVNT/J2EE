@@ -120,6 +120,7 @@ export default function DashboardScreen() {
         availableMonths={ai.availableMonths}
         goToPrevMonth={ai.goToPrevMonth}
         goToNextMonth={ai.goToNextMonth}
+        goToMonth={ai.goToMonth}
         canGoPrev={ai.canGoPrev}
         canGoNext={ai.canGoNext}
         result={ai.result}

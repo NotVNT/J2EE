@@ -1,30 +1,33 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { Image, View, Text, StyleSheet } from 'react-native';
 import { useAppColors } from '../../constants/colors';
-import AppIcon from '../ui/AppIcon';
 import AmountText from '../ui/AmountText';
+import expenseIcon from '../../assets/expense/spending.png';
+import incomeIcon from '../../assets/income/financial-statement.png';
 
 export default function DailySummaryCards({ totalIncome = 0, totalExpense = 0 }) {
   const colors = useAppColors();
+  const expenseColor = colors.EXPENSE || colors.ACTION_EXPENSE || '#EF4444';
+  const incomeColor = colors.INCOME || colors.ACTION_INCOME || '#22C55E';
 
   return (
     <View style={styles.container}>
       <View style={[styles.card, { backgroundColor: colors.SURFACE, borderColor: colors.BORDER }]}>
         <View style={styles.row}>
-          <View style={[styles.iconContainer, { backgroundColor: 'rgba(239, 68, 68, 0.1)' }]}>
-            <AppIcon name="arrow-down-circle-outline" size={18} color="#EF4444" />
+          <View style={styles.iconContainer}>
+            <Image source={expenseIcon} style={styles.iconImage} resizeMode="contain" />
           </View>
-          <Text style={[styles.label, { color: colors.TEXT_SECONDARY }]}>Chi tiêu</Text>
+          <Text style={[styles.label, { color: expenseColor }]}>Chi tiêu</Text>
         </View>
         <AmountText value={totalExpense} type="expense" style={styles.amount} />
       </View>
 
       <View style={[styles.card, { backgroundColor: colors.SURFACE, borderColor: colors.BORDER }]}>
         <View style={styles.row}>
-          <View style={[styles.iconContainer, { backgroundColor: 'rgba(34, 197, 94, 0.1)' }]}>
-            <AppIcon name="arrow-up-circle-outline" size={18} color="#22C55E" />
+          <View style={styles.iconContainer}>
+            <Image source={incomeIcon} style={styles.iconImage} resizeMode="contain" />
           </View>
-          <Text style={[styles.label, { color: colors.TEXT_SECONDARY }]}>Thu nhập</Text>
+          <Text style={[styles.label, { color: incomeColor }]}>Thu nhập</Text>
         </View>
         <AmountText value={totalIncome} type="income" style={styles.amount} />
       </View>
@@ -57,17 +60,20 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   iconContainer: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 26,
+    height: 26,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 8,
   },
+  iconImage: {
+    width: 24,
+    height: 24,
+  },
   label: {
     flex: 1,
-    fontSize: 12,
-    fontWeight: '500',
+    fontSize: 16,
+    fontWeight: '800',
   },
   amount: {
     fontSize: 16,
