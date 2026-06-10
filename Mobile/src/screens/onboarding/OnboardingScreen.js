@@ -10,7 +10,7 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
-import appLogo from "../../assets/applogo.png";
+import appLogo from "../../assets/logo&banner/applogo.png";
 import { COLORS, useAppColors } from "../../constants/colors";
 import { scale, clampScale, useDynamicViewport } from "../../utils/layoutScale";
 import AppIcon from "../../components/ui/AppIcon";

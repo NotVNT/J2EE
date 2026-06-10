@@ -10,6 +10,7 @@ import {
 import { COLORS, useAppColors } from "../../constants/colors";
 
 export default function ForecastMonthPicker({
+  accessibilityLabel = "Chọn tháng dự báo",
   label,
   hint,
   visible,
@@ -29,12 +30,12 @@ export default function ForecastMonthPicker({
           style={({ pressed }) => [styles.monthPicker, { backgroundColor: colors.CARD, borderColor: colors.PRIMARY_LIGHT }, pressed && styles.monthPickerPressed]}
           onPress={onOpen}
           accessibilityRole="button"
-          accessibilityLabel="Chọn tháng dự báo"
+          accessibilityLabel={accessibilityLabel}
         >
           <Text style={styles.monthPickerIcon}>{"\uD83D\uDCC5"}</Text>
           <Text style={[styles.monthLabel, { color: colors.TEXT }]}>{label}</Text>
         </Pressable>
-        <Text style={[styles.monthHint, { color: colors.TEXT_SECONDARY }]}>{hint}</Text>
+        {hint ? <Text style={[styles.monthHint, { color: colors.TEXT_SECONDARY }]}>{hint}</Text> : null}
       </View>
 
       <Modal
@@ -45,7 +46,7 @@ export default function ForecastMonthPicker({
       >
         <View style={styles.monthModalOverlay}>
           <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-          <View style={[styles.monthModalCard, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}> 
+          <View style={[styles.monthModalCard, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}>
             <ScrollView showsVerticalScrollIndicator={false}>
               {options.map((option) => {
                 const active = option.month === selectedMonth && option.year === selectedYear;

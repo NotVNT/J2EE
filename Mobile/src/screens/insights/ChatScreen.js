@@ -10,7 +10,6 @@ import {
   Pressable,
   Animated
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
 import { useAppColors } from "../../constants/colors";
 import ChatAssistantHeader from "../../components/chatbotUI/ChatAssistantHeader";
 import MessageBubble from "../../components/chatbotUI/MessageBubble";
@@ -59,7 +58,6 @@ function WaveformBar({ color }) {
 }
 
 export default function ChatScreen() {
-  const navigation = useNavigation();
   const colors = useAppColors();
   const [inputText, setInputText] = useState("");
   const [isSessionsVisible, setIsSessionsVisible] = useState(false);
@@ -131,15 +129,6 @@ export default function ChatScreen() {
     sendMessage(prompt.text);
   }, [sendMessage]);
 
-  const handleBack = useCallback(() => {
-    if (navigation.canGoBack()) {
-      navigation.goBack();
-      return;
-    }
-
-    navigation.navigate("Dashboard");
-  }, [navigation]);
-
   const handleEditMessage = useCallback((message) => {
     setEditingMessage(message);
     setIsEditModalVisible(true);
@@ -168,7 +157,6 @@ export default function ChatScreen() {
         isFreePlan={isFreePlan}
         modelLabel={modelLabel}
         onChangeMode={handleModeSwitch}
-        onBack={handleBack}
         onOpenSessions={() => setIsSessionsVisible(true)}
       />
 

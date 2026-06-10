@@ -17,6 +17,7 @@ export const MORE_MENU_GROUPS = [
     title: "QUẢN LÝ TÀI CHÍNH",
     items: [
       { key: "jars", icon: "archive-outline", title: "Hũ chi tiêu phụ", route: "HomeTab", params: { screen: "Jars" } },
+      { key: "goals", icon: "flag-outline", title: "Mục tiêu tiết kiệm", route: "HomeTab", params: { screen: "Goal" } },
       { key: "reports", icon: "bar-chart-outline", title: "Báo cáo thu chi tháng", route: "HomeTab", params: { screen: "Reports" } }
     ]
   },

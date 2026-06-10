@@ -9,7 +9,7 @@ import {
   isActivationRequiredError,
   openActivationOtp
 } from "../../utils/authActivation";
-import appLogo from "../../assets/applogo.png";
+import appLogo from "../../assets/logo&banner/applogo.png";
 import { COLORS } from "../../constants/colors";
 import { scale, clampScale } from "../../utils/layoutScale";
 

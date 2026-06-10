@@ -66,8 +66,6 @@ export default function CategoryScreen() {
         data={visibleCategories}
         keyExtractor={(item) => String(item?.id)}
         renderItem={renderCategory}
-        numColumns={2}
-        columnWrapperStyle={styles.columnWrapper}
         contentContainerStyle={[styles.listContent, { paddingBottom: getSafeAreaBottom(insets) }]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         ListHeaderComponent={renderListHeader}
@@ -128,9 +126,6 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingBottom: 24
-  },
-  columnWrapper: {
-    justifyContent: "space-between",
   },
   modalOverlay: {
     flex: 1,

@@ -9,7 +9,6 @@ import RecentTransactionsSection from "../../components/Dashboard/RecentTransact
 import GoalsPreview from "../../components/Dashboard/GoalsPreview";
 import HomeBanner from "../../components/Dashboard/HomeBanner";
 import HomeTopHeader from "../../components/Dashboard/HomeTopHeader";
-import QuickActions from "../../components/Dashboard/QuickActions";
 import DailySummaryCards from "../../components/Dashboard/DailySummaryCards";
 import NotificationModal from "../../components/Dashboard/NotificationModal";
 import { useVisibleItems } from "../../components/common/ShowMoreButton";
@@ -84,7 +83,6 @@ export default function DashboardScreen() {
           isBalanceVisible={isBalanceVisible}
           monthlySeries={dashboard.monthlySeries}
         />
-        <QuickActions />
         <DailySummaryCards totalIncome={totalIncome} totalExpense={totalExpense} />
 
         <FinanceOverviewSection

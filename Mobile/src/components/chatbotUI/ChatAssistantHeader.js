@@ -4,14 +4,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { COLORS, useAppColors } from "../../constants/colors";
 import ModeSegmentedControl from "./ModeSegmentedControl";
-import appLogo from "../../assets/applogo.png";
+import appLogo from "../../assets/logo&banner/applogo.png";
 
 export default function ChatAssistantHeader({
   activeMode,
   isFreePlan,
   modelLabel,
   onChangeMode,
-  onBack,
   onOpenSessions,
 }) {
   const colors = useAppColors();
@@ -26,22 +25,6 @@ export default function ChatAssistantHeader({
   return (
     <View style={[styles.headerCard, { marginTop: safeTopPadding, backgroundColor: colors.CARD, borderColor: colors.CHAT_BORDER, shadowColor: colors.PRIMARY }]}>
       <View style={styles.topRow}>
-        {onBack ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Quay lại"
-            hitSlop={8}
-            onPress={onBack}
-            style={({ pressed }) => [
-              styles.backButton,
-              { backgroundColor: colors.CHAT_PURPLE_LIGHT, borderColor: colors.CHAT_BORDER },
-              pressed && styles.backButtonPressed,
-            ]}
-          >
-            <Ionicons name="chevron-back" size={20} color={colors.PRIMARY} />
-          </Pressable>
-        ) : null}
-
         <View style={[styles.avatarFrame, { backgroundColor: colors.ROSE_MIST }]}>
           <Image source={appLogo} style={styles.avatarImage} resizeMode="cover" />
         </View>
@@ -108,18 +91,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 18,
-  },
-  backButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 10,
-  },
-  backButtonPressed: {
-    opacity: 0.72,
   },
   avatarFrame: {
     width: 64,

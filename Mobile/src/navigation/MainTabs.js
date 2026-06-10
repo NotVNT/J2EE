@@ -11,6 +11,7 @@ import MoreScreen from "../screens/profile/MoreScreen";
 import IncomeScreen from "../screens/finance/IncomeScreen";
 import BudgetScreen from "../screens/finance/BudgetScreen";
 import GoalScreen from "../screens/finance/GoalScreen";
+import CategoryScreen from "../screens/finance/CategoryScreen";
 import ForecastScreen from "../screens/insights/ForecastScreen";
 import ChatScreen from "../screens/insights/ChatScreen";
 import ReportsScreen from "../screens/insights/ReportsScreen";
@@ -96,7 +97,7 @@ export function HomeStack() {
 export function CategoryStack() {
   return (
     <Stack.Navigator screenOptions={hiddenHeaderOptions}>
-      <Stack.Screen name="CategoryMain" component={ReportsScreen} />
+      <Stack.Screen name="CategoryMain" component={CategoryScreen} />
     </Stack.Navigator>
   );
 }
@@ -250,8 +251,8 @@ export default function MainTabs() {
           name="CategoryTab"
           component={CategoryStack}
           options={{
-            tabBarLabel: tabLabel("Thống kê"),
-            tabBarIcon: tabIcon("bar-chart", "bar-chart-outline"),
+            tabBarLabel: tabLabel("Danh mục"),
+            tabBarIcon: tabIcon("grid", "grid-outline"),
             tabBarButton: pillTabBarButton
           }}
         />

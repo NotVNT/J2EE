@@ -42,7 +42,7 @@ export default function ReceiptPreviewScreen() {
   });
 
   if (!hasInitialItems && !submitting) {
-    return <ReceiptPreviewEmptyState onBack={handleBack} />;
+    return <ReceiptPreviewEmptyState />;
   }
 
   return (
@@ -91,7 +91,7 @@ export default function ReceiptPreviewScreen() {
   );
 }
 
-function ReceiptPreviewEmptyState({ onBack }) {
+function ReceiptPreviewEmptyState() {
   const insets = useSafeAreaInsets();
   const colors = useAppColors();
 
@@ -105,9 +105,6 @@ function ReceiptPreviewEmptyState({ onBack }) {
           Gemini không tìm thấy mặt hàng nào trong ảnh.{"\n"}
           Hãy thử lại với ảnh rõ hơn hoặc nhập tay.
         </Text>
-        <Pressable style={[styles.backButton, { backgroundColor: colors.PRIMARY }]} onPress={onBack}>
-          <Text style={[styles.backButtonText, { color: colors.WHITE || "#FFFFFF" }]}>← Quay lại</Text>
-        </Pressable>
       </View>
     </View>
   );
@@ -175,15 +172,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: scale(24),
     lineHeight: scale(20)
-  },
-  backButton: {
-    borderRadius: scale(12),
-    paddingVertical: scale(12),
-    paddingHorizontal: scale(28)
-  },
-  backButtonText: {
-    fontWeight: "700",
-    fontSize: 15
   },
   footer: {
     padding: scale(16),

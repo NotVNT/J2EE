@@ -64,12 +64,14 @@ export default function CategoryItem({ item, onEditCategory, onDeleteCategory })
 
       <TransactionIcon iconValue={item?.icon} size={24} containerSize={48} color={iconColor} />
 
-      <Text numberOfLines={1} style={[styles.itemName, { color: colors.TEXT }]}>
-        {item?.name || "Chưa đặt tên"}
-      </Text>
+      <View style={styles.itemContent}>
+        <Text numberOfLines={1} style={[styles.itemName, { color: colors.TEXT }]}>
+          {item?.name || "Chưa đặt tên"}
+        </Text>
 
-      <View style={[styles.typeChip, { backgroundColor: meta.chipBg }]}>
-        <Text style={[styles.typeChipText, { color: meta.chipText }]}>{meta.label}</Text>
+        <View style={[styles.typeChip, { backgroundColor: meta.chipBg }]}>
+          <Text style={[styles.typeChipText, { color: meta.chipText }]}>{meta.label}</Text>
+        </View>
       </View>
 
       <Modal visible={menuVisible} transparent animationType="fade" onRequestClose={() => setMenuVisible(false)}>
@@ -108,16 +110,20 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     padding: 16,
-    flexDirection: "column",
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    flex: 1,
+    justifyContent: "flex-start",
+    gap: 12,
     margin: 6,
     position: "relative",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
     shadowRadius: 6,
     elevation: 1.5,
+  },
+  itemContent: {
+    flex: 1,
+    paddingRight: 32
   },
   menuDots: {
     position: "absolute",
@@ -134,12 +140,11 @@ const styles = StyleSheet.create({
   itemName: {
     fontWeight: "600",
     fontSize: 14,
-    marginTop: 10,
     marginBottom: 6,
-    textAlign: "center",
-    width: "90%",
+    textAlign: "left",
   },
   typeChip: {
+    alignSelf: "flex-start",
     borderRadius: 999,
     paddingVertical: 3,
     paddingHorizontal: 8,

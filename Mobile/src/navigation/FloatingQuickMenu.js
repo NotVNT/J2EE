@@ -21,11 +21,11 @@ const SUB_ACTIONS = [
     gradient: ["#22C55E", "#16A34A"],
   },
   {
-    key: "Budget",
-    icon: "pie-chart-outline",
-    label: "Ngân sách",
-    color: "#A855F7",
-    gradient: ["#A855F7", "#7C3AED"],
+    key: "AddExpense",
+    icon: "cart-outline",
+    label: "Chi tiêu",
+    color: "#F97316",
+    gradient: ["#FB923C", "#F97316"],
   },
   {
     key: "Forecast",
@@ -35,11 +35,11 @@ const SUB_ACTIONS = [
     gradient: ["#2DD4BF", "#0F766E"],
   },
   {
-    key: "Goal",
-    icon: "flag-outline",
-    label: "Mục tiêu",
-    color: "#3B82F6",
-    gradient: ["#60A5FA", "#2563EB"],
+    key: "Budget",
+    icon: "pie-chart-outline",
+    label: "Ngân sách",
+    color: "#A855F7",
+    gradient: ["#A855F7", "#7C3AED"],
   },
   {
     key: "Chat",
@@ -214,22 +214,6 @@ export default function FloatingQuickMenu({ visible, onClose, onSelectRoute, foc
                 Mở nhanh các mục thường dùng
               </Text>
             </View>
-            <Pressable
-              onPress={onClose}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel="Đóng menu nhanh"
-              style={({ pressed }) => [
-                styles.closeButton,
-                {
-                  backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "#F8F2F5",
-                  borderColor: colors.CARD_BORDER,
-                },
-                pressed && { opacity: 0.7 },
-              ]}
-            >
-              <AppIcon name="close" size={16} color={colors.TEXT_SECONDARY} />
-            </Pressable>
           </View>
 
           <View style={styles.actionRow}>
@@ -334,7 +318,6 @@ const styles = StyleSheet.create({
   },
   dockTitleBlock: {
     flex: 1,
-    paddingRight: 12,
   },
   dockTitle: {
     fontSize: 15,
@@ -344,14 +327,6 @@ const styles = StyleSheet.create({
     marginTop: 2,
     fontSize: 11,
     fontWeight: "600",
-  },
-  closeButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
   },
   actionRow: {
     flexDirection: "row",
