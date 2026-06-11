@@ -75,12 +75,17 @@ export default function PaymentHistorySection({
             const isDeleting = deletingCode === orderCode;
 
             return (
-              <View key={orderCode || payment?.paymentLinkId} style={[styles.card, { backgroundColor: colors.BG, borderColor: colors.CARD_BORDER }]}>
+              <View key={orderCode || payment?.paymentLinkId} style={[styles.card, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}>
                 <View style={styles.cardTopRow}>
+                  <View style={[styles.receiptIcon, { backgroundColor: colors.BG }]}>
+                    <AppIcon name="receipt-outline" size={20} color={colors.PRIMARY} />
+                  </View>
                   <View style={styles.cardTitleBlock}>
-                    <Text style={[styles.orderCode, { color: colors.TEXT }]}>#{orderCode || "--"}</Text>
-                    <Text style={[styles.planName, { color: colors.TEXT_SECONDARY }]} numberOfLines={1}>
+                    <Text style={[styles.planName, { color: colors.TEXT }]} numberOfLines={1}>
                       {payment?.planName || payment?.description || "Gói dịch vụ"}
+                    </Text>
+                    <Text style={[styles.receiptLabel, { color: colors.TEXT_SECONDARY }]}>
+                      Hóa đơn thanh toán
                     </Text>
                   </View>
                   <View style={[styles.statusBadge, { backgroundColor: toneColors.backgroundColor }]}>
@@ -90,11 +95,11 @@ export default function PaymentHistorySection({
                 </View>
 
                 <View style={styles.detailGrid}>
-                  <View style={styles.detailItem}>
+                  <View style={[styles.detailItem, { backgroundColor: colors.BG }]}>
                     <Text style={[styles.detailLabel, { color: colors.TEXT_MUTED }]}>Số tiền</Text>
                     <Text style={[styles.detailValue, { color: colors.TEXT }]}>{formatMoney(payment?.amount)}</Text>
                   </View>
-                  <View style={styles.detailItem}>
+                  <View style={[styles.detailItem, { backgroundColor: colors.BG }]}>
                     <Text style={[styles.detailLabel, { color: colors.TEXT_MUTED }]}>Cập nhật</Text>
                     <Text style={[styles.detailValue, { color: colors.TEXT }]}>{formatPaymentDate(payment?.updatedAt || payment?.createdAt)}</Text>
                   </View>
@@ -187,27 +192,42 @@ const styles = StyleSheet.create({
   },
   card: {
     borderWidth: 1,
-    borderRadius: 14,
+    borderRadius: 16,
     padding: 12,
-    gap: 10
+    gap: 12,
+    shadowColor: "#000",
+    shadowOpacity: 0.04,
+    shadowRadius: 10,
+    shadowOffset: {
+      width: 0,
+      height: 4
+    },
+    elevation: 2
   },
   cardTopRow: {
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
     justifyContent: "space-between",
     gap: 10
+  },
+  receiptIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center"
   },
   cardTitleBlock: {
     flex: 1
   },
-  orderCode: {
-    fontSize: 15,
+  planName: {
+    fontSize: 14,
     fontWeight: "800"
   },
-  planName: {
+  receiptLabel: {
     marginTop: 3,
-    fontSize: 12,
-    fontWeight: "600"
+    fontSize: 11,
+    fontWeight: "700"
   },
   statusBadge: {
     minHeight: 28,
@@ -226,7 +246,10 @@ const styles = StyleSheet.create({
     gap: 10
   },
   detailItem: {
-    flex: 1
+    flex: 1,
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 9
   },
   detailLabel: {
     fontSize: 11,

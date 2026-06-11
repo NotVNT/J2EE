@@ -1,10 +1,11 @@
 import React, { useCallback, useContext, useState } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, Text } from "react-native";
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
 import PaymentHistorySection from "../../components/Payment/PaymentHistorySection";
 import { API_ENDPOINTS } from "../../constants/api";
-import { useAppColors } from "../../constants/colors";
+import { COLORS, useAppColors } from "../../constants/colors";
 import { AuthContext } from "../../contexts/AuthContext";
 import apiClient from "../../services/apiClient";
 import { formatMoney, getApiErrorMessage } from "../../utils/format";
@@ -31,6 +32,7 @@ async function deletePayment(orderCode) {
 import { getSafeAreaContentStyle } from "../../utils/safeArea";
 import { PAYMENT_PLANS } from "./paymentPlans";
 import ScreenBackHeader from "../../components/common/ScreenBackHeader";
+import AppIcon from "../../components/ui/AppIcon";
 
 export default function PaymentScreen() {
   const navigation = useNavigation();
@@ -46,6 +48,8 @@ export default function PaymentScreen() {
   const [deletingCode, setDeletingCode] = useState("");
 
   const selectedPlan = PAYMENT_PLANS.find((plan) => plan.id === selectedPlanId) || PAYMENT_PLANS[0];
+  const brandColor = colors.ACTION_VOICE || "#A855F7";
+  const isDarkMode = colors.CARD !== "#FFFFFF";
 
   const loadPaymentHistory = useCallback(async ({ refreshing = false } = {}) => {
     if (refreshing) {
@@ -164,35 +168,85 @@ export default function PaymentScreen() {
 
       {PAYMENT_PLANS.map((plan) => {
         const active = plan.id === selectedPlanId;
-        const activeBg = colors.CARD === "#FFFFFF"
-          ? "#F7F3FF" // Solid light brand purple
-          : "#221930"; // Solid dark brand purple
+        const premium = plan.id === "premium";
+        const gradientColors = active
+          ? (premium ? ["#7C3AED", "#A855F7"] : ["#8B5CF6", "#A855F7"])
+          : (premium
+            ? (isDarkMode ? ["#231A31", colors.CARD] : ["#FFFFFF", "#F7F0FF"])
+            : [colors.CARD, colors.CARD]);
+        const textColor = active ? COLORS.WHITE : colors.TEXT;
+        const secondaryTextColor = active ? "rgba(255,255,255,0.76)" : colors.TEXT_SECONDARY;
 
         return (
           <Pressable
             key={plan.id}
             style={[
-              styles.planCard,
+              styles.planPressable,
               {
-                backgroundColor: active ? activeBg : colors.CARD,
-                borderColor: active ? (colors.ACTION_VOICE || '#A855F7') : colors.CARD_BORDER,
+                shadowColor: active ? brandColor : "#000",
+                shadowOpacity: active ? 0.2 : 0.04,
+                elevation: active ? 5 : 2
               },
             ]}
             onPress={() => setSelectedPlanId(plan.id)}
           >
-            <Text style={[styles.planName, { color: colors.TEXT }]}>{plan.displayName}</Text>
-            <Text style={[styles.planAmount, { color: colors.ACTION_VOICE || '#A855F7' }]}>{formatMoney(plan.amount)} / {plan.cycleLabel}</Text>
-            <Text style={[styles.planDescription, { color: colors.TEXT_SECONDARY }]}>{plan.description}</Text>
+            <LinearGradient
+              colors={gradientColors}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={[
+                styles.planCard,
+                {
+                  borderColor: active ? "transparent" : (premium ? "rgba(168,85,247,0.25)" : colors.CARD_BORDER)
+                }
+              ]}
+            >
+              <View style={styles.planTopRow}>
+                <View style={[
+                  styles.planIconWrap,
+                  { backgroundColor: active ? "rgba(255,255,255,0.16)" : (premium ? brandColor : colors.BG) }
+                ]}>
+                  <AppIcon name={plan.icon} size={20} color={active || premium ? COLORS.WHITE : brandColor} />
+                </View>
+                <View style={[
+                  styles.planBadge,
+                  { backgroundColor: active ? "rgba(255,255,255,0.18)" : (premium ? "rgba(168,85,247,0.12)" : colors.BG) }
+                ]}>
+                  <Text style={[styles.planBadgeText, { color: active ? COLORS.WHITE : (premium ? brandColor : colors.TEXT_SECONDARY) }]}>
+                    {plan.badge}
+                  </Text>
+                </View>
+              </View>
+
+              <Text style={[styles.planName, { color: textColor }]}>{plan.displayName}</Text>
+              <Text style={[styles.planDescription, { color: secondaryTextColor }]}>{plan.description}</Text>
+              <View style={styles.priceRow}>
+                <Text style={[styles.planAmount, { color: textColor }]}>{formatMoney(plan.amount)}</Text>
+                <Text style={[styles.planCycle, { color: secondaryTextColor }]}>/ {plan.cycleLabel}</Text>
+              </View>
+
+              <View style={styles.featureList}>
+                {plan.features.map((feature) => (
+                  <View key={feature} style={styles.featureRow}>
+                    <AppIcon name="checkmark-circle" size={15} color={active ? "#BBF7D0" : colors.INCOME} />
+                    <Text style={[styles.featureText, { color: secondaryTextColor }]}>{feature}</Text>
+                  </View>
+                ))}
+              </View>
+            </LinearGradient>
           </Pressable>
         );
       })}
 
       <Pressable
-        style={[styles.button, { backgroundColor: colors.ACTION_VOICE || '#A855F7', shadowColor: colors.ACTION_VOICE || '#A855F7', elevation: 4 }, loading && styles.buttonDisabled]}
+        style={[styles.button, { shadowColor: brandColor, elevation: 4 }, loading && styles.buttonDisabled]}
         onPress={createPayment}
         disabled={loading}
       >
-        <Text style={styles.buttonText}>{loading ? "Đang xử lý..." : "Thanh toán"}</Text>
+        <LinearGradient colors={["#A855F7", "#9333EA"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.buttonGradient}>
+          <AppIcon name="card-outline" size={17} color={COLORS.WHITE} />
+          <Text style={styles.buttonText}>{loading ? "Đang xử lý..." : `Thanh toán ${selectedPlan?.displayName || ""}`}</Text>
+        </LinearGradient>
       </Pressable>
 
       <PaymentHistorySection
@@ -215,7 +269,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 16,
-    gap: 10
+    gap: 12
   },
   title: {
     fontSize: 22,
@@ -227,38 +281,86 @@ const styles = StyleSheet.create({
     lineHeight: 21,
     marginBottom: 6
   },
-  planCard: {
-    borderWidth: 2,
-    borderRadius: 16,
-    padding: 16,
-    shadowColor: "#000",
-    shadowOpacity: 0.02,
-    shadowRadius: 6,
+  planPressable: {
+    borderRadius: 18,
+    shadowRadius: 12,
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 6,
     },
-    elevation: 2
+  },
+  planCard: {
+    borderWidth: 1,
+    borderRadius: 18,
+    padding: 16,
+    overflow: "hidden"
+  },
+  planTopRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 14
+  },
+  planIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  planBadge: {
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 5
+  },
+  planBadgeText: {
+    fontSize: 11,
+    fontWeight: "800"
   },
   planName: {
     fontWeight: "800",
-    fontSize: 16
+    fontSize: 17
   },
   planAmount: {
     fontWeight: "800",
-    marginTop: 4
+    fontSize: 22
+  },
+  planCycle: {
+    fontSize: 12,
+    fontWeight: "700",
+    marginBottom: 3
   },
   planDescription: {
-    marginTop: 6,
-    fontSize: 13
+    marginTop: 5,
+    fontSize: 13,
+    lineHeight: 18
+  },
+  priceRow: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    gap: 4,
+    marginTop: 12
+  },
+  featureList: {
+    gap: 7,
+    marginTop: 13
+  },
+  featureRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7
+  },
+  featureText: {
+    flex: 1,
+    fontSize: 12,
+    fontWeight: "700",
+    lineHeight: 17
   },
   button: {
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: "center",
+    borderRadius: 14,
     marginTop: 10,
     shadowOpacity: 0.15,
-    shadowRadius: 6,
+    shadowRadius: 10,
     shadowOffset: {
       width: 0,
       height: 4,
@@ -267,6 +369,16 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: {
     opacity: 0.7
+  },
+  buttonGradient: {
+    minHeight: 48,
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    gap: 8
   },
   buttonText: {
     color: "#fff",
