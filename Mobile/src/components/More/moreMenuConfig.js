@@ -3,7 +3,8 @@ export const MORE_MENU_GROUPS = [
     title: "TÀI KHOẢN",
     items: [
       { key: "edit-profile", icon: "lock-closed-outline", image: require("../../assets/auth/reset-password.png"), title: "Đổi mật khẩu", route: "EditProfile" },
-      { key: "payment", icon: "card-outline", image: require("../../assets/accessories/upgrade.png"), title: "Thanh toán & Nâng cấp", route: "Payment" }
+      { key: "payment", icon: "card-outline", image: require("../../assets/accessories/upgrade.png"), title: "Thanh toán & Nâng cấp", route: "Payment" },
+      { key: "payment-history", icon: "receipt-outline", image: require("../../assets/accessories/monthly-bill.png"), title: "Lịch sử thanh toán", route: "PaymentHistory" }
     ]
   },
   {
