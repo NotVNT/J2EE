@@ -161,7 +161,15 @@ public class AIOrchestrationService {
                     if (heuristicResponse != null) {
                         return heuristicResponse;
                     }
-                    return buildAnswerResponse(firstNonBlank(rawResponse, retryResponse), provider, model);
+                    String rawCandidate = firstNonBlank(rawResponse, retryResponse);
+                    if (isNavigationAnswer(rawCandidate)) {
+                        String dataAnswer = buildDataAnswerFromPageData(userMessage, pageData);
+                        if (dataAnswer != null) {
+                            log.info("Non-JSON navigation answer replaced with data-computed answer");
+                            return buildAnswerResponse(dataAnswer, provider, model);
+                        }
+                    }
+                    return buildAnswerResponse(rawCandidate, provider, model);
                 } else {
                     throw new RuntimeException("AI không trả về nội dung.");
                 }
@@ -186,6 +194,13 @@ public class AIOrchestrationService {
                     if (heuristicResponse != null) {
                         return heuristicResponse;
                     }
+                    if (isNavigationAnswer(rawResponse)) {
+                        String dataAnswer = buildDataAnswerFromPageData(userMessage, pageData);
+                        if (dataAnswer != null) {
+                            log.info("Parse-error navigation answer replaced with data-computed answer");
+                            return buildAnswerResponse(dataAnswer, provider, model);
+                        }
+                    }
                     return buildAnswerResponse(rawResponse, provider, model);
                 }
                 throw parseError;
@@ -203,6 +218,14 @@ public class AIOrchestrationService {
             String answer = (String) parsed.get("answer");
             if (answer != null) {
                 answer = AIContentGuard.sanitizeOutput(answer);
+            }
+            // If AI answered with navigation instructions despite having data in context, use data directly
+            if ("ANSWER_QUESTION".equals(intent) && isNavigationAnswer(answer)) {
+                String dataAnswer = buildDataAnswerFromPageData(userMessage, pageData);
+                if (dataAnswer != null) {
+                    log.info("JSON navigation answer replaced with data-computed answer");
+                    answer = dataAnswer;
+                }
             }
             Double confidence = toDouble(parsed.get("confidence"));
 
@@ -775,6 +798,84 @@ public class AIOrchestrationService {
                 .build();
     }
 
+    /**
+     * Returns true when the AI answer looks like app-navigation instructions instead of a data answer.
+     * This happens when Gemini ignores the JSON contract and outputs a conversational reply that tells
+     * the user to open a screen rather than reading the data already in the system prompt context.
+     */
+    private boolean isNavigationAnswer(String answer) {
+        if (answer == null || answer.isBlank()) return false;
+        String n = normalizeIntentText(answer);
+        return n.contains("mo ung dung")
+                || n.contains("truy cap vao muc")
+                || n.contains("vao phan")
+                || n.contains("chon khoang thoi gian")
+                || (n.contains("ban vui long") && (n.contains("thao tac") || n.contains("thuc hien")))
+                || (n.contains("chao ban") && n.contains("nova") && n.contains("de minh"))
+                || n.contains("khong the truy cap vao du lieu")
+                || (n.contains("ly do bao mat") && n.contains("khong the"))
+                || (n.contains("chua cung cap thong tin") && n.contains("giao dien ung dung"));
+    }
+
+    /**
+     * Builds a plain-Vietnamese answer directly from pageData for common income/expense queries.
+     * Used as fallback when the AI returns navigation instructions instead of data.
+     */
+    private String buildDataAnswerFromPageData(String userMessage, Map<String, Object> pageData) {
+        if (pageData == null || pageData.isEmpty()) return null;
+        String msg = normalizeIntentText(userMessage);
+
+        boolean asksIncome  = msg.matches(".*\\b(thu nhap|luong|income|kiem duoc)\\b.*");
+        boolean asksExpense = msg.matches(".*\\b(chi tieu|chi phi|expense)\\b.*");
+        boolean asksThisMonth = msg.matches(".*\\b(thang nay|thang hien tai)\\b.*");
+
+        if (asksIncome) {
+            Object monthIncome = pageData.get("currentMonthIncomeAmount");
+            Object ctxCurrentMonth = pageData.get("currentMonth");
+            Object totalIncome = pageData.get("totalIncomeAmount");
+            Object incomeCount = pageData.get("totalIncomeCount");
+            StringBuilder sb = new StringBuilder();
+            if (asksThisMonth && monthIncome != null && ctxCurrentMonth != null) {
+                sb.append("Tháng ").append(ctxCurrentMonth).append(", tổng thu nhập của bạn là ")
+                        .append(formatCurrency(toBigDecimal(monthIncome))).append("đ.");
+            } else if (totalIncome != null) {
+                sb.append("Tổng thu nhập của bạn từ trước đến nay là ")
+                        .append(formatCurrency(toBigDecimal(totalIncome))).append("đ");
+                if (incomeCount != null) sb.append(" (").append(incomeCount).append(" giao dịch)");
+                sb.append(".");
+                if (monthIncome != null && ctxCurrentMonth != null) {
+                    sb.append(" Riêng tháng ").append(ctxCurrentMonth).append(": ")
+                            .append(formatCurrency(toBigDecimal(monthIncome))).append("đ.");
+                }
+            }
+            if (sb.length() > 0) return sb.toString();
+        }
+
+        if (asksExpense) {
+            Object monthExpense = pageData.get("currentMonthExpenseAmount");
+            Object ctxCurrentMonth = pageData.get("currentMonth");
+            Object totalExpense = pageData.get("totalExpenseAmount");
+            Object expenseCount = pageData.get("totalExpenseCount");
+            StringBuilder sb = new StringBuilder();
+            if (asksThisMonth && monthExpense != null && ctxCurrentMonth != null) {
+                sb.append("Tháng ").append(ctxCurrentMonth).append(", tổng chi tiêu của bạn là ")
+                        .append(formatCurrency(toBigDecimal(monthExpense))).append("đ.");
+            } else if (totalExpense != null) {
+                sb.append("Tổng chi tiêu của bạn từ trước đến nay là ")
+                        .append(formatCurrency(toBigDecimal(totalExpense))).append("đ");
+                if (expenseCount != null) sb.append(" (").append(expenseCount).append(" giao dịch)");
+                sb.append(".");
+                if (monthExpense != null && ctxCurrentMonth != null) {
+                    sb.append(" Riêng tháng ").append(ctxCurrentMonth).append(": ")
+                            .append(formatCurrency(toBigDecimal(monthExpense))).append("đ.");
+                }
+            }
+            if (sb.length() > 0) return sb.toString();
+        }
+
+        return null;
+    }
+
     private AIIntentResponseDTO buildHeuristicActionResponse(
             String userMessage,
             String pageContext,
@@ -1041,21 +1142,28 @@ public class AIOrchestrationService {
                 case "aichat" -> {
                     java.time.LocalDate now = java.time.LocalDate.now();
                     java.time.LocalDate monthStart = now.withDayOfMonth(1);
-                    result.put("totalExpenseCount", expenseService.getTotalExpenseCountForCurrentUser());
-                    result.put("totalIncomeCount", incomeService.getTotalIncomeCountForCurrentUser());
-                    result.put("totalExpenseAmount", expenseService.getTotalExpenseForCurrentUser());
-                    result.put("totalIncomeAmount", incomeService.getTotalIncomeForCurrentUser());
+                    // Each call is isolated so one failure doesn't prevent remaining data from loading
+                    try { result.put("totalExpenseCount", expenseService.getTotalExpenseCountForCurrentUser()); } catch (Exception ex) { log.warn("aichat: totalExpenseCount failed: {}", ex.getMessage()); }
+                    try { result.put("totalIncomeCount", incomeService.getTotalIncomeCountForCurrentUser()); } catch (Exception ex) { log.warn("aichat: totalIncomeCount failed: {}", ex.getMessage()); }
+                    try { result.put("totalExpenseAmount", expenseService.getTotalExpenseForCurrentUser()); } catch (Exception ex) { log.warn("aichat: totalExpenseAmount failed: {}", ex.getMessage()); }
+                    try { result.put("totalIncomeAmount", incomeService.getTotalIncomeForCurrentUser()); } catch (Exception ex) { log.warn("aichat: totalIncomeAmount failed: {}", ex.getMessage()); }
                     result.put("currentMonth", now.getMonthValue() + "/" + now.getYear());
-                    result.put("currentMonthExpenseAmount", expenseService.getExpenseTotalForCurrentUserBetween(monthStart, now));
-                    result.put("currentMonthIncomeAmount", incomeService.getIncomeTotalForCurrentUserBetween(monthStart, now));
-                    List<ExpenseDTO> recentExp = expenseService.getLatest5ExpensesForCurrentUser();
-                    result.put("recentExpenses", recentExp.stream().map(this::buildExpenseMap).toList());
-                    List<IncomeDTO> recentInc = incomeService.getLatest5IncomesForCurrentUser();
-                    result.put("recentIncomes", recentInc.stream().map(this::buildIncomeMap).toList());
-                    List<CategoryDTO> categories = categoryService.getCategoriesForCurrentUser();
-                    result.put("categories", categories.stream()
-                            .map(c -> Map.of("id", c.getId(), "name", c.getName(), "type", c.getType()))
-                            .toList());
+                    try { result.put("currentMonthExpenseAmount", expenseService.getExpenseTotalForCurrentUserBetween(monthStart, now)); } catch (Exception ex) { log.warn("aichat: currentMonthExpenseAmount failed: {}", ex.getMessage()); }
+                    try { result.put("currentMonthIncomeAmount", incomeService.getIncomeTotalForCurrentUserBetween(monthStart, now)); } catch (Exception ex) { log.warn("aichat: currentMonthIncomeAmount failed: {}", ex.getMessage()); }
+                    try {
+                        List<ExpenseDTO> recentExp = expenseService.getLatest5ExpensesForCurrentUser();
+                        result.put("recentExpenses", recentExp.stream().map(this::buildExpenseMap).toList());
+                    } catch (Exception ex) { log.warn("aichat: recentExpenses failed: {}", ex.getMessage()); }
+                    try {
+                        List<IncomeDTO> recentInc = incomeService.getLatest5IncomesForCurrentUser();
+                        result.put("recentIncomes", recentInc.stream().map(this::buildIncomeMap).toList());
+                    } catch (Exception ex) { log.warn("aichat: recentIncomes failed: {}", ex.getMessage()); }
+                    try {
+                        List<CategoryDTO> categories = categoryService.getCategoriesForCurrentUser();
+                        result.put("categories", categories.stream()
+                                .map(c -> Map.of("id", c.getId(), "name", c.getName(), "type", c.getType()))
+                                .toList());
+                    } catch (Exception ex) { log.warn("aichat: categories failed: {}", ex.getMessage()); }
                 }
                 default -> {
                     java.time.LocalDate now = java.time.LocalDate.now();
