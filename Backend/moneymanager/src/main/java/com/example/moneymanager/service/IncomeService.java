@@ -152,6 +152,18 @@ public class IncomeService {
         return incomePage.getContent().stream().map(this::toDTO).toList();
     }
 
+    // Get single income by id for current user (used by AI confirmation form pre-fill)
+    @Transactional(readOnly = true)
+    public IncomeDTO getIncomeById(Long incomeId) {
+        ProfileEntity profile = profileService.getCurrentProfile();
+        IncomeEntity entity = incomeRepository.findById(incomeId)
+                .orElseThrow(() -> new RuntimeException("Income not found"));
+        if (!entity.getProfile().getId().equals(profile.getId())) {
+            throw new RuntimeException("Unauthorized to access this income");
+        }
+        return toDTO(entity);
+    }
+
     @Transactional
     public IncomeDTO updateIncome(Long incomeId, IncomeDTO dto) {
         ProfileEntity profile = profileService.getCurrentProfile();

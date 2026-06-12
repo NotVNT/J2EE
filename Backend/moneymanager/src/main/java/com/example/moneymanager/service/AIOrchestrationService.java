@@ -33,6 +33,11 @@ public class AIOrchestrationService {
         "(?i)return.{0,30}(json|true|false|null)",
         Pattern.CASE_INSENSITIVE
     );
+    private static final Pattern AMOUNT_LITERAL_PATTERN = Pattern.compile(
+            "\\b\\d+(?:[.,]\\d+)?\\s*(?:k|nghin|ngan|tr|trieu|m|cu|dong|d)\\b|\\b\\d{4,}(?:[.,]\\d+)?\\b",
+            Pattern.CASE_INSENSITIVE
+    );
+    private static final Pattern ISO_DATE_PATTERN = Pattern.compile("\\b\\d{4}-\\d{2}-\\d{2}\\b");
 
     private final AIChatService aiChatService;
     private final GeminiProperties geminiProperties;
@@ -106,8 +111,10 @@ public class AIOrchestrationService {
             Map<String, Object> pageData = loadPageData(pageContext, profile);
             String systemPrompt = AIInstructionPromptBuilder.buildSystemPrompt(pageContext, pageData);
 
-            // Trim conversation history to last 5 turns (user+assistant pairs) to keep context sharp
-            List<AIChatMessageDTO> trimmedHistory = trimConversationHistory(request.getConversationHistory(), 10);
+            // BUG-09: Trim to last 2 turns (4 messages) for intent classification.
+            // Using too much history causes context contamination where prior conversation
+            // topics bleed into the intent classifier and cause wrong classifications.
+            List<AIChatMessageDTO> trimmedHistory = trimConversationHistory(request.getConversationHistory(), 4);
             trimmedHistory = trimmedHistory.stream()
                     .map(message -> {
                         if (message.getContent() != null
@@ -139,9 +146,30 @@ public class AIOrchestrationService {
                 cleanedJson = extractJson(retryResponse);
                 if (cleanedJson != null && !cleanedJson.isBlank()) {
                     rawResponse = retryResponse;
-                } else if (rawResponse != null && !rawResponse.isBlank()) {
+                } else if (firstNonBlank(rawResponse, retryResponse) != null) {
                     log.warn("Retry also returned non-JSON, treating as answer: {}", retryResponse);
-                    return buildAnswerResponse(rawResponse, provider, model);
+                    AIIntentResponseDTO heuristicResponse = buildHeuristicActionResponse(
+                            userMessage,
+                            pageContext,
+                            trimmedHistory,
+                            pageData,
+                            request,
+                            profile,
+                            provider,
+                            model
+                    );
+                    if (heuristicResponse != null) {
+                        return heuristicResponse;
+                    }
+                    String rawCandidate = firstNonBlank(rawResponse, retryResponse);
+                    if (isNavigationAnswer(rawCandidate)) {
+                        String dataAnswer = buildDataAnswerFromPageData(userMessage, pageData);
+                        if (dataAnswer != null) {
+                            log.info("Non-JSON navigation answer replaced with data-computed answer");
+                            return buildAnswerResponse(dataAnswer, provider, model);
+                        }
+                    }
+                    return buildAnswerResponse(rawCandidate, provider, model);
                 } else {
                     throw new RuntimeException("AI không trả về nội dung.");
                 }
@@ -153,6 +181,26 @@ public class AIOrchestrationService {
             } catch (Exception parseError) {
                 if (rawResponse != null && !rawResponse.isBlank()) {
                     log.warn("AI intent JSON parse failed, returning raw response as answer: {}", rawResponse, parseError);
+                    AIIntentResponseDTO heuristicResponse = buildHeuristicActionResponse(
+                            userMessage,
+                            pageContext,
+                            trimmedHistory,
+                            pageData,
+                            request,
+                            profile,
+                            provider,
+                            model
+                    );
+                    if (heuristicResponse != null) {
+                        return heuristicResponse;
+                    }
+                    if (isNavigationAnswer(rawResponse)) {
+                        String dataAnswer = buildDataAnswerFromPageData(userMessage, pageData);
+                        if (dataAnswer != null) {
+                            log.info("Parse-error navigation answer replaced with data-computed answer");
+                            return buildAnswerResponse(dataAnswer, provider, model);
+                        }
+                    }
                     return buildAnswerResponse(rawResponse, provider, model);
                 }
                 throw parseError;
@@ -170,6 +218,14 @@ public class AIOrchestrationService {
             String answer = (String) parsed.get("answer");
             if (answer != null) {
                 answer = AIContentGuard.sanitizeOutput(answer);
+            }
+            // If AI answered with navigation instructions despite having data in context, use data directly
+            if ("ANSWER_QUESTION".equals(intent) && isNavigationAnswer(answer)) {
+                String dataAnswer = buildDataAnswerFromPageData(userMessage, pageData);
+                if (dataAnswer != null) {
+                    log.info("JSON navigation answer replaced with data-computed answer");
+                    answer = dataAnswer;
+                }
             }
             Double confidence = toDouble(parsed.get("confidence"));
 
@@ -194,7 +250,7 @@ public class AIOrchestrationService {
             }
 
             // ── Step 4: Generate confirmationPrompt if absent ─────────────────
-            if (confirmationPrompt == null && isCrudIntent(intent)) {
+            if (confirmationPrompt == null && "ACTION".equals(intentType)) {
                 confirmationPrompt = generateConfirmationPrompt(intent, extractedFields);
             }
 
@@ -221,6 +277,23 @@ public class AIOrchestrationService {
         } catch (ForbiddenException e) {
             throw e;
         } catch (Exception e) {
+            String fallbackPageContext = request.getPageContext() != null ? request.getPageContext() : "dashboard";
+            AIIntentResponseDTO heuristicResponse = buildHeuristicActionResponse(
+                    userMessage,
+                    fallbackPageContext,
+                    trimConversationHistory(request.getConversationHistory(), 4),
+                    loadPageData(fallbackPageContext, profile),
+                    request,
+                    profile,
+                    provider,
+                    model
+            );
+            if (heuristicResponse != null) {
+                log.warn("Intent parser failed but recovered with heuristic intent {}: {}",
+                        heuristicResponse.getIntent(), e.getMessage());
+                return heuristicResponse;
+            }
+
             log.error("Error parsing intent: {}", e.getMessage(), e);
             try {
                 AIChatResponseDTO fallback = aiChatService.chat(AIChatRequestDTO.builder()
@@ -228,7 +301,7 @@ public class AIOrchestrationService {
                         .model(model)
                         .messages(buildMessages(request))
                         .build());
-                String reply = fallback.getReply();
+                String reply = fallback != null ? fallback.getReply() : null;
                 if (reply == null || reply.contains("sự cố") || reply.contains("chưa được cấu hình")) {
                     log.warn("Fallback AI returned error message, using neutral response");
                     reply = "Mô hình AI đang bận. Vui lòng thử lại sau vài giây nhé.";
@@ -237,8 +310,8 @@ public class AIOrchestrationService {
                         .intent("ANSWER_QUESTION")
                         .intentType("QUESTION")
                         .answer(reply)
-                        .provider(fallback.getProvider())
-                        .modelUsed(fallback.getModelUsed())
+                        .provider(fallback != null ? fallback.getProvider() : provider)
+                        .modelUsed(fallback != null ? fallback.getModelUsed() : model)
                         .build();
             } catch (Exception fallbackError) {
                 return AIIntentResponseDTO.builder()
@@ -689,6 +762,10 @@ public class AIOrchestrationService {
                         from != null ? from : "?",
                         to != null ? to : "?");
             }
+            case "EXPORT_EXCEL_INCOME" -> "B\u1EA1n mu\u1ED1n xu\u1EA5t b\u00E1o c\u00E1o Excel thu nh\u1EADp th\u00E1ng n\u00E0y?";
+            case "EXPORT_EXCEL_EXPENSE" -> "B\u1EA1n mu\u1ED1n xu\u1EA5t b\u00E1o c\u00E1o Excel chi ti\u00EAu th\u00E1ng n\u00E0y?";
+            case "EMAIL_INCOME_REPORT" -> "B\u1EA1n mu\u1ED1n g\u1EEDi b\u00E1o c\u00E1o thu nh\u1EADp th\u00E1ng n\u00E0y \u0111\u1EBFn email c\u1EE7a b\u1EA1n?";
+            case "EMAIL_EXPENSE_REPORT" -> "B\u1EA1n mu\u1ED1n g\u1EEDi b\u00E1o c\u00E1o chi ti\u00EAu th\u00E1ng n\u00E0y \u0111\u1EBFn email c\u1EE7a b\u1EA1n?";
             default -> "B\u1EA1n x\u00E1c nh\u1EADn th\u1EF1c hi\u1EC7n thao t\u00E1c n\u00E0y?";
         };
     }
@@ -714,10 +791,196 @@ public class AIOrchestrationService {
         return AIIntentResponseDTO.builder()
                 .status("SUCCESS")
                 .intent("ANSWER_QUESTION")
+                .intentType("QUESTION")
                 .answer(AIContentGuard.sanitizeOutput(answer))
                 .provider(provider)
                 .modelUsed(model)
                 .build();
+    }
+
+    /**
+     * Returns true when the AI answer looks like app-navigation instructions instead of a data answer.
+     * This happens when Gemini ignores the JSON contract and outputs a conversational reply that tells
+     * the user to open a screen rather than reading the data already in the system prompt context.
+     */
+    private boolean isNavigationAnswer(String answer) {
+        if (answer == null || answer.isBlank()) return false;
+        String n = normalizeIntentText(answer);
+        return n.contains("mo ung dung")
+                || n.contains("truy cap vao muc")
+                || n.contains("vao phan")
+                || n.contains("chon khoang thoi gian")
+                || (n.contains("ban vui long") && (n.contains("thao tac") || n.contains("thuc hien")))
+                || (n.contains("chao ban") && n.contains("nova") && n.contains("de minh"))
+                || n.contains("khong the truy cap vao du lieu")
+                || (n.contains("ly do bao mat") && n.contains("khong the"))
+                || (n.contains("chua cung cap thong tin") && n.contains("giao dien ung dung"));
+    }
+
+    /**
+     * Builds a plain-Vietnamese answer directly from pageData for common income/expense queries.
+     * Used as fallback when the AI returns navigation instructions instead of data.
+     */
+    private String buildDataAnswerFromPageData(String userMessage, Map<String, Object> pageData) {
+        if (pageData == null || pageData.isEmpty()) return null;
+        String msg = normalizeIntentText(userMessage);
+
+        boolean asksIncome  = msg.matches(".*\\b(thu nhap|luong|income|kiem duoc)\\b.*");
+        boolean asksExpense = msg.matches(".*\\b(chi tieu|chi phi|expense)\\b.*");
+        boolean asksThisMonth = msg.matches(".*\\b(thang nay|thang hien tai)\\b.*");
+
+        if (asksIncome) {
+            Object monthIncome = pageData.get("currentMonthIncomeAmount");
+            Object ctxCurrentMonth = pageData.get("currentMonth");
+            Object totalIncome = pageData.get("totalIncomeAmount");
+            Object incomeCount = pageData.get("totalIncomeCount");
+            StringBuilder sb = new StringBuilder();
+            if (asksThisMonth && monthIncome != null && ctxCurrentMonth != null) {
+                sb.append("Tháng ").append(ctxCurrentMonth).append(", tổng thu nhập của bạn là ")
+                        .append(formatCurrency(toBigDecimal(monthIncome))).append("đ.");
+            } else if (totalIncome != null) {
+                sb.append("Tổng thu nhập của bạn từ trước đến nay là ")
+                        .append(formatCurrency(toBigDecimal(totalIncome))).append("đ");
+                if (incomeCount != null) sb.append(" (").append(incomeCount).append(" giao dịch)");
+                sb.append(".");
+                if (monthIncome != null && ctxCurrentMonth != null) {
+                    sb.append(" Riêng tháng ").append(ctxCurrentMonth).append(": ")
+                            .append(formatCurrency(toBigDecimal(monthIncome))).append("đ.");
+                }
+            }
+            if (sb.length() > 0) return sb.toString();
+        }
+
+        if (asksExpense) {
+            Object monthExpense = pageData.get("currentMonthExpenseAmount");
+            Object ctxCurrentMonth = pageData.get("currentMonth");
+            Object totalExpense = pageData.get("totalExpenseAmount");
+            Object expenseCount = pageData.get("totalExpenseCount");
+            StringBuilder sb = new StringBuilder();
+            if (asksThisMonth && monthExpense != null && ctxCurrentMonth != null) {
+                sb.append("Tháng ").append(ctxCurrentMonth).append(", tổng chi tiêu của bạn là ")
+                        .append(formatCurrency(toBigDecimal(monthExpense))).append("đ.");
+            } else if (totalExpense != null) {
+                sb.append("Tổng chi tiêu của bạn từ trước đến nay là ")
+                        .append(formatCurrency(toBigDecimal(totalExpense))).append("đ");
+                if (expenseCount != null) sb.append(" (").append(expenseCount).append(" giao dịch)");
+                sb.append(".");
+                if (monthExpense != null && ctxCurrentMonth != null) {
+                    sb.append(" Riêng tháng ").append(ctxCurrentMonth).append(": ")
+                            .append(formatCurrency(toBigDecimal(monthExpense))).append("đ.");
+                }
+            }
+            if (sb.length() > 0) return sb.toString();
+        }
+
+        return null;
+    }
+
+    private AIIntentResponseDTO buildHeuristicActionResponse(
+            String userMessage,
+            String pageContext,
+            List<AIChatMessageDTO> history,
+            Map<String, Object> pageData,
+            AIIntentRequestDTO request,
+            ProfileEntity profile,
+            String provider,
+            String model
+    ) {
+        String intent = reclassifyByPageContext(userMessage, pageContext, history);
+        if (intent == null) {
+            return null;
+        }
+
+        Map<String, Object> extractedFields = extractHeuristicFields(intent, userMessage, pageData);
+        List<String> missingFields = computeMissingFields(intent, extractedFields);
+        String confirmationPrompt = generateConfirmationPrompt(intent, extractedFields);
+        String sessionId = persistAgentUserMessage(request.getSessionId(), profile.getId(), userMessage, intent, null);
+
+        return AIIntentResponseDTO.builder()
+                .status("NEED_CONFIRMATION")
+                .sessionId(sessionId)
+                .intent(intent)
+                .intentType("ACTION")
+                .extractedFields(extractedFields)
+                .suggestedValues(new HashMap<>())
+                .validationErrors(new ArrayList<>())
+                .missingFields(missingFields)
+                .confirmationPrompt(confirmationPrompt)
+                .confidence(0.55)
+                .provider(provider)
+                .modelUsed(model)
+                .build();
+    }
+
+    private Map<String, Object> extractHeuristicFields(String intent, String userMessage, Map<String, Object> pageData) {
+        Map<String, Object> fields = new HashMap<>();
+        BigDecimal amount = extractAmountFromMessage(userMessage);
+        if (amount != null) {
+            if ("CREATE_SAVING_GOAL".equals(intent) || "UPDATE_SAVING_GOAL".equals(intent)) {
+                fields.put("targetAmount", amount);
+            } else {
+                fields.put("amount", amount);
+            }
+        }
+
+        if ("CREATE_EXPENSE".equals(intent) || "CREATE_INCOME".equals(intent)) {
+            fields.put("date", extractDateFromMessage(userMessage));
+        }
+
+        String categoryType = switch (intent) {
+            case "CREATE_INCOME", "UPDATE_INCOME" -> "income";
+            case "CREATE_EXPENSE", "UPDATE_EXPENSE", "CREATE_BUDGET", "UPDATE_BUDGET" -> "expense";
+            default -> null;
+        };
+        if (categoryType != null) {
+            String categoryName = extractCategoryNameFromMessage(userMessage, categoryType, pageData);
+            if (categoryName != null) {
+                fields.put("categoryName", categoryName);
+            }
+        }
+
+        return fields;
+    }
+
+    private BigDecimal extractAmountFromMessage(String userMessage) {
+        String normalizedMessage = normalizeIntentText(userMessage);
+        var matcher = AMOUNT_LITERAL_PATTERN.matcher(normalizedMessage);
+        if (!matcher.find()) {
+            return null;
+        }
+        BigDecimal amount = toBigDecimal(matcher.group().replaceAll("\\s+", ""));
+        return amount.compareTo(BigDecimal.ZERO) > 0 ? amount : null;
+    }
+
+    private String extractDateFromMessage(String userMessage) {
+        String normalizedMessage = normalizeIntentText(userMessage);
+        var isoMatcher = ISO_DATE_PATTERN.matcher(normalizedMessage);
+        if (isoMatcher.find()) {
+            return isoMatcher.group();
+        }
+        if (normalizedMessage.matches(".*\\bhom qua\\b.*")) {
+            return LocalDate.now().minusDays(1).toString();
+        }
+        return LocalDate.now().toString();
+    }
+
+    @SuppressWarnings("unchecked")
+    private String extractCategoryNameFromMessage(String userMessage, String categoryType, Map<String, Object> pageData) {
+        if (pageData == null || !(pageData.get("categories") instanceof List<?> categories)) {
+            return null;
+        }
+
+        String normalizedMessage = normalizeIntentText(userMessage);
+        return categories.stream()
+                .filter(Map.class::isInstance)
+                .map(category -> (Map<String, Object>) category)
+                .filter(category -> categoryType.equalsIgnoreCase(String.valueOf(category.get("type"))))
+                .map(category -> String.valueOf(category.get("name")))
+                .filter(name -> name != null && !name.isBlank())
+                .sorted(Comparator.comparingInt(String::length).reversed())
+                .filter(name -> normalizedMessage.contains(normalizeIntentText(name)))
+                .findFirst()
+                .orElse(null);
     }
 
     private AIIntentResponseDTO buildGuardedIntentResponse(String message, String modelUsed) {
@@ -738,10 +1001,25 @@ public class AIOrchestrationService {
         List<AIChatMessageDTO> messages = new ArrayList<>();
         if (history != null) {
             messages.addAll(history);
-            // Tránh lỗi trùng lặp consecutive user role trong API Gemini
+            // Remove trailing user message to avoid consecutive user roles when intent instruction is appended
             if (!messages.isEmpty() && "user".equals(messages.get(messages.size() - 1).getRole())) {
                 messages.remove(messages.size() - 1);
             }
+            // Gemini requires: no consecutive same-role turns, and first turn must be "user"
+            // Remove leading assistant messages
+            while (!messages.isEmpty() && !"user".equals(messages.get(0).getRole())) {
+                messages.remove(0);
+            }
+            // Collapse consecutive same-role messages (keep last of each run)
+            List<AIChatMessageDTO> sanitized = new ArrayList<>();
+            for (AIChatMessageDTO msg : messages) {
+                if (!sanitized.isEmpty() && sanitized.get(sanitized.size() - 1).getRole().equals(msg.getRole())) {
+                    sanitized.set(sanitized.size() - 1, msg);
+                } else {
+                    sanitized.add(msg);
+                }
+            }
+            messages = sanitized;
         }
         messages.add(AIChatMessageDTO.builder().role("user").content(userMessage).build());
 
@@ -864,21 +1142,28 @@ public class AIOrchestrationService {
                 case "aichat" -> {
                     java.time.LocalDate now = java.time.LocalDate.now();
                     java.time.LocalDate monthStart = now.withDayOfMonth(1);
-                    result.put("totalExpenseCount", expenseService.getTotalExpenseCountForCurrentUser());
-                    result.put("totalIncomeCount", incomeService.getTotalIncomeCountForCurrentUser());
-                    result.put("totalExpenseAmount", expenseService.getTotalExpenseForCurrentUser());
-                    result.put("totalIncomeAmount", incomeService.getTotalIncomeForCurrentUser());
+                    // Each call is isolated so one failure doesn't prevent remaining data from loading
+                    try { result.put("totalExpenseCount", expenseService.getTotalExpenseCountForCurrentUser()); } catch (Exception ex) { log.warn("aichat: totalExpenseCount failed: {}", ex.getMessage()); }
+                    try { result.put("totalIncomeCount", incomeService.getTotalIncomeCountForCurrentUser()); } catch (Exception ex) { log.warn("aichat: totalIncomeCount failed: {}", ex.getMessage()); }
+                    try { result.put("totalExpenseAmount", expenseService.getTotalExpenseForCurrentUser()); } catch (Exception ex) { log.warn("aichat: totalExpenseAmount failed: {}", ex.getMessage()); }
+                    try { result.put("totalIncomeAmount", incomeService.getTotalIncomeForCurrentUser()); } catch (Exception ex) { log.warn("aichat: totalIncomeAmount failed: {}", ex.getMessage()); }
                     result.put("currentMonth", now.getMonthValue() + "/" + now.getYear());
-                    result.put("currentMonthExpenseAmount", expenseService.getExpenseTotalForCurrentUserBetween(monthStart, now));
-                    result.put("currentMonthIncomeAmount", incomeService.getIncomeTotalForCurrentUserBetween(monthStart, now));
-                    List<ExpenseDTO> recentExp = expenseService.getLatest5ExpensesForCurrentUser();
-                    result.put("recentExpenses", recentExp.stream().map(this::buildExpenseMap).toList());
-                    List<IncomeDTO> recentInc = incomeService.getLatest5IncomesForCurrentUser();
-                    result.put("recentIncomes", recentInc.stream().map(this::buildIncomeMap).toList());
-                    List<CategoryDTO> categories = categoryService.getCategoriesForCurrentUser();
-                    result.put("categories", categories.stream()
-                            .map(c -> Map.of("id", c.getId(), "name", c.getName(), "type", c.getType()))
-                            .toList());
+                    try { result.put("currentMonthExpenseAmount", expenseService.getExpenseTotalForCurrentUserBetween(monthStart, now)); } catch (Exception ex) { log.warn("aichat: currentMonthExpenseAmount failed: {}", ex.getMessage()); }
+                    try { result.put("currentMonthIncomeAmount", incomeService.getIncomeTotalForCurrentUserBetween(monthStart, now)); } catch (Exception ex) { log.warn("aichat: currentMonthIncomeAmount failed: {}", ex.getMessage()); }
+                    try {
+                        List<ExpenseDTO> recentExp = expenseService.getLatest5ExpensesForCurrentUser();
+                        result.put("recentExpenses", recentExp.stream().map(this::buildExpenseMap).toList());
+                    } catch (Exception ex) { log.warn("aichat: recentExpenses failed: {}", ex.getMessage()); }
+                    try {
+                        List<IncomeDTO> recentInc = incomeService.getLatest5IncomesForCurrentUser();
+                        result.put("recentIncomes", recentInc.stream().map(this::buildIncomeMap).toList());
+                    } catch (Exception ex) { log.warn("aichat: recentIncomes failed: {}", ex.getMessage()); }
+                    try {
+                        List<CategoryDTO> categories = categoryService.getCategoriesForCurrentUser();
+                        result.put("categories", categories.stream()
+                                .map(c -> Map.of("id", c.getId(), "name", c.getName(), "type", c.getType()))
+                                .toList());
+                    } catch (Exception ex) { log.warn("aichat: categories failed: {}", ex.getMessage()); }
                 }
                 default -> {
                     java.time.LocalDate now = java.time.LocalDate.now();
@@ -921,11 +1206,6 @@ public class AIOrchestrationService {
         m.put("date", i.getDate() != null ? i.getDate().toString() : "");
         m.put("name", i.getName() != null ? i.getName() : "");
         return m;
-    }
-
-    private boolean isCrudIntent(String intent) {
-        return intent != null && (intent.startsWith("CREATE_") || intent.startsWith("UPDATE_") ||
-                intent.startsWith("DELETE_") || intent.startsWith("TRANSFER_"));
     }
 
     /**
@@ -976,6 +1256,10 @@ public class AIOrchestrationService {
                     case "budget_id", "budgetid"         -> "budgetId";
                     case "saving_goal_id", "savinggoalid" -> "savingGoalId";
                     case "category_id", "categoryid"     -> "categoryId";
+                    // BUG-06: CREATE_CATEGORY — AI may return "categoryType" instead of "type"
+                    case "category_type", "categorytype", "categoryType" -> "type";
+                    // BUG-06: CREATE_SAVING_GOAL — AI may return "goal_name" or "goalName"
+                    case "goal_name", "goalname", "goalName" -> "name";
                     default -> key;
                 };
                 fields.put(key, v);
@@ -1067,8 +1351,11 @@ public class AIOrchestrationService {
         boolean isAnalysisQuery = msg.matches(".*\\b(phan tich|goi y|tu van|tom tat|tinh hinh tai chinh|dong tien)\\b.*")
                 || msg.matches(".*\\b(lam the nao de|cach .* tiet kiem|goi y tiet kiem|tiet kiem hon)\\b.*");
 
+        boolean mentionsIncome = msg.matches(".*\\b(thu nhap|luong|income)\\b.*");
+
         if (hasEmailCommand || followUpToReport) {
-            return ctx.equals("income") ? "EMAIL_INCOME_REPORT" : "EMAIL_EXPENSE_REPORT";
+            boolean isIncomeContext = ctx.equals("income") || mentionsIncome;
+            return isIncomeContext ? "EMAIL_INCOME_REPORT" : "EMAIL_EXPENSE_REPORT";
         }
         if (hasExport) {
             return ctx.equals("income") ? "EXPORT_EXCEL_INCOME" : "EXPORT_EXCEL_EXPENSE";
@@ -1178,7 +1465,7 @@ public class AIOrchestrationService {
                 .replaceAll("\\p{M}+", "")
                 .replace('đ', 'd')
                 .replace('Đ', 'D');
-        return normalized.toLowerCase(Locale.ROOT).trim();
+        return normalized.toLowerCase(Locale.ROOT).replaceAll("\\s+", " ").trim();
     }
 
     /**
@@ -1189,6 +1476,12 @@ public class AIOrchestrationService {
         int size = history.size();
         if (size <= maxMessages) return new ArrayList<>(history);
         return new ArrayList<>(history.subList(size - maxMessages, size));
+    }
+
+    private String firstNonBlank(String first, String second) {
+        if (first != null && !first.isBlank()) return first;
+        if (second != null && !second.isBlank()) return second;
+        return null;
     }
 
     private Double toDouble(Object value) {

@@ -23,7 +23,7 @@ export const getAssistantMessageVariant = (message) => {
     return "error";
   }
 
-  if (message?.isSystem) {
+  if (message?.isSystem || message?.isAgentResult) {
     return "system";
   }
 

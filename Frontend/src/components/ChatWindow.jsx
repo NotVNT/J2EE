@@ -397,7 +397,7 @@ const ChatWindow = ({
                           ? "bg-amber-50/60 dark:bg-amber-500/5 text-amber-700 dark:text-amber-400 border border-amber-100 dark:border-amber-500/10 rounded-2xl rounded-tl-sm px-5 py-4 max-w-[90%] sm:max-w-[85%] shadow-sm"
                           : "bg-slate-50/40 dark:bg-white/[0.02] border border-slate-100/80 dark:border-white/[0.03] text-slate-700 dark:text-[#e3e3e3] rounded-2xl rounded-tl-sm px-5 py-4 max-w-[90%] sm:max-w-[85%] shadow-sm"}`}
                 >
-                  {msg.isIntent && !msg.isConfirmation && (
+                  {msg.isIntent && !msg.isConfirmation && !msg.isCancelled && (
                     <AIConfirmationForm
                       intent={msg.intent || "UNKNOWN"}
                       extractedFields={msg.extractedFields || {}}
@@ -414,6 +414,14 @@ const ChatWindow = ({
                       <span>{INTENT_ICONS[msg.intent]}</span>
                       <span>{INTENT_LABELS[msg.intent] || msg.intent}</span>
                       <span className="text-green-500 dark:text-green-400">Đã xác nhận</span>
+                    </div>
+                  )}
+
+                  {msg.isIntent && msg.isCancelled && (
+                    <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium">
+                      <span>{INTENT_ICONS[msg.intent]}</span>
+                      <span>{INTENT_LABELS[msg.intent] || msg.intent}</span>
+                      <span className="text-red-400 dark:text-red-400">Đã hủy</span>
                     </div>
                   )}
 
