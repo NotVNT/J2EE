@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useContext, useMemo, useState, useEffect } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -12,10 +12,11 @@ import { useRoute } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BarChart } from "react-native-chart-kit";
 import { Ionicons } from "@expo/vector-icons";
+import { AuthContext } from "../../contexts/AuthContext";
 import { useAppColors } from "../../constants/colors";
 import { getSafeAreaContentStyle } from "../../utils/safeArea";
 import useMonthlyReport from "../../hooks/useMonthlyReport";
-import MonthNavigator from "../../components/Report/MonthNavigator";
+import ForecastMonthPicker from "../../components/Forecast/ForecastMonthPicker";
 import ReportMetricCard from "../../components/Report/ReportMetricCard";
 import CategoryBreakdownCard from "../../components/Report/CategoryBreakdownCard";
 import ReportAdviceCard from "../../components/Report/ReportAdviceCard";
@@ -226,19 +227,27 @@ export default function ReportsScreen() {
   const route = useRoute();
   const insets = useSafeAreaInsets();
   const colors = useAppColors();
+  const { user } = useContext(AuthContext);
   const {
     selectedMonth,
     selectedYear,
     report,
     loading,
     error,
-    goToPrevMonth,
-    goToNextMonth,
-  } = useMonthlyReport();
+    monthOptions,
+    monthPickerLabel,
+    selectMonth,
+  } = useMonthlyReport(user?.createdAt);
 
   const [expenses, setExpenses] = useState([]);
   const [incomes, setIncomes] = useState([]);
+  const [isMonthPickerVisible, setIsMonthPickerVisible] = useState(false);
   const shouldShowBackHeader = route.name !== "CategoryMain";
+
+  const handleSelectMonth = (month, year) => {
+    selectMonth(month, year);
+    setIsMonthPickerVisible(false);
+  };
 
   useEffect(() => {
     const fetchTransactions = async () => {
@@ -264,11 +273,16 @@ export default function ReportsScreen() {
     >
       {shouldShowBackHeader ? <ScreenBackHeader title="Thống kê" /> : null}
 
-      <MonthNavigator
+      <ForecastMonthPicker
+        accessibilityLabel="Chọn tháng thống kê"
+        label={monthPickerLabel}
+        visible={isMonthPickerVisible}
+        options={monthOptions}
         selectedMonth={selectedMonth}
         selectedYear={selectedYear}
-        onPrev={goToPrevMonth}
-        onNext={goToNextMonth}
+        onOpen={() => setIsMonthPickerVisible(true)}
+        onSelect={handleSelectMonth}
+        onClose={() => setIsMonthPickerVisible(false)}
       />
 
       {loading ? (

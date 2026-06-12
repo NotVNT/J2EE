@@ -27,9 +27,9 @@ export default function AiInsightMonthNavigator({
       >
         <AppIcon name="chevron-back" size={20} color={canGoPrev && !disabled ? colors.PRIMARY : colors.TEXT_MUTED} />
       </Pressable>
-      
+
       <Text style={[styles.monthLabel, { color: colors.TEXT }]}>{monthLabel}</Text>
-      
+
       <Pressable
         onPress={goToNextMonth}
         disabled={!canGoNext || disabled}
@@ -51,25 +51,26 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 8,
-    paddingVertical: 6,
-    borderRadius: 12,
+    paddingVertical: 7,
+    borderRadius: 16,
     borderWidth: 1,
     alignSelf: "center",
-    minWidth: scale(220),
-    marginBottom: 4,
+    minWidth: scale(230),
+    marginBottom: 2,
   },
   arrow: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    width: 38,
+    height: 34,
     alignItems: "center",
-    justifyContent: "center"
+    justifyContent: "center",
+    borderRadius: 12
   },
   arrowOff: {
     opacity: 0.25
   },
   monthLabel: {
-    fontSize: 14,
-    fontWeight: "800",
+    fontSize: 15,
+    fontWeight: "900",
     textAlign: "center",
     flex: 1
   }

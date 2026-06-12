@@ -10,7 +10,7 @@ import {
   View,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import appLogo from "../../assets/applogo.png";
+import appLogo from "../../assets/logo&banner/applogo.png";
 import { COLORS, useAppColors } from "../../constants/colors";
 import { scale, clampScale } from "../../utils/layoutScale";
 import useLoginActions from "../../hooks/useLoginActions";

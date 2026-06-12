@@ -25,9 +25,6 @@ export default function PaymentCheckoutScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.BG, paddingTop: getSafeAreaTop(insets), paddingBottom: getSafeAreaBottom(insets, 86) }]}>
       <PaymentCheckoutHeader
-        canGoBack={checkout.canGoBack}
-        onExit={checkout.goBackToPayment}
-        onGoBack={checkout.goBackInWebView}
         title={checkout.title}
       />
 

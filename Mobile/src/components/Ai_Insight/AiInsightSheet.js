@@ -1,9 +1,10 @@
-import React, { useMemo } from "react";
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import React, { useCallback, useMemo, useState } from "react";
+import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { useAppColors } from "../../constants/colors";
 import AiInsightForecastResult from "./AiInsightForecastResult";
-import AiInsightMonthNavigator from "./AiInsightMonthNavigator";
 import AiInsightStateBlock from "./AiInsightStateBlock";
+import ForecastMonthPicker from "../Forecast/ForecastMonthPicker";
 import AppIcon from "../ui/AppIcon";
 import { scale } from "../../utils/layoutScale";
 
@@ -12,6 +13,7 @@ export default function AiInsightSheet({
   canGoNext,
   canGoPrev,
   error,
+  goToMonth,
   goToNextMonth,
   goToPrevMonth,
   isIdle,
@@ -27,6 +29,7 @@ export default function AiInsightSheet({
   visible
 }) {
   const colors = useAppColors();
+  const [pickerVisible, setPickerVisible] = useState(false);
 
   const monthLabel = useMemo(() => {
     const selected = (availableMonths || []).find(
@@ -35,43 +38,56 @@ export default function AiInsightSheet({
     return selected ? selected.label : `Tháng ${selectedMonth}/${selectedYear}`;
   }, [availableMonths, selectedMonth, selectedYear]);
 
+  const handleMonthSelect = useCallback((month, year) => {
+    setPickerVisible(false);
+    goToMonth(month, year);
+  }, [goToMonth]);
+
   const hasData = Boolean(result);
 
   return (
     <Modal visible={visible} transparent statusBarTranslucent animationType="fade" onRequestClose={onClose}>
       <View style={styles.overlay}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        
-        <View style={[styles.sheet, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}>
+
+        <View style={[styles.sheet, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER, shadowColor: colors.SHADOW_COLOR || "#000" }]}>
           <View style={[styles.header, { borderBottomColor: colors.CARD_BORDER }]}>
             <View style={styles.headerLeft}>
-              <AppIcon name="sparkles-outline" size={18} color={colors.PRIMARY} />
-              <Text style={[styles.headerTitle, { color: colors.TEXT }]}>AI Insight</Text>
+              <Image source={require("../../assets/ai-insight/ai-insight.png")} style={styles.headerIconImg} />
+              <View>
+                <Text style={[styles.headerTitle, { color: colors.TEXT }]}>AI Insight</Text>
+                <Text style={[styles.headerSubtitle, { color: colors.TEXT_SECONDARY }]}>Dự báo hành vi tài chính</Text>
+              </View>
             </View>
-            <Pressable style={[styles.closeBtn, { backgroundColor: colors.BG }]} onPress={onClose} hitSlop={10}>
-              <AppIcon name="close" size={18} color={colors.TEXT_SECONDARY} />
-            </Pressable>
           </View>
 
-          {/* Setting flex: 1 on ScrollView to ensure proper height constraint and scrolling */}
-          <ScrollView 
-            style={styles.body} 
-            contentContainerStyle={styles.bodyContent} 
+          <ScrollView
+            style={styles.body}
+            contentContainerStyle={styles.bodyContent}
             showsVerticalScrollIndicator={true}
           >
-            <AiInsightMonthNavigator
-              canGoNext={canGoNext}
-              canGoPrev={canGoPrev}
-              disabled={loading}
-              goToNextMonth={goToNextMonth}
-              goToPrevMonth={goToPrevMonth}
-              monthLabel={monthLabel}
+            <ForecastMonthPicker
+              accessibilityLabel="Chọn tháng dự báo AI Insight"
+              label={monthLabel}
+              visible={pickerVisible}
+              options={availableMonths}
+              selectedMonth={selectedMonth}
+              selectedYear={selectedYear}
+              onOpen={() => setPickerVisible(true)}
+              onSelect={handleMonthSelect}
+              onClose={() => setPickerVisible(false)}
             />
 
             {isPremium && isIdle ? (
-              <Text style={[styles.idleText, { color: colors.TEXT_SECONDARY }]}>
-                AI sẽ dùng dữ liệu các tháng trước để dự báo hành vi tài chính cho {monthLabel}.
-              </Text>
+              <View style={[styles.infoCard, { backgroundColor: colors.BG, borderColor: colors.CARD_BORDER }]}>
+                <Image source={require("../../assets/ai-insight/analyzing.png")} style={styles.infoIconImg} />
+                <View style={styles.infoTextWrap}>
+                  <Text style={[styles.infoTitle, { color: colors.TEXT }]}>Sẵn sàng phân tích</Text>
+                  <Text style={[styles.idleText, { color: colors.TEXT_SECONDARY }]}>
+                    AI sẽ dùng dữ liệu các tháng trước để dự báo hành vi tài chính cho {monthLabel}.
+                  </Text>
+                </View>
+              </View>
             ) : null}
 
             {!isPremium ? (
@@ -85,7 +101,15 @@ export default function AiInsightSheet({
 
             {isPremium && !hasData && !loading ? (
               <Pressable style={[styles.analyzeBtn, { backgroundColor: colors.PRIMARY }]} onPress={onAnalyze}>
-                <Text style={styles.analyzeBtnText}>✨ Phân tích</Text>
+                <LinearGradient
+                  colors={[colors.PRIMARY || "#E8597A", colors.ACTION_VOICE || "#A855F7"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.analyzeGradient}
+                >
+                  <Image source={require("../../assets/ai-insight/pointing-finger.png")} style={styles.analyzeBtnIcon} />
+                  <Text style={styles.analyzeBtnText}>Phân tích</Text>
+                </LinearGradient>
               </Pressable>
             ) : null}
 
@@ -111,56 +135,99 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.45)"
+    backgroundColor: "rgba(0, 0, 0, 0.58)"
   },
   sheet: {
-    borderRadius: scale(20),
-    height: "75%", // Fixed height percentage to avoid circular flex collapse
+    borderRadius: scale(24),
+    maxHeight: "90%",
     width: "92%",
     borderWidth: 1,
-    overflow: "hidden"
+    overflow: "hidden",
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.2,
+    shadowRadius: 24,
+    elevation: 16,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 14,
     borderBottomWidth: 1
   },
   headerLeft: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8
+    gap: 10
+  },
+  headerIconImg: {
+    width: 34,
+    height: 34,
+    resizeMode: "contain"
   },
   headerTitle: {
-    fontSize: 16,
-    fontWeight: "800"
+    fontSize: 17,
+    fontWeight: "900"
   },
-  closeBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center"
+  headerSubtitle: {
+    marginTop: 2,
+    fontSize: 11,
+    fontWeight: "600"
   },
+
   body: {
-    flex: 1 // Crucial: forces ScrollView to scroll inside the constrained sheet height
+    flexShrink: 1
   },
   bodyContent: {
     padding: 16,
-    gap: 14,
+    gap: 12,
     paddingBottom: 24
   },
+  infoCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 12,
+    gap: 11
+  },
+  infoIconImg: {
+    width: 42,
+    height: 42,
+    resizeMode: "contain"
+  },
+  infoTextWrap: {
+    flex: 1,
+    minWidth: 0
+  },
+  infoTitle: {
+    fontSize: 14,
+    fontWeight: "850",
+    marginBottom: 3
+  },
   idleText: {
-    fontSize: 13,
-    textAlign: "center",
-    lineHeight: 20
+    fontSize: 12,
+    lineHeight: 18
   },
   analyzeBtn: {
-    borderRadius: 12,
-    paddingVertical: 13,
-    alignItems: "center"
+    borderRadius: 14,
+    minHeight: 46,
+    overflow: "hidden"
+  },
+  analyzeGradient: {
+    flex: 1,
+    minHeight: 46,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 13
+  },
+  analyzeBtnIcon: {
+    width: 17,
+    height: 17,
+    resizeMode: "contain"
   },
   analyzeBtnText: {
     color: "#FFFFFF",

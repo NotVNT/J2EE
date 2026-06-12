@@ -18,7 +18,7 @@ import {
   getForecastRequestKey,
   getMonthPickerState,
   getTopGrowthCategory
-} from "./forecastDataUtils";
+} from "../utils/forecastDataUtils";
 
 /**
  * Custom hook encapsulating all forecast data fetching, state management,

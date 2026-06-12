@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated } from 'react-native';
 import { useAppColors } from '../../constants/colors';
-import { RADIUS, SPACE } from '../../constants/spacing';
 import { scale } from '../../utils/layoutScale';
 
 /**
@@ -39,10 +38,10 @@ export default function LoadingCard({ style }) {
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: RADIUS.md,
+    borderRadius: 12,
     padding: scale(16),
     borderWidth: 1,
-    marginBottom: SPACE.md,
+    marginBottom: 12,
   },
   shimmerLine: {
     height: scale(14),

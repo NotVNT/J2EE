@@ -1,8 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useAppColors } from '../../constants/colors';
-import { SPACE } from '../../constants/spacing';
-import { FONTS, TEXT_SIZE } from '../../constants/typography';
 import { scale } from '../../utils/layoutScale';
 import AppIcon from './AppIcon';
 import AppButton from './AppButton';
@@ -25,11 +23,11 @@ export default function EmptyState({
       <View style={[styles.iconContainer, { backgroundColor: COLORS.PRIMARY_GLOW || COLORS.PRIMARY_LIGHT }]}>
         <AppIcon name={icon} size={scale(36)} color={COLORS.PRIMARY} />
       </View>
-      <Text style={[styles.title, { color: COLORS.TEXT, fontFamily: FONTS.bold }]}>
+      <Text style={[styles.title, { color: COLORS.TEXT }]}>
         {title}
       </Text>
       {description && (
-        <Text style={[styles.description, { color: COLORS.TEXT_SECONDARY, fontFamily: FONTS.regular }]}>
+        <Text style={[styles.description, { color: COLORS.TEXT_SECONDARY }]}>
           {description}
         </Text>
       )}
@@ -58,20 +56,20 @@ const styles = StyleSheet.create({
     borderRadius: scale(36),
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: SPACE.md,
+    marginBottom: 12,
   },
   title: {
-    fontSize: TEXT_SIZE.base,
+    fontSize: 15,
     fontWeight: '600',
     textAlign: 'center',
-    marginBottom: SPACE.xs,
+    marginBottom: 4,
   },
   description: {
-    fontSize: TEXT_SIZE.sm,
+    fontSize: 12,
     textAlign: 'center',
-    marginBottom: SPACE.md,
+    marginBottom: 12,
   },
   button: {
-    marginTop: SPACE.xs,
+    marginTop: 4,
   },
 });

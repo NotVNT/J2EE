@@ -21,7 +21,6 @@ import {
 } from "../../utils/authPassword";
 import PasswordInput from "../../components/auth/PasswordInput";
 import PasswordRequirement from "../../components/auth/PasswordRequirement";
-import AppIcon from "../../components/ui/AppIcon";
 import { scale, clampScale } from "../../utils/layoutScale";
 
 export default function ResetPasswordScreen() {
@@ -65,12 +64,6 @@ export default function ResetPasswordScreen() {
       <View style={[styles.screen, { paddingTop: insets.top }]}>
         <View style={styles.bgGlowTop} />
         <View style={styles.bgGlowBottom} />
-
-        <View style={styles.topBar}>
-          <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
-            <AppIcon name="chevron-back" size={24} color={COLORS.DARK_TEXT} />
-          </Pressable>
-        </View>
 
         <ScrollView
           contentContainerStyle={styles.scrollContent}
@@ -128,20 +121,6 @@ const styles = StyleSheet.create({
     height: scale(320),
     borderRadius: scale(160),
     backgroundColor: COLORS.PRIMARY_GLOW,
-  },
-  topBar: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: scale(16),
-    paddingVertical: scale(8),
-  },
-  backButton: {
-    width: scale(36),
-    height: scale(36),
-    borderRadius: scale(18),
-    alignItems: "center",
-    justifyContent: "center",
   },
   scrollContent: {
     flexGrow: 1,

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
   Easing,
+  Image,
   Pressable,
   StyleSheet,
   Text,
@@ -15,35 +16,35 @@ import AppIcon from "../components/ui/AppIcon";
 const SUB_ACTIONS = [
   {
     key: "Income",
-    icon: "wallet-outline",
+    iconSource: require("../assets/income/income.png"),
     label: "Thu nhập",
     color: "#22C55E",
     gradient: ["#22C55E", "#16A34A"],
   },
   {
-    key: "Budget",
-    icon: "pie-chart-outline",
-    label: "Ngân sách",
-    color: "#A855F7",
-    gradient: ["#A855F7", "#7C3AED"],
+    key: "Expense",
+    iconSource: require("../assets/expense/expenses.png"),
+    label: "Chi tiêu",
+    color: "#F97316",
+    gradient: ["#FB923C", "#F97316"],
   },
   {
     key: "Forecast",
-    icon: "trending-up-outline",
+    iconSource: require("../assets/ai-insight/forecast-analytics.png"),
     label: "Dự báo",
     color: "#26A69A",
     gradient: ["#2DD4BF", "#0F766E"],
   },
   {
-    key: "Goal",
-    icon: "flag-outline",
-    label: "Mục tiêu",
-    color: "#3B82F6",
-    gradient: ["#60A5FA", "#2563EB"],
+    key: "Budget",
+    iconSource: require("../assets/accessories/budget.png"),
+    label: "Ngân sách",
+    color: "#A855F7",
+    gradient: ["#A855F7", "#7C3AED"],
   },
   {
     key: "Chat",
-    icon: "chatbubble-ellipses-outline",
+    iconSource: require("../assets/ai-insight/robot.png"),
     label: "Chat AI",
     color: "#7C4DFF",
     gradient: ["#8B5CF6", "#6D22E8"],
@@ -207,37 +208,12 @@ export default function FloatingQuickMenu({ visible, onClose, onSelectRoute, foc
             },
           ]}
         >
-          <View style={styles.dockHeader}>
-            <View style={styles.dockTitleBlock}>
-              <Text style={[styles.dockTitle, { color: colors.TEXT }]}>Thao tác nhanh</Text>
-              <Text style={[styles.dockSubtitle, { color: colors.TEXT_SECONDARY }]}>
-                Mở nhanh các mục thường dùng
-              </Text>
-            </View>
-            <Pressable
-              onPress={onClose}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel="Đóng menu nhanh"
-              style={({ pressed }) => [
-                styles.closeButton,
-                {
-                  backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "#F8F2F5",
-                  borderColor: colors.CARD_BORDER,
-                },
-                pressed && { opacity: 0.7 },
-              ]}
-            >
-              <AppIcon name="close" size={16} color={colors.TEXT_SECONDARY} />
-            </Pressable>
-          </View>
-
           <View style={styles.actionRow}>
             {SUB_ACTIONS.map((action, index) => {
               const anim = animations[index];
               const isFocused = focusedKey === action.key;
               const actionBackground = isFocused ? `${action.color}18` : inactiveActionBackground;
-              const actionBorderColor = isFocused ? action.color : colors.CARD_BORDER;
+              const actionBorderColor = isFocused ? action.color : isDark ? "rgba(255,255,255,0.14)" : "rgba(239,94,131,0.18)";
               const actionLabelColor = isFocused ? action.color : colors.TEXT;
 
               return (
@@ -270,7 +246,7 @@ export default function FloatingQuickMenu({ visible, onClose, onSelectRoute, foc
                       end={{ x: 1, y: 1 }}
                       style={[styles.actionIcon, { shadowColor: action.color }]}
                     >
-                      <AppIcon name={action.icon} size={22} color="#FFFFFF" />
+                      <Image source={action.iconSource} style={styles.actionIconImage} resizeMode="contain" />
                     </LinearGradient>
                     <Text
                       style={[styles.actionLabel, { color: actionLabelColor }]}
@@ -317,7 +293,7 @@ const styles = StyleSheet.create({
     right: 18,
     borderRadius: 28,
     borderWidth: 1,
-    padding: 14,
+    padding: 12,
     shadowOffset: {
       width: 0,
       height: 12,
@@ -325,33 +301,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.18,
     shadowRadius: 22,
     elevation: 14,
-  },
-  dockHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 12,
-  },
-  dockTitleBlock: {
-    flex: 1,
-    paddingRight: 12,
-  },
-  dockTitle: {
-    fontSize: 15,
-    fontWeight: "800",
-  },
-  dockSubtitle: {
-    marginTop: 2,
-    fontSize: 11,
-    fontWeight: "600",
-  },
-  closeButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
   },
   actionRow: {
     flexDirection: "row",
@@ -363,7 +312,7 @@ const styles = StyleSheet.create({
   actionCard: {
     minHeight: 82,
     borderRadius: 20,
-    borderWidth: 1,
+    borderWidth: 1.2,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 3,
@@ -382,6 +331,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.22,
     shadowRadius: 8,
     elevation: 5,
+  },
+  actionIconImage: {
+    width: 24,
+    height: 24
   },
   actionLabel: {
     marginTop: 7,

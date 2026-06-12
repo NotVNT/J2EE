@@ -11,7 +11,7 @@ export default function PaymentCheckoutFallback({ onBackToPayment }) {
 
   return (
     <View style={[styles.fallbackContainer, { backgroundColor: colors.BG, paddingTop: getSafeAreaTop(insets) }]}>
-      <ScreenBackHeader title="Thanh toán" onBack={onBackToPayment} style={styles.screenHeader} />
+      <ScreenBackHeader title="Thanh toán" style={styles.screenHeader} />
       <View style={styles.fallbackBody}>
         <Text style={[styles.fallbackTitle, { color: colors.TEXT }]}>Không tìm thấy liên kết thanh toán</Text>
         <Text style={[styles.fallbackText, { color: colors.TEXT_SECONDARY }]}>Hãy quay lại và tạo giao dịch mới.</Text>

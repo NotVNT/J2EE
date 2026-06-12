@@ -1,8 +1,10 @@
 import React from "react";
-import { Pressable, StyleSheet, Switch, Text, View } from "react-native";
+import { Image, Pressable, StyleSheet, Switch, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS, useAppColors } from "../../constants/colors";
 import { MORE_MENU_GROUPS } from "./moreMenuConfig";
+import mailReminderIcon from "../../assets/accessories/mail-reminder.png";
+import notificationIcon from "../../assets/accessories/notification.png";
 
 function SettingGroup({ colors, title, children }) {
   return (
@@ -17,9 +19,7 @@ function SettingGroup({ colors, title, children }) {
   );
 }
 
-function SettingItem({ colors, icon, title, value, onPress, hasChevron = true, isSwitch = false, switchValue, onSwitchChange, disabled = false }) {
-  const isDark = colors.BG === '#0F0D0C';
-
+function SettingItem({ colors, icon, image, title, value, valueStyle, onPress, hasChevron = true, isSwitch = false, switchValue, onSwitchChange, disabled = false }) {
   return (
     <Pressable
       style={({ pressed }) => [styles.itemRow, { borderBottomColor: colors.BG }, pressed && !isSwitch && styles.itemRowPressed, disabled && styles.itemRowDisabled]}
@@ -27,25 +27,24 @@ function SettingItem({ colors, icon, title, value, onPress, hasChevron = true, i
       disabled={isSwitch || disabled}
     >
       <View style={styles.itemLeft}>
-        <View style={[
-          styles.itemIconWrap, 
-          { 
-            backgroundColor: isDark ? "rgba(255, 255, 255, 0.05)" : "rgba(168, 85, 247, 0.05)", 
-            borderColor: colors.CARD_BORDER 
-          }
-        ]}>
-          <Ionicons name={icon} size={16} color={colors.ACTION_VOICE || '#A855F7'} />
+        <View style={styles.itemIconWrap}>
+          {image ? (
+            <Image source={image} style={styles.itemIconImage} resizeMode="contain" />
+          ) : (
+            <Ionicons name={icon} size={16} color={colors.ACTION_VOICE || '#A855F7'} />
+          )}
         </View>
         <Text style={[styles.itemTitle, { color: colors.TEXT }]}>{title}</Text>
       </View>
       <View style={styles.itemRight}>
-        {value ? <Text style={[styles.itemValueText, { color: colors.TEXT_SECONDARY }]}>{value}</Text> : null}
+        {value ? <Text style={[styles.itemValueText, { color: colors.TEXT_SECONDARY }, valueStyle]}>{value}</Text> : null}
         {isSwitch ? (
           <Switch
             value={switchValue}
             onValueChange={onSwitchChange}
             disabled={disabled}
-            trackColor={{ false: colors.CARD_BORDER, true: colors.ACTION_VOICE || '#A855F7' }}
+            trackColor={{ false: colors.TEXT_MUTED, true: colors.ACTION_VOICE || '#A855F7' }}
+            ios_backgroundColor={colors.TEXT_MUTED}
             thumbColor={colors.WHITE}
           />
         ) : hasChevron ? (
@@ -66,7 +65,7 @@ export function LogoutButton({ onPress }) {
   );
 }
 
-export default function MoreSettings({ appNotifications, emailPreferences, onAppNotificationsChange, onItemPress }) {
+export default function MoreSettings({ appNotifications, emailPreferences, languageLabel, onAppNotificationsChange, onItemPress }) {
   const colors = useAppColors();
 
   return (
@@ -75,8 +74,11 @@ export default function MoreSettings({ appNotifications, emailPreferences, onApp
         <SettingGroup key={group.title} colors={colors} title={group.title}>
           {group.items.map((item) => {
             const { key, ...settingItemProps } = item;
+            const dynamicProps = key === "language"
+              ? { value: languageLabel, valueStyle: styles.languageValueText, hasChevron: true }
+              : {};
 
-            return <SettingItem key={key} colors={colors} {...settingItemProps} onPress={() => onItemPress(item)} />;
+            return <SettingItem key={key} colors={colors} {...settingItemProps} {...dynamicProps} onPress={() => onItemPress(item)} />;
           })}
         </SettingGroup>
       ))}
@@ -85,6 +87,7 @@ export default function MoreSettings({ appNotifications, emailPreferences, onApp
         <SettingItem
           colors={colors}
           icon="notifications-outline"
+          image={notificationIcon}
           title="Thông báo ứng dụng"
           isSwitch
           switchValue={appNotifications}
@@ -93,6 +96,7 @@ export default function MoreSettings({ appNotifications, emailPreferences, onApp
         <SettingItem
           colors={colors}
           icon="mail-outline"
+          image={mailReminderIcon}
           title="Nhắc nhở qua Email"
           isSwitch
           switchValue={emailPreferences.isDailyEnabled}
@@ -152,12 +156,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   itemIconWrap: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
+    width: 34,
+    height: 34,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 1,
+  },
+  itemIconImage: {
+    width: 26,
+    height: 26,
   },
   itemTitle: {
     fontSize: 14,
@@ -172,6 +178,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "600",
     marginRight: 6,
+  },
+  languageValueText: {
+    color: "#EF4444",
+    fontWeight: "900",
   },
   logoutButton: {
     flexDirection: "row",

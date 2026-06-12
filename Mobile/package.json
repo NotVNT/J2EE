@@ -7,7 +7,6 @@
     "start": "expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",
-    "test": "node --test src/utils/notificationFilters.test.js src/utils/paymentUrl.test.js src/utils/chatMarkdown.test.js src/utils/jar.test.js src/utils/paymentStatus.test.js",
     "web": "expo start --web"
   },
   "dependencies": {

@@ -2,57 +2,21 @@ import { useCallback, useMemo, useState } from "react";
 import { Alert } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { SUCCESS_ALERT_MESSAGES, SUCCESS_ALERT_TITLE } from "../constants/alertMessages";
-import { useVisibleItems } from "../components/common/ShowMoreButton";
-import {
-  deleteExpenseById,
-  exportExpenseReport,
-  fetchExpensesByFilter,
-  parseExpenseVoice
-} from "../services/expenseService";
+import { deleteExpenseById, exportExpenseReport, fetchExpensesByFilter, parseExpenseVoice } from "../services/expenseService";
 import { getApiErrorMessage } from "../utils/format";
 
-const CURRENT_EXPENSE_FILTER = "current";
-
-function searchExpenses(expenses, searchQuery) {
-  const keyword = searchQuery.toLowerCase().trim();
-  if (!keyword) {
-    return expenses;
-  }
-
-  return expenses.filter(
-    (item) =>
-      (item.name || "").toLowerCase().includes(keyword) ||
-      (item.note || "").toLowerCase().includes(keyword) ||
-      (item.categoryName || "").toLowerCase().includes(keyword)
-  );
-}
+export const EXPENSE_FILTER_TYPES = {
+  current: "current",
+  all: "all"
+};
 
 export default function useExpenses() {
   const [expenses, setExpenses] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filterType, setFilterType] = useState(CURRENT_EXPENSE_FILTER);
+  const [filterType, setFilterType] = useState(EXPENSE_FILTER_TYPES.current);
   const [isExporting, setIsExporting] = useState(false);
 
-  const filteredExpenses = useMemo(
-    () => searchExpenses(expenses, searchQuery),
-    [expenses, searchQuery]
-  );
-
-  const totalExpense = useMemo(() => {
-    return expenses.reduce((sum, item) => sum + Number(item?.amount || 0), 0);
-  }, [expenses]);
-
-  const {
-    visibleItems: visibleExpenses,
-    canToggle: canToggleExpenses,
-    expanded: expandedExpenses,
-    toggle: toggleExpenses
-  } = useVisibleItems(filteredExpenses, {
-    initialCount: 3,
-    mode: "toggle",
-    resetKey: `${filterType}|${searchQuery.trim()}`
-  });
+  const totalExpense = useMemo(() => expenses.reduce((sum, item) => sum + Number(item?.amount || 0), 0), [expenses]);
 
   const fetchExpenses = useCallback(async () => {
     const data = await fetchExpensesByFilter(filterType);
@@ -124,8 +88,6 @@ export default function useExpenses() {
 
   return {
     expenses,
-    expandedExpenses,
-    filteredExpenses,
     filterType,
     handleExport,
     handleVoiceResult,
@@ -133,13 +95,7 @@ export default function useExpenses() {
     onDelete,
     onRefresh,
     refreshing,
-    searchQuery,
     setFilterType,
-    setSearchQuery,
-    totalExpense,
-    toggleExpenses,
-    canToggleExpenses,
-    visibleExpenses,
-    fetchExpenses
+    totalExpense
   };
 }
