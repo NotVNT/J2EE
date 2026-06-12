@@ -154,6 +154,15 @@ const normalizeIntentMessage = (message) => String(message || "")
   .replace(/\s+/g, " ")
   .trim();
 
+/**
+ * BUG-04 + BUG-05: Normalize "là" between category/keyword and amount.
+ * "lương là 5000000" → "lương 5000000"
+ * "tháng 6 là 8000000" → "tháng 6 8000000"
+ * This prevents "là" from breaking category resolution and month detection.
+ */
+const normalizeIsParticle = (message) =>
+  String(message || "").replace(/\s+là\s+(\d)/gi, " $1");
+
 const ACTION_PHRASES = [
   "cap nhat",
   "ghi nhan",
@@ -161,16 +170,30 @@ const ACTION_PHRASES = [
   "gui qua mail",
   "gui email",
   "gui mail",
+  "goi qua email",
+  "goi qua mail",
+  "goi email",
+  "goi mail",
+  "gui bao cao",
+  "goi bao cao",
 ];
 
-const ACTION_WORD_PATTERN = /\b(them|tao|ghi|nap|xoa|bo|huy|sua|chinh|doi|update|xuat|tai|download|export|chuyen|transfer|add|delete|remove)\b/i;
+const ACTION_WORD_PATTERN = /\b(them|tao|ghi|nap|xoa|bo|huy|sua|chinh|doi|update|xuat|tai|download|export|chuyen|transfer|add|delete|remove|gui|goi)\b/i;
 const QUESTION_HINT_PATTERN = /\b(bao nhieu|tong|thong ke|liet ke|xem|cho biet|hien|tom tat|phan tich|bao cao|tinh hinh|dong tien|tra cuu|the nao|con bao nhieu|con du|het bao nhieu|kiem duoc)\b/i;
 const FINANCIAL_DOMAIN_PATTERN = /\b(thu nhap|luong|income|chi tieu|expense|ngan sach|budget|tiet kiem|saving|muc tieu|goal|hu|jar|so du|tieu|kiem duoc)\b/i;
-const TIME_RANGE_PATTERN = /\b(hom nay|hom qua|tuan nay|tuan qua|tuan truoc|thang nay|thang qua|thang truoc|quy nay|quy truoc|nam nay|nam truoc|gan day)\b/i;
-const AMOUNT_PATTERN = /\b\d+(?:[.,]\d+)?\s*(?:k|nghin|ngan|tr|trieu|m|cu|dong)?\b/i;
+// BUG-05: Added tháng [1-12] pattern to detect specific months (not just tháng này/trước)
+const TIME_RANGE_PATTERN = /\b(hom nay|hom qua|tuan nay|tuan qua|tuan truoc|thang nay|thang qua|thang truoc|thang\s*(?:1[0-2]|[1-9])|quy nay|quy truoc|nam nay|nam truoc|gan day)\b/i;
+// BUG-05 fix: bare numbers without a unit must be ≥4 digits (≥1000) to qualify as an amount,
+// so that the month number in "tháng 6" (a single digit) is not falsely treated as an amount.
+const AMOUNT_PATTERN = /\b\d+(?:[.,]\d+)?\s*(?:k|nghin|ngan|tr|trieu|m|cu|dong)\b|\b\d{4,}(?:[.,]\d+)?\b/i;
+
+// BUG-07: Patterns to distinguish email report types
+const EMAIL_INCOME_PATTERN = /\b(thu nhap|luong|income)\b/i;
+const EMAIL_EXPENSE_PATTERN = /\b(chi tieu|chi phi|expense)\b/i;
 
 export const hasExplicitActionVerb = (message) => {
-  const normalizedMessage = normalizeIntentMessage(message);
+  // BUG-04+05: Strip "là" before amount so "lương là 5tr" → "lương 5tr" does not confuse parsing
+  const normalizedMessage = normalizeIntentMessage(normalizeIsParticle(message));
 
   if (!normalizedMessage) {
     return false;
@@ -184,7 +207,8 @@ export const hasExplicitActionVerb = (message) => {
 };
 
 export const isLikelyFinancialQuestion = (message) => {
-  const normalizedMessage = normalizeIntentMessage(message);
+  // BUG-04+05: Strip "là" before amount so month+amount combos are not misread as question context
+  const normalizedMessage = normalizeIntentMessage(normalizeIsParticle(message));
 
   if (!normalizedMessage || !FINANCIAL_DOMAIN_PATTERN.test(normalizedMessage)) {
     return false;
@@ -201,10 +225,27 @@ export const isLikelyFinancialQuestion = (message) => {
   const hasTimeRange = TIME_RANGE_PATTERN.test(normalizedMessage);
   const hasAmount = AMOUNT_PATTERN.test(normalizedMessage);
 
+  // BUG-05: "tháng 6 là 8000000" → after normalization becomes "tháng 6 8000000"
+  // hasAmount=true → not a question → returns false (correct: route to agent)
   return hasTimeRange && !hasAmount;
 };
 
+/**
+ * BUG-07: Discriminate email report intent by checking for income/expense keywords in the message.
+ * Returns "EMAIL_INCOME_REPORT", "EMAIL_EXPENSE_REPORT", or null (use default/page-context logic).
+ */
+export const discriminateEmailReportIntent = (message) => {
+  const normalized = normalizeIntentMessage(message);
+  const hasIncome = EMAIL_INCOME_PATTERN.test(normalized);
+  const hasExpense = EMAIL_EXPENSE_PATTERN.test(normalized);
+  // Income keyword wins if both present (rare), otherwise use whichever matches
+  if (hasIncome && !hasExpense) return "EMAIL_INCOME_REPORT";
+  if (hasExpense && !hasIncome) return "EMAIL_EXPENSE_REPORT";
+  return null; // ambiguous — caller falls back to page context / model classification
+};
+
 export const shouldPreferQuestionFlow = (intent, intentType, message) => {
+  if (isExportEmailIntent(intent)) return false;
   return isActionIntent(intent, intentType) && isLikelyFinancialQuestion(message);
 };
 
@@ -310,8 +351,8 @@ export const getFieldsForIntent = (intent) => {
     case INTENT_TYPES.UPDATE_CATEGORY:
       return [
         { key: "name", label: "Tên danh mục", type: "text", required: true },
-        { key: "icon", label: "Icon", type: "text", required: false },
-        { key: "type", label: "Loại (income/expense)", type: "text", required: true }
+        { key: "icon", label: "Icon (emoji hoặc tên icon)", type: "text", required: false },
+        { key: "type", label: "Loại danh mục", type: "select", options: [{ value: "expense", label: "Chi tiêu" }, { value: "income", label: "Thu nhập" }], required: true }
       ];
     case INTENT_TYPES.CREATE_EXPENSE:
       return [

@@ -122,6 +122,18 @@ public class ExpenseService {
         return expensePage.getContent().stream().map(this::toDTO).toList();
     }
 
+    // Get single expense by id for current user (used by AI confirmation form pre-fill)
+    @Transactional(readOnly = true)
+    public ExpenseDTO getExpenseById(Long expenseId) {
+        ProfileEntity profile = profileService.getCurrentProfile();
+        ExpenseEntity entity = expenseRepository.findById(expenseId)
+                .orElseThrow(() -> new RuntimeException("Expense not found"));
+        if (!entity.getProfile().getId().equals(profile.getId())) {
+            throw new RuntimeException("Unauthorized to access this expense");
+        }
+        return toDTO(entity);
+    }
+
     // Delete expense by id for current user
     @Transactional
     public void deleteExpense(Long expenseId) {

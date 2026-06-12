@@ -32,6 +32,7 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -197,8 +198,77 @@ class AIOrchestrationServiceEmailReportIntentRegressionTest {
     }
 
     @Test
-    @DisplayName("REGRESSION: aiChat intent request must keep 10 history messages and remind integer amounts")
-    void parseIntentFromChat_keepsLongerHistoryAndAddsAmountReminder() {
+    @DisplayName("REGRESSION: non-JSON agent command reply must still open confirmation")
+    void parseIntentFromChat_reclassifiesNonJsonCreateExpenseReply() {
+        ProfileEntity basicProfile = ProfileEntity.builder()
+                .id(7L)
+                .subscriptionPlan(SubscriptionPlan.BASIC)
+                .build();
+
+        AIIntentRequestDTO request = AIIntentRequestDTO.builder()
+                .provider("gemini")
+                .model("gemini-3.1-flash-lite")
+                .sessionId("session-non-json")
+                .pageContext("aiChat")
+                .userMessage("Them chi tieu an trua cung dong nghiep 75k danh muc An uong hom nay")
+                .build();
+
+        stubAiChatBaseContext(basicProfile);
+        when(categoryService.getCategoriesForCurrentUser()).thenReturn(List.of(
+                CategoryDTO.builder().id(1L).name("An uong").type("expense").createdAt(LocalDateTime.now()).updatedAt(LocalDateTime.now()).build()
+        ));
+        when(aiChatService.chatWithSystemPrompt(anyString(), any(AIChatRequestDTO.class)))
+                .thenReturn(
+                        "Minh dang o che do Chat nen chua the thao tac truc tiep.",
+                        "Ban vui long chuyen sang che do Agent de thuc hien giao dich."
+                );
+
+        AIIntentResponseDTO response = aiOrchestrationService.parseIntentFromChat(request);
+
+        assertEquals("CREATE_EXPENSE", response.getIntent());
+        assertEquals("ACTION", response.getIntentType());
+        assertEquals("NEED_CONFIRMATION", response.getStatus());
+        assertEquals(new BigDecimal("75000"), response.getExtractedFields().get("amount"));
+        assertEquals("An uong", response.getExtractedFields().get("categoryName"));
+        assertEquals(LocalDate.now().toString(), response.getExtractedFields().get("date"));
+        assertTrue(response.getMissingFields().isEmpty());
+    }
+
+    @Test
+    @DisplayName("REGRESSION: provider failure on clear agent command must still open confirmation")
+    void parseIntentFromChat_reclassifiesCreateExpenseWhenProviderFails() {
+        ProfileEntity basicProfile = ProfileEntity.builder()
+                .id(7L)
+                .subscriptionPlan(SubscriptionPlan.BASIC)
+                .build();
+
+        AIIntentRequestDTO request = AIIntentRequestDTO.builder()
+                .provider("gemini")
+                .model("gemini-3.1-flash-lite")
+                .sessionId("session-provider-failure")
+                .pageContext("aiChat")
+                .userMessage("Them chi tieu an trua 75k danh muc An uong hom nay")
+                .build();
+
+        stubAiChatBaseContext(basicProfile);
+        when(categoryService.getCategoriesForCurrentUser()).thenReturn(List.of(
+                CategoryDTO.builder().id(1L).name("An uong").type("expense").createdAt(LocalDateTime.now()).updatedAt(LocalDateTime.now()).build()
+        ));
+        when(aiChatService.chatWithSystemPrompt(anyString(), any(AIChatRequestDTO.class)))
+                .thenThrow(new RuntimeException("provider unavailable"));
+
+        AIIntentResponseDTO response = aiOrchestrationService.parseIntentFromChat(request);
+
+        assertEquals("CREATE_EXPENSE", response.getIntent());
+        assertEquals("ACTION", response.getIntentType());
+        assertEquals("NEED_CONFIRMATION", response.getStatus());
+        assertEquals(new BigDecimal("75000"), response.getExtractedFields().get("amount"));
+        assertEquals("An uong", response.getExtractedFields().get("categoryName"));
+    }
+
+    @Test
+    @DisplayName("REGRESSION: aiChat intent request trims recent history and reminds integer amounts")
+    void parseIntentFromChat_trimsRecentHistoryAndAddsAmountReminder() {
         ProfileEntity basicProfile = ProfileEntity.builder()
                 .id(7L)
                 .subscriptionPlan(SubscriptionPlan.BASIC)
@@ -234,7 +304,7 @@ class AIOrchestrationServiceEmailReportIntentRegressionTest {
         verify(aiChatService).chatWithSystemPrompt(anyString(), chatRequestCaptor.capture());
         AIChatRequestDTO chatRequest = chatRequestCaptor.getValue();
 
-        assertEquals(11, chatRequest.getMessages().size());
+        assertEquals(5, chatRequest.getMessages().size());
         assertTrue(chatRequest.getMessages().get(chatRequest.getMessages().size() - 1).getContent().contains("amount/targetAmount/currentAmount"));
         assertTrue(chatRequest.getMessages().get(chatRequest.getMessages().size() - 1).getContent().contains("75000"));
     }

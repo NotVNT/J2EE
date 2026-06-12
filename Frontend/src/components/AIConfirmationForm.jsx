@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { Check, X, ChevronDown } from "lucide-react";
+import { Check, X, ChevronDown, Loader2 } from "lucide-react";
 import * as Lucide from "lucide-react";
 import { getFieldsForIntent, INTENT_ICONS, INTENT_LABELS, normalizeAmountInput } from "../util/aiIntentParser.js";
 import axiosConfig from "../util/axiosConfig.jsx";
@@ -203,8 +203,66 @@ const AIConfirmationForm = ({ intent, extractedFields, suggestedValues, confirma
   const [jars, setJars] = useState([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
   const [loadingJars, setLoadingJars] = useState(false);
+  const [loadingOriginalRecord, setLoadingOriginalRecord] = useState(false);
   const fields = useMemo(() => getFieldsForIntent(intent), [intent]);
   const [formData, setFormData] = useState(() => buildInitialFormData(fields, extractedFields, suggestedValues));
+  const [submitError, setSubmitError] = useState(null);
+
+  // BUG-03: Fetch original record for UPDATE intents to pre-fill fields not provided by AI
+  useEffect(() => {
+    const isUpdateExpense = intent === "UPDATE_EXPENSE";
+    const isUpdateIncome = intent === "UPDATE_INCOME";
+    if (!isUpdateExpense && !isUpdateIncome) return;
+
+    const recordId = extractedFields?.expenseId || extractedFields?.incomeId
+      || suggestedValues?.expenseId || suggestedValues?.incomeId;
+    if (!recordId) return;
+
+    const fetchOriginalRecord = async () => {
+      setLoadingOriginalRecord(true);
+      try {
+        const endpoint = isUpdateExpense
+          ? API_ENDPOINTS.GET_EXPENSE_BY_ID(recordId)
+          : API_ENDPOINTS.GET_INCOME_BY_ID(recordId);
+        const res = await axiosConfig.get(endpoint);
+        const record = res.data;
+        // Merge strategy: AI-provided fields override original, rest keep original
+        setFormData((prev) => {
+          const merged = {};
+          fields.forEach((field) => {
+            const aiHasValue = (extractedFields?.[field.key] !== undefined && extractedFields?.[field.key] !== null && extractedFields?.[field.key] !== "")
+              || (suggestedValues?.[field.key] !== undefined && suggestedValues?.[field.key] !== null && suggestedValues?.[field.key] !== "");
+            const prevHasValue = prev[field.key] !== undefined && prev[field.key] !== null && prev[field.key] !== "";
+            if (aiHasValue || prevHasValue) {
+              // Keep AI-provided / user-entered value
+              merged[field.key] = prev[field.key];
+            } else {
+              // Fall back to original record
+              // Map form key "description" to backend DTO key "name" for expense/income
+              const backendKey = field.key === "description" ? "name" : field.key;
+              const recordValue = record[backendKey];
+              if (field.type === "date") {
+                merged[field.key] = normalizeToIsoDate(recordValue) || recordValue || "";
+              } else if (field.type === "number") {
+                merged[field.key] = recordValue !== undefined && recordValue !== null ? normalizeAmountInput(recordValue) : "";
+              } else {
+                merged[field.key] = recordValue !== undefined && recordValue !== null ? recordValue : "";
+              }
+            }
+          });
+          return merged;
+        });
+      } catch {
+        // If fetch fails, keep AI-provided fields — don't crash
+        console.warn("[AIConfirmationForm] Could not fetch original record for pre-fill");
+      } finally {
+        setLoadingOriginalRecord(false);
+      }
+    };
+
+    void fetchOriginalRecord();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [intent, extractedFields?.expenseId, extractedFields?.incomeId]);
 
   useEffect(() => {
     const categoryTypes = [...new Set(
@@ -256,13 +314,28 @@ const AIConfirmationForm = ({ intent, extractedFields, suggestedValues, confirma
 
   const handleFieldChange = (key, value) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
+    setSubmitError(null);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     const mergedData = { ...suggestedValues, ...extractedFields, ...formData };
-    const normalizedData = {};
 
+    // Validate required fields before submitting
+    const missingLabels = fields
+      .filter((field) => {
+        if (!field.required) return false;
+        const value = mergedData[field.key];
+        return value === null || value === undefined || value === "";
+      })
+      .map((field) => field.label);
+
+    if (missingLabels.length > 0) {
+      setSubmitError(`Vui lòng điền đầy đủ các trường bắt buộc: ${missingLabels.join(", ")}`);
+      return;
+    }
+
+    const normalizedData = {};
     for (const [key, value] of Object.entries(mergedData)) {
       const fieldDefinition = fields.find((field) => field.key === key);
       normalizedData[key] = fieldDefinition?.type === "number"
@@ -302,6 +375,14 @@ const AIConfirmationForm = ({ intent, extractedFields, suggestedValues, confirma
         <div className="flex items-start gap-2.5 rounded-xl bg-slate-50/80 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/5 p-3.5 mb-4 text-xs text-slate-600 dark:text-slate-300">
           <Lucide.Sparkles size={14} className="text-violet-500 dark:text-violet-400 shrink-0 mt-0.5 animate-bounce" />
           <p className="leading-relaxed">{confirmationPrompt}</p>
+        </div>
+      )}
+
+      {/* Loading indicator for original record pre-fill (BUG-03) */}
+      {loadingOriginalRecord && (
+        <div className="flex items-center gap-2 text-xs text-violet-500 dark:text-violet-400 mb-3 animate-pulse">
+          <Loader2 size={13} className="animate-spin shrink-0" />
+          <span>Đang tải dữ liệu gốc để điền sẵn...</span>
         </div>
       )}
 
@@ -350,6 +431,19 @@ const AIConfirmationForm = ({ intent, extractedFields, suggestedValues, confirma
                     className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-100/50 dark:hover:bg-slate-800/80 px-3.5 py-2.5 text-sm text-slate-800 dark:text-slate-200 outline-none transition-all duration-200 focus:border-violet-500 dark:focus:border-violet-400 focus:ring-1 focus:ring-violet-500/20 dark:focus:ring-violet-500/20"
                     required={field.required}
                   />
+                ) : field.type === "select" ? (
+                  <select
+                    value={formData[field.key] || ""}
+                    onChange={(e) => handleFieldChange(field.key, e.target.value)}
+                    required={field.required}
+                    disabled={isProcessing}
+                    className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-100/50 dark:hover:bg-slate-800/80 px-3.5 py-2.5 text-sm text-slate-800 dark:text-slate-200 outline-none transition-all duration-200 focus:border-violet-500 dark:focus:border-violet-400 focus:ring-1 focus:ring-violet-500/20 dark:focus:ring-violet-500/20 disabled:opacity-50 cursor-pointer"
+                  >
+                    <option value="">-- Chọn --</option>
+                    {(field.options || []).map((opt) => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
                 ) : (
                   <input
                     type="text"
@@ -366,11 +460,19 @@ const AIConfirmationForm = ({ intent, extractedFields, suggestedValues, confirma
           })}
         </div>
 
+        {/* Required-field validation error */}
+        {submitError && (
+          <div className="text-xs text-red-500 dark:text-red-400 mt-2 flex items-center gap-1.5">
+            <Lucide.AlertCircle size={13} className="shrink-0" />
+            {submitError}
+          </div>
+        )}
+
         {/* Action buttons with modern gradients */}
         <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100 dark:border-white/5 mt-5">
           <button
             type="submit"
-            disabled={isProcessing}
+            disabled={isProcessing || loadingOriginalRecord}
             className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 active:scale-95 text-white px-5 py-2.5 text-sm font-semibold transition-all duration-150 shadow-[0_4px_12px_rgba(16,185,129,0.15)] hover:shadow-[0_4px_16px_rgba(16,185,129,0.25)] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
             {isProcessing ? (

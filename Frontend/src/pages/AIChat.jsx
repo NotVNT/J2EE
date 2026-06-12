@@ -14,6 +14,7 @@ import {
   clientTelemetry,
   isExportEmailIntent,
   shouldPreferQuestionFlow,
+  discriminateEmailReportIntent,
 } from "../util/aiIntentParser.js";
 import { useNavigate } from "react-router-dom";
 import { Sparkles, TrendingUp, Zap, MessageSquare } from "lucide-react";
@@ -137,16 +138,13 @@ const AIChat = () => {
     const isEditingExistingMessage = editingMessageIndex >= 0;
 
     if (pendingIntent && !isEditingExistingMessage) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `system-warn-${Date.now()}`,
-          role: "assistant",
-          content: "[Cần xác nhận] Vui lòng xác nhận hoặc hủy thao tác hiện tại trước khi gửi lệnh mới.",
-          isSystem: true
-        }
-      ]);
-      return;
+      // Auto-cancel the pending intent and allow the new message to go through
+      clientTelemetry.logConfirmationCancelled(pendingIntent.intent, pendingIntent.extractedFields);
+      setPendingIntent(null);
+      setMessages((prev) => prev.map((m) => {
+        if (m.isIntent && !m.isConfirmation && !m.isCancelled) return { ...m, isCancelled: true };
+        return m;
+      }));
     }
 
     setIsSending(true);
@@ -218,10 +216,10 @@ const AIChat = () => {
         setMessages(nextMessages);
 
         const resolvedSessionId = data.sessionId || activeSessionId;
+        await replaceEditedSessionHistory(resolvedSessionId, nextMessages);
         if (data.sessionId && !activeSessionId) {
           setActiveSessionId(data.sessionId);
         }
-        await replaceEditedSessionHistory(resolvedSessionId, nextMessages);
         debouncedFetchSessions();
         // KhÃƒÂ´ng return sÃ¡Â»â€ºm Ã¢â‚¬â€ Ã„â€˜Ã¡Â»Æ’ finally xÃ¡Â»Â­ lÃƒÂ½ setIsSending(false) thÃ¡Â»â€˜ng nhÃ¡ÂºÂ¥t
         return;
@@ -240,8 +238,13 @@ const AIChat = () => {
       const parsed = parseIntentResponse(intentResponse.data);
       const resolvedSessionId = intentResponse.data?.sessionId || activeSessionId;
 
-      if (intentResponse.data?.sessionId && !activeSessionId) {
-        setActiveSessionId(intentResponse.data.sessionId);
+      // BUG-07: If backend returned a generic email intent, override with keyword-based discrimination
+      // to distinguish EMAIL_INCOME_REPORT from EMAIL_EXPENSE_REPORT more reliably.
+      if (parsed.intent === "EMAIL_INCOME_REPORT" || parsed.intent === "EMAIL_EXPENSE_REPORT") {
+        const discriminated = discriminateEmailReportIntent(trimmedMessage);
+        if (discriminated && discriminated !== parsed.intent) {
+          parsed.intent = discriminated;
+        }
       }
 
       // Telemetry: log missing fields on ACTION intents
@@ -274,10 +277,10 @@ const AIChat = () => {
         setMessages(nextMessages);
 
         const fallbackSessionId = data.sessionId || resolvedSessionId || activeSessionId;
-        if (data.sessionId && !activeSessionId) {
-          setActiveSessionId(data.sessionId);
-        }
         await syncSessionHistory(fallbackSessionId, nextMessages);
+        if (intentResponse.data?.sessionId && !activeSessionId) {
+          setActiveSessionId(intentResponse.data.sessionId);
+        }
       } else if (isCrudIntent(parsed.intent) || isActionIntent(parsed.intent, parsed.intentType)) {
         // If action intent but missing required fields, still show confirmation form
         // (backend already populated missingFields Ã¢â‚¬â€ frontend should highlight them)
@@ -298,6 +301,9 @@ const AIChat = () => {
         ];
         setMessages(nextMessages);
         await replaceEditedSessionHistory(resolvedSessionId, updatedMessages);
+        if (intentResponse.data?.sessionId && !activeSessionId) {
+          setActiveSessionId(intentResponse.data.sessionId);
+        }
       } else if (parsed.intent === "ANSWER_QUESTION") {
         // Telemetry: if message looks like agent command but got ANSWER_QUESTION, log it
         const agentVerbPattern = /\b(them|tao|ghi|nhap|xoa|bo|huy|sua|chinh|doi|cap nhat|xuat|tai|chuyen|gui mail|gui email|gui qua email|gui qua mail|add|delete|remove|update|export|transfer)\b/i;
@@ -318,6 +324,9 @@ const AIChat = () => {
         ];
         setMessages(nextMessages);
         await replaceEditedSessionHistory(resolvedSessionId, nextMessages);
+        if (intentResponse.data?.sessionId && !activeSessionId) {
+          setActiveSessionId(intentResponse.data.sessionId);
+        }
       } else if (parsed.intent === "INVALID_REQUEST") {
         const isGuardedResponse = intentResponse.data?.provider === "nova-guard";
         const nextMessages = [
@@ -335,6 +344,9 @@ const AIChat = () => {
         ];
         setMessages(nextMessages);
         await replaceEditedSessionHistory(resolvedSessionId, updatedMessages);
+        if (intentResponse.data?.sessionId && !activeSessionId) {
+          setActiveSessionId(intentResponse.data.sessionId);
+        }
       } else {
         // Unrecognized intent Ã¢â‚¬â€ fall back to regular chat (only for genuine QUESTION-type intents)
         const { data } = await axiosConfig.post(API_ENDPOINTS.AI_CHAT, {
@@ -359,11 +371,13 @@ const AIChat = () => {
         ];
         setMessages(nextMessages);
         
-        const fallbackSessionId = data.sessionId || activeSessionId;
-        if (data.sessionId && !activeSessionId) {
+        const fallbackSessionId = data.sessionId || resolvedSessionId || activeSessionId;
+        await replaceEditedSessionHistory(fallbackSessionId, nextMessages);
+        if (intentResponse.data?.sessionId && !activeSessionId) {
+          setActiveSessionId(intentResponse.data.sessionId);
+        } else if (data.sessionId && !activeSessionId) {
           setActiveSessionId(data.sessionId);
         }
-        await replaceEditedSessionHistory(fallbackSessionId, nextMessages);
       }
       
       debouncedFetchSessions();
@@ -452,7 +466,7 @@ const AIChat = () => {
       setMessages((prev) => prev.map((m) => m.isIntent ? { ...m, isConfirmation: true } : m));
       setMessages((prev) => [
         ...prev,
-        { id: `result-${Date.now()}`, role: "assistant", content: resultContent, isSystem: true }
+        { id: `result-${Date.now()}`, role: "assistant", content: resultContent, isAgentResult: true }
       ]);
       if (undoData) {
         setMessages((prev) => [
@@ -493,8 +507,9 @@ const AIChat = () => {
       clientTelemetry.logConfirmationCancelled(pendingIntent.intent, pendingIntent.extractedFields);
     }
     setPendingIntent(null);
+    // Mark intent message as isCancelled (distinct from isConfirmation which means confirmed)
     setMessages((prev) => prev.map((m) => {
-      if (m.isIntent) return { ...m, isConfirmation: true };
+      if (m.isIntent && !m.isConfirmation && !m.isCancelled) return { ...m, isCancelled: true };
       return m;
     }));
     setMessages((prev) => [

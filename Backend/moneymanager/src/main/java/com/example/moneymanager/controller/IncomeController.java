@@ -41,6 +41,11 @@ public class IncomeController {
         return ResponseEntity.ok(incomes);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<IncomeDTO> getIncomeById(@PathVariable Long id) {
+        return ResponseEntity.ok(incomeService.getIncomeById(id));
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<?> updateIncome(@PathVariable Long id, @RequestBody IncomeDTO dto) {
         try {
