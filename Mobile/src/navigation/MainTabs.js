@@ -1,12 +1,12 @@
 import React, { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import AppIcon from "../components/ui/AppIcon";
 import { useAppColors } from "../constants/colors";
 import DashboardScreen from "../screens/dashboard/DashboardScreen";
 import ExpenseScreen from "../screens/finance/ExpenseScreen";
+import TransactionHistoryScreen from "../screens/finance/TransactionHistoryScreen";
 import MoreScreen from "../screens/profile/MoreScreen";
 import IncomeScreen from "../screens/finance/IncomeScreen";
 import BudgetScreen from "../screens/finance/BudgetScreen";
@@ -29,6 +29,12 @@ import { appNavigationRef } from "./navigationRef";
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 const hiddenHeaderOptions = { headerShown: false };
+const TAB_ICONS = {
+  home: require("../assets/accessories/home.png"),
+  categories: require("../assets/accessories/categories.png"),
+  history: require("../assets/accessories/history-money.png"),
+  settings: require("../assets/accessories/settings.png")
+};
 
 function EmptyScreen() {
   return <View style={{ flex: 1 }} />;
@@ -78,6 +84,7 @@ export function HomeStack() {
   return (
     <Stack.Navigator screenOptions={hiddenHeaderOptions}>
       <Stack.Screen name="Dashboard" component={DashboardScreen} />
+      <Stack.Screen name="Expense" component={ExpenseScreen} />
       <Stack.Screen name="AddExpense" component={ExpenseScreen} />
       <Stack.Screen name="AddIncome" component={IncomeScreen} />
       <Stack.Screen name="Income" component={IncomeScreen} />
@@ -106,7 +113,8 @@ export function CategoryStack() {
 export function ExpenseStack() {
   return (
     <Stack.Navigator screenOptions={hiddenHeaderOptions}>
-      <Stack.Screen name="ExpenseMain" component={ExpenseScreen} />
+      <Stack.Screen name="TransactionHistory" component={TransactionHistoryScreen} />
+      <Stack.Screen name="Expense" component={ExpenseScreen} />
       <Stack.Screen name="AddExpense" component={ExpenseScreen} />
       <Stack.Screen name="AddIncome" component={IncomeScreen} />
     </Stack.Navigator>
@@ -186,12 +194,11 @@ export default function MainTabs() {
       ? colors.TAB_ACTIVE_FG || colors.TEXT || "#1A0F14"
       : colors.TAB_INACTIVE || originalColor;
 
-  const tabIcon = (focusedName, outlineName) => ({ focused, color }) => (
-    <AppIcon
-      name={focused ? focusedName : outlineName}
-      size={20}
-      color={tabColor(focused, color)}
-      style={{ marginTop: 2 }}
+  const tabIcon = (source) => () => (
+    <Image
+      source={source}
+      style={styles.tabIconImage}
+      resizeMode="contain"
     />
   );
 
@@ -244,7 +251,7 @@ export default function MainTabs() {
           component={HomeStack}
           options={{
             tabBarLabel: tabLabel("Tổng quan"),
-            tabBarIcon: tabIcon("home", "home-outline"),
+            tabBarIcon: tabIcon(TAB_ICONS.home),
             tabBarButton: pillTabBarButton
           }}
         />
@@ -254,7 +261,7 @@ export default function MainTabs() {
           component={CategoryStack}
           options={{
             tabBarLabel: tabLabel("Danh mục"),
-            tabBarIcon: tabIcon("grid", "grid-outline"),
+            tabBarIcon: tabIcon(TAB_ICONS.categories),
             tabBarButton: pillTabBarButton
           }}
         />
@@ -285,7 +292,7 @@ export default function MainTabs() {
           component={ExpenseStack}
           options={{
             tabBarLabel: tabLabel("Lịch sử"),
-            tabBarIcon: tabIcon("calendar", "calendar-outline"),
+            tabBarIcon: tabIcon(TAB_ICONS.history),
             tabBarButton: pillTabBarButton
           }}
         />
@@ -295,7 +302,7 @@ export default function MainTabs() {
           component={SettingStack}
           options={{
             tabBarLabel: tabLabel("Cài đặt"),
-            tabBarIcon: tabIcon("settings", "settings-outline"),
+            tabBarIcon: tabIcon(TAB_ICONS.settings),
             tabBarButton: pillTabBarButton
           }}
         />
@@ -331,6 +338,11 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     marginBottom: 2,
     textAlign: "center"
+  },
+  tabIconImage: {
+    width: 22,
+    height: 22,
+    marginTop: 2
   },
   fabTabSlot: {
     flex: 1,
