@@ -219,11 +219,11 @@ public class AIOrchestrationService {
             if (answer != null) {
                 answer = AIContentGuard.sanitizeOutput(answer);
             }
-            // If AI answered with navigation instructions despite having data in context, use data directly
-            if ("ANSWER_QUESTION".equals(intent) && isNavigationAnswer(answer)) {
+            // Use loaded context directly for direct lookups, or when AI responds with app navigation.
+            if ("ANSWER_QUESTION".equals(intent)) {
                 String dataAnswer = buildDataAnswerFromPageData(userMessage, pageData);
-                if (dataAnswer != null) {
-                    log.info("JSON navigation answer replaced with data-computed answer");
+                if (dataAnswer != null && shouldAnswerFromPageData(userMessage, answer)) {
+                    log.info("JSON answer replaced with data-computed answer");
                     answer = dataAnswer;
                 }
             }
@@ -232,7 +232,8 @@ public class AIOrchestrationService {
             // ── Step 2: Heuristic reclassification ────────────────────────────
             // If AI returns ANSWER_QUESTION but the message has a clear agent verb, do not fall back
             final String finalUserMessage = userMessage;
-            if ("ANSWER_QUESTION".equals(intent) || "INVALID_REQUEST".equals(intent)) {
+            if (("ANSWER_QUESTION".equals(intent) || "INVALID_REQUEST".equals(intent))
+                    && !isDirectDataLookupQuestion(finalUserMessage)) {
                 String reclassified = reclassifyByPageContext(finalUserMessage, pageContext, trimmedHistory);
                 if (reclassified != null) {
                     intent = reclassified;
@@ -817,6 +818,21 @@ public class AIOrchestrationService {
                 || (n.contains("chua cung cap thong tin") && n.contains("giao dien ung dung"));
     }
 
+    private boolean shouldAnswerFromPageData(String userMessage, String answer) {
+        return isDirectDataLookupQuestion(userMessage)
+                || isNavigationAnswer(answer);
+    }
+
+    private boolean isDirectDataLookupQuestion(String userMessage) {
+        String msg = normalizeIntentText(userMessage);
+        boolean mentionsMetric = msg.matches(".*\\b(thu nhap|luong|income|doanh thu|kiem duoc|chi tieu|chi phi|expense|tieu het)\\b.*");
+        boolean hasLookupWord = msg.matches(".*\\b(tong|bao nhieu|thong ke|xem|cho biet|hien|hien thi|kiem duoc|tieu het)\\b.*");
+        boolean hasTimeScope = msg.matches(".*\\b(thang nay|thang hien tai|hom nay|tu truoc den nay)\\b.*");
+        boolean hasExplicitAction = msg.matches(".*\\b(them|tao|ghi|xoa|bo|huy|sua|chinh|doi|cap nhat|update|xuat|tai|download|export|gui(?:\\s+qua)?\\s+(?:mail|email)|email\\s+bao\\s+cao|mail\\s+bao\\s+cao)\\b.*");
+        boolean isAnalysisRequest = msg.matches(".*\\b(phan tich|goi y|tu van|tom tat|bao cao|tinh hinh tai chinh|dong tien)\\b.*");
+        return mentionsMetric && (hasLookupWord || hasTimeScope) && !hasExplicitAction && !isAnalysisRequest;
+    }
+
     /**
      * Builds a plain-Vietnamese answer directly from pageData for common income/expense queries.
      * Used as fallback when the AI returns navigation instructions instead of data.
@@ -825,8 +841,8 @@ public class AIOrchestrationService {
         if (pageData == null || pageData.isEmpty()) return null;
         String msg = normalizeIntentText(userMessage);
 
-        boolean asksIncome  = msg.matches(".*\\b(thu nhap|luong|income|kiem duoc)\\b.*");
-        boolean asksExpense = msg.matches(".*\\b(chi tieu|chi phi|expense)\\b.*");
+        boolean asksIncome  = msg.matches(".*\\b(thu nhap|luong|income|doanh thu|kiem duoc)\\b.*");
+        boolean asksExpense = msg.matches(".*\\b(chi tieu|chi phi|expense|tieu het)\\b.*");
         boolean asksThisMonth = msg.matches(".*\\b(thang nay|thang hien tai)\\b.*");
 
         if (asksIncome) {
