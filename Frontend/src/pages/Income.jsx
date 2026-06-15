@@ -16,8 +16,14 @@ import IncomeOverview from "../components/IncomeOverview.jsx";
 import TransactionCalendar from "../components/TransactionCalendar.jsx";
 import { AppContext } from "../context/AppContext.jsx";
 import { usePageTitle } from "../hooks/usePageTitle.js";
-import DateInput from "../components/DateInput.jsx";
-import { getMonthFilterValue, getTodayIsoDate, isIsoDateAfter } from "../util/dateInput.js";
+import { getTodayIsoDate, isIsoDateAfter } from "../util/dateInput.js";
+import { buildIncomeListUrl, buildIncomeReportPayload } from "../util/incomeFilters.js";
+
+const incomeFilterOptions = [
+  { value: "all", label: "Tất cả" },
+  { value: "current", label: "Tháng này" },
+  { value: "specific", label: "Chọn tháng" },
+];
 
 const Income = () => {
   useUser();
@@ -25,8 +31,8 @@ const Income = () => {
   const { user } = useContext(AppContext);
   const [incomeData, setIncomeData] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [filterType] = useState("all");
-  const [selectedMonthDate] = useState("");
+  const [filterType, setFilterType] = useState("all");
+  const [selectedMonthDate, setSelectedMonthDate] = useState(() => getTodayIsoDate().slice(0, 7));
   const [calendarMonth, setCalendarMonth] = useState(() => moment());
   const [openAddIncomeModal, setOpenAddIncomeModal] = useState(false);
   const [openEditIncomeModal, setOpenEditIncomeModal] = useState(false);
@@ -43,12 +49,12 @@ const Income = () => {
 
   const fetchIncomeDetails = useCallback(async () => {
     try {
-      let url = API_ENDPOINTS.GET_ALL_INCOMES;
-      if (filterType === "all") url += "?all=true";
-      else if (filterType === "specific" && selectedMonthDate) {
-        const [year, month] = getMonthFilterValue(selectedMonthDate).split("-");
-        url += `?month=${month}&year=${year}`;
-      }
+      const url = buildIncomeListUrl(API_ENDPOINTS.GET_ALL_INCOMES, {
+        filterType,
+        selectedMonth: selectedMonthDate,
+      });
+      if (!url) return;
+
       const response = await axiosConfig.get(url);
       if (response.status === 200) setIncomeData(response.data);
     } catch (error) {
@@ -131,13 +137,7 @@ const Income = () => {
   const handleDownloadIncomeDetails = async () => {
     if (exportLocked) { toast.error(exportUpgradeMessage); return; }
     try {
-      const now = new Date();
-      let payload = { month: now.getMonth() + 1, year: now.getFullYear() };
-      
-      if (filterType === "specific" && selectedMonthDate) {
-        const [year, month] = getMonthFilterValue(selectedMonthDate).split("-");
-        payload = { month: Number(month), year: Number(year) };
-      }
+      const payload = buildIncomeReportPayload({ filterType, selectedMonth: selectedMonthDate });
 
       const response = await axiosConfig.post(API_ENDPOINTS.GENERATE_INCOME_REPORT, payload);
       
@@ -181,11 +181,48 @@ const Income = () => {
     fetchIncomeDetails();
   }, [fetchIncomeDetails, filterType, selectedMonthDate]);
 
+  const handleFilterTypeChange = (event) => {
+    const nextFilterType = event.target.value;
+    setFilterType(nextFilterType);
+    if (nextFilterType === "specific" && !selectedMonthDate) {
+      setSelectedMonthDate(getTodayIsoDate().slice(0, 7));
+    }
+  };
+
   return (
     <Dashboard activeMenu="Income">
       <div className="space-y-4 sm:space-y-6">
 
         <IncomeOverview onAddIncome={() => setOpenAddIncomeModal(true)} />
+
+        <div className="card">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h5 className="text-base font-bold text-slate-900 dark:text-white">Bộ lọc thu nhập</h5>
+              <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+                Chọn phạm vi dữ liệu hiển thị trên lịch và danh sách thu nhập.
+              </p>
+            </div>
+
+            <div className="grid w-full grid-cols-1 gap-3 sm:w-auto sm:grid-cols-[180px_170px]">
+              <CustomSelect
+                value={filterType}
+                onChange={handleFilterTypeChange}
+                options={incomeFilterOptions}
+                className="w-full rounded-xl px-3 py-2 text-sm outline-none transition-colors bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white focus:border-violet-500 dark:focus:border-amber-500"
+              />
+
+              <input
+                type="month"
+                value={selectedMonthDate}
+                onChange={(event) => setSelectedMonthDate(event.target.value)}
+                disabled={filterType !== "specific"}
+                className="w-full rounded-xl px-3 py-2 text-sm outline-none transition-colors bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white disabled:cursor-not-allowed disabled:opacity-50 focus:border-violet-500 dark:focus:border-amber-500"
+                aria-label="Chọn tháng thu nhập"
+              />
+            </div>
+          </div>
+        </div>
 
         <TransactionCalendar
           key={`income-calendar-${filterType}-${selectedMonthDate || "current"}`}

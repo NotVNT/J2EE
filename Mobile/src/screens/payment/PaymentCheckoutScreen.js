@@ -4,9 +4,10 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { WebView } from "react-native-webview";
 import PaymentCheckoutFallback from "../../components/Payment/PaymentCheckoutFallback";
 import PaymentCheckoutHeader from "../../components/Payment/PaymentCheckoutHeader";
-import { COLORS, useAppColors } from "../../constants/colors";
+import { useAppColors } from "../../constants/colors";
 import usePaymentCheckoutFlow from "../../hooks/usePaymentCheckoutFlow";
 import { getSafeAreaBottom, getSafeAreaTop } from "../../utils/safeArea";
+import { scale } from "../../utils/layoutScale";
 
 const PAYOS_MERCHANT_HEADER_HEIGHT = 56;
 
@@ -19,22 +20,22 @@ export default function PaymentCheckoutScreen() {
     return <PaymentCheckoutFallback onBackToPayment={checkout.goBackToPayment} />;
   }
 
+  const isDark = colors.BG === '#0F0D0C';
+
   return (
-    <View style={[styles.container, { backgroundColor: colors.BG, paddingTop: getSafeAreaTop(insets), paddingBottom: getSafeAreaBottom(insets, 86) }]}> 
+    <View style={[styles.container, { backgroundColor: colors.BG, paddingTop: getSafeAreaTop(insets), paddingBottom: getSafeAreaBottom(insets, 86) }]}>
       <PaymentCheckoutHeader
-        canGoBack={checkout.canGoBack}
-        onGoBack={checkout.goBackInWebView}
         title={checkout.title}
       />
 
       {checkout.isPageLoading ? (
-        <View style={styles.loadingOverlay}>
+        <View style={[styles.loadingOverlay, { backgroundColor: isDark ? "rgba(44,44,46,0.94)" : "rgba(255,255,255,0.94)" }]}>
           <ActivityIndicator size="large" color={colors.PRIMARY} />
           <Text style={[styles.loadingText, { color: colors.TEXT }]}>Đang tải cổng thanh toán...</Text>
         </View>
       ) : null}
 
-      <View style={[styles.checkoutFrame, { backgroundColor: colors.CARD }]}> 
+      <View style={[styles.checkoutFrame, { backgroundColor: colors.CARD }]}>
         <WebView
           ref={checkout.webViewRef}
           style={styles.checkoutWebView}
@@ -58,28 +59,24 @@ export default function PaymentCheckoutScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.BG
   },
   loadingOverlay: {
     position: "absolute",
-    top: 100,
-    left: 16,
-    right: 16,
+    top: scale(100),
+    left: scale(16),
+    right: scale(16),
     zIndex: 10,
-    backgroundColor: "rgba(255,255,255,0.94)",
-    borderRadius: 16,
-    paddingVertical: 20,
+    borderRadius: scale(16),
+    paddingVertical: scale(20),
     alignItems: "center",
-    gap: 10
+    gap: scale(10)
   },
   loadingText: {
-    color: COLORS.TEXT,
     fontWeight: "600"
   },
   checkoutFrame: {
     flex: 1,
     overflow: "hidden",
-    backgroundColor: COLORS.CARD
   },
   checkoutWebView: {
     flex: 1,

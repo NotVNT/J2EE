@@ -5,6 +5,8 @@ import { INCOME_FILTER_TYPES } from "../../hooks/useIncomes";
 import { formatMoney } from "../../utils/format";
 import VoiceInputButton from "../common/VoiceInputButton";
 
+const MIC_ICON = require("../../assets/accessories/mic.png");
+
 export default function IncomeSummaryCard({
   filterType,
   incomeCount,
@@ -17,23 +19,23 @@ export default function IncomeSummaryCard({
   const colors = useAppColors();
 
   return (
-    <View style={[styles.summaryCard, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER, shadowColor: colors.TEXT }]}> 
+    <View style={[styles.summaryCard, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER, shadowColor: colors.TEXT }]}>
       <Text style={[styles.summaryLabel, { color: colors.TEXT_SECONDARY }]}>Tổng thu nhập</Text>
       <Text style={[styles.summaryAmount, { color: colors.INCOME }]}>{formatMoney(totalIncome)}</Text>
       <Text style={[styles.summaryHint, { color: colors.TEXT_SECONDARY }]}>{incomeCount} giao dịch</Text>
 
       <View style={styles.actionRowMain}>
-        <Pressable style={[styles.addButtonMain, { backgroundColor: colors.PRIMARY }]} onPress={onAddIncome}>
+        <Pressable style={[styles.addButtonMain, { backgroundColor: colors.ACTION_INCOME || colors.INCOME }]} onPress={onAddIncome}>
           <Text style={styles.addButtonText}>+ Thêm thu nhập</Text>
         </Pressable>
-        <VoiceInputButton onResult={onVoiceResult} />
+        <VoiceInputButton iconSource={MIC_ICON} noBackground onResult={onVoiceResult} />
       </View>
       <Pressable
-        style={[styles.exportButton, { backgroundColor: colors.BG, borderColor: colors.PRIMARY_LIGHT }, isExporting && styles.exportButtonDisabled]}
+        style={[styles.exportButton, { backgroundColor: colors.BG, borderColor: colors.INCOME_LIGHT }, isExporting && styles.exportButtonDisabled]}
         onPress={onExport}
         disabled={isExporting}
       >
-        <Text style={[styles.exportText, { color: colors.PRIMARY }]}> 
+        <Text style={[styles.exportText, { color: colors.ACTION_INCOME || colors.INCOME }]}>
           {isExporting
             ? "Đang tạo báo cáo..."
             : filterType === INCOME_FILTER_TYPES.all

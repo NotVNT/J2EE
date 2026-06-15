@@ -9,7 +9,10 @@ export function DashboardSectionHeader({ title, children }) {
 
   return (
     <View style={styles.sectionHeader}>
-      <Text style={[styles.sectionTitle, { color: colors.TEXT }]}>{title}</Text>
+      <View style={styles.titleRow}>
+        <View style={[styles.decorator, { backgroundColor: colors.PRIMARY }]} />
+        <Text style={[styles.sectionTitle, { color: colors.TEXT }]}>{title}</Text>
+      </View>
       {children}
     </View>
   );
@@ -18,7 +21,20 @@ export function DashboardSectionHeader({ title, children }) {
 export function DashboardSectionCard({ children }) {
   const colors = useAppColors();
 
-  return <View style={[styles.sectionCard, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}>{children}</View>;
+  return (
+    <View
+      style={[
+        styles.sectionCard,
+        {
+          backgroundColor: colors.SURFACE_ELEVATED || colors.CARD,
+          borderColor: colors.CARD_BORDER,
+          shadowColor: colors.SHADOW_COLOR || "#000",
+        },
+      ]}
+    >
+      {children}
+    </View>
+  );
 }
 
 export function ToggleSectionHeader({ title, visible, expanded, onPress }) {
@@ -34,7 +50,18 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginTop: scale(6)
+    marginTop: scale(10),
+    marginBottom: scale(4),
+  },
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  decorator: {
+    width: scale(4),
+    height: scale(15),
+    borderRadius: scale(2),
+    marginRight: scale(6),
   },
   sectionTitle: {
     color: COLORS.TEXT,
@@ -42,10 +69,13 @@ const styles = StyleSheet.create({
     fontWeight: "800"
   },
   sectionCard: {
-    backgroundColor: COLORS.CARD,
-    borderRadius: scale(14),
+    borderRadius: scale(16),
     borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
-    padding: scale(12)
+    padding: scale(16),
+    shadowOffset: { width: 0, height: scale(4) },
+    shadowOpacity: 0.08,
+    shadowRadius: scale(12),
+    elevation: scale(3),
+    marginBottom: scale(6),
   }
 });

@@ -3,6 +3,7 @@ import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput,
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { COLORS } from "../../constants/colors";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { scale, clampScale } from "../../utils/layoutScale";
 
 export default function SetupProfileScreen() {
   const navigation = useNavigation();
@@ -77,45 +78,45 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: -120,
     left: -100,
-    width: 300,
-    height: 300,
-    borderRadius: 150,
+    width: scale(300),
+    height: scale(300),
+    borderRadius: scale(150),
     backgroundColor: COLORS.PRIMARY_GLOW
   },
   bgGlowBottom: {
     position: "absolute",
     right: -140,
     bottom: -120,
-    width: 320,
-    height: 320,
-    borderRadius: 160,
+    width: scale(320),
+    height: scale(320),
+    borderRadius: scale(160),
     backgroundColor: COLORS.PRIMARY_GLOW
   },
   body: {
     flex: 1,
     justifyContent: "center",
-    paddingHorizontal: 28,
-    paddingBottom: 60
+    paddingHorizontal: scale(28),
+    paddingBottom: scale(60)
   },
   inputGroup: {
-    marginBottom: 24
+    marginBottom: scale(24)
   },
   inputLabel: {
     color: COLORS.PRIMARY_LIGHT,
     fontSize: 13,
     fontWeight: "600",
-    marginBottom: 8,
+    marginBottom: scale(8),
     letterSpacing: 0.3
   },
   inputWrap: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: COLORS.DARK_INPUT_BG,
-    borderRadius: 10,
-    borderWidth: 1,
+    borderRadius: scale(12),
+    borderWidth: 1.5,
     borderColor: COLORS.DARK_BORDER,
-    paddingHorizontal: 14,
-    height: 50
+    paddingHorizontal: scale(14),
+    height: scale(50)
   },
   inputWrapFocused: {
     borderColor: COLORS.PRIMARY,
@@ -127,9 +128,9 @@ const styles = StyleSheet.create({
     fontSize: 16
   },
   clearButton: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: scale(28),
+    height: scale(28),
+    borderRadius: scale(14),
     backgroundColor: COLORS.DARK_TEXT_SECONDARY,
     alignItems: "center",
     justifyContent: "center"
@@ -141,19 +142,24 @@ const styles = StyleSheet.create({
   },
   nextButton: {
     backgroundColor: COLORS.PRIMARY,
-    borderRadius: 24,
-    height: 50,
+    borderRadius: scale(12),
+    height: scale(50),
     alignItems: "center",
-    justifyContent: "center"
+    justifyContent: "center",
+    shadowColor: COLORS.PRIMARY,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 4,
   },
   nextButtonDisabled: {
     backgroundColor: COLORS.DARK_BORDER,
     opacity: 0.5
   },
   nextButtonText: {
-    color: COLORS.DARK_TEXT,
+    color: COLORS.WHITE || "#FFFFFF",
     fontSize: 16,
-    fontWeight: "700"
+    fontWeight: "800"
   },
   nextButtonTextDisabled: {
     color: COLORS.DARK_TEXT_SECONDARY

@@ -1,18 +1,17 @@
 import React, { useState } from "react";
-import { Text, Pressable, StyleSheet, View } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAppColors } from "../constants/colors";
-import FloatingQuickMenu, { FloatingTabButton } from "./FloatingQuickMenu";
 import DashboardScreen from "../screens/dashboard/DashboardScreen";
-import CategoryScreen from "../screens/finance/CategoryScreen";
 import ExpenseScreen from "../screens/finance/ExpenseScreen";
+import TransactionHistoryScreen from "../screens/finance/TransactionHistoryScreen";
 import MoreScreen from "../screens/profile/MoreScreen";
 import IncomeScreen from "../screens/finance/IncomeScreen";
 import BudgetScreen from "../screens/finance/BudgetScreen";
 import GoalScreen from "../screens/finance/GoalScreen";
+import CategoryScreen from "../screens/finance/CategoryScreen";
 import ForecastScreen from "../screens/insights/ForecastScreen";
 import ChatScreen from "../screens/insights/ChatScreen";
 import ReportsScreen from "../screens/insights/ReportsScreen";
@@ -22,25 +21,43 @@ import ProfileScreen from "../screens/profile/ProfileScreen";
 import EditProfileScreen from "../screens/profile/EditProfileScreen";
 import PaymentScreen from "../screens/payment/PaymentScreen";
 import PaymentCheckoutScreen from "../screens/payment/PaymentCheckoutScreen";
+import PaymentHistoryScreen from "../screens/payment/PaymentHistoryScreen";
 import PaymentResultScreen from "../screens/payment/PaymentResultScreen";
+import FloatingQuickMenu, { FloatingTabButton } from "./FloatingQuickMenu";
+import { appNavigationRef } from "./navigationRef";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
+const hiddenHeaderOptions = { headerShown: false };
+const TAB_ICONS = {
+  home: require("../assets/accessories/home.png"),
+  categories: require("../assets/accessories/categories.png"),
+  history: require("../assets/accessories/history-money.png"),
+  settings: require("../assets/accessories/settings.png")
+};
 
-// ─── Empty placeholder for center FAB tab slot ──────────
 function EmptyScreen() {
   return <View style={{ flex: 1 }} />;
 }
 
-function PillTabButton({ children, onPress, accessibilityState, suppressActive }) {
+function PillTabButton({ children, onPress, accessibilityState, suppressActive, style }) {
   const focused = accessibilityState?.selected && !suppressActive;
   const colors = useAppColors();
+  const activeBg = colors.ACTION_VOICE || "#A855F7";
+  const isDark = colors.BG === "#0F0D0C";
+  const hoverBg = isDark ? "rgba(168, 85, 247, 0.3)" : "#E9D5FF";
+
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [
+      style={({ pressed, hovered }) => [
         styles.pillButton,
-        (focused || pressed) && [styles.pillButtonActive, { backgroundColor: colors.TAB_ACTIVE_BG }],
+        style,
+        focused && { backgroundColor: activeBg },
+        pressed && { opacity: 0.85 },
+        hovered && {
+          backgroundColor: focused ? activeBg : hoverBg
+        }
       ]}
       unstable_pressDelay={0}
     >
@@ -48,8 +65,6 @@ function PillTabButton({ children, onPress, accessibilityState, suppressActive }
     </Pressable>
   );
 }
-
-// ─── Stack navigators for each tab ──────────────────────────
 
 function TabLabel({ label, color }) {
   return (
@@ -65,10 +80,11 @@ function TabLabel({ label, color }) {
   );
 }
 
-function HomeStack() {
+export function HomeStack() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={hiddenHeaderOptions}>
       <Stack.Screen name="Dashboard" component={DashboardScreen} />
+      <Stack.Screen name="Expense" component={ExpenseScreen} />
       <Stack.Screen name="AddExpense" component={ExpenseScreen} />
       <Stack.Screen name="AddIncome" component={IncomeScreen} />
       <Stack.Screen name="Income" component={IncomeScreen} />
@@ -86,40 +102,40 @@ function HomeStack() {
   );
 }
 
-function CategoryStack() {
+export function CategoryStack() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={hiddenHeaderOptions}>
       <Stack.Screen name="CategoryMain" component={CategoryScreen} />
     </Stack.Navigator>
   );
 }
 
-function ExpenseStack() {
+export function ExpenseStack() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="ExpenseMain" component={ExpenseScreen} />
+    <Stack.Navigator screenOptions={hiddenHeaderOptions}>
+      <Stack.Screen name="TransactionHistory" component={TransactionHistoryScreen} />
+      <Stack.Screen name="Expense" component={ExpenseScreen} />
       <Stack.Screen name="AddExpense" component={ExpenseScreen} />
+      <Stack.Screen name="AddIncome" component={IncomeScreen} />
     </Stack.Navigator>
   );
 }
 
-function SettingStack() {
+export function SettingStack() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={hiddenHeaderOptions}>
       <Stack.Screen name="MoreMain" component={MoreScreen} />
       <Stack.Screen name="Profile" component={ProfileScreen} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} />
       <Stack.Screen name="Payment" component={PaymentScreen} />
+      <Stack.Screen name="PaymentHistory" component={PaymentHistoryScreen} />
       <Stack.Screen name="PaymentCheckout" component={PaymentCheckoutScreen} />
       <Stack.Screen name="PaymentResult" component={PaymentResultScreen} />
     </Stack.Navigator>
   );
 }
 
-// ─── Main Tabs ──────────────────────────────────────────────
-
 export default function MainTabs() {
-  const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const colors = useAppColors();
   const [isQuickMenuVisible, setIsQuickMenuVisible] = useState(false);
@@ -130,28 +146,36 @@ export default function MainTabs() {
     setFloatingFocusedKey(routeName);
     setSuppressTabFocus(true);
     setIsQuickMenuVisible(false);
+
     const routeMap = {
       Income: "Income",
       Budget: "Budget",
       Forecast: "Forecast",
       Goal: "Goal",
-      Chat: "Chat",
+      Chat: "Chat"
     };
     const screen = routeMap[routeName] || routeName;
-    navigation.navigate("HomeTab", { screen });
+    appNavigationRef.current?.navigate("HomeTab", { screen });
   };
 
   const pillTabBarButton = (props) => {
     const originalOnPress = props.onPress;
+    const focused = props.accessibilityState?.selected && !suppressTabFocus;
+    const activeBg = colors.ACTION_VOICE || "#A855F7";
+
     return (
       <PillTabButton
         {...props}
         suppressActive={suppressTabFocus}
-        onPress={(e) => {
+        onPress={(event) => {
           setSuppressTabFocus(false);
           setFloatingFocusedKey(null);
-          originalOnPress?.(e);
+          originalOnPress?.(event);
         }}
+        style={[
+          styles.pillButton,
+          focused && { backgroundColor: activeBg }
+        ]}
       />
     );
   };
@@ -160,17 +184,22 @@ export default function MainTabs() {
     <View style={styles.fabTabSlot}>
       <FloatingTabButton
         isOpen={isQuickMenuVisible}
-        onPress={() => setIsQuickMenuVisible((prev) => !prev)}
+        onPress={() => setIsQuickMenuVisible((previousValue) => !previousValue)}
       />
     </View>
   );
 
-  // Override icon/label color when floating menu suppresses tab focus
   const tabColor = (focused, originalColor) =>
-    focused && suppressTabFocus ? colors.TAB_INACTIVE : originalColor;
+    focused && !suppressTabFocus
+      ? colors.TAB_ACTIVE_FG || colors.TEXT || "#1A0F14"
+      : colors.TAB_INACTIVE || originalColor;
 
-  const tabIcon = (emoji) => ({ focused, color }) => (
-    <Text style={{ color: tabColor(focused, color), fontSize: 17, marginTop: 4 }}>{emoji}</Text>
+  const tabIcon = (source) => () => (
+    <Image
+      source={source}
+      style={styles.tabIconImage}
+      resizeMode="contain"
+    />
   );
 
   const tabLabel = (label) => ({ focused, color }) => (
@@ -182,48 +211,48 @@ export default function MainTabs() {
       <Tab.Navigator
         screenOptions={{
           headerShown: false,
-          tabBarActiveTintColor: colors.TAB_ACTIVE,
+          tabBarActiveTintColor: colors.TAB_ACTIVE_FG || colors.TEXT || "#1A0F14",
           tabBarInactiveTintColor: colors.TAB_INACTIVE,
           tabBarLabelStyle: {
             fontSize: 10,
             fontWeight: "600",
-            marginBottom: 4,
+            marginBottom: 2
           },
           tabBarStyle: {
-            height: 70,
-            backgroundColor: colors.TAB_BG,
-            borderTopWidth: 1,
-            borderTopColor: colors.TAB_BORDER,
-            borderLeftWidth: 1,
-            borderLeftColor: colors.TAB_BORDER,
-            borderRightWidth: 1,
-            borderRightColor: colors.TAB_BORDER,
-            borderRadius: 20,
+            height: 72,
+            backgroundColor: colors.SURFACE,
+            borderTopWidth: 0.5,
+            borderTopColor: colors.BORDER,
+            borderLeftWidth: 0.5,
+            borderLeftColor: colors.BORDER,
+            borderRightWidth: 0.5,
+            borderRightColor: colors.BORDER,
+            borderRadius: 24,
             marginHorizontal: 16,
             marginBottom: Math.max(insets.bottom, 8),
-            paddingBottom: 6,
+            paddingBottom: 4,
             position: "absolute",
-            shadowColor: "#000",
+            shadowColor: colors.SHADOW_COLOR || "#000",
             shadowOffset: {
               width: 0,
-              height: 2,
+              height: 4
             },
-            shadowOpacity: 0.06,
-            shadowRadius: 8,
-            elevation: 3,
+            shadowOpacity: 0.08,
+            shadowRadius: 10,
+            elevation: 4
           },
           tabBarItemStyle: {
-            flex: 1,
-          },
+            flex: 1
+          }
         }}
       >
         <Tab.Screen
           name="HomeTab"
           component={HomeStack}
           options={{
-            tabBarLabel: tabLabel("Trang chủ"),
-            tabBarIcon: tabIcon("🏠"),
-            tabBarButton: pillTabBarButton,
+            tabBarLabel: tabLabel("Tổng quan"),
+            tabBarIcon: tabIcon(TAB_ICONS.home),
+            tabBarButton: pillTabBarButton
           }}
         />
 
@@ -232,30 +261,29 @@ export default function MainTabs() {
           component={CategoryStack}
           options={{
             tabBarLabel: tabLabel("Danh mục"),
-            tabBarIcon: tabIcon("📂"),
-            tabBarButton: pillTabBarButton,
+            tabBarIcon: tabIcon(TAB_ICONS.categories),
+            tabBarButton: pillTabBarButton
           }}
         />
 
-        {/* Center FAB — occupies 5th slot, evenly spaced between tabs */}
         <Tab.Screen
           name="FabCenter"
           component={EmptyScreen}
           options={{
             tabBarLabel: () => null,
             tabBarIcon: () => null,
-            tabBarButton: fabTabBarButton,
+            tabBarButton: fabTabBarButton
           }}
           listeners={{
-            tabPress: (e) => {
-              e.preventDefault();
-              setIsQuickMenuVisible((prev) => {
-                if (prev) {
+            tabPress: (event) => {
+              event.preventDefault();
+              setIsQuickMenuVisible((previousValue) => {
+                if (previousValue) {
                   setFloatingFocusedKey(null);
                 }
-                return !prev;
+                return !previousValue;
               });
-            },
+            }
           }}
         />
 
@@ -263,9 +291,9 @@ export default function MainTabs() {
           name="ExpenseTab"
           component={ExpenseStack}
           options={{
-            tabBarLabel: tabLabel("Chi tiêu"),
-            tabBarIcon: tabIcon("💸"),
-            tabBarButton: pillTabBarButton,
+            tabBarLabel: tabLabel("Lịch sử"),
+            tabBarIcon: tabIcon(TAB_ICONS.history),
+            tabBarButton: pillTabBarButton
           }}
         />
 
@@ -273,9 +301,9 @@ export default function MainTabs() {
           name="SettingTab"
           component={SettingStack}
           options={{
-            tabBarLabel: tabLabel("Hồ sơ"),
-            tabBarIcon: tabIcon("👤"),
-            tabBarButton: pillTabBarButton,
+            tabBarLabel: tabLabel("Cài đặt"),
+            tabBarIcon: tabIcon(TAB_ICONS.settings),
+            tabBarButton: pillTabBarButton
           }}
         />
       </Tab.Navigator>
@@ -298,26 +326,27 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    marginHorizontal: 2,
-    marginVertical: 6,
-    borderRadius: 999,
-    paddingHorizontal: 5,
-    backgroundColor: "transparent",
-  },
-  pillButtonActive: {
-    borderColor: "transparent",
+    marginHorizontal: 4,
+    marginVertical: 10,
+    borderRadius: 16,
+    backgroundColor: "transparent"
   },
   tabLabel: {
     width: "100%",
     maxWidth: 64,
     fontSize: 10,
     fontWeight: "700",
-    marginBottom: 4,
-    textAlign: "center",
+    marginBottom: 2,
+    textAlign: "center"
+  },
+  tabIconImage: {
+    width: 22,
+    height: 22,
+    marginTop: 2
   },
   fabTabSlot: {
     flex: 1,
     alignItems: "center",
-    justifyContent: "center",
-  },
+    justifyContent: "center"
+  }
 });

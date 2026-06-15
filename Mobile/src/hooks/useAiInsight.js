@@ -84,6 +84,14 @@ export function useAiInsight() {
     }
   }, [selectedMonth, selectedYear, availableMonths]);
 
+  const goToMonth = useCallback((month, year) => {
+    const found = availableMonths.find((m) => m.month === month && m.year === year);
+    if (found) {
+      setSelectedMonth(found.month);
+      setSelectedYear(found.year);
+    }
+  }, [availableMonths]);
+
   const goToNextMonth = useCallback(() => {
     const idx = availableMonths.findIndex(
       (m) => m.month === selectedMonth && m.year === selectedYear
@@ -144,6 +152,7 @@ export function useAiInsight() {
     availableMonths,
     goToPrevMonth,
     goToNextMonth,
+    goToMonth,
     canGoPrev,
     canGoNext,
     result,

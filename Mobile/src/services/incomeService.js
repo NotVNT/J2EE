@@ -16,6 +16,10 @@ export async function createIncome(payload) {
   return apiClient.post(API_ENDPOINTS.ADD_INCOME, payload);
 }
 
+export async function updateIncome(id, payload) {
+  return apiClient.put(API_ENDPOINTS.UPDATE_INCOME(id), payload);
+}
+
 export async function deleteIncomeById(id) {
   return apiClient.delete(API_ENDPOINTS.DELETE_INCOME(id));
 }

@@ -1,9 +1,11 @@
 import React, { useEffect, useRef } from "react";
-import { StyleSheet, Text, View, TextInput, Pressable, Platform, Animated } from "react-native";
+import { Image, StyleSheet, Text, View, TextInput, Pressable, Platform, Animated } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Svg, { Path, Rect } from "react-native-svg";
+import { Ionicons } from "@expo/vector-icons";
 import { COLORS, useAppColors } from "../../constants/colors";
 import { getSafeAreaBottom } from "../../utils/safeArea";
+
+const MIC_ICON = require("../../assets/accessories/mic.png");
 
 export default function ChatInputBar({
   value = "",
@@ -17,10 +19,8 @@ export default function ChatInputBar({
   isRecording
 }) {
   const colors = useAppColors();
-
   const insets = useSafeAreaInsets();
   const isDisabled = loading || disabled;
-
   const hasText = value.trim().length > 0;
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
@@ -35,35 +35,12 @@ export default function ChatInputBar({
       pulse.start();
       return () => pulse.stop();
     }
-
     pulseAnim.setValue(1);
   }, [isRecording, pulseAnim]);
 
-  const MicIcon = () => (
-    <Svg
-      width={18}
-      height={18}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke={COLORS.WHITE}
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <Path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-      <Path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-      <Path d="M12 19v4" />
-      <Path d="M8 23h8" />
-    </Svg>
-  );
-
-  const WaveformIcon = () => (
-    <Svg width={20} height={20} viewBox="0 0 24 24" fill={COLORS.WHITE}>
-      <Rect x="6" y="7" width="3" height="10" rx="1.5" />
-      <Rect x="10.5" y="4" width="3" height="16" rx="1.5" />
-      <Rect x="15" y="7" width="3" height="10" rx="1.5" />
-    </Svg>
-  );
+  // Premium Translucent background for glassmorphic effect
+  const isDark = colors.CHAT_BG === '#0F0A0F';
+  const glassBg = isDark ? "rgba(31, 26, 31, 0.85)" : "rgba(255, 255, 255, 0.85)";
 
   const renderRightAction = () => {
     if (loading && onStop) {
@@ -74,9 +51,7 @@ export default function ChatInputBar({
           accessibilityRole="button"
           accessibilityLabel="Dừng tạo phản hồi"
         >
-          <Svg width={14} height={14} viewBox="0 0 24 24" fill={COLORS.WHITE}>
-            <Rect x="4" y="4" width="16" height="16" rx="2" />
-          </Svg>
+          <Ionicons name="square" size={16} color={COLORS.WHITE} />
         </Pressable>
       );
     }
@@ -84,13 +59,11 @@ export default function ChatInputBar({
     if (hasText) {
       return (
         <Pressable
-          style={[styles.actionCircle, isDisabled && styles.actionCircleDisabled]}
+          style={[styles.actionCircle, { backgroundColor: colors.PRIMARY }, isDisabled && styles.actionCircleDisabled]}
           onPress={onSend}
           disabled={isDisabled}
         >
-          <Svg width={18} height={18} viewBox="0 0 24 24" fill={COLORS.WHITE}>
-            <Path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z" />
-          </Svg>
+          <Ionicons name="send" size={16} color={COLORS.WHITE} style={{ marginLeft: 2 }} />
         </Pressable>
       );
     }
@@ -107,7 +80,7 @@ export default function ChatInputBar({
             onPress={onMicPress}
             disabled={isDisabled}
           >
-            <WaveformIcon />
+            <Ionicons name="pulse" size={18} color={COLORS.WHITE} />
           </Pressable>
         </Animated.View>
       );
@@ -115,20 +88,20 @@ export default function ChatInputBar({
 
     return (
       <Pressable
-        style={[styles.actionCircle, isDisabled && styles.actionCircleDisabled]}
+        style={[styles.actionCircle, { backgroundColor: colors.PRIMARY }, isDisabled && styles.actionCircleDisabled]}
         onPress={onMicPress}
         disabled={isDisabled}
       >
-        <MicIcon />
+        <Image source={MIC_ICON} style={styles.micIcon} resizeMode="contain" />
       </Pressable>
     );
   };
 
   return (
     <View style={[styles.inputShell, { paddingBottom: getSafeAreaBottom(insets, 86) }]}> 
-      <View style={[styles.inputInner, { backgroundColor: colors.CHAT_BUBBLE, borderColor: colors.CHAT_BORDER, shadowColor: colors.PRIMARY }]}> 
+      <View style={[styles.inputInner, { backgroundColor: glassBg, borderColor: colors.CHAT_BORDER, shadowColor: colors.PRIMARY }]}> 
         <View style={styles.inputSparkle}>
-          <Text style={styles.inputSparkleText}>✦</Text>
+          <Ionicons name="sparkles" size={16} color={colors.PRIMARY} />
         </View>
 
         <TextInput
@@ -156,22 +129,19 @@ const styles = StyleSheet.create({
   },
   inputInner: {
     minHeight: 52,
-    paddingHorizontal: 6,
+    paddingHorizontal: 8,
     paddingVertical: 6,
     flexDirection: "row",
     alignItems: "center",
     borderRadius: 28,
-    backgroundColor: "rgba(255, 255, 255, 0.94)",
     borderWidth: 1,
-    borderColor: "rgba(239, 94, 131, 0.18)",
-    shadowColor: COLORS.PRIMARY,
-    shadowOpacity: 0.12,
-    shadowRadius: 14,
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
     shadowOffset: {
       width: 0,
-      height: 6,
+      height: 4,
     },
-    elevation: 4
+    elevation: 3
   },
   inputSparkle: {
     width: 36,
@@ -180,20 +150,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center"
   },
-  inputSparkleText: {
-    fontSize: 16,
-    color: COLORS.PRIMARY
-  },
   input: {
     flex: 1,
     fontSize: 14,
-    color: COLORS.CHAT_TEXT,
     paddingHorizontal: 6,
     paddingVertical: Platform.OS === "ios" ? 8 : 4,
     maxHeight: 80
   },
   inputDisabled: {
-    color: COLORS.CHAT_MUTED
+    opacity: 0.6
   },
   actionCircle: {
     width: 36,
@@ -201,10 +166,13 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: COLORS.PRIMARY
   },
   actionCircleDisabled: {
     backgroundColor: COLORS.CHAT_MUTED
+  },
+  micIcon: {
+    width: 20,
+    height: 20
   },
   actionCircleRecording: {
     backgroundColor: "#EF4444"

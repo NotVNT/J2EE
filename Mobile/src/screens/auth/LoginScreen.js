@@ -10,23 +10,23 @@ import {
   View,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import appLogo from "../../assets/applogo.png";
-import { COLORS } from "../../constants/colors";
+import appLogo from "../../assets/logo&banner/applogo.png";
+import { COLORS, useAppColors } from "../../constants/colors";
 import { scale, clampScale } from "../../utils/layoutScale";
 import useLoginActions from "../../hooks/useLoginActions";
 import LoginForm from "../../components/auth/LoginForm";
 
-function LoginLoadingOverlay() {
+function LoginLoadingOverlay({ colors }) {
   return (
     <View
-      style={styles.loadingOverlay}
+      style={[styles.loadingOverlay, { backgroundColor: colors.OVERLAY || "rgba(0, 0, 0, 0.5)" }]}
       pointerEvents="auto"
       accessibilityViewIsModal
       importantForAccessibility="yes"
     >
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={COLORS.PRIMARY} />
-        <Text style={styles.loadingText}>Devbot đang xác thực</Text>
+      <View style={[styles.loadingContainer, { backgroundColor: colors.SURFACE, borderColor: colors.BORDER }]}>
+        <ActivityIndicator size="large" color={colors.PRIMARY || "#7C4DFF"} />
+        <Text style={[styles.loadingText, { color: colors.TEXT }]}>MoneyManager đang xác thực</Text>
       </View>
     </View>
   );
@@ -34,6 +34,7 @@ function LoginLoadingOverlay() {
 
 export default function LoginScreen() {
   const navigation = useNavigation();
+  const colors = useAppColors();
   const {
     email,
     setEmail,
@@ -49,25 +50,26 @@ export default function LoginScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.screen}
+      style={[styles.screen, { backgroundColor: colors.APP_BACKGROUND || "#F2F2F7" }]}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      {loading || googleAuthLoading ? <LoginLoadingOverlay /> : null}
+      {loading || googleAuthLoading ? <LoginLoadingOverlay colors={colors} /> : null}
 
-      <View style={styles.bgGlowTop} />
-      <View style={styles.bgGlowBottom} />
+      <View style={[styles.bgGlowTop, { backgroundColor: colors.BADGE_POSITIVE_BG || "rgba(124, 77, 255, 0.08)" }]} />
+      <View style={[styles.bgGlowMiddle, { backgroundColor: colors.BADGE_POSITIVE_BG || "rgba(249, 115, 22, 0.05)" }]} />
+      <View style={[styles.bgGlowBottom, { backgroundColor: colors.BADGE_POSITIVE_BG || "rgba(124, 77, 255, 0.08)" }]} />
 
       <ScrollView
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.brandRow}>
+        <View style={[styles.brandRow, { shadowColor: colors.PRIMARY || "#7C4DFF" }]}>
           <Image source={appLogo} style={styles.brandLogo} resizeMode="contain" />
         </View>
 
-        <Text style={styles.title}>Đăng nhập tài khoản</Text>
-        <Text style={styles.subtitle}>Chào mừng bạn quay lại. Hãy chọn cách đăng nhập.</Text>
+        <Text style={[styles.title, { color: colors.TEXT }]}>Đăng nhập tài khoản</Text>
+        <Text style={[styles.subtitle, { color: colors.TEXT_SECONDARY }]}>Chào mừng bạn quay lại. Hãy chọn cách đăng nhập.</Text>
 
         <LoginForm
           email={email}
@@ -91,7 +93,6 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: COLORS.DARK_BG,
   },
   bgGlowTop: {
     position: "absolute",
@@ -100,7 +101,14 @@ const styles = StyleSheet.create({
     width: scale(300),
     height: scale(300),
     borderRadius: scale(150),
-    backgroundColor: COLORS.PRIMARY_GLOW,
+  },
+  bgGlowMiddle: {
+    position: "absolute",
+    top: "40%",
+    right: -100,
+    width: scale(180),
+    height: scale(180),
+    borderRadius: scale(90),
   },
   bgGlowBottom: {
     position: "absolute",
@@ -109,7 +117,6 @@ const styles = StyleSheet.create({
     width: scale(320),
     height: scale(320),
     borderRadius: scale(160),
-    backgroundColor: COLORS.PRIMARY_GLOW,
   },
   content: {
     flexGrow: 1,
@@ -121,20 +128,22 @@ const styles = StyleSheet.create({
   brandRow: {
     alignSelf: "center",
     marginBottom: scale(20),
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    elevation: 4,
   },
   brandLogo: {
     width: 90,
     height: 90,
   },
   title: {
-    color: COLORS.DARK_TEXT,
     fontSize: clampScale(24, 20, 28),
-    fontWeight: "700",
+    fontWeight: "800",
     textAlign: "center",
   },
   subtitle: {
     marginTop: scale(8),
-    color: COLORS.DARK_TEXT_SECONDARY,
     fontSize: clampScale(13, 11, 15),
     textAlign: "center",
   },
@@ -143,21 +152,17 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     padding: scale(20),
-    backgroundColor: COLORS.OVERLAY,
     zIndex: 999,
   },
   loadingContainer: {
-    backgroundColor: COLORS.DARK_CARD_SOLID,
     borderRadius: scale(16),
     borderWidth: 1,
-    borderColor: COLORS.DARK_BORDER,
     paddingVertical: scale(24),
     paddingHorizontal: scale(32),
     alignItems: "center",
     gap: scale(12),
   },
   loadingText: {
-    color: COLORS.DARK_TEXT,
     fontSize: clampScale(14, 12, 16),
     fontWeight: "600",
     textAlign: "center",

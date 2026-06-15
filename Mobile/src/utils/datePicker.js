@@ -309,6 +309,7 @@ export function PickDateField({
   const colors = useAppColors();
   const [visible, setVisible] = useState(false);
   const displayValue = value || placeholder;
+  const isDark = colors.BG === "#0F0D0C";
   const scale = useRef(new Animated.Value(1)).current;
 
   const handlePressIn = () => {
@@ -335,7 +336,13 @@ export function PickDateField({
 
       <Animated.View style={{ transform: [{ scale }] }}>
         <Pressable
-          style={[styles.field, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}
+          style={[
+            styles.field,
+            {
+              backgroundColor: isDark ? "rgba(255,255,255,0.04)" : colors.BG,
+              borderColor: isDark ? "rgba(255,255,255,0.16)" : colors.CARD_BORDER
+            }
+          ]}
           onPress={() => setVisible(true)}
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
@@ -378,11 +385,12 @@ const styles = StyleSheet.create({
   },
   field: {
     backgroundColor: COLORS.CARD,
-    borderRadius: 12,
-    borderWidth: 1,
+    borderRadius: 6,
+    borderWidth: 1.2,
     borderColor: COLORS.CARD_BORDER,
+    minHeight: 48,
     paddingHorizontal: 14,
-    paddingVertical: 11,
+    paddingVertical: 10,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between"

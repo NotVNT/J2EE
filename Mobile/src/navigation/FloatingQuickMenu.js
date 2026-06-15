@@ -1,89 +1,101 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
   Easing,
+  Image,
   Pressable,
   StyleSheet,
   Text,
   View,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAppColors } from "../constants/colors";
 
-// ─── Speed Dial sub-actions ──────────────────────────────
+const PLUS_ICON = require("../assets/accessories/plus.png");
+
 const SUB_ACTIONS = [
   {
     key: "Income",
-    icon: "💰",
-    label: "Thêm thu nhập",
-    tx: -160,
-    ty: -80,
-    color: "#43A047",
+    iconSource: require("../assets/income/income.png"),
+    label: "Thu nhập",
+    color: "#22C55E",
+    gradient: ["#22C55E", "#16A34A"],
   },
   {
-    key: "Budget",
-    icon: "🎯",
-    label: "Ngân sách",
-    tx: -80,
-    ty: -125,
-    color: "#7E57C2",
+    key: "Expense",
+    iconSource: require("../assets/expense/expenses.png"),
+    label: "Chi tiêu",
+    color: "#F97316",
+    gradient: ["#FB923C", "#F97316"],
   },
   {
     key: "Forecast",
-    icon: "🔮",
+    iconSource: require("../assets/ai-insight/forecast-analytics.png"),
     label: "Dự báo",
-    tx: 0,
-    ty: -148,
     color: "#26A69A",
+    gradient: ["#2DD4BF", "#0F766E"],
   },
   {
-    key: "Goal",
-    icon: "🎯",
-    label: "Thêm mục tiêu",
-    tx: 80,
-    ty: -125,
-    color: "#E53935",
+    key: "Budget",
+    iconSource: require("../assets/accessories/budget.png"),
+    label: "Ngân sách",
+    color: "#A855F7",
+    gradient: ["#A855F7", "#7C3AED"],
   },
   {
     key: "Chat",
-    icon: "🤖",
+    iconSource: require("../assets/ai-insight/robot.png"),
     label: "Chat AI",
-    tx: 160,
-    ty: -80,
-    color: "#8E24AA",
+    color: "#7C4DFF",
+    gradient: ["#8B5CF6", "#6D22E8"],
   },
 ];
 
-// ─── FAB button (inside tab bar) ─────────────────────────
 export function FloatingTabButton({ onPress, isOpen }) {
   const colors = useAppColors();
+  const rotateAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(rotateAnim, {
+      toValue: isOpen ? 1 : 0,
+      duration: 220,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [isOpen, rotateAnim]);
+
+  const rotation = rotateAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0deg", "135deg"],
+  });
+
   return (
-    <Pressable
-      style={[
-        styles.fabMain,
-        {
-          backgroundColor: colors.PRIMARY,
-          shadowColor: colors.PRIMARY,
-        },
-      ]}
-      onPress={onPress}
-    >
-      <Text style={[styles.fabMainIcon, { color: colors.DARK_TEXT }]}>{isOpen ? "✕" : "＋"}</Text>
+    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel="Mở menu nhanh">
+      <LinearGradient
+        colors={["#7C4DFF", "#A855F7"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[styles.fabMain, { shadowColor: "#7C4DFF" }]}
+      >
+        <Animated.View style={{ transform: [{ rotate: rotation }] }}>
+          <Image source={PLUS_ICON} style={styles.fabPlusIcon} resizeMode="contain" />
+        </Animated.View>
+      </LinearGradient>
     </Pressable>
   );
 }
 
-// ─── Speed Dial overlay + sub-buttons ────────────────────
 export default function FloatingQuickMenu({ visible, onClose, onSelectRoute, focusedKey }) {
   const overlayOpacity = useRef(new Animated.Value(0)).current;
+  const dockTranslateY = useRef(new Animated.Value(18)).current;
   const insets = useSafeAreaInsets();
   const colors = useAppColors();
+  const isDark = colors.BG === "#0F0D0C";
+  const [active, setActive] = useState(false);
 
-  // one animated value set per sub-button
   const animations = useRef(
     SUB_ACTIONS.map(() => ({
-      tx: new Animated.Value(0),
-      ty: new Animated.Value(0),
       scale: new Animated.Value(0),
       opacity: new Animated.Value(0),
     }))
@@ -91,138 +103,172 @@ export default function FloatingQuickMenu({ visible, onClose, onSelectRoute, foc
 
   useEffect(() => {
     if (visible) {
-      Animated.timing(overlayOpacity, {
-        toValue: 1,
-        duration: 200,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }).start();
+      setActive(true);
 
-      const fanOut = animations.map((anim, i) => {
-        const delay = i * 60;
-        return Animated.sequence([
-          Animated.delay(delay),
-          Animated.parallel([
-            Animated.spring(anim.tx, {
-              toValue: SUB_ACTIONS[i].tx,
-              friction: 6,
-              tension: 100,
-              useNativeDriver: true,
-            }),
-            Animated.spring(anim.ty, {
-              toValue: SUB_ACTIONS[i].ty,
-              friction: 6,
-              tension: 100,
-              useNativeDriver: true,
-            }),
-            Animated.spring(anim.scale, {
-              toValue: 1,
-              friction: 6,
-              tension: 100,
-              useNativeDriver: true,
-            }),
-            Animated.timing(anim.opacity, {
-              toValue: 1,
-              duration: 180,
-              useNativeDriver: true,
-            }),
-          ]),
-        ]);
-      });
-
-      Animated.parallel(fanOut).start();
+      Animated.parallel([
+        Animated.timing(overlayOpacity, {
+          toValue: 1,
+          duration: 200,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.timing(dockTranslateY, {
+          toValue: 0,
+          duration: 240,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.stagger(
+          34,
+          animations.map((anim, index) =>
+            Animated.parallel([
+              Animated.spring(anim.scale, {
+                toValue: 1,
+                friction: 7,
+                tension: 90 + index * 5,
+                useNativeDriver: true,
+              }),
+              Animated.timing(anim.opacity, {
+                toValue: 1,
+                duration: 180,
+                useNativeDriver: true,
+              }),
+            ])
+          )
+        ),
+      ]).start();
     } else {
-      Animated.timing(overlayOpacity, {
-        toValue: 0,
-        duration: 150,
-        easing: Easing.in(Easing.cubic),
-        useNativeDriver: true,
-      }).start();
-
-      animations.forEach((anim) => {
-        anim.tx.setValue(0);
-        anim.ty.setValue(0);
-        anim.scale.setValue(0);
-        anim.opacity.setValue(0);
+      Animated.parallel([
+        Animated.timing(overlayOpacity, {
+          toValue: 0,
+          duration: 180,
+          easing: Easing.in(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.timing(dockTranslateY, {
+          toValue: 18,
+          duration: 180,
+          easing: Easing.in(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.stagger(
+          24,
+          animations.map((anim) =>
+            Animated.parallel([
+              Animated.timing(anim.scale, {
+                toValue: 0,
+                duration: 170,
+                easing: Easing.in(Easing.cubic),
+                useNativeDriver: true,
+              }),
+              Animated.timing(anim.opacity, {
+                toValue: 0,
+                duration: 140,
+                useNativeDriver: true,
+              }),
+            ])
+          )
+        ),
+      ]).start(() => {
+        setActive(false);
       });
     }
-  }, [visible, overlayOpacity, animations]);
+  }, [animations, dockTranslateY, overlayOpacity, visible]);
 
-  if (!visible) return null;
+  if (!visible && !active) return null;
+
+  const dockBottomOffset = Math.max(insets.bottom, 8) + 92;
+  const inactiveActionBackground = isDark ? "rgba(255,255,255,0.055)" : "#FFF9FB";
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
-      {/* Semi-transparent backdrop */}
-      <Animated.View style={[styles.backdrop, { opacity: overlayOpacity }]}>
+      <Animated.View
+        style={[
+          styles.backdrop,
+          {
+            opacity: overlayOpacity,
+            backgroundColor: isDark ? "rgba(0, 0, 0, 0.58)" : "rgba(15, 23, 42, 0.34)",
+          },
+        ]}
+      >
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
       </Animated.View>
 
-      {/* Safe area for interactive floating buttons */}
-      <View
-        style={[
-          styles.safeArea,
-          {
-            paddingTop: insets.top,
-            paddingBottom: insets.bottom,
-            paddingLeft: insets.left,
-            paddingRight: insets.right,
-          },
-        ]}
-        pointerEvents="box-none"
-      >
-        {/* Sub-buttons anchored at center-bottom, above tab bar */}
-        <View style={styles.subButtonsContainer} pointerEvents="box-none">
-        {SUB_ACTIONS.map((action, i) => {
-          const anim = animations[i];
-          return (
-            <Animated.View
-              key={action.key}
-              style={[
-                styles.subButtonWrapper,
-                {
-                  transform: [
-                    { translateX: anim.tx },
-                    { translateY: anim.ty },
-                    { scale: anim.scale },
-                  ],
-                  opacity: anim.opacity,
-                },
-              ]}
-            >
-              <Pressable
-                style={[
-                  styles.subButton,
-                  styles[`blob${i}`],
-                  { backgroundColor: action.color },
-                  focusedKey === action.key && styles.subButtonFocused,
-                ]}
-                onPress={() => onSelectRoute(action.key)}
-              >
-                <Text style={styles.subIcon}>{action.icon}</Text>
-              </Pressable>
-              <View style={[styles.labelBubble, { backgroundColor: colors.CARD }, focusedKey === action.key && styles.labelBubbleFocused]}>
-                <Text
-                  style={[styles.subLabel, { color: colors.TEXT }]}
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                  minimumFontScale={0.72}
-                  allowFontScaling={false}
+      <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+        <Animated.View
+          pointerEvents="auto"
+          style={[
+            styles.quickDock,
+            {
+              bottom: dockBottomOffset,
+              backgroundColor: isDark ? "rgba(31, 27, 25, 0.96)" : "rgba(255, 255, 255, 0.98)",
+              borderColor: isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(239, 226, 230, 0.95)",
+              shadowColor: colors.SHADOW_COLOR || "#000",
+              opacity: overlayOpacity,
+              transform: [{ translateY: dockTranslateY }],
+            },
+          ]}
+        >
+          <View style={styles.actionRow}>
+            {SUB_ACTIONS.map((action, index) => {
+              const anim = animations[index];
+              const isFocused = focusedKey === action.key;
+              const actionBackground = isFocused ? `${action.color}18` : inactiveActionBackground;
+              const actionBorderColor = isFocused ? action.color : isDark ? "rgba(255,255,255,0.14)" : "rgba(239,94,131,0.18)";
+              const actionLabelColor = isFocused ? action.color : colors.TEXT;
+
+              return (
+                <Animated.View
+                  key={action.key}
+                  style={[
+                    styles.actionSlot,
+                    {
+                      opacity: anim.opacity,
+                      transform: [{ scale: anim.scale }],
+                    },
+                  ]}
                 >
-                  {action.label}
-                </Text>
-              </View>
-            </Animated.View>
-          );
-        })}
-      </View>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`Mở ${action.label}`}
+                    style={({ pressed }) => [
+                      styles.actionCard,
+                      {
+                        backgroundColor: actionBackground,
+                        borderColor: actionBorderColor,
+                      },
+                      pressed && { opacity: 0.82, transform: [{ translateY: 1 }] },
+                    ]}
+                    onPress={() => onSelectRoute(action.key)}
+                  >
+                    <LinearGradient
+                      colors={action.gradient}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={[styles.actionIcon, { shadowColor: action.color }]}
+                    >
+                      <Image source={action.iconSource} style={styles.actionIconImage} resizeMode="contain" />
+                    </LinearGradient>
+                    <Text
+                      style={[styles.actionLabel, { color: actionLabelColor }]}
+                      numberOfLines={2}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.78}
+                    >
+                      {action.label}
+                    </Text>
+                  </Pressable>
+                </Animated.View>
+              );
+            })}
+          </View>
+        </Animated.View>
       </View>
     </View>
   );
 }
 
-// ─── Styles ──────────────────────────────────────────────
 const styles = StyleSheet.create({
-  // ── Main FAB ──────────────────────────────────────────
   fabMain: {
     width: 52,
     height: 52,
@@ -239,134 +285,69 @@ const styles = StyleSheet.create({
     elevation: 8,
     alignSelf: "center",
   },
-  fabMainIcon: {
-    fontSize: 22,
-    fontWeight: "700",
-    marginTop: -1,
+  fabPlusIcon: {
+    width: 28,
+    height: 28,
   },
-
-  // ── Backdrop ──────────────────────────────────────────
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0, 0, 0, 0.35)",
   },
-
-  // ── Safe area wrapper ─────────────────────────────────
-  safeArea: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: "flex-end",
-    alignItems: "center",
-  },
-
-  // ── Sub-buttons area ──────────────────────────────────
-  subButtonsContainer: {
+  quickDock: {
     position: "absolute",
-    bottom: 72,
-    left: 0,
-    right: 0,
-    alignItems: "center",
-    justifyContent: "center",
-    flexDirection: "row",
-  },
-
-  subButtonWrapper: {
-    position: "absolute",
-    alignItems: "center",
-  },
-
-  // ── Blob / organic shaped buttons ─────────────────────
-  subButton: {
-    width: 56,
-    height: 56,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
+    left: 18,
+    right: 18,
+    borderRadius: 28,
+    borderWidth: 1,
+    padding: 12,
     shadowOffset: {
       width: 0,
-      height: 4,
+      height: 12,
+    },
+    shadowOpacity: 0.18,
+    shadowRadius: 22,
+    elevation: 14,
+  },
+  actionRow: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  actionSlot: {
+    flex: 1,
+  },
+  actionCard: {
+    minHeight: 82,
+    borderRadius: 20,
+    borderWidth: 1.2,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 3,
+    paddingVertical: 8,
+  },
+  actionIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowOffset: {
+      width: 0,
+      height: 5,
     },
     shadowOpacity: 0.22,
-    shadowRadius: 6,
-    elevation: 6,
+    shadowRadius: 8,
+    elevation: 5,
   },
-  blob0: {
-    borderRadius: 40,
-    borderTopLeftRadius: 46,
-    borderBottomRightRadius: 32,
-    borderTopRightRadius: 28,
-    borderBottomLeftRadius: 44,
+  actionIconImage: {
+    width: 24,
+    height: 24
   },
-  blob1: {
-    borderRadius: 38,
-    borderTopLeftRadius: 28,
-    borderBottomRightRadius: 46,
-    borderTopRightRadius: 44,
-    borderBottomLeftRadius: 30,
-  },
-  blob2: {
-    borderRadius: 42,
-    borderTopLeftRadius: 44,
-    borderBottomRightRadius: 28,
-    borderTopRightRadius: 32,
-    borderBottomLeftRadius: 46,
-  },
-  blob3: {
-    borderRadius: 36,
-    borderTopLeftRadius: 30,
-    borderBottomRightRadius: 48,
-    borderTopRightRadius: 40,
-    borderBottomLeftRadius: 28,
-  },
-  blob4: {
-    borderRadius: 44,
-    borderTopLeftRadius: 32,
-    borderBottomRightRadius: 40,
-    borderTopRightRadius: 46,
-    borderBottomLeftRadius: 34,
-  },
-  blob5: {
-    borderRadius: 34,
-    borderTopLeftRadius: 42,
-    borderBottomRightRadius: 34,
-    borderTopRightRadius: 28,
-    borderBottomLeftRadius: 46,
-  },
-
-  subIcon: {
-    fontSize: 24,
-  },
-
-  labelBubble: {
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    marginTop: 16,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.12,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-
-  subLabel: {
-    fontSize: 11,
-    fontWeight: "700",
+  actionLabel: {
+    marginTop: 7,
+    width: "100%",
+    minHeight: 24,
+    fontSize: 10,
+    fontWeight: "800",
+    lineHeight: 12,
     textAlign: "center",
-  },
-
-  // ── Focused sub-action ────────────────────────────────
-  subButtonFocused: {
-    borderWidth: 3,
-    borderColor: "#FFF",
-    transform: [{ scale: 1.1 }],
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 10,
-  },
-  labelBubbleFocused: {
-    backgroundColor: "#ef5e83",
   },
 });

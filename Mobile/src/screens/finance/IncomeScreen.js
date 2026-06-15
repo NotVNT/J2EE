@@ -6,10 +6,12 @@ import IncomeEmptyState from "../../components/Incomes/IncomeEmptyState";
 import IncomeForm from "../../components/Incomes/IncomeForm";
 import IncomeItem from "../../components/Incomes/IncomeItem";
 import IncomeListHeader from "../../components/Incomes/IncomeListHeader";
-import { COLORS, useAppColors } from "../../constants/colors";
+import { useAppColors } from "../../constants/colors";
 import useIncomeForm from "../../hooks/useIncomeForm";
 import useIncomes from "../../hooks/useIncomes";
 import { getSafeAreaBottom, getSafeAreaContentStyle, getSafeAreaTop } from "../../utils/safeArea";
+import ScreenBackHeader from "../../components/common/ScreenBackHeader";
+import { scale } from "../../utils/layoutScale";
 
 export default function IncomeScreen() {
   const route = useRoute();
@@ -25,13 +27,14 @@ function IncomeFormRoute() {
   const navigation = useNavigation();
   const route = useRoute();
   const insets = useSafeAreaInsets();
+  const title = route.params?.initialData ? "Chỉnh sửa thu nhập" : "Thêm thu nhập";
 
   const form = useIncomeForm({
     initialData: route.params?.initialData,
     onSaved: () => navigation.goBack()
   });
 
-  return <IncomeForm form={form} insetsStyle={getSafeAreaContentStyle(insets)} />;
+  return <IncomeForm form={form} insetsStyle={getSafeAreaContentStyle(insets)} title={title} />;
 }
 
 function IncomeListRoute() {
@@ -62,8 +65,8 @@ function IncomeListRoute() {
   );
 
   const renderIncome = useCallback(
-    ({ item }) => <IncomeItem item={item} onDelete={onDelete} />,
-    [onDelete]
+    ({ item }) => <IncomeItem item={item} onDelete={onDelete} onEdit={navigateToAddIncome} />,
+    [navigateToAddIncome, onDelete]
   );
 
   const renderHeader = useCallback(
@@ -83,14 +86,16 @@ function IncomeListRoute() {
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.BG, paddingTop: getSafeAreaTop(insets) }]}> 
+    <View style={[styles.container, { backgroundColor: colors.APP_BACKGROUND || colors.BG, paddingTop: getSafeAreaTop(insets, 12) }]}>
+      <ScreenBackHeader title="Lịch sử thu nhập" />
+
       <FlatList
         data={incomes}
         keyExtractor={(item) => String(item?.id)}
         renderItem={renderIncome}
         contentContainerStyle={[
           styles.listContent,
-          { paddingBottom: getSafeAreaBottom(insets) },
+          { paddingBottom: getSafeAreaBottom(insets) + scale(80) },
           !incomes.length && styles.listContentEmpty
         ]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
@@ -104,12 +109,10 @@ function IncomeListRoute() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.BG,
-    padding: 16,
-    paddingTop: 16
+    paddingHorizontal: scale(16)
   },
   listContent: {
-    paddingBottom: 24
+    paddingBottom: scale(24)
   },
   listContentEmpty: {
     flexGrow: 1,

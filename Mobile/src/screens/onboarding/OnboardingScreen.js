@@ -9,9 +9,11 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import appLogo from "../../assets/applogo.png";
-import { COLORS } from "../../constants/colors";
+import { LinearGradient } from "expo-linear-gradient";
+import appLogo from "../../assets/logo&banner/applogo.png";
+import { COLORS, useAppColors } from "../../constants/colors";
 import { scale, clampScale, useDynamicViewport } from "../../utils/layoutScale";
+import AppIcon from "../../components/ui/AppIcon";
 
 export const ONBOARDING_KEY = "botdev_onboarding_done";
 
@@ -19,23 +21,33 @@ const SLIDES = [
   {
     id: "plan",
     title: "Theo Dõi Mọi Dòng Tiền",
-    subtitle: "Quản lý thu chi trong một giao diện gọn gàng, dễ theo dõi."
+    subtitle: "Quản lý thu chi trong một giao diện gọn gàng, dễ theo dõi.",
+    icon: "wallet",
+    glowColor: "rgba(124, 77, 255, 0.12)",
+    iconColor: "#7C4DFF",
   },
   {
     id: "insight",
-    title: "Nhận Biết Nhanh Xu Hướng",
-    subtitle: "Xem thống kê trực quan để đưa ra quyết định tài chính nhanh hơn."
+    title: "Ghi chép Bằng Giọng Nói",
+    subtitle: "Nhập chi tiêu/thu nhập bằng giọng nói thông minh chỉ trong vài giây.",
+    icon: "mic",
+    glowColor: "rgba(249, 115, 22, 0.12)",
+    iconColor: "#F97316",
   },
   {
     id: "control",
     title: "Chủ Động Tài Chính",
-    subtitle: "Đặt mục tiêu, giữ ngân sách và tăng trưởng cùng botdev."
+    subtitle: "Thiết lập mục tiêu, giữ ngân sách và quản lý tài chính hiệu quả.",
+    icon: "flag",
+    glowColor: "rgba(59, 130, 246, 0.12)",
+    iconColor: "#3B82F6",
   }
 ];
 
 export default function OnboardingScreen() {
   const navigation = useNavigation();
   const listRef = useRef(null);
+  const colors = useAppColors();
   const [currentIndex, setCurrentIndex] = useState(0);
   const lastIndex = SLIDES.length - 1;
   const isLastSlide = currentIndex === lastIndex;
@@ -44,9 +56,16 @@ export default function OnboardingScreen() {
   const dots = useMemo(
     () =>
       SLIDES.map((slide, index) => (
-        <View key={slide.id} style={[styles.dot, index === currentIndex && styles.dotActive]} />
+        <View 
+          key={slide.id} 
+          style={[
+            styles.dot, 
+            { backgroundColor: colors.BORDER || "#E5E7EB" },
+            index === currentIndex && [styles.dotActive, { backgroundColor: "#3B82F6" }]
+          ]} 
+        />
       )),
-    [currentIndex]
+    [currentIndex, colors.BORDER]
   );
 
   const finishOnboarding = async () => {
@@ -72,14 +91,17 @@ export default function OnboardingScreen() {
   }).current;
 
   return (
-    <View style={styles.container}>
-      <View style={styles.bgGlowTop} />
-      <View style={styles.bgGlowBottom} />
+    <View style={[styles.container, { backgroundColor: colors.APP_BACKGROUND || "#F2F2F7" }]}>
+      {/* Premium Gradient blob design */}
+      <LinearGradient
+        colors={['rgba(124, 77, 255, 0.15)', 'rgba(79, 172, 254, 0.05)']}
+        style={styles.bgGlowTop}
+      />
 
       <View style={styles.headerRow}>
         <Image source={appLogo} style={styles.brandLogo} resizeMode="contain" />
         <Pressable onPress={finishOnboarding}>
-          <Text style={styles.skipText}>Bỏ qua</Text>
+          <Text style={[styles.skipText, { color: colors.TEXT_SECONDARY || "#6B7280" }]}>Bỏ qua</Text>
         </Pressable>
       </View>
 
@@ -94,18 +116,18 @@ export default function OnboardingScreen() {
         viewabilityConfig={{ viewAreaCoveragePercentThreshold: 50 }}
         renderItem={({ item }) => (
           <View style={[styles.slide, { width: viewportWidth - scale(40) }]}>
-            <View style={styles.iconBubble}>
-              <Text style={styles.iconText}>$</Text>
+            <View style={[styles.iconBubble, { backgroundColor: item.glowColor, borderColor: item.iconColor }]}>
+              <AppIcon name={item.icon} size={scale(44)} color={item.iconColor} />
             </View>
-            <Text style={styles.title}>{item.title}</Text>
-            <Text style={styles.subtitle}>{item.subtitle}</Text>
+            <Text style={[styles.title, { color: colors.TEXT || "#1C1C1E" }]}>{item.title}</Text>
+            <Text style={[styles.subtitle, { color: colors.TEXT_SECONDARY || "#6B7280" }]}>{item.subtitle}</Text>
           </View>
         )}
       />
 
       <View style={styles.footer}>
         <View style={styles.dotsRow}>{dots}</View>
-        <Pressable style={styles.ctaButton} onPress={handleNext}>
+        <Pressable style={[styles.ctaButton, { backgroundColor: "#3B82F6" }]} onPress={handleNext}>
           <Text style={styles.ctaText}>{isLastSlide ? "Bắt đầu" : "Tiếp tục"}</Text>
         </Pressable>
       </View>
@@ -116,28 +138,17 @@ export default function OnboardingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.DARK_BG,
     paddingHorizontal: scale(20),
-    paddingTop: scale(18),
+    paddingTop: scale(24),
     paddingBottom: scale(26)
   },
   bgGlowTop: {
     position: "absolute",
     top: -90,
     left: -80,
-    width: scale(260),
-    height: scale(260),
-    borderRadius: scale(130),
-    backgroundColor: COLORS.PRIMARY_GLOW
-  },
-  bgGlowBottom: {
-    position: "absolute",
-    right: -120,
-    bottom: -90,
-    width: scale(280),
-    height: scale(280),
-    borderRadius: scale(140),
-    backgroundColor: COLORS.PRIMARY_GLOW
+    width: scale(300),
+    height: scale(300),
+    borderRadius: scale(150),
   },
   headerRow: {
     flexDirection: "row",
@@ -149,7 +160,6 @@ const styles = StyleSheet.create({
     aspectRatio: 1
   },
   skipText: {
-    color: COLORS.DARK_TEXT_SECONDARY,
     fontSize: clampScale(14, 12, 16),
     fontWeight: "600"
   },
@@ -159,31 +169,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: scale(12)
   },
   iconBubble: {
-    width: scale(120),
+    width: scale(110),
     aspectRatio: 1,
-    borderRadius: scale(60),
-    borderWidth: 1,
-    borderColor: COLORS.PRIMARY_GLOW_STRONG,
-    backgroundColor: COLORS.PRIMARY_GLOW,
+    borderRadius: scale(55),
+    borderWidth: 1.5,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: scale(26)
-  },
-  iconText: {
-    color: COLORS.PRIMARY_LIGHT,
-    fontSize: clampScale(52, 40, 60),
-    fontWeight: "800"
+    marginBottom: scale(26),
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
   },
   title: {
-    color: COLORS.DARK_TEXT,
-    fontSize: clampScale(30, 24, 34),
+    fontSize: clampScale(28, 24, 32),
     fontWeight: "800",
     textAlign: "center",
     letterSpacing: 0.3
   },
   subtitle: {
     marginTop: scale(12),
-    color: COLORS.DARK_TEXT_SECONDARY,
     textAlign: "center",
     lineHeight: scale(22),
     fontSize: clampScale(15, 13, 17)
@@ -202,20 +208,22 @@ const styles = StyleSheet.create({
     width: scale(8),
     height: scale(8),
     borderRadius: scale(4),
-    backgroundColor: COLORS.DARK_BORDER
   },
   dotActive: {
     width: scale(18),
-    backgroundColor: COLORS.PRIMARY
   },
   ctaButton: {
     borderRadius: scale(12),
-    backgroundColor: COLORS.PRIMARY,
     paddingVertical: scale(14),
-    alignItems: "center"
+    alignItems: "center",
+    shadowColor: "#3B82F6",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 3,
   },
   ctaText: {
-    color: COLORS.DARK_TEXT,
+    color: "#FFF",
     fontWeight: "800",
     fontSize: clampScale(15, 13, 17)
   }

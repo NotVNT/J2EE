@@ -1,5 +1,6 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { COLORS, useAppColors } from "../../constants/colors";
 
 export default function ReportAdviceCard({ strengths, improvements }) {
@@ -11,18 +12,21 @@ export default function ReportAdviceCard({ strengths, improvements }) {
 
   return (
     <View style={[styles.card, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}> 
-      <Text style={[styles.cardTitle, { color: colors.TEXT }]}>💡 Đánh giá & Khuyên nghị</Text>
+      <View style={styles.cardHeader}>
+        <Ionicons name="bulb-outline" size={18} color={colors.PRIMARY} />
+        <Text style={[styles.cardTitle, { color: colors.TEXT }]}>Đánh giá & Khuyến nghị</Text>
+      </View>
 
       {hasStrengths && strengths.map((str, idx) => (
         <View key={`str-${idx}`} style={styles.tipRow}>
-          <Text style={styles.tipIcon}>🌟</Text>
+          <Ionicons name="checkmark-circle" size={16} color={colors.INCOME} style={{ marginTop: 1 }} />
           <Text style={[styles.tipText, { color: colors.TEXT_SECONDARY }]}>{str}</Text>
         </View>
       ))}
 
       {hasImprovements && improvements.map((imp, idx) => (
         <View key={`imp-${idx}`} style={styles.tipRow}>
-          <Text style={styles.tipIcon}>⚠️</Text>
+          <Ionicons name="warning" size={16} color={colors.EXPENSE} style={{ marginTop: 1 }} />
           <Text style={[styles.tipText, { color: colors.TEXT_SECONDARY }]}>{imp}</Text>
         </View>
       ))}
@@ -32,17 +36,27 @@ export default function ReportAdviceCard({ strengths, improvements }) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: COLORS.CARD,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
     padding: 16,
+    shadowColor: "#000",
+    shadowOpacity: 0.02,
+    shadowRadius: 6,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    elevation: 2,
+  },
+  cardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 14,
   },
   cardTitle: {
     fontSize: 15,
     fontWeight: "800",
-    color: COLORS.TEXT,
-    marginBottom: 14,
   },
   tipRow: {
     flexDirection: "row",
@@ -50,14 +64,9 @@ const styles = StyleSheet.create({
     gap: 10,
     marginVertical: 6,
   },
-  tipIcon: {
-    fontSize: 16,
-    marginTop: 1,
-  },
   tipText: {
     flex: 1,
     fontSize: 13,
-    color: COLORS.TEXT_SECONDARY,
     lineHeight: 18,
   },
 });

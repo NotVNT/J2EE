@@ -13,23 +13,30 @@ export default function CompactGoalTab({ item, onPress }) {
   const progress = Math.max(0, Math.min(100, Number(item?.progressPercent || 0)));
   const visual = getGoalVisual(item);
 
+  // SpendBee goals color scheme
+  const progressColor = item?.status === "COMPLETED" 
+    ? (colors.INCOME_COLOR || "#22C55E") 
+    : (item?.isBehindSchedule 
+      ? (colors.EXPENSE_COLOR || "#EF4444") 
+      : (colors.GOAL_PROGRESS || "#F97316"));
+
   return (
     <Pressable style={[styles.tab, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]} onPress={() => onPress(item)}>
-      <View style={[styles.accent, { backgroundColor: visual.color }]} />
+      <View style={[styles.accent, { backgroundColor: progressColor }]} />
       <View style={styles.main}>
         <View style={styles.header}>
           <Text style={[styles.name, { color: colors.TEXT }]} numberOfLines={1}>{item?.name || "Mục tiêu"}</Text>
-          <Text style={[styles.percent, { color: visual.color }]}>{progress.toFixed(0)}%</Text>
+          <Text style={[styles.percent, { color: progressColor }]}>{progress.toFixed(0)}%</Text>
         </View>
         <Text style={[styles.period, { color: colors.TEXT_SECONDARY }]} numberOfLines={1}>
           {formatDate(item?.startDate)} {'>'} {formatDate(item?.targetDate)}
         </Text>
         <View style={[styles.track, { backgroundColor: colors.CARD_BORDER }]}> 
-          <View style={[styles.fill, { width: `${progress}%`, backgroundColor: visual.color }]} />
+          <View style={[styles.fill, { width: `${progress}%`, backgroundColor: progressColor }]} />
         </View>
       </View>
       <View style={[styles.statusBadge, { backgroundColor: visual.bg }]}>
-        <Text style={[styles.statusText, { color: visual.color }]}>{visual.label}</Text>
+        <Text style={[styles.statusText, { color: progressColor }]}>{visual.label}</Text>
       </View>
     </Pressable>
   );

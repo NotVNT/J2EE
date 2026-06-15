@@ -1,26 +1,88 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import Svg, { Circle } from "react-native-svg";
 import { COLORS, useAppColors } from "../../constants/colors";
 import { formatMoney } from "../../utils/format";
 
-function GradeBadge({ grade, label }) {
-  const getGradeColor = (g) => {
-    switch (g) {
-      case "A": return { text: COLORS.INCOME, bg: COLORS.INCOME_LIGHT };
-      case "B": return { text: COLORS.INFO, bg: COLORS.INFO_LIGHT };
-      case "C": return { text: COLORS.WARNING, bg: COLORS.WARNING_LIGHT };
-      case "D": return { text: COLORS.PRIMARY, bg: COLORS.ROSE_MIST };
-      case "F":
-      default: return { text: COLORS.EXPENSE, bg: COLORS.EXPENSE_LIGHT };
-    }
-  };
+const GRADE_CONFIG = {
+  A: { color: COLORS.INCOME, light: COLORS.INCOME_LIGHT, score: 92 },
+  B: { color: COLORS.INFO, light: COLORS.INFO_LIGHT, score: 78 },
+  C: { color: COLORS.WARNING, light: COLORS.WARNING_LIGHT, score: 62 },
+  D: { color: COLORS.PRIMARY, light: COLORS.ROSE_MIST, score: 42 },
+  F: { color: COLORS.EXPENSE, light: COLORS.EXPENSE_LIGHT, score: 18 },
+};
 
-  const colors = getGradeColor(grade);
+function getGradeConfig(grade) {
+  return GRADE_CONFIG[grade] || GRADE_CONFIG.F;
+}
+
+function normalizeSavingsRate(value) {
+  const numericValue = Number(value || 0);
+  return Math.abs(numericValue) <= 1 ? numericValue * 100 : numericValue;
+}
+
+function GradeMeter({ grade }) {
+  const config = getGradeConfig(grade);
+  const size = 106;
+  const strokeWidth = 8;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const score = config.score;
+  const progressOffset = circumference * (1 - score / 100);
 
   return (
-    <View style={[styles.gradeCard, { backgroundColor: colors.bg, borderColor: colors.text }]}>
-      <Text style={[styles.gradeLetter, { color: colors.text }]}>{grade || "C"}</Text>
-      <Text style={[styles.gradeLabel, { color: colors.text }]}>{label || "Khá"}</Text>
+    <View style={styles.gradeMeterWrap}>
+      <Svg width={size} height={size} style={styles.gradeMeterSvg}>
+        <Circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke={config.light}
+          strokeWidth={strokeWidth}
+          fill="#FFFFFF"
+        />
+        <Circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke={config.color}
+          strokeWidth={strokeWidth}
+          fill="transparent"
+          strokeLinecap="round"
+          strokeDasharray={`${circumference} ${circumference}`}
+          strokeDashoffset={progressOffset}
+          rotation="-90"
+          origin={`${size / 2}, ${size / 2}`}
+        />
+      </Svg>
+
+      <View style={styles.gradeMeterContent}>
+        <Text style={[styles.gradeLetter, { color: config.color }]}>{grade || "F"}</Text>
+        <Text style={[styles.gradeScore, { color: config.color }]}>{score} / 100</Text>
+      </View>
+    </View>
+  );
+}
+
+function SpendingChangePill({ value, colors }) {
+  const spendingChange = Math.round(Number(value || 0));
+  const isIncrease = spendingChange > 0;
+  const changeText = spendingChange === 0
+    ? "Chi tiêu tương đương"
+    : `Chi tiêu ${isIncrease ? "tăng" : "giảm"} ${Math.abs(spendingChange)}%`;
+
+  return (
+    <View style={[styles.spendingPill, { backgroundColor: colors.BG }]}>
+      <View style={[styles.spendingPillIcon, { backgroundColor: colors.PRIMARY_LIGHT || colors.ROSE_MIST }]}>
+        <Ionicons name="stats-chart-outline" size={16} color={colors.PRIMARY} />
+      </View>
+      <View style={styles.spendingPillTextWrap}>
+        <Text style={[styles.spendingPillTitle, { color: colors.TEXT }]}>
+          {changeText}
+        </Text>
+        <Text style={[styles.spendingPillSub, { color: colors.TEXT_SECONDARY }]}>so với tháng trước</Text>
+      </View>
     </View>
   );
 }
@@ -38,7 +100,7 @@ function MetricRow({ colors, label, value, prevValue, type }) {
           <Text style={[styles.prevText, { color: colors.TEXT_MUTED }]}>Tháng trước: {formatMoney(prevValue)}</Text>
         )}
       </View>
-      <Text style={[styles.metricValue, { color: isSavings ? colors.PRIMARY : color }]}> 
+      <Text style={[styles.metricValue, { color: isSavings ? colors.PRIMARY : color }]}>
         {formatMoney(value)}
       </Text>
     </View>
@@ -47,27 +109,39 @@ function MetricRow({ colors, label, value, prevValue, type }) {
 
 export default function ReportMetricCard({ report }) {
   const colors = useAppColors();
+  const gradeConfig = getGradeConfig(report.grade);
+  const savingsRate = Math.round(normalizeSavingsRate(report.savingsRate));
 
   return (
     <>
-      <View style={[styles.gradeSection, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}> 
-        <GradeBadge grade={report.grade} label={report.gradeLabel} />
-        <View style={styles.gradeIntro}>
-          <Text style={[styles.savingsRateText, { color: colors.TEXT }]}> 
-            Tỷ lệ tiết kiệm: {Math.round(report.savingsRate * 100)}%
+      <View style={[styles.gradeSection, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}>
+        <GradeMeter grade={report.grade} />
+        <View style={styles.gradeContent}>
+          <View style={styles.gradeTopRow}>
+            <Text style={[styles.gradeLabel, { color: gradeConfig.color }]}>
+              {report.gradeLabel || "Không xác định"}
+            </Text>
+            <View style={[styles.trendIconBox, { backgroundColor: gradeConfig.light }]}>
+              <Ionicons
+                name={report.spendingChangePercent > 0 ? "trending-down-outline" : "trending-up-outline"}
+                size={18}
+                color={gradeConfig.color}
+              />
+            </View>
+          </View>
+          <Text style={[styles.savingsCaption, { color: colors.TEXT_SECONDARY }]}>Tỷ lệ tiết kiệm</Text>
+          <Text style={[styles.savingsRateText, { color: gradeConfig.color }]}>
+            {savingsRate}%
           </Text>
-          <Text style={[styles.spendingChangeText, { color: colors.TEXT_SECONDARY }]}> 
-            {report.spendingChangePercent > 0
-              ? `Chi tiêu tăng ${Math.round(report.spendingChangePercent)}% so với tháng trước`
-              : report.spendingChangePercent < 0
-                ? `Chi tiêu giảm ${Math.round(Math.abs(report.spendingChangePercent))}% so với tháng trước`
-                : "Mức chi tiêu tương đương tháng trước"}
-          </Text>
+          <SpendingChangePill value={report.spendingChangePercent} colors={colors} />
         </View>
       </View>
 
-      <View style={[styles.card, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}> 
-        <Text style={[styles.cardTitle, { color: colors.TEXT }]}>📊 Chỉ số tài chính</Text>
+      <View style={[styles.card, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}>
+        <View style={styles.cardHeader}>
+          <Ionicons name="bar-chart-outline" size={18} color={colors.PRIMARY} />
+          <Text style={[styles.cardTitle, { color: colors.TEXT }]}>Chỉ số tài chính</Text>
+        </View>
         <MetricRow colors={colors} label="Tổng thu nhập" value={report.totalIncome} prevValue={report.prevMonthIncome} type="income" />
         <MetricRow colors={colors} label="Tổng chi tiêu" value={report.totalExpense} prevValue={report.prevMonthExpense} type="expense" />
         <View style={[styles.divider, { backgroundColor: colors.CARD_BORDER }]} />
@@ -81,55 +155,128 @@ const styles = StyleSheet.create({
   gradeSection: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 16,
-    backgroundColor: COLORS.CARD,
-    borderRadius: 16,
+    gap: 14,
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
-    padding: 16,
+    padding: 14,
+    shadowColor: "#000",
+    shadowOpacity: 0.02,
+    shadowRadius: 6,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    elevation: 2,
   },
-  gradeCard: {
-    width: 72,
-    height: 72,
-    borderRadius: 20,
-    borderWidth: 1.5,
+  gradeMeterWrap: {
+    width: 106,
+    height: 106,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  gradeMeterSvg: {
+    position: "absolute",
+  },
+  gradeMeterContent: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    backgroundColor: "#FFFFFF",
     alignItems: "center",
     justifyContent: "center",
   },
   gradeLetter: {
-    fontSize: 32,
+    fontSize: 34,
     fontWeight: "900",
+    lineHeight: 38,
+  },
+  gradeScore: {
+    marginTop: 1,
+    fontSize: 12,
+    fontWeight: "800",
   },
   gradeLabel: {
-    fontSize: 11,
-    fontWeight: "800",
-    marginTop: -2,
-  },
-  gradeIntro: {
     flex: 1,
+    fontSize: 18,
+    fontWeight: "900",
+  },
+  gradeContent: {
+    flex: 1,
+    minWidth: 0,
+  },
+  gradeTopRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  trendIconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  savingsCaption: {
+    marginTop: 8,
+    fontSize: 13,
+    fontWeight: "600",
   },
   savingsRateText: {
-    fontSize: 16,
-    fontWeight: "800",
-    color: COLORS.TEXT,
+    marginTop: 2,
+    fontSize: 20,
+    fontWeight: "900",
   },
-  spendingChangeText: {
+  spendingPill: {
+    marginTop: 10,
+    borderRadius: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 9,
+  },
+  spendingPillIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 9,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  spendingPillTextWrap: {
+    flex: 1,
+    minWidth: 0,
+  },
+  spendingPillTitle: {
     fontSize: 12,
-    color: COLORS.TEXT_SECONDARY,
-    marginTop: 4,
+    fontWeight: "800",
+  },
+  spendingPillSub: {
+    marginTop: 2,
+    fontSize: 11,
+    fontWeight: "600",
   },
   card: {
-    backgroundColor: COLORS.CARD,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
     padding: 16,
+    shadowColor: "#000",
+    shadowOpacity: 0.02,
+    shadowRadius: 6,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    elevation: 2,
+  },
+  cardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 14,
   },
   cardTitle: {
     fontSize: 15,
     fontWeight: "800",
-    color: COLORS.TEXT,
-    marginBottom: 14,
   },
   metricRow: {
     flexDirection: "row",
@@ -142,12 +289,10 @@ const styles = StyleSheet.create({
   },
   metricLabel: {
     fontSize: 14,
-    fontWeight: "700",
-    color: COLORS.TEXT,
+    fontWeight: "750",
   },
   prevText: {
     fontSize: 11,
-    color: COLORS.TEXT_MUTED,
     marginTop: 2,
   },
   metricValue: {
@@ -156,7 +301,6 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: COLORS.CARD_BORDER,
     marginVertical: 10,
   },
 });

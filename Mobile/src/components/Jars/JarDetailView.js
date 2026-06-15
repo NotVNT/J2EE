@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path, G, Text as SvgText } from "react-native-svg";
 import apiClient from "../../services/apiClient";
 import { API_ENDPOINTS } from "../../constants/api";
-import { COLORS } from "../../constants/colors";
+import { COLORS, useAppColors } from "../../constants/colors";
 import { getApiErrorMessage, formatDate } from "../../utils/format";
 import {
   describeDonutArc,
@@ -16,37 +16,39 @@ import {
 } from "../../utils/jar";
 import { CategoryVectorIcon, getIconColor } from "../../utils/categoryIcons";
 import { getSafeAreaBottom, getSafeAreaTop } from "../../utils/safeArea";
+import ScreenBackHeader from "../common/ScreenBackHeader";
 
 const screenWidth = Dimensions.get("window").width;
 
 function ExpenseItem({ item, onDelete }) {
+  const colors = useAppColors();
   const amount = Number(item?.amount || 0);
   const note = item?.note || "";
   const iconColor = getIconColor(item?.icon);
 
   return (
-    <View style={styles.itemCard}>
+    <View style={[styles.itemCard, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}>
       <View style={styles.itemMain}>
         <View style={[styles.iconBubble, { backgroundColor: iconColor + "18" }]}>
           <CategoryVectorIcon iconValue={item?.icon} size={18} color={iconColor} />
         </View>
 
         <View style={styles.itemContent}>
-          <Text style={styles.itemName}>{item?.name || "Chi tiêu"}</Text>
-          <Text style={styles.itemMeta}>{formatDate(item?.date)} • {item?.categoryName || "Khác"}</Text>
+          <Text style={[styles.itemName, { color: colors.TEXT }]}>{item?.name || "Chi tiêu"}</Text>
+          <Text style={[styles.itemMeta, { color: colors.TEXT_SECONDARY }]}>{formatDate(item?.date)} • {item?.categoryName || "Khác"}</Text>
           {note ? (
             <View style={styles.noteRow}>
               <Text style={styles.noteIcon}>📝</Text>
-              <Text style={styles.noteText} numberOfLines={2}>{note}</Text>
+              <Text style={[styles.noteText, { color: colors.TEXT_SECONDARY }]} numberOfLines={2}>{note}</Text>
             </View>
           ) : null}
         </View>
       </View>
 
       <View style={styles.itemRight}>
-        <Text style={styles.itemAmount}>- {formatJarMoney(amount)}</Text>
-        <Pressable onPress={() => onDelete(item?.id)} style={styles.deleteButton}>
-          <Text style={styles.deleteText}>Xóa</Text>
+        <Text style={[styles.itemAmount, { color: colors.EXPENSE }]}>- {formatJarMoney(amount)}</Text>
+        <Pressable onPress={() => onDelete(item?.id)} style={[styles.deleteButton, { backgroundColor: colors.EXPENSE_LIGHT, borderColor: colors.CARD_BORDER }]}>
+          <Text style={[styles.deleteText, { color: colors.EXPENSE }]}>Xóa</Text>
         </Pressable>
       </View>
     </View>
@@ -54,6 +56,7 @@ function ExpenseItem({ item, onDelete }) {
 }
 
 export default function JarDetailView() {
+  const colors = useAppColors();
   const navigation = useNavigation();
   const route = useRoute();
   const insets = useSafeAreaInsets();
@@ -192,8 +195,8 @@ export default function JarDetailView() {
 
   if (!selectedJar) {
     return (
-      <View style={styles.loadingContainer}>
-        <Text style={styles.loadingText}>Đang tải chi tiết...</Text>
+      <View style={[styles.loadingContainer, { backgroundColor: colors.BG }]}>
+        <Text style={[styles.loadingText, { color: colors.TEXT_SECONDARY }]}>Đang tải chi tiết...</Text>
       </View>
     );
   }
@@ -212,64 +215,65 @@ export default function JarDetailView() {
   const cy = svgSize / 2;
 
   return (
-    <View style={[styles.container, { paddingTop: getSafeAreaTop(insets) }]}>
+    <View style={[styles.container, { backgroundColor: colors.BG, paddingTop: getSafeAreaTop(insets) }]}>
+      <ScreenBackHeader title={selectedJar.name || "Chi tiết ví phụ"} style={styles.screenHeader} />
       <FlatList
         data={jarExpenses}
         keyExtractor={(item) => String(item.id)}
         renderItem={({ item }) => <ExpenseItem item={item} onDelete={handleDeleteExpense} />}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: getSafeAreaBottom(insets) }]}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.PRIMARY} colors={[colors.PRIMARY]} />}
         ListHeaderComponent={
           <View>
             {/* Info Card */}
-            <View style={styles.infoCard}>
-              <View style={styles.cardHeader}>
+            <View style={[styles.infoCard, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}>
+              <View style={[styles.cardHeader, { borderBottomColor: colors.CARD_BORDER }]}>
                 <View style={styles.iconTitleRow}>
-                  <View style={[styles.iconContainer, { backgroundColor: (selectedJar.color || COLORS.PRIMARY) + "18" }]}>
+                  <View style={[styles.iconContainer, { backgroundColor: (selectedJar.color || colors.PRIMARY) + "18" }]}>
                     <Text style={styles.iconText}>{selectedJar.icon || "🏺"}</Text>
                   </View>
                   <View>
-                    <Text style={styles.cardName}>{selectedJar.name}</Text>
-                    <Text style={styles.cardTarget}>Mục tiêu: {selectedJar.targetPercentage ?? 0}%</Text>
+                    <Text style={[styles.cardName, { color: colors.TEXT }]}>{selectedJar.name}</Text>
+                    <Text style={[styles.cardTarget, { color: colors.TEXT_SECONDARY }]}>Mục tiêu: {selectedJar.targetPercentage ?? 0}%</Text>
                   </View>
                 </View>
 
                 {/* Edit & Delete Jar buttons */}
                 <View style={styles.jarActions}>
                   <Pressable
-                    style={styles.actionBtn}
+                    style={[styles.actionBtn, { backgroundColor: colors.BG, borderColor: colors.CARD_BORDER }]}
                     onPress={() => navigation.navigate("JarForm", { initialData: selectedJar, isEditing: true })}
                   >
-                    <Text style={styles.actionBtnText}>Sửa</Text>
+                    <Text style={[styles.actionBtnText, { color: colors.TEXT_SECONDARY }]}>Sửa</Text>
                   </Pressable>
                   {selectedJar.name !== "Ví tổng" && (
-                    <Pressable style={[styles.actionBtn, styles.deleteJarBtn]} onPress={handleDeleteJar}>
-                      <Text style={[styles.actionBtnText, styles.deleteJarText]}>Xóa</Text>
+                    <Pressable style={[styles.actionBtn, styles.deleteJarBtn, { backgroundColor: colors.EXPENSE_LIGHT, borderColor: colors.CARD_BORDER }]} onPress={handleDeleteJar}>
+                      <Text style={[styles.actionBtnText, { color: colors.EXPENSE }]}>Xóa</Text>
                     </Pressable>
                   )}
                 </View>
               </View>
 
               <View style={styles.balanceRow}>
-                <Text style={styles.balanceLabel}>Số dư hiện tại</Text>
-                <Text style={[styles.cardBalance, isNegative && { color: COLORS.EXPENSE }]}>
+                <Text style={[styles.balanceLabel, { color: colors.TEXT_MUTED }]}>Số dư hiện tại</Text>
+                <Text style={[styles.cardBalance, { color: colors.TEXT }, isNegative && { color: colors.EXPENSE }]}>
                   {formatJarMoney(selectedJar.currentBalance)}
                 </Text>
               </View>
 
               <View style={styles.progressRow}>
-                <Text style={styles.progressLabel}>Tỷ trọng thực tế</Text>
-                <Text style={[styles.progressValue, { color: selectedJar.color || COLORS.PRIMARY }]}>
+                <Text style={[styles.progressLabel, { color: colors.TEXT_MUTED }]}>Tỷ trọng thực tế</Text>
+                <Text style={[styles.progressValue, { color: selectedJar.color || colors.PRIMARY }]}>
                   {actualPercent}%
                 </Text>
               </View>
-              <View style={styles.progressBarBg}>
+              <View style={[styles.progressBarBg, { backgroundColor: colors.CARD_BORDER }]}>
                 <View
                   style={[
                     styles.progressBarFill,
                     {
                       width: `${progressWidth}%`,
-                      backgroundColor: isNegative ? COLORS.EXPENSE : (selectedJar.color || COLORS.PRIMARY),
+                      backgroundColor: isNegative ? colors.EXPENSE : (selectedJar.color || colors.PRIMARY),
                     },
                   ]}
                 />
@@ -278,8 +282,8 @@ export default function JarDetailView() {
 
             {/* Spent Pie Chart breakdown */}
             {chartData.length > 0 && (
-              <View style={styles.chartCard}>
-                <Text style={styles.chartTitle}>Cấu trúc chi tiêu</Text>
+              <View style={[styles.chartCard, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}>
+                <Text style={[styles.chartTitle, { color: colors.TEXT }]}>Cấu trúc chi tiêu</Text>
                 <View style={styles.chartWrapper}>
                   <Svg width={svgSize} height={svgSize} viewBox={`0 0 ${svgSize} ${svgSize}`}>
                     <G>
@@ -299,7 +303,7 @@ export default function JarDetailView() {
                         textAnchor="middle"
                         fontSize="10"
                         fontWeight="600"
-                        fill="#8b7b80"
+                        fill={colors.TEXT_SECONDARY}
                       >
                         Đã chi
                       </SvgText>
@@ -309,7 +313,7 @@ export default function JarDetailView() {
                         textAnchor="middle"
                         fontSize="11"
                         fontWeight="800"
-                        fill={COLORS.EXPENSE}
+                        fill={colors.EXPENSE}
                       >
                         Ví hũ
                       </SvgText>
@@ -320,7 +324,7 @@ export default function JarDetailView() {
                     {chartData.slice(0, 4).map((slice, idx) => (
                       <View key={idx} style={styles.legendItem}>
                         <View style={[styles.legendColorBox, { backgroundColor: slice.color }]} />
-                        <Text style={styles.legendText} numberOfLines={1}>
+                        <Text style={[styles.legendText, { color: colors.TEXT_SECONDARY }]} numberOfLines={1}>
                           {slice.name} ({slice.percent.toFixed(1)}%)
                         </Text>
                       </View>
@@ -333,14 +337,14 @@ export default function JarDetailView() {
             {/* Section transactions list */}
             <View style={styles.sectionHeader}>
               <View style={styles.sectionHeaderLeft}>
-                <Text style={styles.listTitle}>Lịch sử chi tiêu</Text>
-                <Text style={styles.listSubtitle}>Tổng cộng {jarExpenses.length} giao dịch</Text>
+                <Text style={[styles.listTitle, { color: colors.TEXT }]}>Lịch sử chi tiêu</Text>
+                <Text style={[styles.listSubtitle, { color: colors.TEXT_SECONDARY }]}>Tổng cộng {jarExpenses.length} giao dịch</Text>
               </View>
               <Pressable
-                style={styles.addExpenseShortcut}
+                style={[styles.addExpenseShortcut, { backgroundColor: colors.PRIMARY }]}
                 onPress={() => navigation.navigate("AddExpense", { defaultJarId: selectedJar.id })}
               >
-                <Text style={styles.addExpenseShortcutText}>+ Thêm chi tiêu</Text>
+                <Text style={[styles.addExpenseShortcutText, { color: colors.WHITE }]}>+ Thêm chi tiêu</Text>
               </Pressable>
             </View>
           </View>
@@ -349,8 +353,8 @@ export default function JarDetailView() {
           !loading && (
             <View style={styles.emptyState}>
               <Text style={styles.emptyIcon}>🧾</Text>
-              <Text style={styles.emptyTitle}>Hũ chưa có chi tiêu</Text>
-              <Text style={styles.emptyText}>
+              <Text style={[styles.emptyTitle, { color: colors.TEXT }]}>Hũ chưa có chi tiêu</Text>
+              <Text style={[styles.emptyText, { color: colors.TEXT_SECONDARY }]}>
                 Các khoản chi gắn với hũ này sẽ được thống kê và liệt kê chi tiết ở đây.
               </Text>
             </View>
@@ -365,6 +369,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.BG,
+  },
+  screenHeader: {
+    marginHorizontal: 16,
+    marginBottom: 0,
   },
   scrollContent: {
     padding: 16,

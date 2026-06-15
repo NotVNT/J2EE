@@ -1,7 +1,8 @@
 import React from "react";
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { COLORS } from "../../constants/colors";
+import { useAppColors } from "../../constants/colors";
 import { CategoryVectorIcon, getIconColor } from "../../utils/categoryIcons";
+import { scale } from "../../utils/layoutScale";
 
 export default function CategoryPickerModal({
   categories,
@@ -11,20 +12,22 @@ export default function CategoryPickerModal({
   selectedId,
   visible
 }) {
+  const colors = useAppColors();
+
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable style={styles.modalOverlay} onPress={onClose}>
-        <View style={styles.pickerSheet}>
-          <View style={styles.pickerHeader}>
-            <Text style={styles.pickerTitle}>Chọn danh mục</Text>
+      <Pressable style={[styles.modalOverlay, { backgroundColor: colors.OVERLAY }]} onPress={onClose}>
+        <View style={[styles.pickerSheet, { backgroundColor: colors.CARD }]}>
+          <View style={[styles.pickerHeader, { borderBottomColor: colors.CARD_BORDER }]}>
+            <Text style={[styles.pickerTitle, { color: colors.TEXT }]}>Chọn danh mục</Text>
             <Pressable onPress={onClose}>
-              <Text style={styles.pickerClose}>Đóng</Text>
+              <Text style={[styles.pickerClose, { color: colors.PRIMARY }]}>Đóng</Text>
             </Pressable>
           </View>
           <ScrollView style={styles.pickerList}>
-            {loading ? <Text style={styles.emptyPickerText}>Đang tải danh mục...</Text> : null}
+            {loading ? <Text style={[styles.emptyPickerText, { color: colors.TEXT_SECONDARY }]}>Đang tải danh mục...</Text> : null}
             {!loading && !categories.length ? (
-              <Text style={styles.emptyPickerText}>Chưa có danh mục chi tiêu.</Text>
+              <Text style={[styles.emptyPickerText, { color: colors.TEXT_SECONDARY }]}>Chưa có danh mục chi tiêu.</Text>
             ) : null}
             {categories.map((category) => {
               const isSelected = String(category.id) === String(selectedId);
@@ -32,7 +35,7 @@ export default function CategoryPickerModal({
               return (
                 <Pressable
                   key={String(category.id)}
-                  style={[styles.pickerItem, isSelected && styles.pickerItemActive]}
+                  style={[styles.pickerItem, isSelected && [styles.pickerItemActive, { backgroundColor: colors.ROSE_MIST }]]}
                   onPress={() => {
                     onSelect(String(category.id));
                     onClose();
@@ -41,10 +44,10 @@ export default function CategoryPickerModal({
                   <View style={[styles.pickerIconBubble, { backgroundColor: `${iconColor}18` }]}>
                     <CategoryVectorIcon iconValue={category.icon} size={18} color={iconColor} />
                   </View>
-                  <Text style={[styles.pickerItemText, isSelected && styles.pickerItemTextActive]}>
+                  <Text style={[styles.pickerItemText, { color: colors.TEXT }, isSelected && [styles.pickerItemTextActive, { color: colors.PRIMARY }]]}>
                     {category.name}
                   </Text>
-                  {isSelected ? <Text style={styles.pickerCheck}>✓</Text> : null}
+                  {isSelected ? <Text style={[styles.pickerCheck, { color: colors.PRIMARY }]}>✓</Text> : null}
                 </Pressable>
               );
             })}
@@ -58,73 +61,62 @@ export default function CategoryPickerModal({
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: COLORS.OVERLAY,
     justifyContent: "flex-end"
   },
   pickerSheet: {
-    backgroundColor: COLORS.CARD,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: scale(20),
+    borderTopRightRadius: scale(20),
     maxHeight: "65%",
-    paddingBottom: 24
+    paddingBottom: scale(24)
   },
   pickerHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: 16,
+    padding: scale(16),
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.CARD_BORDER
   },
   pickerTitle: {
     fontSize: 16,
     fontWeight: "700",
-    color: COLORS.TEXT
   },
   pickerClose: {
     fontSize: 14,
     fontWeight: "600",
-    color: COLORS.PRIMARY
   },
   pickerList: {
-    padding: 8
+    padding: scale(8)
   },
   pickerItem: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    borderRadius: 10,
-    gap: 10
+    paddingVertical: scale(12),
+    paddingHorizontal: scale(12),
+    borderRadius: scale(10),
+    gap: scale(10)
   },
-  pickerItemActive: {
-    backgroundColor: COLORS.ROSE_MIST
-  },
+  pickerItemActive: {},
   pickerIconBubble: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: scale(32),
+    height: scale(32),
+    borderRadius: scale(16),
     justifyContent: "center",
     alignItems: "center"
   },
   pickerItemText: {
     fontSize: 14,
-    color: COLORS.TEXT,
     flex: 1
   },
   pickerItemTextActive: {
     fontWeight: "700",
-    color: COLORS.PRIMARY
   },
   pickerCheck: {
     fontSize: 16,
-    color: COLORS.PRIMARY,
     fontWeight: "700"
   },
   emptyPickerText: {
-    color: COLORS.TEXT_SECONDARY,
     fontSize: 13,
-    padding: 14,
+    padding: scale(14),
     textAlign: "center"
   }
 });

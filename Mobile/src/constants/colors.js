@@ -67,6 +67,51 @@ export const COLORS = {
   BLACK: '#000000',
   OVERLAY: 'rgba(0, 0, 0, 0.5)',
   TRANSPARENT: 'transparent',
+
+  // ─── Design System Surface & Depth ──────────────────────
+  SURFACE: '#FFFFFF',
+  SURFACE_ELEVATED: '#FFF9FB',
+  PRIMARY_GRADIENT: ['#ef5e83', '#f190ab'],
+  SHADOW_COLOR: 'rgba(239, 94, 131, 0.08)',
+
+  // ─── SpendBee design system colors ──────────────────────
+  APP_BACKGROUND: '#F2F2F7',      // iOS system background xám nhạt
+  SURFACE_SECONDARY: '#F2F2F7',  // card xám nhạt (nested)
+
+  // Wallet card gradient
+  WALLET_GRADIENT_START: '#7C4DFF',  // tím
+  WALLET_GRADIENT_END:   '#4FACFE',  // xanh dương
+
+  // Action buttons
+  ACTION_VOICE:   '#A855F7',  // tím
+  ACTION_EXPENSE: '#F97316',  // cam
+  ACTION_INCOME:  '#22C55E',  // xanh lá
+  ACTION_GOAL:    '#3B82F6',  // xanh dương
+
+  // Tab bar
+  TAB_ACTIVE_FG:  '#1A0F14',  // icon/text tối trên nền tím khi active ở light mode
+  TAB_ACTIVE_BG_SPENDBEE: '#3B82F6', // pill background khi active
+  TAB_INACTIVE:   '#9CA3AF',  // icon xám khi inactive
+
+  // Amount colors (SpendBee style)
+  INCOME_COLOR:   '#22C55E',  // xanh lá
+  EXPENSE_COLOR:  '#EF4444',  // đỏ
+
+  // Chart card background (dark — như SpendBee stats screen)
+  CHART_BG:       '#1C1C1E',  // dark card cho chart
+
+  // Goal progress
+  GOAL_PROGRESS:  '#F97316',  // cam
+
+  // Badge
+  BADGE_POSITIVE_BG:  'rgba(34,197,94,0.15)',   // xanh lá nhạt
+  BADGE_POSITIVE_FG:  '#22C55E',
+  BADGE_NEGATIVE_BG:  'rgba(239,68,68,0.15)',    // đỏ nhạt
+  BADGE_NEGATIVE_FG:  '#EF4444',
+
+  // Border
+  BORDER:         '#E5E7EB',
+  SEPARATOR:      '#F3F4F6',
 };
 
 export const DARK_COLORS = {
@@ -74,7 +119,7 @@ export const DARK_COLORS = {
 
   // ─── Override for Dark Mode ─────────────────────────────
   BG: '#0F0D0C',
-  CARD: '#1A1817',
+  CARD: '#2C2C2E', // iOS dark card background
   CARD_BORDER: '#2E2A28',
   TEXT: '#F3EEEC',
   TEXT_SECONDARY: '#B8ACA6',
@@ -83,6 +128,7 @@ export const DARK_COLORS = {
   TAB_BG: '#1A1817',
   TAB_ACTIVE: '#E8A87C',
   TAB_ACTIVE_BG: '#2A2624',
+  TAB_ACTIVE_FG: '#F3EEEC',
   TAB_INACTIVE: '#7A6E68',
   TAB_BORDER: 'rgba(255, 255, 255, 0.06)',
   TAB_SHADOW: 'rgba(0, 0, 0, 0.3)',
@@ -101,6 +147,19 @@ export const DARK_COLORS = {
 
   ROSE_MIST: '#2A181E',
   OVERLAY: 'rgba(0, 0, 0, 0.7)',
+
+  // ─── Design System Surface & Depth (Dark Override) ─────
+  SURFACE: '#2C2C2E',
+  SURFACE_ELEVATED: '#24201E',
+  PRIMARY_GRADIENT: ['#ef5e83', '#b83b5b'],
+  SHADOW_COLOR: 'rgba(0, 0, 0, 0.4)',
+
+  // ─── SpendBee Dark Mode Overrides ───────────────────────
+  APP_BACKGROUND: '#1C1C1E',
+  SURFACE_SECONDARY: '#3A3A3C',
+  CHART_BG: '#1C1C1E',
+  BORDER: '#38383A',
+  SEPARATOR: '#2C2C2E',
 };
 
 /**

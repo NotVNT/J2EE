@@ -30,6 +30,8 @@ export const API_ENDPOINTS = {
   GET_UNREAD_COUNT: "/notifications/unread-count",
   MARK_NOTIFICATION_READ: (id) => `/notifications/${id}/read`,
   MARK_ALL_NOTIFICATIONS_READ: "/notifications/read-all",
+  DELETE_NOTIFICATION: (id) => `/notifications/${id}`,
+  DELETE_NOTIFICATIONS_BULK: "/notifications/delete-bulk",
 
   // Email Preferences
   GET_EMAIL_PREFERENCES: "/profile/email-preferences",
@@ -77,6 +79,7 @@ export const API_ENDPOINTS = {
   // Expenses
   GET_ALL_EXPENSE: "/expenses",
   ADD_EXPENSE: "/expenses",
+  UPDATE_EXPENSE: (expenseId) => `/expenses/${expenseId}`,
   DELETE_EXPENSE: (expenseId) => `/expenses/${expenseId}`,
 
   // Receipt Import (PREMIUM)
@@ -86,6 +89,7 @@ export const API_ENDPOINTS = {
   // Incomes
   GET_ALL_INCOMES: "/incomes",
   ADD_INCOME: "/incomes",
+  UPDATE_INCOME: (incomeId) => `/incomes/${incomeId}`,
   DELETE_INCOME: (incomeId) => `/incomes/${incomeId}`,
 
   // Budgets
@@ -115,9 +119,11 @@ export const API_ENDPOINTS = {
   // Payment & OTP
   REQUEST_PAYMENT_OTP: "/payments/otp/request",
   VERIFY_PAYMENT_OTP: "/payments/otp/verify",
+  GET_PAYMENTS: "/payments",
   CREATE_PAYMENT: "/payments/payos/create",
   GET_PAYMENT_BY_ORDER_CODE: (orderCode) => `/payments/${orderCode}`,
   SYNC_PAYMENT_STATUS: (orderCode) => `/payments/${orderCode}/status`,
+  DELETE_PAYMENT: (orderCode) => `/payments/${orderCode}`,
 
   // Image upload
   UPLOAD_IMAGE: `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,

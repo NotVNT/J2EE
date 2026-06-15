@@ -1,9 +1,10 @@
 import React, { useContext } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { COLORS } from "../../constants/colors";
+import { COLORS, useAppColors } from "../../constants/colors";
 import { AuthContext } from "../../contexts/AuthContext";
 
 export default function AiInsightButton({ onPress, style }) {
+  const colors = useAppColors();
   const { user } = useContext(AuthContext);
   const plan = String(user?.subscriptionPlan || "FREE").toUpperCase();
   const status = String(user?.subscriptionStatus || "INACTIVE").toUpperCase();
@@ -12,13 +13,13 @@ export default function AiInsightButton({ onPress, style }) {
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [styles.button, style, pressed && styles.buttonPressed]}
+      style={({ pressed }) => [styles.button, { backgroundColor: colors.ROSE_MIST, borderColor: colors.CARD_BORDER }, style, pressed && styles.buttonPressed]}
       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
     >
       <Text style={styles.icon}>✨</Text>
       <View style={styles.labelWrap}>
-        <Text style={styles.label}>AI</Text>
-        {isPremium ? <View style={styles.proDot} /> : null}
+        <Text style={[styles.label, { color: colors.PRIMARY }]}>AI</Text>
+        {isPremium ? <View style={[styles.proDot, { backgroundColor: colors.GOLD }]} /> : null}
       </View>
     </Pressable>
   );

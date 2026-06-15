@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
-import { COLORS } from "../../constants/colors";
+import { useAppColors } from "../../constants/colors";
 import { formatCurrencyInput, parseCurrencyInput, todayIso } from "../../utils/format";
 import { PickDateField } from "../../utils/datePicker";
 import { CategoryVectorIcon, getIconColor } from "../../utils/categoryIcons";
 import CategoryPickerModal from "./CategoryPickerModal";
+import { scale } from "../../utils/layoutScale";
 
 export default function ReceiptItemRow({
   categories,
@@ -14,6 +15,7 @@ export default function ReceiptItemRow({
   onDelete,
   onUpdate
 }) {
+  const colors = useAppColors();
   const [pickerVisible, setPickerVisible] = useState(false);
   const selectedCategory = categories.find((category) => String(category.id) === String(item.categoryId));
   const iconColor = getIconColor(item.icon || selectedCategory?.icon);
@@ -28,51 +30,51 @@ export default function ReceiptItemRow({
   };
 
   return (
-    <View style={styles.itemCard}>
+    <View style={[styles.itemCard, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}>
       <View style={styles.itemHeader}>
-        <View style={styles.itemIndexBadge}>
-          <Text style={styles.itemIndexText}>#{index + 1}</Text>
+        <View style={[styles.itemIndexBadge, { backgroundColor: `${colors.PRIMARY}18` }]}>
+          <Text style={[styles.itemIndexText, { color: colors.PRIMARY }]}>#{index + 1}</Text>
         </View>
 
-        <Pressable onPress={() => onDelete(index)} style={styles.itemDeleteBtn}>
-          <Text style={styles.itemDeleteText}>✕ Xóa</Text>
+        <Pressable onPress={() => onDelete(index)} style={[styles.itemDeleteBtn, { backgroundColor: colors.BADGE_NEGATIVE_BG || colors.EXPENSE_LIGHT }]}>
+          <Text style={[styles.itemDeleteText, { color: colors.BADGE_NEGATIVE_FG || colors.EXPENSE }]}>✕ Xóa</Text>
         </Pressable>
       </View>
 
-      <Text style={styles.fieldLabel}>Tên khoản chi</Text>
+      <Text style={[styles.fieldLabel, { color: colors.TEXT_SECONDARY }]}>Tên khoản chi</Text>
       <TextInput
-        style={styles.textInput}
+        style={[styles.textInput, { backgroundColor: colors.BG || colors.APP_BACKGROUND, borderColor: colors.BORDER || colors.CARD_BORDER, color: colors.TEXT }]}
         value={item.name || ""}
         onChangeText={(text) => onUpdate(index, { ...item, name: text })}
         placeholder="VD: Cơm trưa, Xăng xe..."
-        placeholderTextColor={COLORS.TEXT_MUTED}
+        placeholderTextColor={colors.TEXT_MUTED}
       />
 
-      <Text style={styles.fieldLabel}>Số tiền (VNĐ)</Text>
+      <Text style={[styles.fieldLabel, { color: colors.TEXT_SECONDARY }]}>Số tiền (VNĐ)</Text>
       <TextInput
-        style={styles.textInput}
+        style={[styles.textInput, { backgroundColor: colors.BG || colors.APP_BACKGROUND, borderColor: colors.BORDER || colors.CARD_BORDER, color: colors.TEXT }]}
         value={item.amount ? formatCurrencyInput(String(item.amount)) : ""}
         onChangeText={(text) => onUpdate(index, { ...item, amount: parseCurrencyInput(text) })}
         placeholder="0"
-        placeholderTextColor={COLORS.TEXT_MUTED}
+        placeholderTextColor={colors.TEXT_MUTED}
         keyboardType="numeric"
       />
 
       <View style={styles.fieldRow}>
         <View style={styles.fieldHalf}>
-          <Text style={styles.fieldLabel}>Danh mục</Text>
-          <Pressable style={styles.categoryBtn} onPress={() => setPickerVisible(true)}>
+          <Text style={[styles.fieldLabel, { color: colors.TEXT_SECONDARY }]}>Danh mục</Text>
+          <Pressable style={[styles.categoryBtn, { backgroundColor: colors.BG || colors.APP_BACKGROUND, borderColor: colors.BORDER || colors.CARD_BORDER }]} onPress={() => setPickerVisible(true)}>
             {selectedCategory ? (
               <View style={styles.categoryBtnContent}>
                 <View style={[styles.catIconSm, { backgroundColor: `${iconColor}18` }]}>
                   <CategoryVectorIcon iconValue={selectedCategory.icon} size={14} color={iconColor} />
                 </View>
-                <Text style={styles.categoryBtnText} numberOfLines={1}>
+                <Text style={[styles.categoryBtnText, { color: colors.TEXT }]} numberOfLines={1}>
                   {selectedCategory.name}
                 </Text>
               </View>
             ) : (
-              <Text style={styles.categoryBtnPlaceholder}>Chọn...</Text>
+              <Text style={[styles.categoryBtnPlaceholder, { color: colors.TEXT_MUTED }]}>Chọn...</Text>
             )}
           </Pressable>
         </View>
@@ -87,7 +89,7 @@ export default function ReceiptItemRow({
       </View>
 
       {item.categoryHint && !item.categoryId ? (
-        <Text style={styles.hintText}>💡 Gợi ý: {item.categoryHint}</Text>
+        <Text style={[styles.hintText, { color: colors.WARNING }]}>💡 Gợi ý: {item.categoryHint}</Text>
       ) : null}
 
       <CategoryPickerModal
@@ -104,100 +106,85 @@ export default function ReceiptItemRow({
 
 const styles = StyleSheet.create({
   itemCard: {
-    backgroundColor: COLORS.CARD,
-    borderRadius: 14,
+    borderRadius: scale(14),
     borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
-    padding: 14
+    padding: scale(14)
   },
   itemHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 10
+    marginBottom: scale(10)
   },
   itemIndexBadge: {
-    backgroundColor: `${COLORS.PRIMARY}18`,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 3
+    borderRadius: scale(8),
+    paddingHorizontal: scale(10),
+    paddingVertical: scale(3)
   },
   itemIndexText: {
     fontSize: 12,
     fontWeight: "700",
-    color: COLORS.PRIMARY
   },
   itemDeleteBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-    backgroundColor: COLORS.EXPENSE_LIGHT
+    paddingHorizontal: scale(10),
+    paddingVertical: scale(4),
+    borderRadius: scale(8),
   },
   itemDeleteText: {
     fontSize: 12,
     fontWeight: "600",
-    color: COLORS.EXPENSE
   },
   fieldLabel: {
     fontSize: 12,
     fontWeight: "600",
-    color: COLORS.TEXT_SECONDARY,
-    marginBottom: 4,
-    marginTop: 8
+    marginBottom: scale(4),
+    marginTop: scale(8)
   },
   textInput: {
-    backgroundColor: COLORS.BG,
-    borderRadius: 10,
+    borderRadius: scale(10),
     borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingHorizontal: scale(12),
+    paddingVertical: scale(10),
     fontSize: 14,
-    color: COLORS.TEXT
   },
   fieldRow: {
     flexDirection: "row",
-    gap: 10,
-    marginTop: 4
+    gap: scale(10),
+    marginTop: scale(4)
   },
   fieldHalf: {
     flex: 1
   },
   categoryBtn: {
-    backgroundColor: COLORS.BG,
-    borderRadius: 10,
+    borderRadius: scale(10),
     borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingHorizontal: scale(12),
+    paddingVertical: scale(10),
     justifyContent: "center",
-    minHeight: 42
+    minHeight: scale(42)
   },
   categoryBtnContent: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6
+    gap: scale(6)
   },
   catIconSm: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: scale(24),
+    height: scale(24),
+    borderRadius: scale(12),
     justifyContent: "center",
     alignItems: "center"
   },
   categoryBtnText: {
     fontSize: 13,
-    color: COLORS.TEXT,
     flex: 1
   },
   categoryBtnPlaceholder: {
     fontSize: 13,
-    color: COLORS.TEXT_MUTED
   },
   hintText: {
     fontSize: 12,
-    color: COLORS.WARNING,
-    marginTop: 6,
+    marginTop: scale(6),
     fontStyle: "italic"
   }
 });

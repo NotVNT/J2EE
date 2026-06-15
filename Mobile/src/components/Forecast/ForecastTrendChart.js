@@ -7,7 +7,7 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { LineChart } from "react-native-chart-kit";
-import { COLORS, useAppColors } from "../../constants/colors";
+import { useAppColors } from "../../constants/colors";
 import ForecastEmptyState from "./ForecastEmptyState";
 
 export default function ForecastTrendChart({
@@ -80,14 +80,11 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: "800",
-    color: COLORS.TEXT,
     marginBottom: 10,
   },
   chartCard: {
-    backgroundColor: COLORS.CARD,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
     paddingTop: 12,
     paddingBottom: 8,
     alignItems: "center",
@@ -97,7 +94,6 @@ const styles = StyleSheet.create({
   },
   trendNote: {
     fontSize: 11,
-    color: COLORS.TEXT_MUTED,
     marginTop: 6,
     textAlign: "center",
   },

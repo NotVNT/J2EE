@@ -6,47 +6,47 @@ export const DEFAULT_ALERT_BUTTON_TEXT = "Đã hiểu";
 export const APP_ALERT_VARIANTS = {
   success: {
     label: "Thành công",
-    icon: "✓",
-    accent: COLORS.INCOME,
-    accentDark: "#0F766E",
+    image: require("../assets/alert/success.png"),
+    accent: "#4ADE70",
+    accentDark: "#22C55E",
     soft: COLORS.INCOME_LIGHT,
-    glow: "rgba(42, 157, 143, 0.28)",
+    glow: "rgba(34, 197, 94, 0.15)",
     title: COLORS.TEXT
   },
   error: {
     label: "Có lỗi",
-    icon: "!",
-    accent: COLORS.EXPENSE,
-    accentDark: "#B93815",
+    image: require("../assets/alert/error.png"),
+    accent: "#EF3B3B",
+    accentDark: "#DC2626",
     soft: COLORS.EXPENSE_LIGHT,
-    glow: "rgba(231, 111, 81, 0.28)",
+    glow: "rgba(239, 68, 68, 0.15)",
     title: COLORS.TEXT
   },
   warning: {
     label: "Cần chú ý",
-    icon: "!",
+    image: require("../assets/alert/warning.png"),
     accent: COLORS.WARNING,
     accentDark: "#D97706",
     soft: COLORS.WARNING_LIGHT,
-    glow: "rgba(255, 184, 77, 0.32)",
+    glow: "rgba(255, 184, 77, 0.2)",
     title: COLORS.TEXT
   },
   confirm: {
     label: "Xác nhận",
-    icon: "?",
-    accent: COLORS.PRIMARY,
-    accentDark: COLORS.PRIMARY_DARK,
+    image: require("../assets/alert/confirm.png"),
+    accent: COLORS.WARNING,
+    accentDark: "#D97706",
     soft: COLORS.ROSE_MIST,
-    glow: COLORS.PRIMARY_GLOW_STRONG,
+    glow: "rgba(255, 184, 77, 0.2)",
     title: COLORS.TEXT
   },
   info: {
     label: "Thông tin",
-    icon: "i",
+    image: require("../assets/alert/information.png"),
     accent: COLORS.INFO,
     accentDark: "#2563EB",
     soft: COLORS.INFO_LIGHT,
-    glow: "rgba(107, 155, 210, 0.28)",
+    glow: "rgba(107, 155, 210, 0.15)",
     title: COLORS.TEXT
   }
 };

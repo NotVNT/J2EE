@@ -44,6 +44,11 @@ public class ExpenseController {
         return ResponseEntity.ok(expenses);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<ExpenseDTO> getExpenseById(@PathVariable Long id) {
+        return ResponseEntity.ok(expenseService.getExpenseById(id));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteExpense(@PathVariable Long id) {
         expenseService.deleteExpense(id);

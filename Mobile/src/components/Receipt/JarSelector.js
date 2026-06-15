@@ -1,15 +1,18 @@
 import React from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { COLORS } from "../../constants/colors";
+import { useAppColors } from "../../constants/colors";
+import { scale } from "../../utils/layoutScale";
 
 export default function JarSelector({ jarId, jars, loading, onChange }) {
+  const colors = useAppColors();
+
   return (
-    <View style={styles.jarsCard}>
-      <Text style={styles.jarsLabel}>Hũ chi tiêu áp dụng</Text>
+    <View style={[styles.jarsCard, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}>
+      <Text style={[styles.jarsLabel, { color: colors.TEXT_SECONDARY }]}>Hũ chi tiêu áp dụng</Text>
       {loading ? (
-        <Text style={styles.mutedText}>Đang tải danh sách hũ...</Text>
+        <Text style={[styles.mutedText, { color: colors.TEXT_MUTED }]}>Đang tải danh sách hũ...</Text>
       ) : jars.length === 0 ? (
-        <Text style={styles.mutedText}>Không tìm thấy hũ chi tiêu nào.</Text>
+        <Text style={[styles.mutedText, { color: colors.TEXT_MUTED }]}>Không tìm thấy hũ chi tiêu nào.</Text>
       ) : (
         <ScrollView
           horizontal
@@ -18,13 +21,14 @@ export default function JarSelector({ jarId, jars, loading, onChange }) {
         >
           {jars.map((jar) => {
             const isSelected = String(jar.id) === jarId;
-            const accentColor = jar.color || COLORS.PRIMARY;
+            const accentColor = jar.color || colors.PRIMARY;
             return (
               <Pressable
                 key={jar.id}
                 onPress={() => onChange(isSelected ? "" : String(jar.id))}
                 style={[
                   styles.jarItem,
+                  { backgroundColor: colors.APP_BACKGROUND || colors.BG, borderColor: colors.BORDER || colors.CARD_BORDER },
                   isSelected && {
                     borderColor: accentColor,
                     backgroundColor: `${accentColor}12`
@@ -37,6 +41,7 @@ export default function JarSelector({ jarId, jars, loading, onChange }) {
                 <Text
                   style={[
                     styles.jarName,
+                    { color: colors.TEXT },
                     isSelected && {
                       color: accentColor,
                       fontWeight: "800"
@@ -56,52 +61,45 @@ export default function JarSelector({ jarId, jars, loading, onChange }) {
 
 const styles = StyleSheet.create({
   jarsCard: {
-    backgroundColor: COLORS.CARD,
-    borderRadius: 14,
+    borderRadius: scale(14),
     borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
-    padding: 12,
-    marginBottom: 4
+    padding: scale(12),
+    marginBottom: scale(4)
   },
   jarsLabel: {
     fontSize: 13,
     fontWeight: "700",
-    color: COLORS.TEXT_SECONDARY,
-    marginBottom: 8
+    marginBottom: scale(8)
   },
   mutedText: {
     fontSize: 12,
-    color: COLORS.TEXT_MUTED
   },
   jarsRow: {
     flexDirection: "row",
-    gap: 8
+    gap: scale(8)
   },
   jarItem: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: COLORS.BG,
-    borderRadius: 10,
+    borderRadius: scale(10),
     borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    marginRight: 6
+    paddingHorizontal: scale(10),
+    paddingVertical: scale(6),
+    marginRight: scale(6)
   },
   jarEmojiBox: {
-    width: 22,
-    height: 22,
-    borderRadius: 5,
+    width: scale(22),
+    height: scale(22),
+    borderRadius: scale(5),
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 6
+    marginRight: scale(6)
   },
   jarEmoji: {
-    fontSize: 12
+    fontSize: scale(12)
   },
   jarName: {
     fontSize: 12,
-    color: COLORS.TEXT,
     fontWeight: "600"
   }
 });

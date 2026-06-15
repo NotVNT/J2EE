@@ -1,7 +1,7 @@
 import { useState, useEffect, useContext, useMemo, useRef, useCallback } from "react";
 import axiosConfig from "../util/axiosConfig";
 import toast from "react-hot-toast";
-import { AlertTriangle, Lightbulb, Activity, Crown, Sparkles, CheckCircle2 } from "lucide-react";
+import { AlertTriangle, Lightbulb, Activity, Crown, Sparkles, CheckCircle2, TrendingUp, ListFilter } from "lucide-react";
 import { API_ENDPOINTS } from "../util/apiEndpoints";
 import { AppContext } from "../context/AppContext";
 import Dashboard from "../components/Dashboard";
@@ -10,6 +10,12 @@ import { useNavigate } from "react-router-dom";
 import { useUser } from "../hooks/useUser";
 import { usePageTitle } from "../hooks/usePageTitle";
 import { useTheme } from "../context/ThemeContext";
+import ForecastTrendChart from "../components/ForecastTrendChart.jsx";
+import {
+    buildCategoryChipOptions,
+    buildCategoryTrendChartData,
+    getForecastSummary,
+} from "../util/forecastUi.js";
 
 const getNearestMonths = (count) => {
     const months = [];
@@ -40,6 +46,9 @@ const Forecast = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [isInsightsLoading, setIsInsightsLoading] = useState(false);
     const [selectedIdx, setSelectedIdx] = useState(0);
+    const [selectedCategoryId, setSelectedCategoryId] = useState("all");
+    const [categoryTrend, setCategoryTrend] = useState(null);
+    const [isTrendLoading, setIsTrendLoading] = useState(false);
     const NEAREST_MONTHS = useMemo(() => getNearestMonths(6), []);
     const selectedMonth = NEAREST_MONTHS[selectedIdx].month;
     const selectedYear = NEAREST_MONTHS[selectedIdx].year;
@@ -62,6 +71,10 @@ const Forecast = () => {
             return `${(value / 1_000).toFixed(1)}K`;
         }
         return value.toString();
+    }, []);
+    const formatCurrency = useCallback((value) => {
+        const numericValue = Number(value || 0);
+        return `${new Intl.NumberFormat("vi-VN").format(Math.round(numericValue))} VND`;
     }, []);
 
     const fetchInsights = useCallback(async (forecastData) => {
@@ -112,14 +125,74 @@ const Forecast = () => {
         }
     }, [fetchData, user]);
 
+    const categoryOptions = useMemo(
+        () => buildCategoryChipOptions(monthlyForecast),
+        [monthlyForecast]
+    );
+    const selectedForecast = useMemo(
+        () => (monthlyForecast?.categories || []).find((category) => String(category.categoryId) === String(selectedCategoryId)) || null,
+        [monthlyForecast, selectedCategoryId]
+    );
+    const forecastSummary = useMemo(
+        () => getForecastSummary(monthlyForecast, anomalies),
+        [monthlyForecast, anomalies]
+    );
+    const targetTrendLabel = `${String(selectedMonth).padStart(2, "0")}/${selectedYear}`;
+    const trendChartData = useMemo(
+        () => buildCategoryTrendChartData({
+            trend: categoryTrend,
+            selectedForecast,
+            targetLabel: targetTrendLabel,
+        }),
+        [categoryTrend, selectedForecast, targetTrendLabel]
+    );
+
+    useEffect(() => {
+        const selectedCategoryStillExists = categoryOptions.some((option) => option.id === String(selectedCategoryId));
+        if (!selectedCategoryStillExists) {
+            setSelectedCategoryId("all");
+        }
+    }, [categoryOptions, selectedCategoryId]);
+
+    useEffect(() => {
+        if (selectedCategoryId === "all" || user?.subscriptionPlan !== "PREMIUM") {
+            setCategoryTrend(null);
+            setIsTrendLoading(false);
+            return;
+        }
+
+        let cancelled = false;
+        setIsTrendLoading(true);
+        setCategoryTrend(null);
+
+        axiosConfig
+            .get(API_ENDPOINTS.FORECAST_CATEGORY_TREND(selectedCategoryId, 6), { _skipGlobalLoading: true })
+            .then((response) => {
+                if (!cancelled) setCategoryTrend(response.data);
+            })
+            .catch((error) => {
+                console.error("Error fetching category trend:", error);
+                if (!cancelled) toast.error("Không thể tải xu hướng danh mục");
+            })
+            .finally(() => {
+                if (!cancelled) setIsTrendLoading(false);
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [selectedCategoryId, user?.subscriptionPlan]);
+
     const chartData = useMemo(() =>
-        monthlyForecast?.categories?.map(c => ({
+        (monthlyForecast?.categories || [])
+            .filter((category) => selectedCategoryId === "all" || String(category.categoryId) === String(selectedCategoryId))
+            .map(c => ({
             name: c.categoryName,
             predicted: c.predictedAmount,
             average: c.historicalAverage,
             trend: c.trend
-        })) || [],
-        [monthlyForecast]
+        })),
+        [monthlyForecast, selectedCategoryId]
     );
 
     if (user?.subscriptionPlan !== "PREMIUM") {
@@ -282,6 +355,79 @@ const Forecast = () => {
                         </div>
                     </div>
                 ) : (
+                    <>
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/5">
+                            <div className="flex items-center justify-between gap-3">
+                                <div>
+                                    <p className="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Dự báo tổng</p>
+                                    <p className="mt-2 text-xl font-black text-slate-900 dark:text-white">{formatCurrency(forecastSummary.totalPredicted)}</p>
+                                </div>
+                                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-violet-500/10 text-violet-500">
+                                    <Activity size={21} />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/5">
+                            <div className="flex items-center justify-between gap-3">
+                                <div className="min-w-0">
+                                    <p className="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Tăng mạnh nhất</p>
+                                    <p className="mt-2 truncate text-xl font-black text-slate-900 dark:text-white">
+                                        {forecastSummary.strongestIncrease?.categoryName || "Ổn định"}
+                                    </p>
+                                    {forecastSummary.strongestIncrease ? (
+                                        <p className="mt-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                                            {formatCurrency(forecastSummary.strongestIncrease.predictedAmount)}
+                                        </p>
+                                    ) : null}
+                                </div>
+                                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-500">
+                                    <TrendingUp size={21} />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/5">
+                            <div className="flex items-center justify-between gap-3">
+                                <div>
+                                    <p className="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Bất thường</p>
+                                    <p className="mt-2 text-xl font-black text-slate-900 dark:text-white">{forecastSummary.anomalyCount}</p>
+                                    <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">giao dịch cần xem lại</p>
+                                </div>
+                                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-rose-500/10 text-rose-500">
+                                    <AlertTriangle size={21} />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-white/5">
+                        <div className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-800 dark:text-white">
+                            <ListFilter size={17} className="text-violet-500" />
+                            Lọc theo danh mục
+                        </div>
+                        <div className="flex gap-2 overflow-x-auto pb-1">
+                            {categoryOptions.map((option) => {
+                                const isSelected = String(selectedCategoryId) === option.id;
+                                return (
+                                    <button
+                                        key={option.id}
+                                        type="button"
+                                        onClick={() => setSelectedCategoryId(option.id)}
+                                        className={`shrink-0 rounded-full border px-4 py-2 text-xs font-bold transition ${
+                                            isSelected
+                                                ? "border-violet-500 bg-violet-600 text-white shadow-sm shadow-violet-500/20"
+                                                : "border-slate-200 bg-slate-50 text-slate-500 hover:border-violet-300 hover:text-violet-600 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:border-violet-400"
+                                        }`}
+                                    >
+                                        {option.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         
                         {/* Main Chart Area */}
@@ -358,6 +504,15 @@ const Forecast = () => {
                             </div>
 
                             {/* AI Insights - chỉ hiển thị cho tháng tương lai */}
+                            {selectedCategoryId !== "all" && (
+                                <ForecastTrendChart
+                                    data={trendChartData}
+                                    title={`Xu hướng ${selectedForecast?.categoryName || "danh mục"}`}
+                                    isLoading={isTrendLoading}
+                                    formatYAxis={formatYAxis}
+                                />
+                            )}
+
                             {!isCurrentMonth && (
                                 isInsightsLoading ? (
                                     <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-6 text-white shadow-md relative overflow-hidden">
@@ -436,6 +591,7 @@ const Forecast = () => {
                         </div>
                         
                     </div>
+                    </>
                 )}
             </div>
         </Dashboard>

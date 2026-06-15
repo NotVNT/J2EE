@@ -1,6 +1,6 @@
 import React from "react";
 import { Pressable, StyleSheet, Text, TextInput } from "react-native";
-import { COLORS } from "../../constants/colors";
+import { COLORS, useAppColors } from "../../constants/colors";
 
 export default function PasswordChangeFields({
   confirmPassword,
@@ -12,44 +12,46 @@ export default function PasswordChangeFields({
   setShowPasswordFields,
   showPasswordFields
 }) {
+  const colors = useAppColors();
+
   if (!showPasswordFields) {
     return (
-      <Pressable style={styles.secondaryButton} onPress={() => setShowPasswordFields(true)}>
-        <Text style={styles.secondaryButtonText}>Đổi mật khẩu</Text>
+      <Pressable style={[styles.secondaryButton, { borderColor: colors.PRIMARY_GLOW, backgroundColor: colors.PRIMARY_GLOW_STRONG ? colors.PRIMARY_GLOW : "rgba(239, 94, 131, 0.04)" }]} onPress={() => setShowPasswordFields(true)}>
+        <Text style={[styles.secondaryButtonText, { color: colors.PRIMARY }]}>Đổi mật khẩu</Text>
       </Pressable>
     );
   }
 
   return (
     <>
-      <Text style={styles.label}>Mật khẩu hiện tại</Text>
+      <Text style={[styles.label, { color: colors.TEXT }]}>Mật khẩu hiện tại</Text>
       <TextInput
-        style={styles.input}
+        style={[styles.input, { backgroundColor: colors.BG, borderColor: colors.CARD_BORDER, color: colors.TEXT }]}
         value={currentPassword}
         onChangeText={setCurrentPassword}
         secureTextEntry
         placeholder="Nhập mật khẩu hiện tại"
-        placeholderTextColor={COLORS.DARK_TEXT_SECONDARY}
+        placeholderTextColor={colors.TEXT_MUTED}
       />
 
-      <Text style={styles.label}>Mật khẩu mới</Text>
+      <Text style={[styles.label, { color: colors.TEXT }]}>Mật khẩu mới</Text>
       <TextInput
-        style={styles.input}
+        style={[styles.input, { backgroundColor: colors.BG, borderColor: colors.CARD_BORDER, color: colors.TEXT }]}
         value={newPassword}
         onChangeText={setNewPassword}
         secureTextEntry
         placeholder="Ít nhất 6 ký tự"
-        placeholderTextColor={COLORS.DARK_TEXT_SECONDARY}
+        placeholderTextColor={colors.TEXT_MUTED}
       />
 
-      <Text style={styles.label}>Xác nhận mật khẩu mới</Text>
+      <Text style={[styles.label, { color: colors.TEXT }]}>Xác nhận mật khẩu mới</Text>
       <TextInput
-        style={styles.input}
+        style={[styles.input, { backgroundColor: colors.BG, borderColor: colors.CARD_BORDER, color: colors.TEXT }]}
         value={confirmPassword}
         onChangeText={setConfirmPassword}
         secureTextEntry
         placeholder="Nhập lại mật khẩu mới"
-        placeholderTextColor={COLORS.DARK_TEXT_SECONDARY}
+        placeholderTextColor={colors.TEXT_MUTED}
       />
     </>
   );

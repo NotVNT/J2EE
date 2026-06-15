@@ -34,6 +34,7 @@ export const API_ENDPOINTS = {
 
     // Income endpoints
     GET_ALL_INCOMES: "/incomes",
+    GET_INCOME_BY_ID: (incomeId) => `/incomes/${incomeId}`,
     ADD_INCOME: "/incomes",
     UPDATE_INCOME: (incomeId) => `/incomes/${incomeId}`,
     DELETE_INCOME: (incomeId) => `/incomes/${incomeId}`,
@@ -42,6 +43,7 @@ export const API_ENDPOINTS = {
 
     // Expense endpoints
     GET_ALL_EXPENSE: "/expenses",
+    GET_EXPENSE_BY_ID: (expenseId) => `/expenses/${expenseId}`,
     ADD_EXPENSE: "/expenses",
     ANALYZE_EXPENSE_RECEIPT: "/expenses/import-receipt/analyze",
     CONFIRM_EXPENSE_RECEIPT_IMPORT: "/expenses/import-receipt/confirm",

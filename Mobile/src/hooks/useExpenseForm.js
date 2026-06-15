@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Alert } from "react-native";
 import { SUCCESS_ALERT_MESSAGES, SUCCESS_ALERT_TITLE } from "../constants/alertMessages";
 import { fetchCategoriesByType } from "../services/categoryService";
-import { createExpense } from "../services/expenseService";
+import { createExpense, updateExpense } from "../services/expenseService";
 import { fetchJars } from "../services/jarService";
 import { formatCurrencyInput, getApiErrorMessage, parseCurrencyInput, todayIso } from "../utils/format";
 import { parseNote, suggestCategory } from "../utils/noteParser";
@@ -40,7 +40,7 @@ export default function useExpenseForm({ defaultJarId, initialData, onSaved }) {
         if (!active) return;
         setCategories(data);
         if (data.length > 0) {
-          setCategoryId(String(data[0].id));
+          setCategoryId(String(initialData?.categoryId || data[0].id));
         }
       } catch (error) {
         Alert.alert("Lỗi", getApiErrorMessage(error, "Không tải được danh mục"));
@@ -55,7 +55,7 @@ export default function useExpenseForm({ defaultJarId, initialData, onSaved }) {
     return () => {
       active = false;
     };
-  }, []);
+  }, [initialData?.categoryId]);
 
   useEffect(() => {
     let active = true;
@@ -66,7 +66,11 @@ export default function useExpenseForm({ defaultJarId, initialData, onSaved }) {
         const data = await fetchJars();
         if (!active) return;
         setJars(data);
-        setJarId(getDefaultJarId(data, defaultJarId));
+        setJarId(
+          initialData?.id
+            ? (initialData.jarId ? String(initialData.jarId) : "")
+            : getDefaultJarId(data, defaultJarId)
+        );
       } catch (error) {
         console.error("Lỗi tải danh sách hũ:", error);
       } finally {
@@ -80,7 +84,7 @@ export default function useExpenseForm({ defaultJarId, initialData, onSaved }) {
     return () => {
       active = false;
     };
-  }, [defaultJarId]);
+  }, [defaultJarId, initialData?.id, initialData?.jarId]);
 
   useEffect(() => {
     if (!initialData) return;
@@ -89,6 +93,9 @@ export default function useExpenseForm({ defaultJarId, initialData, onSaved }) {
     if (initialData.amount) setAmount(formatCurrencyInput(String(initialData.amount)));
     if (initialData.date) setDate(initialData.date);
     if (initialData.note) setNote(initialData.note);
+    if (initialData.categoryId) setCategoryId(String(initialData.categoryId));
+    if (initialData.jarId) setJarId(String(initialData.jarId));
+    if (initialData.id && !initialData.jarId) setJarId("");
 
     if (initialData.categoryHint && categories.length > 0) {
       const hint = initialData.categoryHint.toLowerCase();
@@ -174,16 +181,23 @@ export default function useExpenseForm({ defaultJarId, initialData, onSaved }) {
         }));
       }
 
-      await createExpense(payload);
-      Alert.alert(SUCCESS_ALERT_TITLE, SUCCESS_ALERT_MESSAGES.create.expense, [
+      const isEditing = Boolean(initialData?.id);
+      if (isEditing) {
+        await updateExpense(initialData.id, payload);
+      } else {
+        await createExpense(payload);
+      }
+
+      const successMessage = isEditing ? SUCCESS_ALERT_MESSAGES.update.expense : SUCCESS_ALERT_MESSAGES.create.expense;
+      Alert.alert(SUCCESS_ALERT_TITLE, successMessage, [
         { text: "OK", onPress: onSaved }
       ]);
     } catch (error) {
-      Alert.alert("Lưu thất bại", getApiErrorMessage(error, "Không thể tạo khoản chi"));
+      Alert.alert("Lưu thất bại", getApiErrorMessage(error, "Không thể lưu khoản chi"));
     } finally {
       setSubmitting(false);
     }
-  }, [amount, categoryId, date, jarId, name, note, onSaved, splitInfo]);
+  }, [amount, categoryId, date, initialData, jarId, name, note, onSaved, splitInfo]);
 
   return {
     amount,

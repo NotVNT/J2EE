@@ -1,5 +1,6 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { COLORS, useAppColors } from "../../constants/colors";
 import { formatJarMoney } from "../../utils/jar";
 
@@ -7,27 +8,32 @@ export default function JarOverview({ jarCount, maxJars, totalBalance, totalPerc
   const colors = useAppColors();
 
   return (
-    <View style={[styles.overviewContainer, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER, shadowColor: colors.TEXT }]}> 
-      <View style={[styles.overviewBox, { borderBottomColor: colors.CARD_BORDER }]}> 
-        <Text style={[styles.overviewLabel, { color: colors.TEXT_SECONDARY }]}>Tổng số dư hũ</Text>
-        <Text style={[styles.overviewBalance, { color: colors.PRIMARY }]}>{formatJarMoney(totalBalance)}</Text>
+    <LinearGradient
+      colors={[colors.WALLET_GRADIENT_START || '#7C4DFF', colors.WALLET_GRADIENT_END || '#4FACFE']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 0 }}
+      style={[styles.overviewContainer, { shadowColor: colors.WALLET_GRADIENT_START || '#7C4DFF' }]}
+    >
+      <View style={[styles.overviewBox, { borderBottomColor: 'rgba(255,255,255,0.2)' }]}> 
+        <Text style={[styles.overviewLabel, { color: 'rgba(255,255,255,0.8)' }]}>Tổng số dư hũ</Text>
+        <Text style={[styles.overviewBalance, { color: '#FFFFFF' }]}>{formatJarMoney(totalBalance)}</Text>
       </View>
       <View style={styles.overviewRow}>
-        <View style={[styles.smallOverviewBox, { marginRight: 8, backgroundColor: colors.BG }]}> 
-          <Text style={[styles.overviewLabel, { color: colors.TEXT_SECONDARY }]}>Số hũ đang dùng</Text>
-          <Text style={[styles.overviewValue, { color: colors.TEXT }]}>{jarCount} / {maxJars === Infinity ? "∞" : maxJars}</Text>
+        <View style={[styles.smallOverviewBox, { marginRight: 8, backgroundColor: 'rgba(255,255,255,0.15)' }]}> 
+          <Text style={[styles.overviewLabel, { color: 'rgba(255,255,255,0.8)' }]}>Số hũ đang dùng</Text>
+          <Text style={[styles.overviewValue, { color: '#FFFFFF' }]}>{jarCount} / {maxJars === Infinity ? "∞" : maxJars}</Text>
         </View>
-        <View style={[styles.smallOverviewBox, { backgroundColor: colors.BG }]}> 
-          <Text style={[styles.overviewLabel, { color: colors.TEXT_SECONDARY }]}>Tổng phân bổ %</Text>
-          <Text style={[styles.overviewValue, { color: colors.TEXT }, totalPercentage > 100 && { color: colors.EXPENSE }]}>{totalPercentage.toFixed(1)}%</Text>
+        <View style={[styles.smallOverviewBox, { backgroundColor: 'rgba(255,255,255,0.15)' }]}> 
+          <Text style={[styles.overviewLabel, { color: 'rgba(255,255,255,0.8)' }]}>Tổng phân bổ %</Text>
+          <Text style={[styles.overviewValue, { color: '#FFFFFF' }, totalPercentage > 100 && { color: '#FFD4B2' }]}>{totalPercentage.toFixed(1)}%</Text>
         </View>
       </View>
       {totalPercentage > 100 && (
-        <View style={[styles.warningBanner, { backgroundColor: colors.EXPENSE_LIGHT, borderColor: colors.EXPENSE }]}> 
-          <Text style={[styles.warningText, { color: colors.EXPENSE }]}>🚨 Tổng tỉ lệ phân bổ đã vượt quá 100%! Vui lòng điều chỉnh lại tỉ lệ các hũ.</Text>
+        <View style={[styles.warningBanner, { backgroundColor: 'rgba(239,111,81,0.2)', borderColor: '#FFB84D' }]}> 
+          <Text style={[styles.warningText, { color: '#FFD4B2' }]}>🚨 Tổng tỉ lệ phân bổ đã vượt quá 100%! Vui lòng điều chỉnh lại tỉ lệ các hũ.</Text>
         </View>
       )}
-    </View>
+    </LinearGradient>
   );
 }
 

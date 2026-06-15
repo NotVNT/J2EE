@@ -1,15 +1,15 @@
 {
   "expo": {
-    "name": "Devbot",
+    "name": "Money Manager",
     "slug": "moneymanager-mobile",
     "scheme": "moneymanager",
-    "version": "1.0.0",
+    "version": "1.5",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "jsEngine": "hermes",
-    "icon": "./src/assets/applogo.png",
+    "icon": "./src/assets/logo&banner/applogo.png",
     "splash": {
-      "image": "./src/assets/loadingscreen.png",
+      "image": "./src/assets/logo&banner/loadingscreen.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -20,7 +20,7 @@
       "package": "com.money.manager.mobile",
       "usesCleartextTraffic": true,
       "adaptiveIcon": {
-        "foregroundImage": "./src/assets/applogo.png",
+        "foregroundImage": "./src/assets/logo&banner/applogo.png",
         "backgroundColor": "#ffffff"
       },
       "permissions": [
@@ -29,7 +29,7 @@
     },
     "ios": {
       "bundleIdentifier": "com.money.manager.mobile",
-      "icon": "./src/assets/applogo.png",
+      "icon": "./src/assets/logo&banner/applogo.png",
       "infoPlist": {
         "CFBundleURLTypes": [
           {

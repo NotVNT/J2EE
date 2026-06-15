@@ -1,5 +1,6 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { COLORS, useAppColors } from "../../constants/colors";
 
 export default function BudgetGoalProgressCard({ budgetsOnTrack, totalBudgets, completedGoalsThisMonth }) {
@@ -7,7 +8,10 @@ export default function BudgetGoalProgressCard({ budgetsOnTrack, totalBudgets, c
 
   return (
     <View style={[styles.card, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}> 
-      <Text style={[styles.cardTitle, { color: colors.TEXT }]}>🎯 Tiến độ Ngân sách & Mục tiêu</Text>
+      <View style={styles.cardHeader}>
+        <Ionicons name="pie-chart-outline" size={18} color={colors.PRIMARY} />
+        <Text style={[styles.cardTitle, { color: colors.TEXT }]}>Tiến độ ngân sách & mục tiêu</Text>
+      </View>
       <View style={styles.goalStatusRow}>
         <View style={styles.goalStatusItem}>
           <Text style={[styles.goalStatusValue, { color: colors.PRIMARY }]}>{budgetsOnTrack} / {totalBudgets}</Text>
@@ -25,17 +29,27 @@ export default function BudgetGoalProgressCard({ budgetsOnTrack, totalBudgets, c
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: COLORS.CARD,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: COLORS.CARD_BORDER,
     padding: 16,
+    shadowColor: "#000",
+    shadowOpacity: 0.02,
+    shadowRadius: 6,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    elevation: 2,
+  },
+  cardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 14,
   },
   cardTitle: {
     fontSize: 15,
     fontWeight: "800",
-    color: COLORS.TEXT,
-    marginBottom: 14,
   },
   goalStatusRow: {
     flexDirection: "row",
@@ -48,17 +62,14 @@ const styles = StyleSheet.create({
   goalStatusValue: {
     fontSize: 18,
     fontWeight: "800",
-    color: COLORS.PRIMARY,
   },
   goalStatusLabel: {
     fontSize: 12,
-    color: COLORS.TEXT_SECONDARY,
     marginTop: 4,
     fontWeight: "600",
   },
   verticalDivider: {
     width: 1,
     height: 32,
-    backgroundColor: COLORS.CARD_BORDER,
   },
 });

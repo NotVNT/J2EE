@@ -1,4 +1,5 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
+import { Alert, BackHandler, Platform } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -15,8 +16,10 @@ import ForgotPasswordOtpScreen from "../screens/auth/ForgotPasswordOtpScreen";
 import ResetPasswordScreen from "../screens/auth/ResetPasswordScreen";
 import VerifyOtpScreen from "../screens/auth/VerifyOtpScreen";
 import OnboardingScreen, { ONBOARDING_KEY } from "../screens/onboarding/OnboardingScreen";
+import { appNavigationRef } from "./navigationRef";
 
 const Stack = createNativeStackNavigator();
+
 
 const linking = {
   prefixes: ["moneymanager://"],
@@ -117,6 +120,7 @@ export default function AppNavigator() {
   const [isOnboardingResolved, setIsOnboardingResolved] = useState(false);
   const [shouldShowOnboarding, setShouldShowOnboarding] = useState(false);
   const [isStartupDelayDone, setIsStartupDelayDone] = useState(false);
+  const isExitConfirmOpenRef = useRef(false);
 
   useEffect(() => {
     let active = true;
@@ -147,12 +151,68 @@ export default function AppNavigator() {
     setIsStartupDelayDone(true);
   };
 
+  useEffect(() => {
+    if (Platform.OS !== "android") {
+      return undefined;
+    }
+
+    const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
+      const navigation = appNavigationRef.current;
+
+      if (navigation?.canGoBack?.()) {
+        return false;
+      }
+
+      if (isExitConfirmOpenRef.current) {
+        return true;
+      }
+
+      isExitConfirmOpenRef.current = true;
+      Alert.alert(
+        "Thoát ứng dụng?",
+        "Bạn có chắc chắn muốn thoát ứng dụng không?",
+        [
+          {
+            text: "Ở lại",
+            style: "cancel",
+            onPress: () => {
+              isExitConfirmOpenRef.current = false;
+            },
+          },
+          {
+            text: "Thoát",
+            style: "destructive",
+            onPress: () => {
+              isExitConfirmOpenRef.current = false;
+              BackHandler.exitApp();
+            },
+          },
+        ],
+        {
+          cancelable: true,
+          onDismiss: () => {
+            isExitConfirmOpenRef.current = false;
+          },
+        }
+      );
+
+      return true;
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
+
   if (isBootstrapping || !isOnboardingResolved || !isStartupDelayDone) {
     return <LoadingScreen onComplete={handleSplashComplete} />;
   }
 
   return (
-    <NavigationContainer linking={linking}>
+    <NavigationContainer
+      linking={linking}
+      ref={(nav) => { appNavigationRef.current = nav; }}
+    >
       {user ? <MainTabs /> : <AuthStack shouldShowOnboarding={shouldShowOnboarding} />}
     </NavigationContainer>
   );
