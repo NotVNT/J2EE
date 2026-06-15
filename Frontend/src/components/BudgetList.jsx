@@ -1,11 +1,11 @@
 import BudgetCard from "./BudgetCard.jsx";
 
 /**
- * BudgetList – Danh sách hạn mức ngân sách
+ * BudgetList – List of budget limits
  * Props:
- *   budgets     – mảng budget objects
+ *   budgets     – array of budget objects
  *   onDelete    – callback(id)
- *   onAddClick  – callback khi ấn nút Thêm hạn mức mới
+ *   onAddClick  – callback when Add limit button is clicked
  *   loading     – boolean
  */
 const BudgetList = ({ budgets = [], onDelete, onAddClick, loading = false }) => {
@@ -51,9 +51,9 @@ const BudgetList = ({ budgets = [], onDelete, onAddClick, loading = false }) => 
         <div className="budget-list">
             <div className="budget-list__header">
                 <div>
-                    <h2 className="budget-list__title">Hạn mức ngân sách</h2>
+                    <h2 className="budget-list__title">Budget limits</h2>
                     <p className="budget-list__subtitle">
-                        Tháng {new Date().getMonth() + 1}/{new Date().getFullYear()}
+                        Month {new Date().getMonth() + 1}/{new Date().getFullYear()}
                     </p>
                 </div>
                 <button
@@ -61,16 +61,16 @@ const BudgetList = ({ budgets = [], onDelete, onAddClick, loading = false }) => 
                     onClick={onAddClick}
                     id="budget-add-btn"
                 >
-                    + Thêm hạn mức
+                    + Add limit
                 </button>
             </div>
 
             {budgets.length === 0 ? (
                 <div className="budget-list__empty">
                     <span className="budget-list__empty-icon">💸</span>
-                    <p>Chưa có hạn mức nào trong tháng này</p>
+                    <p>No limits set for this month</p>
                     <p className="budget-list__empty-hint">
-                        Nhấn <strong>+ Thêm hạn mức</strong> để bắt đầu quản lý ngân sách
+                        Click <strong>+ Add limit</strong> to start managing your budget
                     </p>
                 </div>
             ) : (

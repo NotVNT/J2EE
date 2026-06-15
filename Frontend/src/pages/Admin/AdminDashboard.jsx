@@ -4,12 +4,13 @@ import { Users, CreditCard, Wallet, Activity, ArrowRight, TrendingUp, ShieldChec
 import axiosConfig from "../../util/axiosConfig.jsx";
 import { API_ENDPOINTS } from "../../util/apiEndpoints.js";
 import { usePageTitle } from "../../hooks/usePageTitle.js";
+import { useTranslation } from "../../hooks/useTranslation.js";
 
 const formatMoney = (amount) => new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(amount || 0);
 
 const formatDateTime = (value) => {
   if (!value) return "-";
-  return new Date(value).toLocaleString("vi-VN");
+  return new Date(value).toLocaleString("en-US");
 };
 
 const StatCard = ({ title, value, subtitle, icon: Icon, gradientClass }) => (
@@ -44,7 +45,8 @@ const StatCard = ({ title, value, subtitle, icon: Icon, gradientClass }) => (
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
-  usePageTitle("Bảng điều khiển quản trị", "Money Manager Admin");
+  const { t } = useTranslation();
+  usePageTitle(t("admin.dashboardTitle"), "Money Manager Admin");
   const [overview, setOverview] = useState({
     totalUsers: 0,
     activeSubscriptions: 0,
@@ -71,7 +73,7 @@ const AdminDashboard = () => {
         setOverview((prev) => ({ ...prev, ...(overviewResponse.data || {}) }));
         setRecentPayments(Array.isArray(paymentsResponse.data) ? paymentsResponse.data : []);
       } catch (err) {
-        setError(err?.response?.data?.message || "Không thể tải dữ liệu dashboard");
+        setError(err?.response?.data?.message || t("admin.loadError"));
       }
     };
 
@@ -88,10 +90,10 @@ const AdminDashboard = () => {
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
             <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-              Chào mừng, Quản Trị Viên! 👋
+              {t("admin.welcomeTitle")}
             </h1>
             <p className="mt-2 text-blue-100 max-w-xl text-lg font-medium">
-              Trung tâm kiểm soát Money Manager. Theo dõi người dùng, cấu hình hệ thống và quản lý doanh thu theo thời gian thực.
+              {t("admin.welcomeSubtitle")}
             </p>
             {error && (
               <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-red-500/20 text-white backdrop-blur-md border border-red-500/30">
@@ -107,28 +109,28 @@ const AdminDashboard = () => {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
-          title="Tổng người dùng"
-          value={overview.totalUsers?.toLocaleString("vi-VN") || "0"}
-          subtitle="+12% tháng này"
+          title={t("admin.totalUsers")}
+          value={overview.totalUsers?.toLocaleString() || "0"}
+          subtitle={t("admin.thisMonthGrowth12")}
           icon={Users}
           gradientClass="from-indigo-500 to-cyan-500"
         />
         <StatCard
-          title="Gói cước hoạt động"
-          value={overview.activeSubscriptions?.toLocaleString("vi-VN") || "0"}
-          subtitle="+5% tháng này"
+          title={t("admin.activeSubscriptions")}
+          value={overview.activeSubscriptions?.toLocaleString() || "0"}
+          subtitle={t("admin.thisMonthGrowth5")}
           icon={Activity}
           gradientClass="from-indigo-600 to-violet-500"
         />
         <StatCard
-          title="Tổng doanh thu"
-          value={overview.totalPayments?.toLocaleString("vi-VN") || "0"}
+          title={t("admin.totalRevenue")}
+          value={overview.totalPayments?.toLocaleString() || "0"}
           icon={Wallet}
           gradientClass="from-violet-600 to-fuchsia-500"
         />
         <StatCard
-          title="Giao dịch thành công"
-          value={overview.paidPayments?.toLocaleString("vi-VN") || "0"}
+          title={t("admin.successfulTransactions")}
+          value={overview.paidPayments?.toLocaleString() || "0"}
           icon={CreditCard}
           gradientClass="from-indigo-700 to-indigo-500"
         />
@@ -140,14 +142,14 @@ const AdminDashboard = () => {
         <div className="lg:col-span-2 bg-white dark:bg-[#0F172A] rounded-3xl border border-slate-200/60 dark:border-white/10 shadow-sm overflow-hidden flex flex-col">
           <div className="p-6 sm:p-8 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
             <div>
-              <h3 className="text-xl font-bold text-slate-800 dark:text-white">Giao dịch gần đây</h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Các khoản thanh toán mới nhất từ người dùng</p>
+              <h3 className="text-xl font-bold text-slate-800 dark:text-white">{t("admin.recentTransactions")}</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{t("admin.latestPayments")}</p>
             </div>
             <button
               onClick={() => navigate("/admin/payments")}
               className="hidden sm:flex items-center gap-2 text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
             >
-              Xem tất cả
+              {t("admin.viewAll")}
               <ArrowRight size={16} />
             </button>
           </div>
@@ -158,8 +160,8 @@ const AdminDashboard = () => {
                 <div className="p-4 rounded-full bg-white dark:bg-[#0F172A] shadow-sm mb-4">
                   <Wallet size={32} className="text-slate-400 dark:text-slate-500" />
                 </div>
-                <p className="font-semibold text-slate-700 dark:text-slate-300">Chưa có giao dịch nào</p>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 max-w-xs">Giao dịch mới sẽ xuất hiện tại đây khi người dùng thanh toán.</p>
+                <p className="font-semibold text-slate-700 dark:text-slate-300">{t("admin.noTransactions")}</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 max-w-xs">{t("admin.noTransactionsDesc")}</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -178,10 +180,10 @@ const AdminDashboard = () => {
                         </div>
                         <div>
                           <p className="font-bold text-slate-800 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                            {payment.planName || payment.planId || "Gói cước"}
+                            {payment.planName || payment.planId || t("admin.plan")}
                           </p>
                           <div className="flex items-center gap-2 mt-1">
-                            <span className="text-sm font-medium text-slate-500 dark:text-slate-400">{payment.payerEmail || "Ẩn danh"}</span>
+                            <span className="text-sm font-medium text-slate-500 dark:text-slate-400">{payment.payerEmail || t("admin.anonymous")}</span>
                             <span className="text-slate-300 dark:text-slate-600">•</span>
                             <span className="text-xs text-slate-400 dark:text-slate-500">{formatDateTime(payment.createdAt)}</span>
                           </div>
@@ -212,7 +214,7 @@ const AdminDashboard = () => {
               onClick={() => navigate("/admin/payments")}
               className="w-full py-3 rounded-xl bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300 font-semibold hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
             >
-              Xem tất cả giao dịch
+              {t("admin.viewAllTransactions")}
             </button>
           </div>
         </div>
@@ -225,13 +227,13 @@ const AdminDashboard = () => {
               <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center mb-6 border border-white/20 shadow-inner">
                 <Zap className="text-indigo-400" size={24} />
               </div>
-              <h3 className="text-2xl font-bold text-white mb-2">Quản lý Thanh toán</h3>
-              <p className="text-indigo-200 text-sm mb-6 line-clamp-2">Theo dõi, kiểm tra và xác nhận các giao dịch thanh toán từ người dùng.</p>
+              <h3 className="text-2xl font-bold text-white mb-2">{t("admin.paymentManagement")}</h3>
+              <p className="text-indigo-200 text-sm mb-6 line-clamp-2">{t("admin.paymentManagementDesc")}</p>
               <button
                 onClick={() => navigate("/admin/payments")}
                 className="w-full py-3 px-4 bg-white hover:bg-slate-100 text-indigo-900 font-bold rounded-xl transition-all hover:shadow-lg hover:shadow-white/10 active:scale-[0.98] flex items-center justify-center gap-2"
               >
-                Mở Quản lý
+                {t("admin.openManager")}
                 <ArrowRight size={18} />
               </button>
             </div>
@@ -243,13 +245,13 @@ const AdminDashboard = () => {
               <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center mb-6 border border-blue-100 dark:border-blue-500/20">
                 <ShieldCheck className="text-blue-600 dark:text-blue-400" size={24} />
               </div>
-              <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">Cài đặt Hệ thống</h3>
-              <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">Cấu hình các tham số, tính năng và bảo mật cho ứng dụng của bạn.</p>
+              <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">{t("admin.systemSettings")}</h3>
+              <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">{t("admin.systemSettingsDesc")}</p>
               <button
                 onClick={() => navigate("/admin/settings")}
                 className="w-full py-3 px-4 bg-slate-50 dark:bg-white/5 text-slate-700 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 transition-colors flex items-center justify-center gap-2 border border-slate-200 dark:border-white/10"
               >
-                Tới Cài đặt
+                {t("admin.goToSettings")}
                 <ArrowRight size={18} />
               </button>
             </div>

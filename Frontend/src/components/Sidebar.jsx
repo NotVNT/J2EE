@@ -1,13 +1,15 @@
 import { useContext } from "react";
 import { AppContext } from "../context/AppContext.jsx";
-import { ShieldCheck, User, Zap } from "lucide-react";
+import { ShieldCheck, User } from "lucide-react";
 import { SIDE_BAR_DATA } from "../assets/assets.js";
 import { useNavigate } from "react-router-dom";
 import favicon from "../assets/logo/favicon.png";
+import { useTranslation } from "../hooks/useTranslation.js";
 
 const Sidebar = ({ activeMenu, mobileOverlay = false }) => {
   const { user } = useContext(AppContext);
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   return (
     <aside className={`h-screen w-64 fixed left-0 top-0 flex-col p-5 gap-2 z-50
@@ -50,7 +52,7 @@ const Sidebar = ({ activeMenu, mobileOverlay = false }) => {
         <div className="flex-1 overflow-hidden">
           <div className="flex items-center gap-1.5">
             <p className="font-semibold text-slate-900 dark:text-white text-sm truncate">
-              {user?.fullName || "Người dùng"}
+              {user?.fullName || t("nav.userFallback")}
             </p>
             {user?.role === "admin" && (
               <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 text-[11px] font-extrabold uppercase tracking-wide border border-amber-500/20 shrink-0">
@@ -69,6 +71,7 @@ const Sidebar = ({ activeMenu, mobileOverlay = false }) => {
       <nav className="flex-1 space-y-0.5 overflow-y-auto">
         {SIDE_BAR_DATA.map((item, index) => {
           const isActive = activeMenu === item.label;
+          const label = item.translationKey ? t(item.translationKey) : item.label;
           return (
             <button
               onClick={() => navigate(item.path)}
@@ -83,7 +86,7 @@ const Sidebar = ({ activeMenu, mobileOverlay = false }) => {
                 size={18}
                 className={isActive ? "text-amber-500" : "text-slate-400 dark:text-slate-500"}
               />
-              {item.label}
+              {label}
             </button>
           );
         })}
@@ -100,7 +103,7 @@ const Sidebar = ({ activeMenu, mobileOverlay = false }) => {
               border border-transparent hover:border-violet-500/20"
           >
             <ShieldCheck size={18} className="text-violet-500" />
-            Trang quản trị
+            {t("nav.adminPanel")}
           </button>
         </>
       )}
@@ -112,8 +115,8 @@ const Sidebar = ({ activeMenu, mobileOverlay = false }) => {
           className="mt-4 p-3 rounded-xl bg-linear-to-br from-violet-600/20 to-amber-500/10
             border border-violet-500/20 cursor-pointer hover:border-violet-500/40 transition"
         >
-          <p className="text-xs font-semibold text-violet-400 mb-0.5">Nâng cấp lên Premium</p>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400">Mở khoá tất cả tính năng AI</p>
+          <p className="text-xs font-semibold text-violet-400 mb-0.5">{t("nav.upgradePremium")}</p>
+          <p className="text-[11px] text-slate-500 dark:text-slate-400">{t("nav.unlockAllAi")}</p>
         </div>
       )}
     </aside>

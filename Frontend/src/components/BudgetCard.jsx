@@ -2,10 +2,10 @@ import {hasDisplayImage, hideBrokenImageWrapper} from "../util/imageDisplay.js";
 import * as Lucide from "lucide-react";
 
 /**
- * BudgetCard – Hiển thị 1 hạn mức ngân sách với thanh tiến trình
+ * BudgetCard – Displays a single budget limit with a progress bar
  * Props:
  *   budget      – { id, categoryName, categoryIcon, amountLimit, totalSpent, month, year }
- *   onDelete    – callback(id) khi bấm xóa
+ *   onDelete    – callback(id) when delete is clicked
  */
 const BudgetCard = ({ budget, onDelete }) => {
     const {
@@ -21,15 +21,15 @@ const BudgetCard = ({ budget, onDelete }) => {
     const ratio = amountLimit > 0 ? totalSpent / amountLimit : 0;
     const percentage = Math.min(ratio * 100, 100).toFixed(1);
 
-    // Xác định màu sắc theo trạng thái
+    // Determine color based on status
     const isExceeded = ratio >= 1;
     const isWarning  = !isExceeded && ratio >= 0.8;
     const barColor   = isExceeded ? "#e74c3c" : isWarning ? "#f39c12" : "#2ecc71";
     const statusText = isExceeded
-        ? "🚨 Vượt hạn mức"
+        ? "🚨 Budget exceeded"
         : isWarning
-        ? "⚠️ Sắp hết hạn mức"
-        : "✅ Trong giới hạn";
+        ? "⚠️ Near limit"
+        : "✅ Within limit";
 
     const fmt = (n) =>
         new Intl.NumberFormat("vi-VN", {
@@ -62,7 +62,7 @@ const BudgetCard = ({ budget, onDelete }) => {
                     <div>
                         <p className="budget-card__name">{categoryName}</p>
                         <p className="budget-card__period">
-                            Tháng {month}/{year}
+                            Month {month}/{year}
                         </p>
                     </div>
                 </div>
@@ -70,13 +70,13 @@ const BudgetCard = ({ budget, onDelete }) => {
                     className="budget-card__delete"
                     onClick={() => onDelete(id)}
                     id={`budget-delete-${id}`}
-                    title="Xóa hạn mức"
+                    title="Delete limit"
                 >
                     ✕
                 </button>
             </div>
 
-            {/* Thanh tiến trình */}
+            {/* Progress bar */}
             <div className="budget-card__bar-wrap">
                 <div
                     className="budget-card__bar"
@@ -86,20 +86,20 @@ const BudgetCard = ({ budget, onDelete }) => {
 
             <div className="budget-card__stats">
                 <div>
-                    <p className="budget-card__label">Đã chi</p>
+                    <p className="budget-card__label">Spent</p>
                     <p className="budget-card__value">{fmt(totalSpent)}</p>
                 </div>
                 <div className="budget-card__status-badge" style={{ color: barColor }}>
                     {statusText}
                 </div>
                 <div className="budget-card__right">
-                    <p className="budget-card__label">Hạn mức</p>
+                    <p className="budget-card__label">Limit</p>
                     <p className="budget-card__value">{fmt(amountLimit)}</p>
                 </div>
             </div>
 
             <p className="budget-card__percentage" style={{ color: barColor }}>
-                {percentage}% sử dụng
+                {percentage}% used
             </p>
         </div>
     );

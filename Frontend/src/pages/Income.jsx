@@ -18,6 +18,7 @@ import { AppContext } from "../context/AppContext.jsx";
 import { usePageTitle } from "../hooks/usePageTitle.js";
 import { getTodayIsoDate, isIsoDateAfter } from "../util/dateInput.js";
 import { buildIncomeListUrl, buildIncomeReportPayload } from "../util/incomeFilters.js";
+import { useTranslation } from "../hooks/useTranslation.js";
 
 const incomeFilterOptions = [
   { value: "all", label: "Tất cả" },
@@ -27,7 +28,8 @@ const incomeFilterOptions = [
 
 const Income = () => {
   useUser();
-  usePageTitle("Thu nhập");
+  const { t } = useTranslation();
+  usePageTitle(t("income.title"));
   const { user } = useContext(AppContext);
   const [incomeData, setIncomeData] = useState([]);
   const [categories, setCategories] = useState([]);

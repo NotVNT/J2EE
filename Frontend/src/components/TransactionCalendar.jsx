@@ -43,6 +43,7 @@ const TransactionCalendar = ({
   onSelectDate,
   onMonthChange,
 }) => {
+  const isBalanceVisible = localStorage.getItem("isBalanceVisible") !== "false";
   const [currentMonth, setCurrentMonth] = useState(() => {
     if (initialMonth) {
       const normalizedInitialMonth = moment(initialMonth, ["YYYY-MM", "YYYY-MM-DD"], true);
@@ -107,7 +108,7 @@ const TransactionCalendar = ({
 
     return (
       <p key={amountType} className={`truncate text-[10px] font-semibold leading-4 sm:text-[11px] ${amountClass}`}>
-        {formatCompactTransactionAmount(amount, amountType)}
+        {isBalanceVisible ? formatCompactTransactionAmount(amount, amountType) : "***"}
       </p>
     );
   };
@@ -124,7 +125,7 @@ const TransactionCalendar = ({
 
     return (
       <p className={`mt-2 text-base font-bold sm:text-lg ${amountClass}`}>
-        {prefix}{addThousandsSeparator(Math.abs(amount))}đ
+        {isBalanceVisible ? `${prefix}${addThousandsSeparator(Math.abs(amount))}đ` : "******"}
       </p>
     );
   };
@@ -275,12 +276,12 @@ const TransactionCalendar = ({
                 <div className="flex flex-wrap items-center gap-3 text-sm font-semibold">
                   {(type === "income" || type === "both") ? (
                     <span className="rounded-full bg-emerald-50 px-3 py-1 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
-                      + {addThousandsSeparator(selectedDayTotals.income)}đ
+                      + {isBalanceVisible ? `${addThousandsSeparator(selectedDayTotals.income)}đ` : "***"}
                     </span>
                   ) : null}
                   {(type === "expense" || type === "both") ? (
                     <span className="rounded-full bg-red-50 px-3 py-1 text-red-500 dark:bg-red-500/10 dark:text-red-400">
-                      - {addThousandsSeparator(selectedDayTotals.expense)}đ
+                      - {isBalanceVisible ? `${addThousandsSeparator(selectedDayTotals.expense)}đ` : "***"}
                     </span>
                   ) : null}
                 </div>
@@ -349,8 +350,12 @@ const TransactionCalendar = ({
                       
                       {activeTransaction ? (
                         <p className={`text-lg font-black mt-1 ${activeTransaction.type === "income" ? "text-emerald-600 dark:text-emerald-400" : "text-red-500 dark:text-red-400"}`}>
-                          {activeTransaction.type === "income" ? "+ " : "- "}
-                          {addThousandsSeparator(activeTransaction.amount)}đ
+                          {isBalanceVisible ? (
+                            <>
+                              {activeTransaction.type === "income" ? "+ " : "- "}
+                              {addThousandsSeparator(activeTransaction.amount)}đ
+                            </>
+                          ) : "******"}
                         </p>
                       ) : null}
                     </div>

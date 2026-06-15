@@ -40,13 +40,15 @@ const DateInput = ({
   const [viewYear, setViewYear] = useState(parsed?.year ?? today.getFullYear());
   const [viewMonth, setViewMonth] = useState(parsed?.month ?? today.getMonth());
 
-  useEffect(() => {
+  const [prevValue, setPrevValue] = useState(value);
+  if (value !== prevValue) {
+    setPrevValue(value);
     const p = parseIsoToDate(value);
     if (p) {
       setViewYear(p.year);
       setViewMonth(p.month);
     }
-  }, [value]);
+  }
 
   const positionCalendar = useCallback(() => {
     if (!inputRef.current) return;

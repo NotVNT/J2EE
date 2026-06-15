@@ -9,6 +9,7 @@ import toast from "react-hot-toast";
 import axiosConfig from "./util/axiosConfig.jsx";
 import { API_ENDPOINTS } from "./util/apiEndpoints.js";
 import { getPostAuthRedirectPath } from "./util/defaultAuthenticatedRoute.js";
+import { useTranslation } from "./hooks/useTranslation.js";
 
 const AdminLayout = lazy(() => import("./pages/Admin/AdminLayout.jsx"));
 const AdminDashboard = lazy(() => import("./pages/Admin/AdminDashboard.jsx"));
@@ -142,12 +143,13 @@ const LoadingFallback = () => (
 const App = () => {
     const { user, setUser, clearUser } = useContext(AppContext);
     const navigate = useNavigate();
+    const { t } = useTranslation();
 
     useEffect(() => {
         const handleStorageChange = (e) => {
             if (e.key === "logout-event" && user) {
                 clearUser();
-                toast.error("Phiên đăng nhập đã hết hạn hoặc bạn đã đăng xuất ở một tab khác. Vui lòng đăng nhập lại.", {
+                toast.error(t("auth.sessionExpired"), {
                     id: "session-expired-toast"
                 });
                 navigate("/login?expired=true");
@@ -158,7 +160,7 @@ const App = () => {
         return () => {
             window.removeEventListener("storage", handleStorageChange);
         };
-    }, [user, clearUser, navigate]);
+    }, [user, clearUser, navigate, t]);
 
     useEffect(() => {
         if (user) return;

@@ -11,6 +11,7 @@ import { useUser } from "../hooks/useUser";
 import { usePageTitle } from "../hooks/usePageTitle";
 import { useTheme } from "../context/ThemeContext";
 import ForecastTrendChart from "../components/ForecastTrendChart.jsx";
+import { useTranslation } from "../hooks/useTranslation.js";
 import {
     buildCategoryChipOptions,
     buildCategoryTrendChartData,
@@ -29,7 +30,8 @@ const getNearestMonths = (count) => {
 
 const Forecast = () => {
     useUser();
-    usePageTitle("Dự báo thông minh");
+    const { t } = useTranslation();
+    usePageTitle(t("forecast.smartTitle"));
     const { theme } = useTheme();
     const isDark = theme === "dark";
     const gridStroke = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)";

@@ -28,11 +28,11 @@ const SavingGoalForm = ({ initialData, isEditing, onSave, onCancel }) => {
     const handleChange = (key, value) => setForm({ ...form, [key]: value });
 
     const handleSubmit = () => {
-        if (!form.name.trim()) { alert("Tên mục tiêu không được để trống"); return; }
-        if (!form.targetAmount || Number(form.targetAmount) <= 0) { alert("Số tiền mục tiêu phải lớn hơn 0"); return; }
-        if (!isEditing && Number(form.currentAmount) > Number(form.targetAmount)) { alert("Số tiền hiện có không được lớn hơn số tiền mục tiêu"); return; }
-        if (!form.targetDate) { alert("Hãy chọn hạn chót"); return; }
-        if (isIsoDateAfter(form.startDate, form.targetDate)) { alert("Hạn chót phải lớn hơn hoặc bằng ngày bắt đầu"); return; }
+        if (!form.name.trim()) { alert("Goal name cannot be empty"); return; }
+        if (!form.targetAmount || Number(form.targetAmount) <= 0) { alert("Target amount must be greater than 0"); return; }
+        if (!isEditing && Number(form.currentAmount) > Number(form.targetAmount)) { alert("Current amount cannot exceed target amount"); return; }
+        if (!form.targetDate) { alert("Please select a deadline"); return; }
+        if (isIsoDateAfter(form.startDate, form.targetDate)) { alert("Deadline must be on or after start date"); return; }
 
         const dto = {
             name: form.name.trim(),
@@ -54,18 +54,18 @@ const SavingGoalForm = ({ initialData, isEditing, onSave, onCancel }) => {
     return (
         <div className="flex flex-col gap-4">
             <div>
-                <label className={labelClass}>Tên mục tiêu</label>
+                <label className={labelClass}>Goal name</label>
                 <input
                     type="text"
                     value={form.name}
                     onChange={(e) => handleChange("name", e.target.value)}
-                    placeholder="VD: Du lịch Nhật Bản"
+                    placeholder="e.g. Japan trip"
                     className="form-input"
                 />
             </div>
 
             <div>
-                <label className={labelClass}>Số tiền mục tiêu (VND)</label>
+                <label className={labelClass}>Target amount (VND)</label>
                 <input
                     type="text"
                     value={fmt(form.targetAmount)}
@@ -77,7 +77,7 @@ const SavingGoalForm = ({ initialData, isEditing, onSave, onCancel }) => {
 
             {!isEditing && (
                 <div>
-                    <label className={labelClass}>Số tiền hiện có ban đầu (VND)</label>
+                    <label className={labelClass}>Initial amount already saved (VND)</label>
                     <input
                         type="text"
                         value={fmt(form.currentAmount)}
@@ -90,7 +90,7 @@ const SavingGoalForm = ({ initialData, isEditing, onSave, onCancel }) => {
 
             {!isEditing && (
                 <div>
-                    <label className={labelClass}>Ngày bắt đầu</label>
+                    <label className={labelClass}>Start date</label>
                     <DateInput
                         value={form.startDate}
                         onChange={(e) => handleChange("startDate", e.target.value)}
@@ -100,7 +100,7 @@ const SavingGoalForm = ({ initialData, isEditing, onSave, onCancel }) => {
             )}
 
             <div>
-                <label className={labelClass}>Hạn chót</label>
+                <label className={labelClass}>Deadline</label>
                 <DateInput
                     value={form.targetDate}
                     onChange={(e) => handleChange("targetDate", e.target.value)}
@@ -113,13 +113,13 @@ const SavingGoalForm = ({ initialData, isEditing, onSave, onCancel }) => {
                     onClick={handleSubmit}
                     className="flex-1 bg-violet-600 hover:bg-violet-700 text-white py-2.5 rounded-xl text-sm font-medium transition-colors"
                 >
-                    {isEditing ? "Cập nhật" : "Tạo mục tiêu"}
+                    {isEditing ? "Update" : "Create goal"}
                 </button>
                 <button
                     onClick={onCancel}
                     className="flex-1 bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/15 text-slate-700 dark:text-slate-300 py-2.5 rounded-xl text-sm font-medium transition-colors"
                 >
-                    Hủy
+                    Cancel
                 </button>
             </div>
         </div>

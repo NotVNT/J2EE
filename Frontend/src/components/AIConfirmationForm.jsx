@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { Check, X, ChevronDown, Loader2 } from "lucide-react";
 import * as Lucide from "lucide-react";
-import { getFieldsForIntent, INTENT_ICONS, INTENT_LABELS, normalizeAmountInput } from "../util/aiIntentParser.js";
+import { getFieldsForIntent, getIntentLabel, INTENT_ICONS, normalizeAmountInput } from "../util/aiIntentParser.js";
 import axiosConfig from "../util/axiosConfig.jsx";
 import { API_ENDPOINTS } from "../util/apiEndpoints.js";
 import DateInput from "./DateInput.jsx";
 import { normalizeToIsoDate } from "../util/dateInput.js";
 import { hasDisplayImage } from "../util/imageDisplay.js";
+import { useTranslation } from "../hooks/useTranslation.js";
 
 const CategoryIcon = ({ icon, className = "h-4 w-4 shrink-0 object-contain text-slate-500 dark:text-slate-400" }) => {
   if (!icon) return null;
@@ -23,7 +24,7 @@ const CategoryIcon = ({ icon, className = "h-4 w-4 shrink-0 object-contain text-
   return <span className="inline-block text-sm shrink-0 leading-none">{icon}</span>;
 };
 
-const CategorySelect = ({ value, onChange, options, required, disabled, placeholder = "-- Chọn danh mục --" }) => {
+const CategorySelect = ({ value, onChange, options, required, disabled, placeholder = "-- Select category --" }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -95,7 +96,7 @@ const CategorySelect = ({ value, onChange, options, required, disabled, placehol
   );
 };
 
-const JarSelect = ({ value, onChange, options, required, disabled, placeholder = "-- Chọn hũ --" }) => {
+const JarSelect = ({ value, onChange, options, required, disabled, placeholder = "-- Select jar --" }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -199,6 +200,7 @@ const buildInitialFormData = (fields, extractedFields, suggestedValues) => {
 };
 
 const AIConfirmationForm = ({ intent, extractedFields, suggestedValues, confirmationPrompt, onConfirm, onCancel, isProcessing }) => {
+  const { t, translate } = useTranslation();
   const [categoriesByType, setCategoriesByType] = useState({});
   const [jars, setJars] = useState([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
@@ -328,10 +330,10 @@ const AIConfirmationForm = ({ intent, extractedFields, suggestedValues, confirma
         const value = mergedData[field.key];
         return value === null || value === undefined || value === "";
       })
-      .map((field) => field.label);
+      .map((field) => translate(field.label));
 
     if (missingLabels.length > 0) {
-      setSubmitError(`Vui lòng điền đầy đủ các trường bắt buộc: ${missingLabels.join(", ")}`);
+      setSubmitError(`${t("ai.missingFields")}: ${missingLabels.join(", ")}`);
       return;
     }
 
@@ -347,7 +349,7 @@ const AIConfirmationForm = ({ intent, extractedFields, suggestedValues, confirma
   };
 
   const intentIcon = INTENT_ICONS[intent] || "🤖";
-  const intentLabel = INTENT_LABELS[intent] || intent;
+  const intentLabel = getIntentLabel(intent, t);
 
   return (
     <div className="relative overflow-visible rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/75 dark:bg-slate-900/60 backdrop-blur-md p-5 my-2 shadow-[0_8px_32px_rgba(139,92,246,0.05)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.25)] transition-all duration-300">
@@ -362,8 +364,8 @@ const AIConfirmationForm = ({ intent, extractedFields, suggestedValues, confirma
           </div>
           <div>
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-500/15 px-1.5 py-0.5 rounded">AI Trợ Lý</span>
-              <span className="text-[10px] text-slate-400 dark:text-slate-500">Giao dịch đề xuất</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-500/15 px-1.5 py-0.5 rounded">{t("ai.widgetTitle")}</span>
+              <span className="text-[10px] text-slate-400 dark:text-slate-500">{t("ai.suggestedTransaction")}</span>
             </div>
             <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200 mt-0.5">{intentLabel}</h4>
           </div>
@@ -382,7 +384,7 @@ const AIConfirmationForm = ({ intent, extractedFields, suggestedValues, confirma
       {loadingOriginalRecord && (
         <div className="flex items-center gap-2 text-xs text-violet-500 dark:text-violet-400 mb-3 animate-pulse">
           <Loader2 size={13} className="animate-spin shrink-0" />
-          <span>Đang tải dữ liệu gốc để điền sẵn...</span>
+          <span>{t("ai.loadingOriginalRecord")}</span>
         </div>
       )}
 
@@ -394,7 +396,7 @@ const AIConfirmationForm = ({ intent, extractedFields, suggestedValues, confirma
             return (
               <div key={field.key} className={`flex flex-col gap-1.5 ${isFullWidth ? "sm:col-span-2" : ""}`}>
                 <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase flex items-center gap-1">
-                  {field.label}
+                  {translate(field.label)}
                   {field.required && <span className="text-red-500">*</span>}
                 </label>
                 {field.type === "category_select" ? (
@@ -408,7 +410,7 @@ const AIConfirmationForm = ({ intent, extractedFields, suggestedValues, confirma
                     }))}
                     required={field.required}
                     disabled={isProcessing || loadingCategories}
-                    placeholder={loadingCategories ? "Đang tải danh mục..." : undefined}
+                    placeholder={loadingCategories ? t("ai.loadingCategories") : t("category.selectPlaceholder")}
                   />
                 ) : field.type === "jar_select" ? (
                   <JarSelect
@@ -422,7 +424,7 @@ const AIConfirmationForm = ({ intent, extractedFields, suggestedValues, confirma
                     }))}
                     required={field.required}
                     disabled={isProcessing || loadingJars}
-                    placeholder={loadingJars ? "Đang tải hũ..." : undefined}
+                    placeholder={loadingJars ? t("ai.loadingJars") : t("jars.selectJar")}
                   />
                 ) : field.type === "date" ? (
                   <DateInput
@@ -439,9 +441,9 @@ const AIConfirmationForm = ({ intent, extractedFields, suggestedValues, confirma
                     disabled={isProcessing}
                     className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-100/50 dark:hover:bg-slate-800/80 px-3.5 py-2.5 text-sm text-slate-800 dark:text-slate-200 outline-none transition-all duration-200 focus:border-violet-500 dark:focus:border-violet-400 focus:ring-1 focus:ring-violet-500/20 dark:focus:ring-violet-500/20 disabled:opacity-50 cursor-pointer"
                   >
-                    <option value="">-- Chọn --</option>
+                    <option value="">{t("common.selectDefault")}</option>
                     {(field.options || []).map((opt) => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      <option key={opt.value} value={opt.value}>{translate(opt.label)}</option>
                     ))}
                   </select>
                 ) : (
@@ -450,7 +452,7 @@ const AIConfirmationForm = ({ intent, extractedFields, suggestedValues, confirma
                     inputMode={field.type === "number" ? "decimal" : undefined}
                     value={formData[field.key] || ""}
                     onChange={(e) => handleFieldChange(field.key, e.target.value)}
-                    placeholder={field.label}
+                    placeholder={translate(field.label)}
                     required={field.required}
                     className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-100/50 dark:hover:bg-slate-800/80 px-3.5 py-2.5 text-sm text-slate-800 dark:text-slate-200 outline-none transition-all duration-200 focus:border-violet-500 dark:focus:border-violet-400 focus:ring-1 focus:ring-violet-500/20 dark:focus:ring-violet-500/20"
                   />
@@ -480,7 +482,7 @@ const AIConfirmationForm = ({ intent, extractedFields, suggestedValues, confirma
             ) : (
               <Check size={16} />
             )}
-            Xác nhận
+            {t("ai.confirmBtn")}
           </button>
           <button
             type="button"
@@ -489,7 +491,7 @@ const AIConfirmationForm = ({ intent, extractedFields, suggestedValues, confirma
             className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white hover:bg-slate-50 dark:bg-slate-800/40 dark:hover:bg-slate-800/80 active:scale-95 text-slate-700 dark:text-slate-300 px-5 py-2.5 text-sm font-semibold transition-all duration-150 shadow-sm cursor-pointer"
           >
             <X size={16} />
-            Hủy
+            {t("ai.cancelBtn")}
           </button>
         </div>
       </form>

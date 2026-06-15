@@ -19,6 +19,8 @@ import {
 import { useNavigate } from "react-router-dom";
 import { Sparkles, TrendingUp, Zap, MessageSquare } from "lucide-react";
 import aiIcon from "../assets/logo/AI_favicon.png";
+import { usePageTitle } from "../hooks/usePageTitle.js";
+import { useTranslation } from "../hooks/useTranslation.js";
 
 const buildHistory = (msgs) =>
   msgs
@@ -35,6 +37,8 @@ const buildPersistedMessages = (msgs) =>
 
 const AIChat = () => {
   useUser();
+  const { t } = useTranslation();
+  usePageTitle(t("ai.pageTitle"));
   const { user } = useContext(AppContext);
   const { currentPage } = useRouteContext();
   const navigate = useNavigate();
@@ -110,8 +114,8 @@ const AIChat = () => {
       };
     }
     // Chat mode:
-    // Nếu là PREMIUM: dùng GPT-OSS 120B
-    // Nếu là BASIC: dùng Gemini 3.1 Flash-Lite
+    // If PREMIUM: use GPT-OSS 120B
+    // If BASIC: use Gemini 3.1 Flash-Lite
     if (isPremiumPlan) {
       return {
         activeProvider: "gptoss",
@@ -183,7 +187,7 @@ const AIChat = () => {
             {
               id: `system-rewrite-failed-${Date.now()}`,
               role: "assistant",
-              content: "Đã gửi lại nhưng chưa đồng bộ hoàn toàn lịch sử chat. Bạn tải lại phiên nếu thấy nội dung cũ.",
+              content: "Message resent but chat history may not be fully synced. Please reload the session if you see old content.",
               isSystem: true
             }
           ]);
@@ -206,7 +210,7 @@ const AIChat = () => {
         const nextMessages = [...updatedMessages, {
           id: `assistant-${Date.now()}`,
           role: "assistant",
-          content: data.reply || "Tôi đã nhận câu hỏi nhưng hiện chưa tạo được câu trả lời phù hợp.",
+          content: data.reply || "I received your question but could not generate a suitable response.",
           provider: data.provider || activeProvider,
           modelUsed: data.modelUsed,
           modelLabel: activeModelLabel,
@@ -267,7 +271,7 @@ const AIChat = () => {
           {
             id: `assistant-${Date.now()}`,
             role: "assistant",
-            content: data.reply || "Tôi đã nhận câu hỏi nhưng hiện chưa tạo được câu trả lời phù hợp.",
+            content: data.reply || "I received your question but could not generate a suitable response.",
             provider: data.provider || activeProvider,
             modelUsed: data.modelUsed,
             modelLabel: activeModelLabel,
@@ -315,7 +319,7 @@ const AIChat = () => {
           {
             id: `assistant-${Date.now()}`,
             role: "assistant",
-            content: parsed.answer || intentResponse.data?.reply || "Tôi đã nhận câu hỏi nhưng hiện chưa tạo được câu trả lời phù hợp.",
+            content: parsed.answer || intentResponse.data?.reply || "I received your question but could not generate a suitable response.",
             provider: intentResponse.data?.provider || activeProvider,
             modelUsed: intentResponse.data?.modelUsed,
             modelLabel: activeModelLabel,
@@ -334,7 +338,7 @@ const AIChat = () => {
           {
             id: `${isGuardedResponse ? "assistant-guarded" : "assistant-error"}-${Date.now()}`,
             role: "assistant",
-            content: parsed.answer || intentResponse.data?.reply || parsed.validationErrors?.[0] || "Yêu cầu không hợp lệ hoặc ngoài phạm vi hỗ trợ.",
+            content: parsed.answer || intentResponse.data?.reply || parsed.validationErrors?.[0] || "Request is invalid or outside the supported scope.",
             isError: !isGuardedResponse,
             isGuarded: isGuardedResponse,
             provider: intentResponse.data?.provider || activeProvider,
@@ -362,7 +366,7 @@ const AIChat = () => {
           {
             id: `assistant-${Date.now()}`,
             role: "assistant",
-            content: data.reply || "Tôi đã nhận câu hỏi nhưng hiện chưa tạo được câu trả lời phù hợp.",
+            content: data.reply || "I received your question but could not generate a suitable response.",
             provider: data.provider || activeProvider,
             modelUsed: data.modelUsed,
             modelLabel: activeModelLabel,
@@ -386,14 +390,14 @@ const AIChat = () => {
         setMessages(prev => [...prev, {
           id: `assistant-canceled-${Date.now()}`,
           role: "assistant",
-          content: "[Đã dừng phản hồi]",
+          content: "[Response stopped]",
           timestamp: new Date().toISOString(),
         }]);
       } else {
         setMessages(prev => [...prev, {
           id: `assistant-error-${Date.now()}`,
           role: "assistant",
-          content: error.response?.data?.message || "Hiện tại tôi chưa phản hồi được. Bạn thử lại sau giúp mình nhé.",
+          content: error.response?.data?.message || "I cannot respond at the moment. Please try again later.",
           timestamp: new Date().toISOString(),
           isError: true,
         }]);
@@ -430,8 +434,8 @@ const AIChat = () => {
       link.parentNode.removeChild(link);
       window.URL.revokeObjectURL(url);
       return intent === "EXPORT_EXCEL_INCOME"
-        ? "Đã tải xuống báo cáo Excel thu nhập tháng này!"
-        : "Đã tải xuống báo cáo Excel chi tiêu tháng này!";
+        ? "This month's income Excel report has been downloaded!"
+        : "This month's expense Excel report has been downloaded!";
     }
     if (intent === "EMAIL_INCOME_REPORT" || intent === "EMAIL_EXPENSE_REPORT") {
       const endpoint = intent === "EMAIL_INCOME_REPORT"
@@ -439,10 +443,10 @@ const AIChat = () => {
         : API_ENDPOINTS.EMAIL_EXPENSE;
       await axiosConfig.get(endpoint);
       return intent === "EMAIL_INCOME_REPORT"
-        ? "Đã gửi báo cáo thu nhập tháng này đến email của bạn!"
-        : "Đã gửi báo cáo chi tiêu tháng này đến email của bạn!";
+        ? "This month's income report has been sent to your email!"
+        : "This month's expense report has been sent to your email!";
     }
-    throw new Error("Không xác định được hành động.");
+    throw new Error("Unable to determine action.");
   };
 
   const handleConfirmAction = async (intent, confirmedData) => {
@@ -459,7 +463,7 @@ const AIChat = () => {
           sessionId: activeSessionId,
           extractedData: confirmedData
         });
-        resultContent = data.message || "Thao tác thành công!";
+        resultContent = data.message || "Operation successful!";
         if (data.undoable && data.operationId) undoData = data;
       }
 
@@ -476,12 +480,12 @@ const AIChat = () => {
             role: "assistant",
             isUndoAction: true,
             operationId: undoData.operationId,
-            content: "Bạn có thể hoàn tác thao tác này trong vài phút."
+            content: "You can undo this action in a few minutes."
           }
         ]);
       }
     } catch (error) {
-      let errorMsg = "Không thể thực hiện thao tác. Vui lòng thử lại.";
+      let errorMsg = "Unable to perform the operation. Please try again.";
       if (error.response?.data instanceof Blob) {
         try {
           const text = await error.response.data.text();
@@ -492,7 +496,7 @@ const AIChat = () => {
       }
       setMessages((prev) => [
         ...prev,
-        { id: `result-error-${Date.now()}`, role: "assistant", content: `Lỗi: ${errorMsg}`, isError: true }
+        { id: `result-error-${Date.now()}`, role: "assistant", content: `Error: ${errorMsg}`, isError: true }
       ]);
       debouncedFetchSessions();
     } finally {
@@ -517,7 +521,7 @@ const AIChat = () => {
       {
         id: `cancel-${Date.now()}`,
         role: "assistant",
-        content: "Đã hủy thao tác.",
+        content: "Action cancelled.",
         isSystem: true
       }
     ]);
@@ -531,7 +535,7 @@ const AIChat = () => {
         {
           id: `undo-result-${Date.now()}`,
           role: "assistant",
-          content: "Đã hoàn tác thao tác thành công.",
+          content: "Action successfully undone.",
           isSystem: true
         }
       ]);
@@ -541,7 +545,7 @@ const AIChat = () => {
         {
           id: `undo-error-${Date.now()}`,
           role: "assistant",
-          content: "Không thể hoàn tác. Có thể đã quá thời gian cho phép.",
+          content: "Cannot undo. The allowed time may have expired.",
           isError: true
         }
       ]);
@@ -591,7 +595,7 @@ const AIChat = () => {
 
   if (isFreePlan) {
     return (
-      <Dashboard activeMenu={"Trợ lý AI"}>
+      <Dashboard activeMenu={t("nav.sidebar.aiChat")}>
         <div className="flex items-center justify-center min-h-[75vh] px-4 relative overflow-hidden">
           {/* Glow orb background */}
           <div className="absolute top-1/4 left-1/4 -translate-x-1/2 w-72 h-72 rounded-full bg-purple-600/15 blur-3xl pointer-events-none" />
@@ -613,15 +617,15 @@ const AIChat = () => {
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold
                 bg-purple-500/10 border border-purple-500/30 text-purple-300 mb-4 uppercase tracking-wider">
                 <Sparkles size={12} className="text-amber-400" />
-                {"Trợ lý Đặc quyền"}
+                {t("ai.privilegedBadge")}
               </div>
 
               <h2 className="text-2xl font-extrabold text-white leading-tight">
-                {"Nova Money - Trợ lý AI"}
+                {"Nova Money - " + t("ai.pageTitle")}
               </h2>
               
               <p className="text-sm text-slate-300 mt-2 mb-6 leading-relaxed max-w-sm mx-auto">
-                {"Tính năng Trợ lý AI đặc quyền chỉ khả dụng từ gói hội viên "}<span className="font-semibold text-purple-400">BASIC</span>{" và "}<span className="font-semibold text-purple-400">PREMIUM</span>{"."}
+                {t("ai.upgradeNotice")}<span className="font-semibold text-purple-400">BASIC</span>{t("ai.upgradeNoticeSuffix")}<span className="font-semibold text-purple-400">PREMIUM</span>{"."}
               </p>
 
               {/* AI Features Grid */}
@@ -631,8 +635,8 @@ const AIChat = () => {
                     <MessageSquare size={14} />
                   </div>
                   <div>
-                    <h4 className="text-sm font-semibold text-white">{"Tr\u00f2 chuy\u1ec7n & T\u01b0 v\u1ea5n T\u00e0i ch\u00ednh"}</h4>
-                    <p className="text-xs text-slate-400 mt-0.5">{"T\u00f3m t\u1eaft chi ti\u00eau, nh\u1eadn l\u1eddi khuy\u00ean th\u00f4ng minh cho cu\u1ed9c s\u1ed1ng c\u00e1 nh\u00e2n."}</p>
+                    <h4 className="text-sm font-semibold text-white">{"Chat & Financial Advice"}</h4>
+                    <p className="text-xs text-slate-400 mt-0.5">{"Summarize expenses and get smart personalized advice."}</p>
                   </div>
                 </div>
 
@@ -641,8 +645,8 @@ const AIChat = () => {
                     <Sparkles size={14} />
                   </div>
                   <div>
-                    <h4 className="text-sm font-semibold text-white">{"Ch\u1ebf \u0111\u1ed9 Agent \u0111\u1eafc l\u1ef1c (Premium)"}</h4>
-                    <p className="text-xs text-slate-400 mt-0.5">{"T\u1ef1 \u0111\u1ed9ng th\u00eam, s\u1eeda, x\u00f3a giao d\u1ecbch v\u00e0 qu\u1ea3n l\u00fd h\u1ed3 s\u01a1 chi ti\u00eau b\u1eb1ng ng\u00f4n ng\u1eef t\u1ef1 nhi\u00ean."}</p>
+                    <h4 className="text-sm font-semibold text-white">{"Powerful Agent Mode (Premium)"}</h4>
+                    <p className="text-xs text-slate-400 mt-0.5">{"Automatically add, edit, and delete transactions using natural language."}</p>
                   </div>
                 </div>
 
@@ -651,8 +655,8 @@ const AIChat = () => {
                     <TrendingUp size={14} />
                   </div>
                   <div>
-                    <h4 className="text-sm font-semibold text-white">{"B\u00e1o c\u00e1o & Ph\u00e2n t\u00edch th\u00f4ng minh"}</h4>
-                    <p className="text-xs text-slate-400 mt-0.5">{"Nh\u1eadn g\u1ee3i \u00fd ti\u1ebft ki\u1ec7m th\u00f4ng minh, c\u00e1 nh\u00e2n h\u00f3a \u0111\u1ec3 t\u1ed1i \u01b0u h\u00f3a d\u00f2ng ti\u1ec1n."}</p>
+                    <h4 className="text-sm font-semibold text-white">{"Reports & Smart Analysis"}</h4>
+                    <p className="text-xs text-slate-400 mt-0.5">{"Get smart, personalized savings suggestions to optimize your cash flow."}</p>
                   </div>
                 </div>
               </div>
@@ -664,7 +668,7 @@ const AIChat = () => {
                   className="w-full sm:order-1 px-5 py-3 rounded-2xl text-sm font-medium
                     bg-slate-800 hover:bg-slate-700 active:scale-98 transition duration-150 text-slate-300 hover:text-white"
                 >
-                  {"Quay lại Trang chủ"}
+                  {t("ai.backHome")}
                 </button>
                 <button
                   onClick={() => navigate("/payment")}
@@ -674,7 +678,7 @@ const AIChat = () => {
                     flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <Zap size={16} />
-                  {"Nâng cấp ngay"}
+                  {t("ai.upgradeNow")}
                 </button>
               </div>
             </div>

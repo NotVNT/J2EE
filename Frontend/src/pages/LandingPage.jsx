@@ -5,12 +5,15 @@ import {
     Star, ArrowRight, Check, ChevronRight, Menu, X, ArrowUpRight, ShieldCheck, Zap
 } from 'lucide-react';
 import ThemeToggle from '../components/ThemeToggle';
+import LanguageToggle from '../components/LanguageToggle';
 import { usePageTitle } from '../hooks/usePageTitle.js';
 import favicon from '../assets/logo/favicon.png';
+import { useTranslation } from '../hooks/useTranslation.js';
 
 const LandingPage = () => {
     const navigate = useNavigate();
-    usePageTitle("Trang chủ");
+    const { t } = useTranslation();
+    usePageTitle(t("landing.homeTitle"));
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
 
@@ -49,7 +52,7 @@ const LandingPage = () => {
                         {/* Logo */}
                         <div className="flex items-center gap-2 cursor-pointer" onClick={() => scrollTo('hero')}>
                             <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center shrink-0 shadow-md">
-                                <img src={favicon} alt="Money Manager Logo" className="w-12 h-12 max-w-none object-cover scale-110" />
+                                <img src={favicon} alt="Logo Money Manager" className="w-12 h-12 max-w-none object-cover scale-110" />
                             </div>
                             <span className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white tracking-tight">
                                 Money<span className="text-amber-500">Manager</span>
@@ -75,6 +78,7 @@ const LandingPage = () => {
 
                         {/* Right Actions */}
                         <div className="flex items-center gap-3">
+                            <LanguageToggle />
                             <ThemeToggle />
                             
                             <button
@@ -101,10 +105,27 @@ const LandingPage = () => {
                             {/* Mobile menu toggle */}
                             <button
                                 className="md:hidden p-2 rounded-xl text-slate-500 dark:text-slate-400
-                                    hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+                                    hover:bg-slate-100 dark:hover:bg-white/10 transition-colors
+                                    relative w-10 h-10 flex items-center justify-center overflow-hidden"
                                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                                aria-label="Toggle menu"
                             >
-                                {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                                {/* Menu Icon */}
+                                <div className={`absolute transition-all duration-300 ease-out transform
+                                    ${mobileMenuOpen 
+                                        ? "opacity-0 rotate-90 scale-50 pointer-events-none" 
+                                        : "opacity-100 rotate-0 scale-100"}`}
+                                >
+                                    <Menu size={24} />
+                                </div>
+                                {/* X Icon */}
+                                <div className={`absolute transition-all duration-300 ease-out transform
+                                    ${mobileMenuOpen 
+                                        ? "opacity-100 rotate-0 scale-100" 
+                                        : "opacity-0 -rotate-90 scale-50 pointer-events-none"}`}
+                                >
+                                    <X size={24} />
+                                </div>
                             </button>
                         </div>
                     </div>
@@ -214,7 +235,7 @@ const LandingPage = () => {
                             transform lg:rotate-y-[-10deg] lg:rotate-x-[5deg] transition-transform duration-700 hover:rotate-0">
                             <div className="absolute inset-0 rounded-[1.5rem] sm:rounded-[2.5rem] bg-gradient-to-br from-white/60 to-white/10 dark:from-white/5 dark:to-transparent pointer-events-none" />
                             <img
-                                alt="Financial Dashboard Preview"
+                                alt="Bản xem trước Bảng điều khiển Tài chính"
                                 className="rounded-[1rem] sm:rounded-[2rem] w-full object-cover shadow-inner"
                                 src="https://lh3.googleusercontent.com/aida-public/AB6AXuCUxTWDZB85sXTl6SXbfWuvp2EUwLCemU-FZvdBrNbssTraz-_Y22L4ezm8SGurAhMgqEGPD-UEF-E0bryNloTPVNSkA8T-aSq9nS-UeQ9t5vcafsDhRU1n9cXK6gaCZAEE0HEip4NNU372iXDsKNeyiG4HOszQ7eU4uQXzYrVq7_l8jvfjBZ_9-yS6X2sowV7OIzqjN26PJoqVJUl4Qpz5IB-DqKmi19hoAXv_t2vr41thRXHHknsaLredFVFulvU4-wuAyQc9t7Gy"
                             />
@@ -519,7 +540,7 @@ const LandingPage = () => {
                         <div className="lg:col-span-2">
                             <div className="flex items-center gap-2 mb-6 cursor-pointer" onClick={() => scrollTo('hero')}>
                                 <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center shrink-0 shadow-md">
-                                    <img src={favicon} alt="Money Manager Logo" className="w-12 h-12 max-w-none object-cover scale-110" />
+                                    <img src={favicon} alt="Logo Money Manager" className="w-12 h-12 max-w-none object-cover scale-110" />
                                 </div>
                                 <span className="text-xl font-bold text-slate-900 dark:text-white">
                                     Money<span className="text-amber-500">Manager</span>

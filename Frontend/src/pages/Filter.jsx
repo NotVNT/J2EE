@@ -10,10 +10,12 @@ import TransactionInfoCard from "../components/TransactionInfoCard.jsx";
 import moment from "moment";
 import { usePageTitle } from "../hooks/usePageTitle.js";
 import DateInput from "../components/DateInput.jsx";
+import { useTranslation } from "../hooks/useTranslation.js";
 
 const Filter = () => {
     useUser();
-    usePageTitle("Lọc giao dịch");
+    const { t } = useTranslation();
+    usePageTitle(t("filter.title"));
     const [type, setType] = useState("income");
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");

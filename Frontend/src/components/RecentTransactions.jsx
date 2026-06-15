@@ -1,16 +1,18 @@
 import moment from "moment";
 import * as Lucide from "lucide-react";
+import { useTranslation } from "../hooks/useTranslation.js";
 
 const RecentTransactions = ({ transactions, onMore }) => {
+  const { t } = useTranslation();
   return (
     <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-6 flex flex-col">
       <div className="flex items-center justify-between mb-5">
-        <h3 className="text-base font-bold text-slate-900 dark:text-white">Giao dịch gần đây</h3>
+        <h3 className="text-base font-bold text-slate-900 dark:text-white">{t("dashboard.recentTransactions")}</h3>
         <button
           onClick={onMore}
           className="text-amber-600 dark:text-amber-400 text-xs font-semibold hover:underline uppercase tracking-widest"
         >
-          Xem tất cả
+          {t("dashboard.viewAll")}
         </button>
       </div>
 
@@ -18,10 +20,10 @@ const RecentTransactions = ({ transactions, onMore }) => {
         <table className="w-full text-left">
           <thead>
             <tr>
-              <th className="px-4 py-3 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Tên giao dịch</th>
-              <th className="px-4 py-3 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Ngày</th>
-              <th className="px-4 py-3 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest hidden sm:table-cell">Danh mục</th>
-              <th className="px-4 py-3 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest text-right">Số tiền</th>
+              <th className="px-4 py-3 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{t("dashboard.colTransactionName")}</th>
+              <th className="px-4 py-3 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{t("dashboard.colDate")}</th>
+              <th className="px-4 py-3 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest hidden sm:table-cell">{t("dashboard.colCategory")}</th>
+              <th className="px-4 py-3 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest text-right">{t("dashboard.colAmount")}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-white/5">
@@ -30,7 +32,7 @@ const RecentTransactions = ({ transactions, onMore }) => {
               const amountStr = item.amount ? item.amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") : "0";
               const rawCategory = item.category || item.type;
               const displayCategory = rawCategory
-                ? (rawCategory.toLowerCase() === "expense" ? "Chi tiêu" : (rawCategory.toLowerCase() === "income" ? "Thu nhập" : rawCategory))
+                ? (rawCategory.toLowerCase() === "expense" ? t("expense.title") : (rawCategory.toLowerCase() === "income" ? t("income.title") : rawCategory))
                 : "";
               
               // Resolve icon
@@ -54,7 +56,7 @@ const RecentTransactions = ({ transactions, onMore }) => {
                         {renderIcon()}
                       </div>
                       <span className="font-semibold text-sm text-slate-800 dark:text-slate-100 truncate max-w-35">
-                        {item.name || item.title || "Giao dịch"}
+                        {item.name || item.title || t("common.transaction")}
                       </span>
                     </div>
                   </td>
@@ -76,7 +78,7 @@ const RecentTransactions = ({ transactions, onMore }) => {
             {(!transactions || transactions.length === 0) && (
               <tr>
                 <td colSpan="4" className="px-4 py-8 text-center text-sm text-slate-400 dark:text-slate-500">
-                  Chưa có giao dịch nào
+                  {t("dashboard.noTransactions")}
                 </td>
               </tr>
             )}

@@ -15,7 +15,7 @@ const JarTransferModal = ({ jars, onTransfer, onClose, defaultFromJarId }) => {
 
   const jarOptions = jars.map((j) => ({
     value: j.id,
-    label: `🏦 ${j.name?.trim() || 'Hũ không tên'} (${fmt(j.currentBalance)})`,
+    label: `🏦 ${j.name?.trim() || 'Unnamed jar'} (${fmt(j.currentBalance)})`,
   }));
 
   const handleAmountChange = (e) => {
@@ -25,7 +25,7 @@ const JarTransferModal = ({ jars, onTransfer, onClose, defaultFromJarId }) => {
 
   const handleSubmit = () => {
     if (!fromJarId || !toJarId || !amount) {
-      toast.error("Vui lòng chọn hũ nguồn, hũ đích và nhập số tiền.");
+      toast.error("Please select a source jar, destination jar, and enter an amount.");
       return;
     }
     if (fromJarId === toJarId) return;
@@ -33,11 +33,11 @@ const JarTransferModal = ({ jars, onTransfer, onClose, defaultFromJarId }) => {
   };
 
   return (
-    <Modal isOpen={true} onClose={onClose} title="Chuyển tiền giữa các hũ">
+    <Modal isOpen={true} onClose={onClose} title="Transfer between jars">
       <div className="space-y-4">
         <Input
-          label="Từ hũ"
-          placeholder="Chọn hũ nguồn"
+          label="From jar"
+          placeholder="Select source jar"
           value={fromJarId}
           onChange={({ target }) => setFromJarId(target.value)}
           isSelect={true}
@@ -51,8 +51,8 @@ const JarTransferModal = ({ jars, onTransfer, onClose, defaultFromJarId }) => {
         </div>
 
         <Input
-          label="Đến hũ"
-          placeholder="Chọn hũ đích"
+          label="To jar"
+          placeholder="Select destination jar"
           value={toJarId}
           onChange={({ target }) => setToJarId(target.value)}
           isSelect={true}
@@ -62,13 +62,13 @@ const JarTransferModal = ({ jars, onTransfer, onClose, defaultFromJarId }) => {
         <Input
           value={formatCurrency(amount)}
           onChange={handleAmountChange}
-          label="Số tiền chuyển"
-          placeholder="VD: 500.000"
+          label="Transfer amount"
+          placeholder="e.g. 500,000"
           type="text"
         />
 
         {fromJarId && toJarId && fromJarId === toJarId && (
-          <p className="text-xs text-red-500">Không thể chuyển tiền vào cùng một hũ.</p>
+          <p className="text-xs text-red-500">Cannot transfer to the same jar.</p>
         )}
 
         <div className="flex justify-end gap-2 mt-4">
@@ -79,7 +79,7 @@ const JarTransferModal = ({ jars, onTransfer, onClose, defaultFromJarId }) => {
               text-slate-600 dark:text-slate-400
               hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
           >
-            Huỷ
+            Cancel
           </button>
           <button
             type="button"
@@ -87,7 +87,7 @@ const JarTransferModal = ({ jars, onTransfer, onClose, defaultFromJarId }) => {
             disabled={!fromJarId || !toJarId || !amount || fromJarId === toJarId}
             className="add-btn add-btn-fill disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Chuyển tiền
+            Transfer
           </button>
         </div>
       </div>

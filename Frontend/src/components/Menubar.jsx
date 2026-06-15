@@ -4,9 +4,11 @@ import { useNavigate } from "react-router-dom";
 import { AppContext } from "../context/AppContext.jsx";
 import Sidebar from "./Sidebar.jsx";
 import ThemeToggle from "./ThemeToggle.jsx";
+import LanguageToggle from "./LanguageToggle.jsx";
 import NotificationDropdown from "./NotificationDropdown.jsx";
 import axiosConfig from "../util/axiosConfig";
 import { API_ENDPOINTS } from "../util/apiEndpoints";
+import { useTranslation } from "../hooks/useTranslation.js";
 
 const Menubar = ({ activeMenu }) => {
   const [openSideMenu, setOpenSideMenu] = useState(false);
@@ -14,6 +16,7 @@ const Menubar = ({ activeMenu }) => {
   const dropdownRef = useRef(null);
   const { clearUser, user } = useContext(AppContext);
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -69,7 +72,7 @@ const Menubar = ({ activeMenu }) => {
               focus:bg-white dark:focus:bg-slate-900/60 focus:border-violet-500 dark:focus:border-amber-500
               focus:ring-1 focus:ring-violet-500/20 dark:focus:ring-amber-500/20
               focus:shadow-[0_0_15px_rgba(139,92,246,0.1)] dark:focus:shadow-[0_0_15px_rgba(245,158,11,0.1)]"
-            placeholder="Tìm kiếm..."
+            placeholder={t("nav.searchPlaceholder")}
             type="text"
           />
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-violet-500 dark:group-focus-within:text-amber-500 transition-colors pointer-events-none" />
@@ -78,6 +81,7 @@ const Menubar = ({ activeMenu }) => {
 
       {/* Right — actions */}
       <div className="flex items-center gap-2">
+        <LanguageToggle />
         <ThemeToggle />
 
         <NotificationDropdown />
@@ -112,7 +116,7 @@ const Menubar = ({ activeMenu }) => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
                       <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                        {user?.fullName || "Người dùng"}
+                        {user?.fullName || t("nav.userFallback")}
                       </p>
                       {user?.role === "admin" && (
                         <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 text-[11px] font-extrabold uppercase tracking-wide border border-amber-500/20 shrink-0">
@@ -135,7 +139,7 @@ const Menubar = ({ activeMenu }) => {
                       transition-colors"
                   >
                     <ShieldCheck size={15} />
-                    Trang quản trị
+                    {t("nav.adminPanel")}
                   </button>
                 )}
                 <button
@@ -145,7 +149,7 @@ const Menubar = ({ activeMenu }) => {
                     transition-colors"
                 >
                   <User size={15} />
-                  Hồ sơ cá nhân
+                  {t("nav.profile")}
                 </button>
                 <button
                   onClick={handleLogout}
@@ -154,7 +158,7 @@ const Menubar = ({ activeMenu }) => {
                     transition-colors mt-1"
                 >
                   <LogOut size={15} />
-                  Đăng xuất
+                  {t("nav.logout")}
                 </button>
               </div>
             </div>

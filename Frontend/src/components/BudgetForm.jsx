@@ -3,11 +3,11 @@ import Input from "./Input.jsx";
 import { formatCurrency } from "../util/helper.js";
 
 /**
- * BudgetForm – Form thiết lập hạn mức ngân sách
+ * BudgetForm – Form for setting a budget limit
  * Props:
- *   categories  – danh sách category loại "expense"
- *   onSave      – callback(dto) khi submit
- *   onCancel    – callback khi bấm Hủy
+ *   categories  – list of "expense" type categories
+ *   onSave      – callback(dto) on submit
+ *   onCancel    – callback when Cancel is clicked
  */
 const BudgetForm = ({ categories = [], onSave, onCancel }) => {
     const now = new Date();
@@ -30,9 +30,9 @@ const BudgetForm = ({ categories = [], onSave, onCancel }) => {
     const selectedCategoryId = form.categoryId || categories[0]?.id || "";
 
     const handleSubmit = () => {
-        if (!selectedCategoryId) return alert("Vui lòng chọn danh mục");
+        if (!selectedCategoryId) return alert("Please select a category");
         if (!form.amountLimit || Number(form.amountLimit) <= 0)
-            return alert("Số tiền hạn mức phải lớn hơn 0");
+            return alert("Budget limit must be greater than 0");
 
         onSave({
             categoryId: Number(selectedCategoryId),
@@ -47,13 +47,13 @@ const BudgetForm = ({ categories = [], onSave, onCancel }) => {
         label: c.name,
     }));
 
-    // Tạo danh sách tháng
+    // Month list
     const monthOptions = Array.from({ length: 12 }, (_, i) => ({
         value: i + 1,
-        label: `Tháng ${i + 1}`,
+        label: `Month ${i + 1}`,
     }));
 
-    // Tạo danh sách năm (3 năm gần nhất)
+    // Year list (3 nearest years)
     const currentYear = now.getFullYear();
     const yearOptions = [currentYear - 1, currentYear, currentYear + 1].map(
         (y) => ({ value: y, label: `${y}` })
@@ -62,30 +62,30 @@ const BudgetForm = ({ categories = [], onSave, onCancel }) => {
     return (
         <div className="budget-form">
             <Input
-                label="Danh mục chi tiêu"
+                label="Expense category"
                 value={selectedCategoryId}
                 onChange={({ target }) => handleChange("categoryId", target.value)}
                 isSelect
                 options={categoryOptions}
                 placeholder={
                     categories.length === 0
-                        ? "Chưa có danh mục expense, hãy tạo trước"
-                        : "Chọn danh mục"
+                        ? "No expense categories yet, please create one first"
+                        : "Select category"
                 }
             />
 
             <Input
-                label="Hạn mức (VNĐ)"
+                label="Limit (VND)"
                 type="text"
                 value={formatCurrency(form.amountLimit)}
                 onChange={handleAmountChange}
-                placeholder="VD: 2.000.000"
+                placeholder="e.g. 2,000,000"
             />
 
             <div className="budget-form__row">
                 <div className="budget-form__half">
                     <Input
-                        label="Tháng"
+                        label="Month"
                         value={form.month}
                         onChange={({ target }) => handleChange("month", target.value)}
                         isSelect
@@ -94,7 +94,7 @@ const BudgetForm = ({ categories = [], onSave, onCancel }) => {
                 </div>
                 <div className="budget-form__half">
                     <Input
-                        label="Năm"
+                        label="Year"
                         value={form.year}
                         onChange={({ target }) => handleChange("year", target.value)}
                         isSelect
@@ -110,7 +110,7 @@ const BudgetForm = ({ categories = [], onSave, onCancel }) => {
                     onClick={onCancel}
                     id="budget-form-cancel-btn"
                 >
-                    Hủy
+                    Cancel
                 </button>
                 <button
                     type="button"
@@ -119,7 +119,7 @@ const BudgetForm = ({ categories = [], onSave, onCancel }) => {
                     id="budget-form-save-btn"
                     disabled={categories.length === 0}
                 >
-                    Lưu hạn mức
+                    Save limit
                 </button>
             </div>
         </div>

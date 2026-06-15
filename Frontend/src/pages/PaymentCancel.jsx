@@ -6,6 +6,7 @@ import axiosConfig from "../util/axiosConfig.jsx";
 import { API_ENDPOINTS } from "../util/apiEndpoints.js";
 import { usePageTitle } from "../hooks/usePageTitle.js";
 import Footer from "../components/Footer.jsx";
+import { useTranslation } from "../hooks/useTranslation.js";
 
 const PAYMENT_STORAGE_KEY = "latestPayment";
 
@@ -27,7 +28,8 @@ const CANCEL_REASONS = [
 
 const PaymentCancel = () => {
   const [searchParams] = useSearchParams();
-  usePageTitle("Thanh toán bị hủy");
+  const { t } = useTranslation();
+  usePageTitle(t("payment.cancelTitle"));
   const [isSyncing, setIsSyncing] = useState(false);
 
   const orderCode = useMemo(() => {

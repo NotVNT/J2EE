@@ -6,9 +6,11 @@ import axiosConfig from "../util/axiosConfig";
 import { API_ENDPOINTS } from "../util/apiEndpoints";
 import toast from "react-hot-toast";
 import { usePageTitle } from "../hooks/usePageTitle.js";
+import { useTranslation } from "../hooks/useTranslation.js";
 
 const Reports = () => {
-  usePageTitle("Báo cáo tài chính");
+  const { t } = useTranslation();
+  usePageTitle(t("reports.financeTitle"));
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);

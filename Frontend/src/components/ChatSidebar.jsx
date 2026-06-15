@@ -20,8 +20,9 @@ import {
 } from "lucide-react";
 import { useTheme } from "../context/ThemeContext.jsx";
 import favicon from "../assets/logo/AI_favicon.png";
+import { useTranslation } from "../hooks/useTranslation.js";
 
-const groupSessions = (sessions) => {
+const groupSessions = (sessions, t) => {
   const now = new Date();
   const today = [];
   const yesterday = [];
@@ -39,10 +40,10 @@ const groupSessions = (sessions) => {
   });
 
   const groups = [];
-  if (today.length) groups.push({ label: "Hôm nay", items: today });
-  if (yesterday.length) groups.push({ label: "Hôm qua", items: yesterday });
-  if (last7.length) groups.push({ label: "7 ngày trước", items: last7 });
-  if (last30.length) groups.push({ label: "Gần đây", items: last30 });
+  if (today.length) groups.push({ label: t("ai.groupToday"), items: today });
+  if (yesterday.length) groups.push({ label: t("ai.groupYesterday"), items: yesterday });
+  if (last7.length) groups.push({ label: t("ai.groupLast7"), items: last7 });
+  if (last30.length) groups.push({ label: t("ai.groupRecent"), items: last30 });
   return groups;
 };
 
@@ -60,6 +61,7 @@ const ChatSidebar = ({
   const navigate = useNavigate();
   const { user, clearUser } = useContext(AppContext);
   const { theme, toggleTheme } = useTheme();
+  const { t } = useTranslation();
 
   const [editingId, setEditingId] = useState(null);
   const [editTitle, setEditTitle] = useState("");
@@ -93,7 +95,7 @@ const ChatSidebar = ({
     ? sessions.filter(s => s.title.toLowerCase().includes(searchQuery.trim().toLowerCase()))
     : sessions;
 
-  const grouped = groupSessions(filteredSessions);
+  const grouped = groupSessions(filteredSessions, t);
 
   const startRename = (session) => {
     setEditingId(session.id);
@@ -118,7 +120,7 @@ const ChatSidebar = ({
     setConfirmDelete(null);
   };
 
-  const userName = user?.fullName || "Người dùng";
+  const userName = user?.fullName || t("nav.userFallback");
   const userPlan = user?.subscriptionPlan || "FREE";
   const userInitial = (userName || "U").charAt(0).toUpperCase();
 
@@ -136,7 +138,7 @@ const ChatSidebar = ({
         >
           <span className="flex items-center gap-3">
             <Pencil size={18} className="text-slate-500 dark:text-slate-400" />
-            Cuộc trò chuyện mới
+            {t("ai.newChat")}
           </span>
         </button>
       </div>
@@ -146,7 +148,7 @@ const ChatSidebar = ({
         <div className="relative group">
           <input
             type="text"
-            placeholder="Tìm kiếm..."
+            placeholder={t("ai.searchPlaceholder")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full bg-slate-100/50 hover:bg-slate-100 dark:bg-white/5 dark:hover:bg-white/8
@@ -175,19 +177,19 @@ const ChatSidebar = ({
         {isLoading ? (
           <div className="flex items-center justify-center py-8 text-slate-400 dark:text-slate-500 text-sm">
             <div className="w-5 h-5 border-2 border-slate-400 dark:border-slate-500 border-t-transparent rounded-full animate-spin mr-2" />
-            Đang tải...
+            {t("common.loading")}
           </div>
         ) : grouped.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 text-slate-400 dark:text-slate-500 text-sm px-4 text-center">
             {searchQuery ? (
               <>
                 <Search size={24} className="mb-2 opacity-40" />
-                Không tìm thấy cuộc trò chuyện nào
+                {t("ai.noSessionsFound")}
               </>
             ) : (
               <>
                 <MessageSquare size={24} className="mb-2 opacity-40" />
-                Chưa có cuộc trò chuyện nào
+                {t("ai.noSessions")}
               </>
             )}
           </div>
@@ -298,7 +300,7 @@ const ChatSidebar = ({
               className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.06] transition-colors"
             >
               <User size={16} className="text-slate-400" />
-              Hồ sơ của tôi
+              {t("ai.myProfile")}
             </button>
 
             <div className="border-t border-slate-100 dark:border-white/5" />
@@ -312,7 +314,7 @@ const ChatSidebar = ({
             >
               <span className="flex items-center gap-3">
                 {theme === "dark" ? <Sun size={16} className="text-slate-400" /> : <Moon size={16} className="text-slate-400" />}
-                Chế độ {theme === "dark" ? "Sáng" : "Tối"}
+                {theme === "dark" ? t("ai.themeLight") : t("ai.themeDark")}
               </span>
             </button>
 
@@ -325,7 +327,7 @@ const ChatSidebar = ({
                   className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-amber-500 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 transition-colors"
                 >
                   <Sparkles size={16} className="shrink-0" />
-                  Nâng cấp Premium
+                  {t("ai.upgradePremium")}
                 </button>
                 <div className="border-t border-slate-100 dark:border-white/5" />
               </>
@@ -336,7 +338,7 @@ const ChatSidebar = ({
               className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
             >
               <LogOut size={16} />
-              Đăng xuất
+              {t("ai.logout")}
             </button>
           </div>
         )}
@@ -359,22 +361,22 @@ const ChatSidebar = ({
       {confirmDelete && (
         <div className="fixed inset-0 bg-black/40 dark:bg-black/60 flex items-center justify-center z-[100]">
           <div className="bg-white dark:bg-[#282a2c] rounded-[24px] p-6 mx-4 shadow-2xl max-w-[480px] w-full">
-            <p className="text-[22px] text-slate-900 dark:text-[#e3e3e3] font-normal mb-3">Bạn muốn xoá cuộc trò chuyện?</p>
+            <p className="text-[22px] text-slate-900 dark:text-[#e3e3e3] font-normal mb-3">{t("ai.deleteSessionTitle")}</p>
             <p className="text-[14px] text-slate-600 dark:text-[#c4c7c5] mb-6 leading-relaxed">
-              Thao tác này sẽ xoá toàn bộ tin nhắn, câu trả lời và nội dung trao đổi khỏi lịch sử trò chuyện của bạn với trợ lý Nova Money. Hành động này không thể hoàn tác.
+              {t("ai.deleteSessionBody")}
             </p>
             <div className="flex justify-end gap-2 mt-2">
               <button
                 onClick={() => setConfirmDelete(null)}
                 className="px-6 py-2.5 rounded-full text-[14px] font-medium text-slate-700 dark:text-[#e3e3e3] hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
               >
-                Huỷ
+                {t("common.cancel")}
               </button>
               <button
                 onClick={() => handleDelete(confirmDelete)}
                 className="px-6 py-2.5 rounded-full text-[14px] font-medium text-slate-700 dark:text-[#e3e3e3] hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
               >
-                Xoá
+                {t("common.delete")}
               </button>
             </div>
           </div>
@@ -413,7 +415,7 @@ const ChatSidebar = ({
                 text-sm font-medium text-slate-700 dark:text-[#e3e3e3] hover:bg-slate-100 dark:hover:bg-white/5 transition-all"
             >
               <ArrowLeft size={18} className="text-slate-500 dark:text-slate-400" />
-              Quay lại Dashboard
+              {t("ai.backToDashboard")}
             </button>
           </div>
           {sidebarContent}

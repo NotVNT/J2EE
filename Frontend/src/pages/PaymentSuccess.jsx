@@ -11,6 +11,7 @@ import { safeOpenExternal } from "../util/safeNavigation.js";
 import { AppContext } from "../context/AppContext.jsx";
 import { usePageTitle } from "../hooks/usePageTitle.js";
 import Footer from "../components/Footer.jsx";
+import { useTranslation } from "../hooks/useTranslation.js";
 
 const PAYMENT_STORAGE_KEY = "latestPayment";
 
@@ -32,7 +33,8 @@ const NEXT_STEPS = [
 
 const PaymentSuccess = () => {
   const [searchParams] = useSearchParams();
-  usePageTitle("Thanh toán thành công");
+  const { t } = useTranslation();
+  usePageTitle(t("payment.successTitle"));
   const { setUser } = useContext(AppContext);
   const [payment, setPayment] = useState(null);
   const [arrivedAt] = useState(() => new Date().toISOString());

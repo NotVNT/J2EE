@@ -3,6 +3,7 @@ import * as Lucide from "lucide-react";
 import { addThousandsSeparator } from "../util/util.js";
 import { hasDisplayImage, hideBrokenImageWrapper } from "../util/imageDisplay.js";
 import { formatDateForDisplay } from "../util/dateInput.js";
+import { useTranslation } from "../hooks/useTranslation.js";
 
 const TransactionInfoCard = ({
     icon,
@@ -39,6 +40,7 @@ const TransactionInfoCard = ({
         callback?.();
     };
 
+    const { t } = useTranslation();
     const resolvedDate = formatDateForDisplay(date) || date;
 
     const renderCardIcon = () => {
@@ -61,6 +63,8 @@ const TransactionInfoCard = ({
         }
         return <span className="text-sm sm:text-base leading-none shrink-0">{icon}</span>;
     };
+
+    const isBalanceVisible = localStorage.getItem("isBalanceVisible") !== "false";
 
     return (
         <div
@@ -92,7 +96,7 @@ const TransactionInfoCard = ({
                         </p>
                         {receiptLocation ? (
                             <p className="mt-1 truncate text-xs text-sky-600 dark:text-sky-400">
-                                Hóa đơn{receiptLocation ? ` • ${receiptLocation}` : ""}
+                                {t("common.receipt")}{receiptLocation ? ` • ${receiptLocation}` : ""}
                             </p>
                         ) : null}
                     </div>
@@ -120,7 +124,7 @@ const TransactionInfoCard = ({
 
                     <div className={`flex items-center gap-2 rounded-xl px-3 py-2 ${amountClass}`}>
                         <h6 className="text-xs font-semibold sm:text-sm">
-                            {type === "income" ? "+ " : "- "}{addThousandsSeparator(amount)}đ
+                            {isBalanceVisible ? `${type === "income" ? "+ " : "- "}${addThousandsSeparator(amount)}đ` : "******"}
                         </h6>
                         {type === "income" ? <TrendingUp size={15} /> : <TrendingDown size={15} />}
                     </div>

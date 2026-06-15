@@ -38,11 +38,13 @@ import WidgetSettingsPanel from "../components/dashboard/WidgetSettingsPanel.jsx
 import { usePageTitle } from "../hooks/usePageTitle.js";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useTheme } from "../context/ThemeContext.jsx";
+import { useTranslation } from "../hooks/useTranslation.js";
 
 const Home = () => {
   useUser();
   const { theme } = useTheme();
-  usePageTitle("Tổng quan");
+  const { t } = useTranslation();
+  usePageTitle(t("dashboard.title"));
   const navigate = useNavigate();
 
   const [dashboardData, setDashboardData] = useState(null);
@@ -52,7 +54,14 @@ const Home = () => {
   const [detailedInsight, setDetailedInsight] = useState(null);
   const [detailedLoading, setDetailedLoading] = useState(false);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
-  const [isBalanceVisible, setIsBalanceVisible] = useState(true);
+  const [isBalanceVisible, setIsBalanceVisible] = useState(() => {
+    const stored = localStorage.getItem("isBalanceVisible");
+    return stored !== "false";
+  });
+
+  useEffect(() => {
+    localStorage.setItem("isBalanceVisible", String(isBalanceVisible));
+  }, [isBalanceVisible]);
 
   const { user } = useContext(AppContext);
 

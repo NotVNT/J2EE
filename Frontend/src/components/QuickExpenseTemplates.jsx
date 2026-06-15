@@ -5,16 +5,17 @@ import toast from "react-hot-toast";
 import axiosConfig from "../util/axiosConfig.jsx";
 import { API_ENDPOINTS } from "../util/apiEndpoints.js";
 import { getTodayIsoDate } from "../util/dateInput.js";
+import { useTranslation } from "../hooks/useTranslation.js";
 
 const STORAGE_KEY = "quick_expense_templates";
 
 const DEFAULT_TEMPLATES = [
-  { id: "t1", emoji: "🍚", name: "Ăn cơm",   amount: 50000,  categoryId: null, jarId: null },
-  { id: "t2", emoji: "☕", name: "Cà phê",    amount: 35000,  categoryId: null, jarId: null },
-  { id: "t3", emoji: "⛽", name: "Xăng xe",   amount: 100000, categoryId: null, jarId: null },
-  { id: "t4", emoji: "🛒", name: "Siêu thị",  amount: 200000, categoryId: null, jarId: null },
-  { id: "t5", emoji: "🧋", name: "Trà sữa",   amount: 45000,  categoryId: null, jarId: null },
-  { id: "t6", emoji: "🍜", name: "Bún phở",   amount: 60000,  categoryId: null, jarId: null },
+  { id: "t1", emoji: "🍚", name: "Rice meal",    amount: 50000,  categoryId: null, jarId: null },
+  { id: "t2", emoji: "☕", name: "Coffee",        amount: 35000,  categoryId: null, jarId: null },
+  { id: "t3", emoji: "⛽", name: "Fuel",          amount: 100000, categoryId: null, jarId: null },
+  { id: "t4", emoji: "🛒", name: "Supermarket",   amount: 200000, categoryId: null, jarId: null },
+  { id: "t5", emoji: "🧋", name: "Bubble tea",    amount: 45000,  categoryId: null, jarId: null },
+  { id: "t6", emoji: "🍜", name: "Noodle soup",   amount: 60000,  categoryId: null, jarId: null },
 ];
 
 const fmt = (n) =>
@@ -25,6 +26,7 @@ const fmt = (n) =>
 const COMMON_EMOJIS = ["🍚","☕","⛽","🛒","🧋","🍜","🍔","🥤","🏥","📱","👗","🎮","🎬","📚","🏋️","🚕","✈️","🎁","💊","🧴"];
 
 function EmojiPicker({ value, onChange }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   return (
     <div className="relative">
@@ -39,7 +41,7 @@ function EmojiPicker({ value, onChange }) {
       {open && (
         <div className="absolute z-50 top-12 left-0 bg-white dark:bg-[#1E293B] border border-slate-200 dark:border-white/10
           rounded-2xl shadow-2xl p-3 w-64">
-          <p className="text-xs text-slate-400 mb-2">Chọn biểu tượng</p>
+          <p className="text-xs text-slate-400 mb-2">{t("common.selectIcon")}</p>
           <div className="grid grid-cols-10 gap-1">
             {COMMON_EMOJIS.map((e) => (
               <button
@@ -115,6 +117,7 @@ function TemplateCard({ template, onUse, onEdit, onDelete, isLoading }) {
 }
 
 function JarPickerModal({ template, jars, onConfirm, onClose }) {
+  const { t } = useTranslation();
   const [jarId, setJarId] = useState(
     template.jarId ?? (jars[0]?.id ?? null)
   );
@@ -128,7 +131,7 @@ function JarPickerModal({ template, jars, onConfirm, onClose }) {
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
       <div className="relative w-full max-w-xs bg-white dark:bg-[#0F172A] rounded-2xl border border-slate-200 dark:border-white/10 shadow-2xl p-6 space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-base font-bold text-slate-900 dark:text-white">Trừ từ hũ nào?</h3>
+          <h3 className="text-base font-bold text-slate-900 dark:text-white">{t("common.deductFromJar")}</h3>
           <button onClick={onClose} className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/10 flex items-center justify-center text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white transition-colors">
             <X size={16} />
           </button>
@@ -139,7 +142,7 @@ function JarPickerModal({ template, jars, onConfirm, onClose }) {
         <CustomSelect
           value={jarId ?? ""}
           onChange={(e) => setJarId(Number(e.target.value))}
-          options={jars.map((j) => ({ value: j.id, label: `🏦 ${j.name?.trim() || 'Hũ không tên'}` }))}
+          options={jars.map((j) => ({ value: j.id, label: `🏦 ${j.name?.trim() || t("jars.empty")}` }))}
           className={inputCls}
         />
         <div className="flex gap-2 pt-1">
@@ -148,7 +151,7 @@ function JarPickerModal({ template, jars, onConfirm, onClose }) {
             onClick={onClose}
             className="flex-1 rounded-xl border border-slate-200 dark:border-white/10 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
           >
-            Hủy
+            {t("common.cancel")}
           </button>
           <button
             type="button"
@@ -156,7 +159,7 @@ function JarPickerModal({ template, jars, onConfirm, onClose }) {
             className="flex-1 rounded-xl bg-violet-600 hover:bg-violet-500 dark:bg-amber-500 dark:hover:bg-amber-400 py-2.5 text-sm font-semibold text-white transition-colors flex items-center justify-center gap-2"
           >
             <Check size={15} />
-            Xác nhận
+            {t("common.confirm")}
           </button>
         </div>
       </div>
@@ -165,6 +168,7 @@ function JarPickerModal({ template, jars, onConfirm, onClose }) {
 }
 
 function TemplateFormModal({ template, categories, jars, onSave, onClose }) {
+  const { t } = useTranslation();
   const isNew = !template?.id || template.id.startsWith("t");
   const [form, setForm] = useState({
     emoji: template?.emoji || "😊",
@@ -180,8 +184,8 @@ function TemplateFormModal({ template, categories, jars, onSave, onClose }) {
   };
 
   const handleSubmit = () => {
-    if (!form.name.trim()) { toast.error("Vui lòng nhập tên mẫu"); return; }
-    if (!form.amount || Number(form.amount) <= 0) { toast.error("Vui lòng nhập số tiền hợp lệ"); return; }
+    if (!form.name.trim()) { toast.error("Please enter a template name"); return; }
+    if (!form.amount || Number(form.amount) <= 0) { toast.error("Please enter a valid amount"); return; }
     onSave({
       ...template,
       emoji: form.emoji,
@@ -203,7 +207,7 @@ function TemplateFormModal({ template, categories, jars, onSave, onClose }) {
         {/* Header */}
         <div className="flex items-center justify-between">
           <h3 className="text-base font-bold text-slate-900 dark:text-white">
-            {isNew ? "Thêm mẫu mới" : "Chỉnh sửa mẫu"}
+            {isNew ? t("common.newTemplate") : t("common.editTemplate")}
           </h3>
           <button onClick={onClose} className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/10 flex items-center justify-center text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white transition-colors">
             <X size={16} />
@@ -215,7 +219,7 @@ function TemplateFormModal({ template, categories, jars, onSave, onClose }) {
           <EmojiPicker value={form.emoji} onChange={(e) => setForm((p) => ({ ...p, emoji: e }))} />
           <input
             className={inputCls}
-            placeholder="Tên mẫu (VD: Ăn cơm trưa)"
+            placeholder={t("common.namePlaceholder")}
             value={form.name}
             onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
           />
@@ -223,7 +227,7 @@ function TemplateFormModal({ template, categories, jars, onSave, onClose }) {
 
         {/* Amount */}
         <div>
-          <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">Số tiền mặc định</label>
+          <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">{t("common.defaultAmount")}</label>
           <div className="relative">
             <input
               className={inputCls + " pr-14"}
@@ -238,12 +242,12 @@ function TemplateFormModal({ template, categories, jars, onSave, onClose }) {
         {/* Category */}
         {categories.length > 0 && (
           <div>
-            <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">Danh mục (tuỳ chọn)</label>
+            <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">{t("category.title")} ({t("common.none").toLowerCase()})</label>
             <CustomSelect
               value={form.categoryId ?? ""}
               onChange={(e) => setForm((p) => ({ ...p, categoryId: e.target.value || null }))}
               options={[
-                { value: "", label: "Không chọn danh mục" },
+                { value: "", label: t("common.noCategory") },
                 ...categories.map((c) => ({ value: c.id, label: c.name })),
               ]}
               className={inputCls}
@@ -254,13 +258,13 @@ function TemplateFormModal({ template, categories, jars, onSave, onClose }) {
         {/* Jar */}
         {jars.length > 0 && (
           <div>
-            <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">Hũ mặc định (tuỳ chọn)</label>
+            <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">{t("jars.title")} ({t("common.none").toLowerCase()})</label>
             <CustomSelect
               value={form.jarId ?? ""}
               onChange={(e) => setForm((p) => ({ ...p, jarId: e.target.value || null }))}
               options={[
-                { value: "", label: "Không chọn hũ" },
-                ...jars.map((j) => ({ value: j.id, label: `🏦 ${j.name?.trim() || 'Hũ không tên'}` })),
+                { value: "", label: t("common.noJar") },
+                ...jars.map((j) => ({ value: j.id, label: `🏦 ${j.name?.trim() || t("jars.empty")}` })),
               ]}
               className={inputCls}
             />
@@ -271,12 +275,12 @@ function TemplateFormModal({ template, categories, jars, onSave, onClose }) {
         <div className="flex gap-2 pt-1">
           <button type="button" onClick={onClose}
             className="flex-1 rounded-xl border border-slate-200 dark:border-white/10 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
-            Hủy
+            {t("common.cancel")}
           </button>
           <button type="button" onClick={handleSubmit}
             className="flex-1 rounded-xl bg-violet-600 hover:bg-violet-500 dark:bg-amber-500 dark:hover:bg-amber-400 py-2.5 text-sm font-semibold text-white transition-colors flex items-center justify-center gap-2">
             <Check size={15} />
-            Lưu mẫu
+            {t("common.save")}
           </button>
         </div>
       </div>
@@ -287,6 +291,7 @@ function TemplateFormModal({ template, categories, jars, onSave, onClose }) {
 // ─── Main Component ─────────────────────────────────────────────────────────
 
 const QuickExpenseTemplates = ({ categories = [], onAddExpense }) => {
+  const { t } = useTranslation();
   const [templates, setTemplates] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
@@ -357,12 +362,12 @@ const QuickExpenseTemplates = ({ categories = [], onAddExpense }) => {
       return [...prev, { ...saved, id: `tpl_${Date.now()}` }];
     });
     setEditingTemplate(null);
-    toast.success(saved.id ? "Đã cập nhật mẫu chi tiêu" : "Đã thêm mẫu chi tiêu mới");
+    toast.success(t("common.templateSaved"));
   };
 
   const handleDelete = (id) => {
     setTemplates((prev) => prev.filter((t) => t.id !== id));
-    toast.success("Đã xoá mẫu chi tiêu");
+    toast.success(t("common.templateDeleted"));
   };
 
   return (
@@ -376,10 +381,10 @@ const QuickExpenseTemplates = ({ categories = [], onAddExpense }) => {
             </div>
             <div>
               <h5 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">
-                Chi tiêu nhanh
+                {t("common.quickExpense")}
               </h5>
               <p className="text-[11px] text-slate-400 dark:text-slate-500">
-                Ghi nhận ngay với 1 thao tác
+                Record instantly with 1 tap
               </p>
             </div>
           </div>
@@ -392,7 +397,7 @@ const QuickExpenseTemplates = ({ categories = [], onAddExpense }) => {
                 rounded-xl hover:bg-violet-50 dark:hover:bg-amber-500/10"
             >
               <Plus size={13} />
-              Thêm mẫu
+              {t("common.addTemplate")}
             </button>
             <button
               type="button"
@@ -408,7 +413,7 @@ const QuickExpenseTemplates = ({ categories = [], onAddExpense }) => {
         {isExpanded && (
           <>
             <p className="text-[11px] text-slate-400 dark:text-slate-500 mb-4 mt-1">
-              Nhấn vào mẫu để ghi nhận chi tiêu ngay hôm nay. Hover để chỉnh sửa hoặc xoá.
+              {t("common.quickExpenseHint")}
             </p>
 
             {templates.length === 0 ? (
@@ -420,8 +425,8 @@ const QuickExpenseTemplates = ({ categories = [], onAddExpense }) => {
                   transition duration-200"
               >
                 <span className="text-3xl">⚡</span>
-                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Chưa có mẫu nào</p>
-                <p className="text-xs text-violet-600 dark:text-amber-400">+ Tạo mẫu chi tiêu đầu tiên</p>
+                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{t("common.noTemplates")}</p>
+                <p className="text-xs text-violet-600 dark:text-amber-400">{t("common.createFirstTemplate")}</p>
               </div>
             ) : (
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
@@ -445,7 +450,7 @@ const QuickExpenseTemplates = ({ categories = [], onAddExpense }) => {
                     hover:bg-violet-50/50 dark:hover:bg-amber-500/5 transition duration-200 min-h-[90px]"
                 >
                   <Plus size={18} />
-                  <span className="text-[10px] font-medium">Thêm</span>
+                  <span className="text-[10px] font-medium">{t("common.add")}</span>
                 </button>
               </div>
             )}
