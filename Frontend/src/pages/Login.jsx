@@ -1,5 +1,5 @@
 import { useCallback, useContext, useEffect, useState, useRef } from "react";
-import { LoaderCircle, Zap } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { AppContext } from "../context/AppContext.jsx";
 import Header from "../components/Header.jsx";
@@ -12,12 +12,14 @@ import Footer from "../components/Footer.jsx";
 import favicon from "../assets/logo/favicon.png";
 import toast from "react-hot-toast";
 import { getPostAuthRedirectPath } from "../util/defaultAuthenticatedRoute.js";
+import { useTranslation } from "../hooks/useTranslation.js";
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 const Login = () => {
   const navigate = useNavigate();
-  usePageTitle("Đăng nhập");
+  const { t } = useTranslation();
+  usePageTitle(t("auth.loginTitle"));
   const { setUser } = useContext(AppContext);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -40,14 +42,14 @@ const Login = () => {
 
   useEffect(() => {
     if (searchParams.get("expired") === "true") {
-      toast.error("Phiên đăng nhập đã hết hạn hoặc bạn đã đăng xuất ở một tab khác. Vui lòng đăng nhập lại.", {
+      toast.error(t("auth.sessionExpired"), {
         id: "session-expired-toast"
       });
       const newParams = new URLSearchParams(searchParams);
       newParams.delete("expired");
       setSearchParams(newParams, { replace: true });
     }
-  }, [searchParams, setSearchParams]);
+  }, [searchParams, setSearchParams, t]);
 
   const handleGoogleCredential = useCallback(async (response) => {
     setError("");
@@ -61,9 +63,9 @@ const Login = () => {
         navigate(getPostAuthRedirectPath(user));
       }
     } catch (err) {
-      setError(err.response?.data?.message || "Đăng nhập bằng Google thất bại. Vui lòng thử lại.");
+      setError(err.response?.data?.message || t("auth.googleFailed"));
     }
-  }, [navigate, setUser]);
+  }, [navigate, setUser, t]);
 
   // Load Google Identity Services script và khởi tạo
   useEffect(() => {
@@ -134,12 +136,12 @@ const Login = () => {
     setError("");
 
     if (!validateEmail(email)) {
-      setError("Vui lòng nhập địa chỉ email hợp lệ");
+      setError(t("auth.invalidEmail"));
       setIsLoading(false);
       return;
     }
     if (!password.trim()) {
-      setError("Vui lòng nhập mật khẩu");
+      setError(t("auth.invalidPassword"));
       setIsLoading(false);
       return;
     }
@@ -181,19 +183,19 @@ const Login = () => {
                 <span className="text-white font-bold text-lg">Money<span className="text-amber-400">Manager</span></span>
               </div>
               <h2 className="text-3xl font-bold text-white leading-snug mb-4">
-                Quản lý tài chính<br />
-                <span className="text-amber-400">thông minh hơn</span>
+                {t("auth.smartMoneyManagement")}<br />
+                <span className="text-amber-400">{t("auth.smarter")}</span>
               </h2>
               <p className="text-slate-400 text-sm leading-relaxed">
-                Theo dõi thu chi, lập kế hoạch ngân sách và đạt mục tiêu tài chính của bạn với AI hỗ trợ.
+                {t("auth.heroDescription")}
               </p>
             </div>
 
             <div className="relative grid grid-cols-2 gap-3 mt-8">
               {[
-                { label: "Người dùng", value: "150K+" },
-                { label: "Giao dịch", value: "$2.4B" },
-                { label: "Đánh giá", value: "4.9/5" },
+                { label: t("auth.stats.users"), value: "150K+" },
+                { label: t("auth.stats.transactions"), value: "$2.4B" },
+                { label: t("auth.stats.rating"), value: "4.9/5" },
                 { label: "Uptime", value: "99.9%" },
               ].map((s) => (
                 <div key={s.label} className="p-3 rounded-xl bg-white/5 border border-white/10">
@@ -207,20 +209,20 @@ const Login = () => {
           {/* Right form */}
           <section className="bg-white dark:bg-[#0F172A] p-8 md:p-10">
             <div className="space-y-1.5 mb-8">
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Chào mừng quay lại</h2>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Nhập thông tin tài khoản để tiếp tục.</p>
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{t("auth.welcomeBack")}</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400">{t("auth.enterCredentials")}</p>
             </div>
 
             <form className="space-y-5" onSubmit={handleSubmit}>
               <Input
-                label="Địa chỉ email"
+                label={t("auth.email")}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="tenban@example.com"
+                placeholder={t("auth.emailPlaceholder")}
                 type="text"
                 value={email}
               />
               <Input
-                label="Mật khẩu"
+                label={t("auth.password")}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 type="password"
@@ -235,14 +237,14 @@ const Login = () => {
                     onChange={(e) => setRememberMe(e.target.checked)}
                     type="checkbox"
                   />
-                  Ghi nhớ đăng nhập
+                  {t("auth.rememberMe")}
                 </label>
                 <button
                   className="font-medium text-amber-600 dark:text-amber-400 hover:underline"
                   onClick={handleForgotPassword}
                   type="button"
                 >
-                  Quên mật khẩu?
+                  {t("auth.forgotPassword")}
                 </button>
               </div>
 
@@ -256,14 +258,14 @@ const Login = () => {
                 {isLoading ? (
                   <>
                     <LoaderCircle className="animate-spin" size={18} />
-                    Đang đăng nhập...
+                    {t("auth.loadingLogin")}
                   </>
-                ) : "ĐĂNG NHẬP"}
+                ) : t("auth.loginBtn")}
               </button>
 
               <div className="flex items-center gap-3 py-1">
                 <span className="h-px flex-1 bg-slate-200 dark:bg-white/10" />
-                <span className="text-xs uppercase tracking-wide text-slate-400">hoặc</span>
+                <span className="text-xs uppercase tracking-wide text-slate-400">{t("common.or")}</span>
                 <span className="h-px flex-1 bg-slate-200 dark:bg-white/10" />
               </div>
 
@@ -280,9 +282,9 @@ const Login = () => {
               </div>
 
               <p className="text-center text-sm text-slate-600 dark:text-slate-400">
-                Chưa có tài khoản?{" "}
+                {t("auth.noAccount")}{" "}
                 <Link className="font-semibold text-amber-600 dark:text-amber-400 hover:underline" to="/signup">
-                  Đăng ký ngay
+                  {t("auth.signupNow")}
                 </Link>
               </p>
             </form>

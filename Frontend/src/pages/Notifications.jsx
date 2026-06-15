@@ -5,6 +5,8 @@ import axiosConfig from "../util/axiosConfig";
 import { API_ENDPOINTS } from "../util/apiEndpoints";
 import toast from "react-hot-toast";
 import { usePageTitle } from "../hooks/usePageTitle.js";
+import { useTranslation } from "../hooks/useTranslation.js";
+import { translateNotification } from "../util/notificationTranslator.js";
 
 const NOTIFICATION_TYPES = {
   ADMIN: {
@@ -58,7 +60,8 @@ const NOTIFICATION_TYPES = {
 };
 
 const Notifications = () => {
-  usePageTitle("Thông báo");
+  const { t, language } = useTranslation();
+  usePageTitle(t("notifications.title"));
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState("ALL"); // ALL, UNREAD
@@ -182,11 +185,13 @@ const Notifications = () => {
     const diffHours = Math.floor(diffMins / 60);
     const diffDays = Math.floor(diffHours / 24);
 
-    if (diffMins < 1) return "Vừa xong";
-    if (diffMins < 60) return `${diffMins} phút trước`;
-    if (diffHours < 24) return `${diffHours} giờ trước`;
-    if (diffDays === 1) return "Hôm qua";
-    return `${diffDays} ngày trước`;
+    const isEn = language === "en";
+
+    if (diffMins < 1) return isEn ? "Just now" : "Vừa xong";
+    if (diffMins < 60) return isEn ? (diffMins === 1 ? "1 minute ago" : `${diffMins} minutes ago`) : `${diffMins} phút trước`;
+    if (diffHours < 24) return isEn ? (diffHours === 1 ? "1 hour ago" : `${diffHours} hours ago`) : `${diffHours} giờ trước`;
+    if (diffDays === 1) return isEn ? "Yesterday" : "Hôm qua";
+    return isEn ? `${diffDays} days ago` : `${diffDays} ngày trước`;
   };
 
   const getNotificationIcon = (type) => {
@@ -380,6 +385,7 @@ const Notifications = () => {
               <div className="divide-y divide-slate-100 dark:divide-white/5 flex-1">
                 {filteredNotifications.map((notif) => {
                   const isSelected = selectedIds.has(notif.id);
+                  const { title: displayTitle, message: displayMessage } = translateNotification(notif.title, notif.message, language);
                   return (
                     <div 
                       key={notif.id} 
@@ -406,20 +412,20 @@ const Notifications = () => {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-3">
                             <h3 className={`text-sm mb-1 break-words pr-2 flex items-center gap-2 flex-wrap ${!notif.isRead ? 'font-extrabold text-slate-900 dark:text-white' : 'font-bold text-slate-700 dark:text-slate-350'}`}>
-                              {notif.title}
+                              {displayTitle}
                               <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold border shrink-0 ${NOTIFICATION_TYPES[notif.type]?.color || "bg-slate-50 text-slate-600 dark:bg-white/5 dark:text-slate-400 border-slate-200/50 dark:border-white/10"}`}>
-                                {NOTIFICATION_TYPES[notif.type]?.label || notif.type}
+                                {t(NOTIFICATION_TYPES[notif.type]?.label || notif.type)}
                               </span>
                             </h3>
                           </div>
                           <p className={`text-sm leading-relaxed mb-3 break-words ${!notif.isRead ? 'text-slate-600 dark:text-slate-300 font-semibold' : 'text-slate-500 dark:text-slate-400 font-medium'}`}>
-                            {notif.message}
+                            {displayMessage}
                           </p>
                           <div className="flex items-center gap-2 text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
                             <Clock size={11} />
                             {formatRelativeTime(notif.createdAt)}
                             <span>•</span>
-                            <span>{new Date(notif.createdAt).toLocaleString('vi-VN')}</span>
+                            <span>{new Date(notif.createdAt).toLocaleString(language === "en" ? "en-US" : "vi-VN")}</span>
                           </div>
                         </div>
                       </div>

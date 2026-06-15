@@ -5,12 +5,12 @@ import axiosConfig from "../util/axiosConfig.jsx";
 import { AppContext } from "../context/AppContext.jsx";
 
 const DEFAULT_SUGGESTED_JARS = [
-  { name: "Thiết yếu", icon: "🏠", color: "#EF4444", targetPercentage: 55 },
-  { name: "Tiết kiệm", icon: "💼", color: "#10B981", targetPercentage: 10 },
-  { name: "Giáo dục", icon: "🎓", color: "#3B82F6", targetPercentage: 10 },
-  { name: "Hưởng thụ", icon: "🎉", color: "#EC4899", targetPercentage: 10 },
-  { name: "Đầu tư", icon: "📈", color: "#F59E0B", targetPercentage: 10 },
-  { name: "Từ thiện", icon: "❤️", color: "#F97316", targetPercentage: 5 },
+  { name: "Necessities", icon: "🏠", color: "#EF4444", targetPercentage: 55 },
+  { name: "Savings", icon: "💼", color: "#10B981", targetPercentage: 10 },
+  { name: "Education", icon: "🎓", color: "#3B82F6", targetPercentage: 10 },
+  { name: "Play", icon: "🎉", color: "#EC4899", targetPercentage: 10 },
+  { name: "Investment", icon: "📈", color: "#F59E0B", targetPercentage: 10 },
+  { name: "Giving", icon: "❤️", color: "#F97316", targetPercentage: 5 },
 ];
 
 const PRESET_COLORS = ["#EF4444", "#10B981", "#3B82F6", "#EC4899", "#F59E0B", "#F97316", "#8B5CF6", "#06B6D4", "#6366F1", "#84CC16"];
@@ -24,27 +24,27 @@ const JarsSetup = ({ onComplete }) => {
   const [balancingInfo, setBalancingInfo] = useState(null);
   const [pendingDeleteAllocation, setPendingDeleteAllocation] = useState(null);
 
-  // Thêm một hũ nháp mới
+  // Add a new draft jar
   const handleAddDraft = () => {
     const nextColor = PRESET_COLORS[draftJars.length % PRESET_COLORS.length];
     const nextEmoji = PRESET_EMOJIS[draftJars.length % PRESET_EMOJIS.length];
     setDraftJars([
       ...draftJars,
-      { name: "Hũ mới", icon: nextEmoji, color: nextColor, targetPercentage: 0 },
+      { name: "New jar", icon: nextEmoji, color: nextColor, targetPercentage: 0 },
     ]);
   };
 
-  // Xóa hũ nháp
+  // Delete a draft jar
   const handleDeleteDraft = (index) => {
     const deletedJar = draftJars[index];
     const nextList = draftJars.filter((_, i) => i !== index);
     setDraftJars(nextList);
     setBalancingInfo(null);
 
-    // Nếu hũ xóa có tỷ lệ > 0 và vẫn còn hũ khác nháp khác, cho phép người dùng phân bổ lại % dôi ra
+    // If deleted jar had percentage > 0 and there are still other draft jars, allow user to reallocate
     if (deletedJar && deletedJar.targetPercentage > 0 && nextList.length > 0) {
       setPendingDeleteAllocation({
-        name: deletedJar.name || "Hũ không tên",
+        name: deletedJar.name || "Unnamed jar",
         percentage: Number(deletedJar.targetPercentage) || 0
       });
     } else {
@@ -66,14 +66,14 @@ const JarsSetup = ({ onComplete }) => {
     setPendingDeleteAllocation(null);
   };
 
-  // Cập nhật giá trị trường trong hũ nháp
+  // Update a field value in a draft jar
   const handleUpdateDraft = (index, key, value) => {
     const nextList = [...draftJars];
     
     if (key === "targetPercentage") {
       const newPct = Number(value) || 0;
       
-      // Lấy originalPct: Nếu đang có balancingInfo cho chính hũ này, giữ nguyên originalPct cũ
+      // Get originalPct: if balancingInfo is for this jar, keep old originalPct
       let originalPct;
       if (balancingInfo && balancingInfo.index === index) {
         originalPct = balancingInfo.originalPct;
@@ -120,17 +120,17 @@ const JarsSetup = ({ onComplete }) => {
 
   const handleSaveAll = async () => {
     if (!isBalanced) {
-      toast.error("Tổng tỷ lệ phân bổ của các hũ bắt buộc phải bằng 100%");
+      toast.error("Total allocation percentage must equal 100%");
       return;
     }
     if (isLimitExceeded) {
-      toast.error(`Gói thành viên hiện tại (${plan}) chỉ hỗ trợ tối đa ${maxJars} hũ. Vui lòng rút bớt hũ hoặc nâng cấp gói!`);
+      toast.error(`Your current plan (${plan}) supports a maximum of ${maxJars} jar(s). Please remove some jars or upgrade your plan!`);
       return;
     }
 
     const invalidJar = draftJars.find(j => !j.name.trim());
     if (invalidJar) {
-      toast.error("Vui lòng nhập tên đầy đủ cho toàn bộ các hũ");
+      toast.error("Please enter a name for all jars");
       return;
     }
 
@@ -145,18 +145,18 @@ const JarsSetup = ({ onComplete }) => {
       }));
 
       await axiosConfig.post("/jars/bulk", payload);
-      toast.success("Khởi tạo cấu hình 6 hũ chi tiêu thành công!");
+      toast.success("Jar configuration initialized successfully!");
       if (onComplete) onComplete();
     } catch (err) {
       console.error(err);
-      toast.error(err.response?.data?.error || "Không thể khởi tạo cấu hình hũ chi tiêu.");
+      toast.error(err.response?.data?.error || "Unable to initialize jar configuration.");
     }
   };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 my-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       
-      {/* Cột trái: Giới thiệu kiến thức 6 hũ */}
+      {/* Left column: 6 Jars method introduction */}
       <div className="lg:col-span-4 space-y-6">
         <div className="card bg-violet-600 text-white relative overflow-hidden border-none shadow-xl">
           {/* Decorative gradients */}
@@ -167,9 +167,9 @@ const JarsSetup = ({ onComplete }) => {
             <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center text-xl shadow-inner">
               <Sparkles className="text-amber-300" size={24} />
             </div>
-            <h3 className="text-xl font-bold tracking-tight">Quy tắc Quản lý 6 Hũ</h3>
+            <h3 className="text-xl font-bold tracking-tight">6 Jars Money Management Rule</h3>
             <p className="text-sm text-violet-100 leading-relaxed">
-              Quy tắc quản lý tài chính kinh điển của T. Harv Eker giúp bạn chia nhỏ thu nhập vào các mục đích sử dụng thông minh, đảm bảo vừa đáp ứng nhu cầu thiết yếu vừa xây dựng tự do tài chính vững bền.
+              T. Harv Eker&apos;s classic financial management rule helps you divide your income into smart spending categories, ensuring you meet essential needs while building lasting financial freedom.
             </p>
           </div>
         </div>
@@ -177,26 +177,26 @@ const JarsSetup = ({ onComplete }) => {
         <div className="card space-y-4 border-slate-200/60 dark:border-white/5 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm">
           <h4 className="font-bold text-slate-800 dark:text-white flex items-center gap-2">
             <BookOpen size={16} className="text-violet-500" />
-            Chi tiết cấu trúc
+            Structure details
           </h4>
           <div className="space-y-3 text-xs leading-relaxed text-slate-600 dark:text-slate-400">
-            <p><strong className="text-red-500">🏠 Thiết yếu (55%):</strong> Chi trả các sinh hoạt phí hàng ngày (tiền nhà, ăn uống, đi lại, hóa đơn...).</p>
-            <p><strong className="text-emerald-500">💼 Tiết kiệm (10%):</strong> Quỹ dài hạn tích lũy cho các dự định lớn hoặc trường hợp khẩn cấp.</p>
-            <p><strong className="text-blue-500">🎓 Giáo dục (10%):</strong> Đầu tư phát triển bản thân (mua sách, học nâng cao kỹ năng, tham dự hội thảo...).</p>
-            <p><strong className="text-pink-500">🎉 Hưởng thụ (10%):</strong> Tự thưởng cho bản thân để tạo động lực (du lịch, vui chơi, ăn uống sang chảnh...).</p>
-            <p><strong className="text-amber-500">📈 Đầu tư (10%):</strong> Quỹ tự do tài chính làm hạt giống sinh lời (mua cổ phiếu, góp vốn làm ăn...).</p>
-            <p><strong className="text-orange-500">❤️ Từ thiện (5%):</strong> Cho đi và sẻ chia cộng đồng, giúp đỡ người khó khăn.</p>
+            <p><strong className="text-red-500">🏠 Necessities (55%):</strong> Pay for daily living expenses (rent, food, transport, bills...).</p>
+            <p><strong className="text-emerald-500">💼 Savings (10%):</strong> Long-term fund accumulated for big plans or emergencies.</p>
+            <p><strong className="text-blue-500">🎓 Education (10%):</strong> Invest in self-development (books, skill courses, seminars...).</p>
+            <p><strong className="text-pink-500">🎉 Play (10%):</strong> Reward yourself to stay motivated (travel, entertainment, dining out...).</p>
+            <p><strong className="text-amber-500">📈 Investment (10%):</strong> Financial freedom fund to grow your wealth (stocks, business ventures...).</p>
+            <p><strong className="text-orange-500">❤️ Giving (5%):</strong> Give back and share with the community, help those in need.</p>
           </div>
         </div>
       </div>
 
-      {/* Cột phải: Cấu hình Interactive nháp */}
+      {/* Right column: Interactive draft configuration */}
       <div className="lg:col-span-8 space-y-6">
         <div className="card shadow-lg border-slate-200/80 dark:border-white/5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             <div>
-              <h3 className="text-lg font-bold text-slate-800 dark:text-white">Thiết lập cấu hình Hũ của bạn</h3>
-              <p className="text-xs text-slate-500 mt-0.5">Tùy biến tên và tỷ lệ % phân bổ cho phù hợp với kế hoạch cá nhân của bạn</p>
+              <h3 className="text-lg font-bold text-slate-800 dark:text-white">Set up your jar configuration</h3>
+              <p className="text-xs text-slate-500 mt-0.5">Customize names and allocation percentages to fit your personal plan</p>
             </div>
             <button
               onClick={handleAddDraft}
@@ -205,7 +205,7 @@ const JarsSetup = ({ onComplete }) => {
                 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300
                 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
             >
-              <Plus size={14} /> Thêm hũ nháp
+              <Plus size={14} /> Add draft jar
             </button>
           </div>
 
@@ -237,7 +237,7 @@ const JarsSetup = ({ onComplete }) => {
                       style={{ backgroundColor: jar.color, color: "#fff" }}
                     >
                       {PRESET_COLORS.map(color => (
-                        <option key={color} value={color} style={{ backgroundColor: color }}>Màu</option>
+                        <option key={color} value={color} style={{ backgroundColor: color }}>Color</option>
                       ))}
                     </select>
 
@@ -246,7 +246,7 @@ const JarsSetup = ({ onComplete }) => {
                       type="text"
                       value={jar.name}
                       onChange={(e) => handleUpdateDraft(index, "name", e.target.value)}
-                      placeholder="Tên hũ..."
+                      placeholder="Jar name..."
                       className="flex-1 w-full text-sm font-semibold px-3 py-2 rounded-xl
                         bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10
                         text-slate-800 dark:text-white outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500/20"
@@ -261,7 +261,7 @@ const JarsSetup = ({ onComplete }) => {
                           handleUpdateDraft(index, "targetPercentage", Math.max(0, currentVal - 1));
                         }}
                         className="w-8 h-8 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 flex items-center justify-center text-sm font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 active:scale-90 transition-all cursor-pointer"
-                        title="Giảm 1%"
+                        title="Decrease 1%"
                       >
                         -
                       </button>
@@ -269,7 +269,7 @@ const JarsSetup = ({ onComplete }) => {
                         type="number"
                         value={jar.targetPercentage === 0 ? "" : jar.targetPercentage}
                         onChange={(e) => handleUpdateDraft(index, "targetPercentage", parseFloat(e.target.value) || 0)}
-                        placeholder="VD: 55"
+                        placeholder="e.g. 55"
                         min="0"
                         max="100"
                         className="w-12 text-center text-sm font-bold py-1.5 rounded-lg
@@ -283,7 +283,7 @@ const JarsSetup = ({ onComplete }) => {
                           handleUpdateDraft(index, "targetPercentage", Math.min(100, currentVal + 1));
                         }}
                         className="w-8 h-8 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 flex items-center justify-center text-sm font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 active:scale-90 transition-all cursor-pointer"
-                        title="Tăng 1%"
+                        title="Increase 1%"
                       >
                         +
                       </button>
@@ -294,13 +294,13 @@ const JarsSetup = ({ onComplete }) => {
                     <button
                       onClick={() => handleDeleteDraft(index)}
                       className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-colors shrink-0 cursor-pointer"
-                      title="Xóa hũ"
+                      title="Delete jar"
                     >
                       <Trash2 size={16} />
                     </button>
                   </div>
 
-                  {/* Cân đối hũ nháp thông minh */}
+                  {/* Smart draft jar balance */}
                   {isBalancingThis && (
                     <div className={`mx-3 p-3 rounded-xl border text-xs leading-relaxed space-y-1.5 animate-in fade-in slide-in-from-top-2 duration-200 ${
                       balancingInfo.diff > 0 
@@ -309,20 +309,20 @@ const JarsSetup = ({ onComplete }) => {
                     }`}>
                       <div className="flex items-center justify-between">
                         <span className="font-bold flex items-center gap-1">
-                          ⚖️ Cân đối tỷ lệ hũ nháp:
+                          ⚖️ Balance draft jar allocation:
                         </span>
                         <button 
                           onClick={() => setBalancingInfo(null)}
                           className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-medium"
                         >
-                          Bỏ qua
+                          Skip
                         </button>
                       </div>
                       <p className="text-slate-600 dark:text-slate-400">
                         {balancingInfo.diff > 0 ? (
-                          <>Bạn đang tăng hũ này thêm <strong className="font-extrabold text-amber-600">{balancingInfo.diff.toFixed(1)}%</strong>. Chọn hũ nháp muốn **giảm đi {balancingInfo.diff.toFixed(1)}%** để cân bằng:</>
+                          <>You are increasing this jar by <strong className="font-extrabold text-amber-600">{balancingInfo.diff.toFixed(1)}%</strong>. Select a draft jar to decrease by {balancingInfo.diff.toFixed(1)}% to balance:</>
                         ) : (
-                          <>Bạn đang giảm hũ này đi <strong className="font-extrabold text-blue-600">{Math.abs(balancingInfo.diff).toFixed(1)}%</strong>. Chọn hũ nháp muốn **tăng thêm {Math.abs(balancingInfo.diff).toFixed(1)}%** để cân bằng:</>
+                          <>You are decreasing this jar by <strong className="font-extrabold text-blue-600">{Math.abs(balancingInfo.diff).toFixed(1)}%</strong>. Select a draft jar to increase by {Math.abs(balancingInfo.diff).toFixed(1)}% to balance:</>
                         )}
                       </p>
                       <select
@@ -330,13 +330,13 @@ const JarsSetup = ({ onComplete }) => {
                         className="w-full mt-2 px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 outline-none text-slate-700 dark:text-slate-300 text-xs font-semibold focus:ring-1 focus:ring-slate-400/20 cursor-pointer"
                         defaultValue=""
                       >
-                        <option value="">-- Chọn hũ nháp đối ứng để cân bằng --</option>
+                        <option value="">-- Select balancing draft jar --</option>
                         {draftJars
                           .map((j, i) => ({ ...j, originalIndex: i }))
                           .filter(j => j.originalIndex !== index)
                           .map(j => (
                             <option key={j.originalIndex} value={j.originalIndex}>
-                              {j.icon || "🏺"} {j.name} (Tỷ lệ hiện tại: {j.targetPercentage}%)
+                              {j.icon || "🏺"} {j.name} (Current: {j.targetPercentage}%)
                             </option>
                           ))
                         }
@@ -353,9 +353,9 @@ const JarsSetup = ({ onComplete }) => {
             <div className="mt-6 p-4 rounded-2xl bg-amber-50 dark:bg-amber-500/5 border border-amber-200 dark:border-amber-500/20 text-amber-700 dark:text-amber-400 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
               <div className="leading-relaxed">
                 <span className="font-bold flex items-center gap-1 mb-0.5">
-                  ♻️ Thu hồi tỷ lệ hũ đã xóa:
+                  ♻️ Recover deleted jar percentage:
                 </span>
-                Bạn vừa xóa hũ <strong className="text-slate-800 dark:text-white">"{pendingDeleteAllocation.name}"</strong> ({pendingDeleteAllocation.percentage}%). Chọn hũ nhận lại lượng % này để bảo toàn tổng 100%:
+                You just deleted jar <strong className="text-slate-800 dark:text-white">&quot;{pendingDeleteAllocation.name}&quot;</strong> ({pendingDeleteAllocation.percentage}%). Select a jar to receive this percentage to preserve the 100% total:
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <select
@@ -363,10 +363,10 @@ const JarsSetup = ({ onComplete }) => {
                   className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 outline-none text-slate-700 dark:text-slate-300 text-xs font-semibold focus:ring-1 focus:ring-slate-400/20 cursor-pointer"
                   defaultValue=""
                 >
-                  <option value="">-- Chọn hũ nhận % --</option>
+                  <option value="">-- Select jar to receive % --</option>
                   {draftJars.map((j, i) => (
                     <option key={i} value={i}>
-                      {j.icon || "🏺"} {j.name} (Hiện tại: {j.targetPercentage}%)
+                      {j.icon || "🏺"} {j.name} (Current: {j.targetPercentage}%)
                     </option>
                   ))}
                 </select>
@@ -374,7 +374,7 @@ const JarsSetup = ({ onComplete }) => {
                   onClick={() => setPendingDeleteAllocation(null)}
                   className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-medium px-2 py-1 text-xs"
                 >
-                  Bỏ qua
+                  Skip
                 </button>
               </div>
             </div>
@@ -385,7 +385,7 @@ const JarsSetup = ({ onComplete }) => {
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-slate-500 dark:text-slate-400">Tổng tỷ lệ nháp:</span>
+                  <span className="text-sm text-slate-500 dark:text-slate-400">Total draft percentage:</span>
                   <span className={`text-base font-extrabold ${isBalanced ? "text-emerald-500" : "text-red-500"}`}>
                     {totalPercentage}% / 100%
                   </span>
@@ -397,12 +397,12 @@ const JarsSetup = ({ onComplete }) => {
                 </div>
                 {isLimitExceeded && (
                   <p className="text-xs text-red-500 font-medium">
-                    ⚠️ Gói {plan} chỉ cho phép tối đa {maxJars} hũ. Bạn đã tạo {draftJars.length} hũ.
+                    ⚠️ Plan {plan} allows a maximum of {maxJars} jar(s). You have created {draftJars.length} jars.
                   </p>
                 )}
                 {!isBalanced && (
                   <p className="text-xs text-slate-400">
-                    * Tổng tỷ lệ của các hũ nháp phải bằng đúng 100% để phân bổ thu nhập hợp lệ.
+                    * Total percentage of all draft jars must equal exactly 100% for valid income allocation.
                   </p>
                 )}
               </div>
@@ -415,7 +415,7 @@ const JarsSetup = ({ onComplete }) => {
                     ? "bg-violet-600 hover:bg-violet-700 hover:shadow-lg cursor-pointer" 
                     : "bg-slate-300 dark:bg-slate-800 opacity-60 cursor-not-allowed"}`}
               >
-                {submitting ? "Đang lưu..." : "⚡ Hoàn tất cấu hình hũ"}
+                {submitting ? "Saving..." : "⚡ Complete jar setup"}
               </button>
             </div>
 

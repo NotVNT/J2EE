@@ -19,10 +19,12 @@ import TransactionCalendar from "../components/TransactionCalendar.jsx";
 import { usePageTitle } from "../hooks/usePageTitle.js";
 import DateInput from "../components/DateInput.jsx";
 import { getTodayIsoDate, isIsoDateAfter, normalizeToIsoDate } from "../util/dateInput.js";
+import { useTranslation } from "../hooks/useTranslation.js";
 
 const Expense = () => {
   useUser();
-  usePageTitle("Chi tiêu");
+  const { t } = useTranslation();
+  usePageTitle(t("expense.title"));
   const { user } = useContext(AppContext);
   const [expenseData, setExpenseData] = useState([]);
   const [categories, setCategories] = useState([]);

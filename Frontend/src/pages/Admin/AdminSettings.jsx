@@ -11,6 +11,7 @@ import {
   Rows3,
 } from "lucide-react";
 import { usePageTitle } from "../../hooks/usePageTitle.js";
+import { useTranslation } from "../../hooks/useTranslation.js";
 
 const ADMIN_SETTINGS_KEY = "admin_settings";
 
@@ -115,7 +116,8 @@ const PageSizeOption = ({ value, current, onChange }) => (
 
 // ─── Main Component ────────────────────────────────────────────────────────────
 const AdminSettings = () => {
-  usePageTitle("Cài đặt hệ thống", "Money Manager Admin");
+  const { t } = useTranslation();
+  usePageTitle(t("admin.settingsTitle"), "Money Manager Admin");
   const [settings, setSettings] = useState(loadAdminSettings);
   const [saved, setSaved] = useState(false);
   const [reset, setReset] = useState(false);
@@ -144,10 +146,10 @@ const AdminSettings = () => {
             <span className="w-9 h-9 rounded-2xl bg-slate-100 dark:bg-white/8 flex items-center justify-center text-slate-600 dark:text-slate-400 shrink-0">
               <SlidersHorizontal size={17} />
             </span>
-            Cài đặt admin
+            {t("admin.settingsAdmin")}
           </h1>
           <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400 pl-11">
-            Tùy chỉnh giao diện và hành vi bảng quản trị theo sở thích của bạn.
+            {t("admin.settingsDesc")}
           </p>
         </div>
 
@@ -158,7 +160,7 @@ const AdminSettings = () => {
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 font-semibold text-sm hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer"
           >
             <RotateCcw size={14} className={reset ? "animate-spin" : ""} />
-            Mặc định
+            {t("admin.defaultBtn")}
           </button>
           <button
             onClick={handleSave}
@@ -167,12 +169,12 @@ const AdminSettings = () => {
             {saved ? (
               <>
                 <Check size={14} />
-                Đã lưu!
+                {t("admin.saved")}
               </>
             ) : (
               <>
                 <Save size={14} />
-                Lưu cài đặt
+                {t("admin.saveSettings")}
               </>
             )}
           </button>
@@ -189,7 +191,7 @@ const AdminSettings = () => {
           }`}
         >
           <Check size={16} />
-          {saved ? "Đã lưu cài đặt thành công!" : "Đã khôi phục về mặc định!"}
+          {saved ? t("admin.savedSuccess") : t("admin.resetSettingsSuccess")}
         </div>
       )}
 
@@ -197,13 +199,13 @@ const AdminSettings = () => {
         {/* ── Dashboard Behavior ── */}
         <SectionCard
           icon={RefreshCw}
-          title="Hành vi bảng điều khiển"
-          description="Cấu hình cách các bảng và dữ liệu hoạt động"
+          title={t("admin.dashboardBehavior")}
+          description={t("admin.dashboardBehaviorDesc")}
           accentColor="indigo"
         >
           <SettingRow
-            label="Tự động làm mới thanh toán"
-            description="Danh sách thanh toán sẽ tự động cập nhật mỗi 20 giây"
+            label={t("admin.autoRefreshLabel")}
+            description={t("admin.autoRefreshDesc")}
           >
             <ToggleSwitch
               id="auto-refresh-toggle"
@@ -213,8 +215,8 @@ const AdminSettings = () => {
           </SettingRow>
 
           <SettingRow
-            label="Bảng thanh toán thu gọn"
-            description="Giảm khoảng cách giữa các dòng để hiển thị nhiều mục hơn"
+            label={t("admin.compactTableLabel")}
+            description={t("admin.compactTableDesc")}
           >
             <ToggleSwitch
               id="compact-table-toggle"
@@ -227,8 +229,8 @@ const AdminSettings = () => {
         {/* ── Display Size ── */}
         <SectionCard
           icon={Table2}
-          title="Số dòng mỗi trang"
-          description="Số lượng bản ghi hiển thị tối đa trong danh sách thanh toán"
+          title={t("admin.rowsPerPage")}
+          description={t("admin.rowsPerPageDesc")}
           accentColor="indigo"
         >
           <div className="py-2">
@@ -243,9 +245,9 @@ const AdminSettings = () => {
               ))}
             </div>
             <p className="text-xs text-slate-400 dark:text-slate-500 mt-4">
-              Hiện đang hiển thị tối đa{" "}
-              <span className="font-bold text-slate-600 dark:text-slate-300">{settings.paymentPageSize}</span>{" "}
-              dòng mỗi lần tải.
+              {t("admin.currentlyShowingPre")}
+              <span className="font-bold text-slate-600 dark:text-slate-300">{settings.paymentPageSize}</span>
+              {t("admin.currentlyShowingSuf")}
             </p>
           </div>
         </SectionCard>
@@ -253,8 +255,8 @@ const AdminSettings = () => {
         {/* ── Default Payment Status ── */}
         <SectionCard
           icon={Rows3}
-          title="Lọc thanh toán mặc định"
-          description="Trạng thái được chọn mặc định khi mở trang Thanh toán"
+          title={t("admin.defaultPaymentFilter")}
+          description={t("admin.defaultPaymentFilterDesc")}
           accentColor="indigo"
         >
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-2 py-1">
@@ -281,7 +283,7 @@ const AdminSettings = () => {
                       : "border-slate-200 dark:border-white/8 bg-transparent text-slate-500 dark:text-slate-500 hover:border-slate-300 dark:hover:border-white/15"
                   }`}
                 >
-                  {opt === "ALL" ? "TẤT CẢ" : opt}
+                  {opt === "ALL" ? t("admin.allUpper") : opt}
                   {isActive && (
                     <span className="w-4 h-4 rounded-full bg-violet-500 flex items-center justify-center ml-1 shrink-0">
                       <Check size={10} className="text-white" />
@@ -296,14 +298,14 @@ const AdminSettings = () => {
         {/* ── Table Layout Preview ── */}
         <SectionCard
           icon={LayoutGrid}
-          title="Xem trước bố cục bảng"
-          description="Hình ảnh thể hiện kiểu hiển thị bảng thanh toán hiện tại"
+          title={t("admin.tableLayoutPreview")}
+          description={t("admin.tableLayoutPreviewDesc")}
           accentColor="indigo"
         >
           <div className="rounded-2xl border border-slate-100 dark:border-white/8 overflow-hidden">
             {/* Mini table header */}
             <div className="grid grid-cols-3 gap-0 bg-slate-50 dark:bg-white/3 px-4 py-2 border-b border-slate-100 dark:border-white/5">
-              {["Mã đơn", "Trạng thái", "Số tiền"].map((h) => (
+              {[t("admin.orderCodeShort"), t("admin.statusCol"), t("admin.amount")].map((h) => (
                 <span key={h} className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                   {h}
                 </span>
@@ -328,11 +330,10 @@ const AdminSettings = () => {
             ))}
           </div>
           <p className="text-xs text-slate-400 dark:text-slate-500 mt-3">
-            Chế độ{" "}
             <span className="font-bold text-slate-600 dark:text-slate-300">
-              {settings.compactTable ? "Thu gọn" : "Đầy đủ"}
+              {settings.compactTable ? t("admin.modeCompact") : t("admin.modeFull")}
             </span>{" "}
-            — {settings.compactTable ? "ít khoảng cách hơn, hiển thị nhiều hàng hơn." : "khoảng cách thoáng, dễ đọc hơn."}
+            — {settings.compactTable ? t("admin.compactModeDesc") : t("admin.fullModeDesc")}
           </p>
         </SectionCard>
       </div>
@@ -344,14 +345,14 @@ const AdminSettings = () => {
           className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 font-semibold text-sm hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer"
         >
           <RotateCcw size={14} />
-          Khôi phục mặc định
+          {t("admin.restoreDefault")}
         </button>
         <button
           onClick={handleSave}
           className="inline-flex items-center gap-2 px-6 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm shadow-md shadow-indigo-600/20 hover:shadow-indigo-600/30 transition-all cursor-pointer active:scale-[0.97]"
         >
           {saved ? <Check size={14} /> : <Save size={14} />}
-          {saved ? "Đã lưu!" : "Lưu cài đặt"}
+          {saved ? t("admin.saved") : t("admin.saveSettings")}
         </button>
       </div>
     </div>

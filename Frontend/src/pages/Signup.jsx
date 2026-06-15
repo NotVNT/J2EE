@@ -5,16 +5,18 @@ import { validateEmail } from "../util/validation.js";
 import axiosConfig from "../util/axiosConfig.jsx";
 import { API_ENDPOINTS } from "../util/apiEndpoints.js";
 import toast from "react-hot-toast";
-import { LoaderCircle, Zap } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 import ProfilePhotoSelector from "../components/ProfilePhotoSelector.jsx";
 import uploadProfileImage from "../util/uploadProfileImage.js";
 import Header from "../components/Header.jsx";
 import { usePageTitle } from "../hooks/usePageTitle.js";
 import Footer from "../components/Footer.jsx";
 import favicon from "../assets/logo/favicon.png";
+import { useTranslation } from "../hooks/useTranslation.js";
 
 const Signup = () => {
-  usePageTitle("Đăng ký tài khoản");
+  const { t } = useTranslation();
+  usePageTitle(t("auth.signupPageTitle"));
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,17 +31,17 @@ const Signup = () => {
     setIsLoading(true);
 
     if (!fullName.trim()) {
-      setError("Vui lòng nhập họ và tên");
+      setError(t("auth.invalidFullName"));
       setIsLoading(false);
       return;
     }
     if (!validateEmail(email)) {
-      setError("Vui lòng nhập địa chỉ email hợp lệ");
+      setError(t("auth.invalidEmail"));
       setIsLoading(false);
       return;
     }
     if (!password.trim()) {
-      setError("Vui lòng nhập mật khẩu");
+      setError(t("auth.invalidPassword"));
       setIsLoading(false);
       return;
     }
@@ -57,7 +59,7 @@ const Signup = () => {
         profileImageUrl,
       });
       if (response.status === 201) {
-        toast.success("Đăng ký thành công! Vui lòng kiểm tra email để lấy mã OTP.");
+        toast.success(t("auth.signupSuccess"));
         navigate("/activate", { state: { email } });
       }
     } catch (err) {
@@ -84,9 +86,9 @@ const Signup = () => {
               <span className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Money<span className="text-amber-500">Manager</span></span>
             </div>
 
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">Tạo tài khoản</h2>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">{t("auth.createAccount")}</h2>
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-7">
-              Bắt đầu theo dõi thu chi của bạn ngay hôm nay.
+              {t("auth.startTracking")}
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -98,22 +100,22 @@ const Signup = () => {
                 <Input
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  label="Họ và tên"
-                  placeholder="Nguyễn Văn A"
+                  label={t("auth.fullName")}
+                  placeholder={t("auth.fullNamePlaceholder")}
                   type="text"
                 />
                 <Input
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  label="Địa chỉ email"
-                  placeholder="tenban@example.com"
+                  label={t("auth.email")}
+                  placeholder={t("auth.emailPlaceholder")}
                   type="text"
                 />
                 <div className="col-span-2">
                   <Input
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    label="Mật khẩu"
+                    label={t("auth.password")}
                     placeholder="••••••••"
                     type="password"
                   />
@@ -134,18 +136,18 @@ const Signup = () => {
                 {isLoading ? (
                   <>
                     <LoaderCircle className="animate-spin w-5 h-5" />
-                    Đang đăng ký...
+                    {t("auth.loadingSignup")}
                   </>
-                ) : "ĐĂNG KÝ"}
+                ) : t("auth.signupBtn")}
               </button>
 
               <p className="text-sm text-slate-600 dark:text-slate-400 text-center pt-1">
-                Đã có tài khoản?{" "}
+                {t("auth.haveAccount")}{" "}
                 <Link
                   to="/login"
                   className="font-semibold text-amber-600 dark:text-amber-400 hover:underline"
                 >
-                  Đăng nhập
+                  {t("nav.login")}
                 </Link>
               </p>
             </form>

@@ -9,6 +9,7 @@ import BudgetForm from "../components/BudgetForm.jsx";
 import Modal from "../components/Modal.jsx";
 import DeleteAlert from "../components/DeleteAlert.jsx";
 import { usePageTitle } from "../hooks/usePageTitle.js";
+import { useTranslation } from "../hooks/useTranslation.js";
 
 /**
  * Budget Page – Trang quản lý hạn mức ngân sách
@@ -16,7 +17,8 @@ import { usePageTitle } from "../hooks/usePageTitle.js";
  */
 const Budget = () => {
     useUser();
-    usePageTitle("Ngân sách");
+    const { t } = useTranslation();
+    usePageTitle(t("budget.title"));
 
     const [budgets, setBudgets]               = useState([]);
     const [categories, setCategories]         = useState([]);

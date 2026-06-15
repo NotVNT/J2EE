@@ -19,13 +19,15 @@ import AddExpenseForm from "../components/AddExpenseForm.jsx";
 import EditExpenseForm from "../components/EditExpenseForm.jsx";
 import { hasDisplayImage } from "../util/imageDisplay.js";
 import { getTodayIsoDate, isIsoDateAfter } from "../util/dateInput.js";
+import { useTranslation } from "../hooks/useTranslation.js";
 
 const fmt = (n) =>
   new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(n ?? 0);
 
 const Jars = () => {
   useUser();
-  usePageTitle("Hũ chi tiêu");
+  const { t } = useTranslation();
+  usePageTitle(t("jars.spendingTitle"));
 
   const { user } = useContext(AppContext);
 

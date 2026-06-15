@@ -11,6 +11,7 @@ import { safeRedirect, safeOpenExternal } from "../util/safeNavigation.js";
 import { usePageTitle } from "../hooks/usePageTitle.js";
 import Modal from "../components/Modal.jsx";
 import DeleteAlert from "../components/DeleteAlert.jsx";
+import { useTranslation } from "../hooks/useTranslation.js";
 
 const PAYMENT_STORAGE_KEY = "latestPayment";
 const ICON_MAP = { ShieldCheck, Sparkles, Star, Zap };
@@ -27,7 +28,8 @@ const STATUS_DETAILS = {
 
 const Payment = () => {
   useUser();
-  usePageTitle("Thanh toán nâng cấp");
+  const { t } = useTranslation();
+  usePageTitle(t("payment.upgradeTitle"));
   const { user } = useContext(AppContext);
   const [rawPlans, setRawPlans] = useState([]);
   const [plansLoading, setPlansLoading] = useState(true);

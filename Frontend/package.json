@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "test": "node --test src/util/defaultAuthenticatedRoute.test.js src/util/authRedirect.test.js src/util/monthlyReportAiRequest.test.js src/util/transactionCalendar.test.js src/util/dateInput.test.js src/util/incomeFilters.test.js src/util/dashboardPrivacy.test.js src/util/forecastUi.test.js src/util/aiIntentParser.test.js src/util/aiChatInputValidation.test.js src/util/aiChatUiState.test.js src/util/adminAiUiState.test.js src/util/apiEndpoints.test.js",
+    "test": "node --test src/util/defaultAuthenticatedRoute.test.js src/util/authRedirect.test.js src/util/monthlyReportAiRequest.test.js src/util/transactionCalendar.test.js src/util/dateInput.test.js src/util/incomeFilters.test.js src/util/dashboardPrivacy.test.js src/util/forecastUi.test.js src/util/aiIntentParser.test.js src/util/aiChatInputValidation.test.js src/util/aiChatUiState.test.js src/util/adminAiUiState.test.js src/util/apiEndpoints.test.js src/util/i18n.test.js",
     "lint": "eslint .",
     "preview": "vite preview",
     "security:check": "node scripts/security-check.js",

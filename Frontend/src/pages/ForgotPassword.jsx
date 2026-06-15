@@ -8,12 +8,14 @@ import axiosConfig from "../util/axiosConfig.jsx";
 import { API_ENDPOINTS } from "../util/apiEndpoints.js";
 import { validateEmail } from "../util/validation.js";
 import { usePageTitle } from "../hooks/usePageTitle.js";
+import { useTranslation } from "../hooks/useTranslation.js";
 
 const STEPS = { EMAIL: "email", OTP: "otp", NEW_PASSWORD: "new_password", SUCCESS: "success" };
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
-  usePageTitle("Quên mật khẩu");
+  const { t } = useTranslation();
+  usePageTitle(t("auth.forgotPasswordTitle"));
 
   const [step, setStep] = useState(STEPS.EMAIL);
   const [email, setEmail] = useState("");
@@ -49,7 +51,7 @@ const ForgotPassword = () => {
   const handleEmailSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    if (!validateEmail(email)) { setError("Vui lòng nhập địa chỉ email hợp lệ."); return; }
+    if (!validateEmail(email)) { setError(t("auth.invalidEmailPeriod")); return; }
     setIsLoading(true);
     try {
       await axiosConfig.post(API_ENDPOINTS.FORGOT_PASSWORD, { email });
@@ -60,7 +62,7 @@ const ForgotPassword = () => {
         setStep(STEPS.OTP);
         setCountdown(Number(retryAfter));
       } else {
-        setError(err.response?.data?.message || "Không thể gửi yêu cầu. Vui lòng thử lại sau.");
+        setError(err.response?.data?.message || t("auth.requestFailed"));
       }
     } finally {
       setIsLoading(false);
@@ -71,13 +73,13 @@ const ForgotPassword = () => {
   const handleOtpSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    if (otp.trim().length !== 6) { setError("Mã OTP phải có đúng 6 chữ số."); return; }
+    if (otp.trim().length !== 6) { setError(t("auth.invalidOtpLength")); return; }
     setIsLoading(true);
     try {
       await axiosConfig.post(API_ENDPOINTS.VERIFY_RESET_OTP, { email, otp: otp.trim() });
       setStep(STEPS.NEW_PASSWORD);
     } catch (err) {
-      setError(err.response?.data?.message || "Mã OTP không hợp lệ. Vui lòng thử lại.");
+      setError(err.response?.data?.message || t("auth.invalidOtp"));
     } finally {
       setIsLoading(false);
     }
@@ -87,8 +89,8 @@ const ForgotPassword = () => {
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    if (newPassword.length < 8) { setError("Mật khẩu mới phải có ít nhất 8 ký tự."); return; }
-    if (newPassword !== confirmPassword) { setError("Mật khẩu xác nhận không khớp."); return; }
+    if (newPassword.length < 8) { setError(t("auth.passwordMin8")); return; }
+    if (newPassword !== confirmPassword) { setError(t("auth.passwordMismatch")); return; }
     setIsLoading(true);
     try {
       await axiosConfig.post(API_ENDPOINTS.RESET_PASSWORD, {
@@ -99,7 +101,7 @@ const ForgotPassword = () => {
       setStep(STEPS.SUCCESS);
     } catch (err) {
       // OTP may have expired between steps — send back to OTP step
-      setError(err.response?.data?.message || "Đặt lại mật khẩu thất bại. Vui lòng thử lại.");
+      setError(err.response?.data?.message || t("auth.resetFailed"));
     } finally {
       setIsLoading(false);
     }
@@ -118,7 +120,7 @@ const ForgotPassword = () => {
       if (retryAfter) {
         setCountdown(Number(retryAfter));
       } else {
-        setError(err.response?.data?.message || "Không thể gửi lại OTP. Vui lòng thử lại.");
+        setError(err.response?.data?.message || t("auth.resendFailed"));
       }
     } finally {
       setIsResending(false);
@@ -137,12 +139,12 @@ const ForgotPassword = () => {
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-500/10">
               <CheckCircle size={32} className="text-emerald-500" />
             </div>
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Thành công!</h2>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">{t("auth.resetSuccessTitle")}</h2>
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-7">
-              Mật khẩu đã được thay đổi. Bạn có thể đăng nhập với mật khẩu mới.
+              {t("auth.resetSuccessDescription")}
             </p>
             <button onClick={() => navigate("/login")} className="btn-primary w-full">
-              Đăng nhập ngay
+              {t("auth.loginNow")}
             </button>
           </div>
         </main>
@@ -169,7 +171,7 @@ const ForgotPassword = () => {
               className="inline-flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 transition-colors mb-6"
             >
               <ArrowLeft size={16} />
-              {step === STEPS.EMAIL ? "Quay lại đăng nhập" : "Quay lại"}
+              {step === STEPS.EMAIL ? t("auth.backToLogin") : t("common.back")}
             </button>
 
             {/* Step indicator */}
@@ -177,7 +179,7 @@ const ForgotPassword = () => {
               <div className="flex items-center gap-2 mb-6">
                 {[
                   { key: STEPS.OTP, label: "Xác thực OTP" },
-                  { key: STEPS.NEW_PASSWORD, label: "Mật khẩu mới" },
+                  { key: STEPS.NEW_PASSWORD, label: t("auth.newPassword") },
                 ].map(({ key, label }, idx) => {
                   const isActive = step === key;
                   const isDone = step === STEPS.NEW_PASSWORD && key === STEPS.OTP;
@@ -204,27 +206,27 @@ const ForgotPassword = () => {
                   <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-500/10 border border-amber-500/20">
                     <Mail size={24} className="text-amber-500" />
                   </div>
-                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Quên mật khẩu?</h2>
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{t("auth.forgotPassword")}</h2>
                   <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                    Nhập email để nhận mã OTP đặt lại mật khẩu
+                    {t("auth.forgotEmailInstruction")}
                   </p>
                 </div>
                 <form className="space-y-5" onSubmit={handleEmailSubmit}>
                   <Input
-                    label="Địa chỉ email"
+                    label={t("auth.email")}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="tenban@example.com"
+                    placeholder={t("auth.emailPlaceholder")}
                     type="email"
                     value={email}
                     autoFocus
                   />
                   {error && <p className="rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 px-4 py-3 text-sm text-red-700 dark:text-red-400">{error}</p>}
                   <button className="btn-primary flex w-full items-center justify-center gap-2" disabled={isLoading} type="submit">
-                    {isLoading ? <><LoaderCircle className="animate-spin" size={18} />Đang gửi...</> : "Gửi mã OTP"}
+                    {isLoading ? <><LoaderCircle className="animate-spin" size={18} />{t("auth.sending")}</> : t("auth.sendOtp")}
                   </button>
                   <p className="text-center text-sm text-slate-500 dark:text-slate-400">
-                    Chưa có tài khoản?{" "}
-                    <Link className="font-semibold text-amber-600 dark:text-amber-400 hover:underline" to="/signup">Đăng ký ngay</Link>
+                    {t("auth.noAccount")}{" "}
+                    <Link className="font-semibold text-amber-600 dark:text-amber-400 hover:underline" to="/signup">{t("auth.signupNow")}</Link>
                   </p>
                 </form>
               </>
@@ -237,14 +239,14 @@ const ForgotPassword = () => {
                   <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-500/10 border border-violet-500/20">
                     <KeyRound size={24} className="text-violet-500" />
                   </div>
-                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Nhập mã OTP</h2>
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{t("auth.enterOtp")}</h2>
                   <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                    Mã đã được gửi tới <strong className="text-slate-700 dark:text-slate-300">{email}</strong>
+                    {t("auth.otpSentTo")} <strong className="text-slate-700 dark:text-slate-300">{email}</strong>
                   </p>
                 </div>
                 <form className="space-y-4" onSubmit={handleOtpSubmit}>
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Mã OTP (6 chữ số)</label>
+                    <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">{t("auth.otpLabel")}</label>
                     <input
                       type="text"
                       inputMode="numeric"
@@ -264,7 +266,7 @@ const ForgotPassword = () => {
                   </div>
                   {error && <p className="rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 px-4 py-3 text-sm text-red-700 dark:text-red-400">{error}</p>}
                   <button className="btn-primary flex w-full items-center justify-center gap-2" disabled={isLoading} type="submit">
-                    {isLoading ? <><LoaderCircle className="animate-spin" size={18} />Đang xác thực...</> : "Xác nhận mã OTP"}
+                    {isLoading ? <><LoaderCircle className="animate-spin" size={18} />{t("auth.verifying")}</> : t("auth.verifyOtp")}
                   </button>
                   <button
                     type="button"
@@ -273,10 +275,10 @@ const ForgotPassword = () => {
                     className="btn-secondary w-full flex items-center justify-center gap-2 border border-slate-200 dark:border-white/10 py-3 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isResending
-                      ? <><LoaderCircle className="animate-spin" size={15} />Đang gửi...</>
+                      ? <><LoaderCircle className="animate-spin" size={15} />{t("auth.sending")}</>
                       : countdown > 0
-                        ? <><RefreshCw size={15} />Gửi lại sau {countdown}s</>
-                        : <><RefreshCw size={15} />Gửi lại mã OTP</>
+                        ? <><RefreshCw size={15} />{t("auth.resendIn")} {countdown}s</>
+                        : <><RefreshCw size={15} />{t("auth.resendOtp")}</>
                     }
                   </button>
                 </form>
@@ -290,18 +292,18 @@ const ForgotPassword = () => {
                   <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/10 border border-emerald-500/20">
                     <ShieldCheck size={24} className="text-emerald-500" />
                   </div>
-                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Tạo mật khẩu mới</h2>
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{t("auth.createNewPassword")}</h2>
                   <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                    OTP đã xác thực. Nhập mật khẩu mới cho tài khoản của bạn.
+                    {t("auth.otpVerifiedInstruction")}
                   </p>
                 </div>
                 <form className="space-y-4" onSubmit={handlePasswordSubmit}>
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Mật khẩu mới</label>
+                    <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">{t("auth.newPassword")}</label>
                     <div className="relative">
                       <Input
                         onChange={(e) => { setNewPassword(e.target.value); checkPasswordStrength(e.target.value); }}
-                        placeholder="Ít nhất 8 ký tự"
+                        placeholder={t("auth.newPasswordPlaceholder")}
                         type={showPassword ? "text" : "password"}
                         value={newPassword}
                       />
@@ -318,10 +320,10 @@ const ForgotPassword = () => {
                   {newPassword && (
                     <div className="rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-3 space-y-1">
                       {[
-                        [passwordStrength.length, "Ít nhất 8 ký tự"],
-                        [passwordStrength.uppercase, "1 chữ hoa"],
-                        [passwordStrength.lowercase, "1 chữ thường"],
-                        [passwordStrength.number, "1 chữ số"],
+                        [passwordStrength.length, t("auth.min8Chars")],
+                        [passwordStrength.uppercase, t("auth.oneUppercase")],
+                        [passwordStrength.lowercase, t("auth.oneLowercase")],
+                        [passwordStrength.number, t("auth.oneNumber")],
                       ].map(([ok, label]) => (
                         <p key={label} className={`text-xs ${ok ? "text-emerald-500" : "text-slate-400 dark:text-slate-500"}`}>
                           {ok ? "✓" : "○"} {label}
@@ -331,11 +333,11 @@ const ForgotPassword = () => {
                   )}
 
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Xác nhận mật khẩu</label>
+                    <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">{t("auth.confirmPassword")}</label>
                     <div className="relative">
                       <Input
                         onChange={(e) => setConfirmPassword(e.target.value)}
-                        placeholder="Nhập lại mật khẩu mới"
+                        placeholder={t("auth.confirmPasswordPlaceholder")}
                         type={showConfirmPassword ? "text" : "password"}
                         value={confirmPassword}
                       />
@@ -352,7 +354,7 @@ const ForgotPassword = () => {
                   {error && <p className="rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 px-4 py-3 text-sm text-red-700 dark:text-red-400">{error}</p>}
 
                   <button className="btn-primary flex w-full items-center justify-center gap-2" disabled={isLoading} type="submit">
-                    {isLoading ? <><LoaderCircle className="animate-spin" size={18} />Đang đặt lại...</> : "Đặt lại mật khẩu"}
+                    {isLoading ? <><LoaderCircle className="animate-spin" size={18} />{t("auth.resetting")}</> : t("auth.resetPassword")}
                   </button>
                 </form>
               </>

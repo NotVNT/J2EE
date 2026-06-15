@@ -4,42 +4,42 @@ import axiosConfig from "../../util/axiosConfig";
 import { API_ENDPOINTS } from "../../util/apiEndpoints";
 import toast from "react-hot-toast";
 import { usePageTitle } from "../../hooks/usePageTitle.js";
+import { useTranslation } from "../../hooks/useTranslation.js";
 
-const NOTIFICATION_TYPES = {
-  ADMIN: {
-    label: "Quản trị viên",
-    color: "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 border-indigo-500/15",
-    icon: Bell
-  },
-  SYSTEM: {
-    label: "Hệ thống",
-    color: "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 border-blue-500/15",
-    icon: Sparkles
-  },
-  BUDGET_ALERT: {
-    label: "Cảnh báo ngân sách",
-    color: "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400 border-amber-500/15",
-    icon: AlertTriangle
-  },
-  SPENDING_ALERT: {
-    label: "Cảnh báo chi tiêu",
-    color: "bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400 border-rose-500/15",
-    icon: AlertTriangle
-  },
-  PAYMENT: {
-    label: "Thanh toán",
-    color: "bg-violet-50 text-violet-600 dark:bg-violet-500/10 dark:text-violet-400 border-violet-500/15",
-    icon: Megaphone
-  },
-  GOAL_PROGRESS: {
-    label: "Mục tiêu",
-    color: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 border-emerald-500/15",
-    icon: Sparkles
-  }
+const NOTIFICATION_TYPE_COLORS = {
+  ADMIN: "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 border-indigo-500/15",
+  SYSTEM: "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 border-blue-500/15",
+  BUDGET_ALERT: "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400 border-amber-500/15",
+  SPENDING_ALERT: "bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400 border-rose-500/15",
+  PAYMENT: "bg-violet-50 text-violet-600 dark:bg-violet-500/10 dark:text-violet-400 border-violet-500/15",
+  GOAL_PROGRESS: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 border-emerald-500/15",
+};
+
+const NOTIFICATION_TYPE_ICONS = {
+  ADMIN: Bell,
+  SYSTEM: Sparkles,
+  BUDGET_ALERT: AlertTriangle,
+  SPENDING_ALERT: AlertTriangle,
+  PAYMENT: Megaphone,
+  GOAL_PROGRESS: Sparkles,
+};
+
+const useNotificationTypes = () => {
+  const { t } = useTranslation();
+  return {
+    ADMIN: { label: t("admin.notifTypeAdmin"), color: NOTIFICATION_TYPE_COLORS.ADMIN, icon: NOTIFICATION_TYPE_ICONS.ADMIN },
+    SYSTEM: { label: t("admin.notifTypeSystem"), color: NOTIFICATION_TYPE_COLORS.SYSTEM, icon: NOTIFICATION_TYPE_ICONS.SYSTEM },
+    BUDGET_ALERT: { label: t("admin.notifTypeBudget"), color: NOTIFICATION_TYPE_COLORS.BUDGET_ALERT, icon: NOTIFICATION_TYPE_ICONS.BUDGET_ALERT },
+    SPENDING_ALERT: { label: t("admin.notifTypeSpending"), color: NOTIFICATION_TYPE_COLORS.SPENDING_ALERT, icon: NOTIFICATION_TYPE_ICONS.SPENDING_ALERT },
+    PAYMENT: { label: t("admin.notifTypePayment"), color: NOTIFICATION_TYPE_COLORS.PAYMENT, icon: NOTIFICATION_TYPE_ICONS.PAYMENT },
+    GOAL_PROGRESS: { label: t("admin.notifTypeGoal"), color: NOTIFICATION_TYPE_COLORS.GOAL_PROGRESS, icon: NOTIFICATION_TYPE_ICONS.GOAL_PROGRESS },
+  };
 };
 
 const AdminNotifications = () => {
-  usePageTitle("Quản lý thông báo", "Money Manager Admin");
+  const { t } = useTranslation();
+  const NOTIFICATION_TYPES = useNotificationTypes();
+  usePageTitle(t("admin.notificationsTitle"), "Money Manager Admin");
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
   const [type, setType] = useState("ADMIN");
@@ -69,7 +69,7 @@ const AdminNotifications = () => {
         setBroadcasts(res.data);
       }
     } catch (err) {
-      toast.error("Lỗi tải lịch sử thông báo");
+      toast.error(t("admin.notifHistoryError"));
       console.error("Failed to fetch broadcasts:", err);
     } finally {
       setLoading(false);
@@ -83,7 +83,7 @@ const AdminNotifications = () => {
   const handleSendBroadcast = async (e) => {
     e.preventDefault();
     if (!title.trim() || !message.trim()) {
-      toast.error("Vui lòng nhập đầy đủ tiêu đề và nội dung");
+      toast.error(t("admin.notifRequiredFields"));
       return;
     }
 
@@ -91,14 +91,14 @@ const AdminNotifications = () => {
     try {
       const res = await axiosConfig.post(API_ENDPOINTS.ADMIN_BROADCAST, { title, message, type });
       if (res.status === 200) {
-        toast.success("Gửi thông báo thành công!");
+        toast.success(t("admin.notifSent"));
         setTitle("");
         setMessage("");
         setType("ADMIN");
         fetchBroadcasts();
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || "Lỗi gửi thông báo");
+      toast.error(error.response?.data?.message || t("admin.notifSendError"));
     } finally {
       setIsSubmitting(false);
     }
@@ -121,7 +121,7 @@ const AdminNotifications = () => {
 
   const handleSaveEdit = async () => {
     if (!editTitle.trim() || !editMessage.trim()) {
-      toast.error("Vui lòng nhập đầy đủ tiêu đề và nội dung");
+      toast.error(t("admin.notifRequiredFields"));
       return;
     }
 
@@ -132,7 +132,7 @@ const AdminNotifications = () => {
         { title: editTitle, message: editMessage, type: editType }
       );
       if (res.status === 200) {
-        toast.success("Cập nhật thông báo thành công!");
+        toast.success(t("admin.notifUpdated"));
         setBroadcasts((prev) =>
           prev.map((b) =>
             b.id === editingId ? { ...b, title: editTitle, message: editMessage, type: editType } : b
@@ -141,7 +141,7 @@ const AdminNotifications = () => {
         handleCancelEdit();
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || "Lỗi cập nhật thông báo");
+      toast.error(error.response?.data?.message || t("admin.notifUpdateError"));
     } finally {
       setIsSavingEdit(false);
     }
@@ -152,7 +152,7 @@ const AdminNotifications = () => {
     try {
       const res = await axiosConfig.delete(API_ENDPOINTS.ADMIN_NOTIFICATION_DELETE(id));
       if (res.status === 200) {
-        toast.success("Xoá thông báo thành công!");
+        toast.success(t("admin.notifDeleted"));
         setBroadcasts((prev) => prev.filter((b) => b.id !== id));
         setSelectedIds((prev) => {
           const next = new Set(prev);
@@ -162,7 +162,7 @@ const AdminNotifications = () => {
         setDeleteConfirmId(null);
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || "Lỗi xoá thông báo");
+      toast.error(error.response?.data?.message || t("admin.notifDeleteError"));
     } finally {
       setIsDeleting(false);
     }
@@ -205,12 +205,12 @@ const AdminNotifications = () => {
     try {
       const res = await axiosConfig.post(API_ENDPOINTS.ADMIN_NOTIFICATION_DELETE_BULK, listIds);
       if (res.status === 200) {
-        toast.success(`Xoá ${listIds.length} thông báo thành công!`);
+        toast.success(`${t("admin.notifBulkDeletedPre")}${listIds.length}${t("admin.notifBulkDeletedSuf")}`);
         setBroadcasts((prev) => prev.filter((b) => !selectedIds.has(b.id)));
         setSelectedIds(new Set());
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || "Lỗi xoá các thông báo đã chọn");
+      toast.error(error.response?.data?.message || t("admin.notifBulkDeleteError"));
     } finally {
       setIsDeleting(false);
     }
@@ -229,17 +229,17 @@ const AdminNotifications = () => {
             <span className="w-9 h-9 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0 border border-indigo-500/10">
               <Megaphone size={17} />
             </span>
-            Thông báo hệ thống
+            {t("admin.systemNotifications")}
           </h1>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 pl-11">
-            Soạn và phát thông báo broadcast đến toàn bộ người dùng.
+            {t("admin.broadcastDesc")}
           </p>
         </div>
         <div className="flex items-center gap-2 pl-11 sm:pl-0">
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 shadow-sm">
             <Bell size={12} className="text-indigo-600 dark:text-indigo-400" />
             <span className="text-xs font-extrabold text-indigo-600 dark:text-indigo-400">
-              {broadcasts.length} thông báo
+              {broadcasts.length}{t("admin.notifCountSuf")}
             </span>
           </div>
         </div>
@@ -255,17 +255,17 @@ const AdminNotifications = () => {
               <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
                 <Sparkles size={15} />
               </div>
-              <h2 className="text-base font-extrabold text-slate-900 dark:text-white leading-tight">Soạn thông báo mới</h2>
+              <h2 className="text-base font-extrabold text-slate-900 dark:text-white leading-tight">{t("admin.composeNotif")}</h2>
             </div>
 
             <form onSubmit={handleSendBroadcast} className="p-6 space-y-5">
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
-                    Tiêu đề <span className="text-red-500">*</span>
+                    {t("admin.notifTitle")} <span className="text-red-500">*</span>
                   </label>
                   <span className={`text-[10px] font-bold ${charTitleLeft < 20 ? "text-red-500" : "text-slate-400 dark:text-slate-600"}`}>
-                    {charTitleLeft < 0 ? "Quá giới hạn" : `${charTitleLeft} ký tự`}
+                    {charTitleLeft < 0 ? t("admin.overLimit") : `${charTitleLeft}${t("admin.charsLeftSuf")}`}
                   </span>
                 </div>
                 <input
@@ -273,14 +273,14 @@ const AdminNotifications = () => {
                   value={title}
                   onChange={(e) => setTitle(e.target.value.slice(0, 120))}
                   className="w-full px-4 py-3 rounded-2xl bg-slate-50/50 dark:bg-[#0A0E1A]/80 border border-slate-200 dark:border-white/8 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-[#070a13] focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none text-sm font-semibold transition-all placeholder:font-normal placeholder:text-slate-500"
-                  placeholder="Nhập tiêu đề thông báo..."
+                  placeholder={t("admin.notifTitlePlaceholder")}
                   required
                 />
               </div>
 
               <div>
                 <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-2">
-                  Phân loại thông báo <span className="text-red-500">*</span>
+                  {t("admin.notifType")} <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={type}
@@ -298,10 +298,10 @@ const AdminNotifications = () => {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
-                    Nội dung <span className="text-red-500">*</span>
+                    {t("admin.notifContent")} <span className="text-red-500">*</span>
                   </label>
                   <span className={`text-[10px] font-bold ${charMsgLeft < 60 ? "text-red-500" : "text-slate-400"}`}>
-                    {charMsgLeft < 0 ? "Quá giới hạn" : `${charMsgLeft} ký tự`}
+                    {charMsgLeft < 0 ? t("admin.overLimit") : `${charMsgLeft}${t("admin.charsLeftSuf")}`}
                   </span>
                 </div>
                 <textarea
@@ -309,7 +309,7 @@ const AdminNotifications = () => {
                   onChange={(e) => setMessage(e.target.value.slice(0, 600))}
                   rows={6}
                   className="w-full px-4 py-3 rounded-2xl bg-slate-50/50 dark:bg-[#0A0E1A]/80 border border-slate-200 dark:border-white/8 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-[#070a13] focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none resize-none text-sm transition-all placeholder:font-normal placeholder:text-slate-500"
-                  placeholder="Nhập nội dung chi tiết..."
+                  placeholder={t("admin.notifContentPlaceholder")}
                   required
                 />
               </div>
@@ -324,7 +324,7 @@ const AdminNotifications = () => {
                     <LoaderCircle size={18} className="animate-spin text-white" />
                   ) : (
                     <>
-                      <Send size={15} /> Gửi đến tất cả
+                      <Send size={15} /> {t("admin.sendToAll")}
                     </>
                   )}
                 </button>
@@ -338,8 +338,8 @@ const AdminNotifications = () => {
           <div className="bg-white dark:bg-[#0F172A] rounded-3xl border border-slate-200/60 dark:border-white/10 shadow-sm min-h-[520px] flex flex-col overflow-hidden">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 border-b border-slate-100 dark:border-white/5">
               <div>
-                <h2 className="text-base font-extrabold text-slate-900 dark:text-white">Lịch sử thông báo</h2>
-                <p className="text-xs text-slate-400 mt-0.5 font-medium">Các thông báo hệ thống đã được phát</p>
+                <h2 className="text-base font-extrabold text-slate-900 dark:text-white">{t("admin.notifHistory")}</h2>
+                <p className="text-xs text-slate-400 mt-0.5 font-medium">{t("admin.broadcastSent")}</p>
               </div>
 
               <div className="flex items-center gap-2">
@@ -349,14 +349,14 @@ const AdminNotifications = () => {
                     type="text"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Tìm kiếm..."
+                    placeholder={t("nav.searchPlaceholder")}
                     className="pl-9 pr-4 py-2 w-full sm:w-56 rounded-2xl bg-slate-50/50 dark:bg-[#0A0E1A]/80 border border-slate-200 dark:border-white/8 text-xs text-slate-900 dark:text-white focus:bg-white dark:focus:bg-[#070a13] focus:border-indigo-500 focus:outline-none transition-all placeholder:text-slate-500 font-semibold"
                   />
                 </div>
                 <button
                   onClick={fetchBroadcasts}
                   className="w-9 h-9 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/8 text-slate-500 dark:text-slate-400 transition-all flex items-center justify-center cursor-pointer shrink-0"
-                  title="Làm mới"
+                  title={t("admin.refresh")}
                 >
                   <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
                 </button>
@@ -378,7 +378,7 @@ const AdminNotifications = () => {
                     className="w-4 h-4 rounded border-slate-350 dark:border-white/10 text-indigo-605 focus:ring-indigo-500/20 bg-transparent cursor-pointer"
                   />
                   <span className="text-xs font-bold text-slate-650 dark:text-slate-400 select-none">
-                    {selectedIds.size > 0 ? `Đã chọn ${selectedIds.size} mục` : "Chọn tất cả"}
+                    {selectedIds.size > 0 ? `${t("admin.selectedItemsPre")}${selectedIds.size}${t("admin.selectedItemsSuf")}` : t("admin.selectAll")}
                   </span>
                 </div>
 
@@ -390,7 +390,7 @@ const AdminNotifications = () => {
                       className="px-3 py-1.5 bg-red-50 hover:bg-red-100 dark:bg-red-500/10 dark:hover:bg-red-500/20 text-red-600 dark:text-red-400 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border border-red-200/50 dark:border-red-500/10 shadow-sm cursor-pointer disabled:opacity-50"
                     >
                       <Trash2 size={13} />
-                      Xóa đã chọn
+                      {t("admin.deleteSelected")}
                     </button>
                   </div>
                 )}
@@ -401,7 +401,7 @@ const AdminNotifications = () => {
               {loading ? (
                 <div className="py-20 flex flex-col items-center gap-3 text-slate-400">
                   <LoaderCircle size={32} className="animate-spin text-indigo-600" />
-                  <p className="text-sm font-medium">Đang tải lịch sử thông báo...</p>
+                  <p className="text-sm font-medium">{t("admin.loadingNotifHistory")}</p>
                 </div>
               ) : filteredBroadcasts.length > 0 ? (
                 <div className="space-y-4 max-h-[600px] overflow-y-auto pr-1">
@@ -436,17 +436,17 @@ const AdminNotifications = () => {
                           {editingId === b.id ? (
                             <div className="space-y-4">
                               <div>
-                                <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-1.5">Tiêu đề</label>
+                                <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-1.5">{t("admin.notifTitle")}</label>
                                 <input
                                   type="text"
                                   value={editTitle}
                                   onChange={(e) => setEditTitle(e.target.value)}
                                   className="w-full px-4 py-2.5 rounded-2xl bg-white dark:bg-[#070a13] border border-indigo-500/50 text-slate-900 dark:text-white text-sm font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                                  placeholder="Tiêu đề"
+                                  placeholder={t("admin.notifTitle")}
                                 />
                               </div>
                               <div>
-                                <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-1.5">Phân loại</label>
+                                <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-1.5">{t("admin.notifTypeLabel")}</label>
                                 <select
                                   value={editType}
                                   onChange={(e) => setEditType(e.target.value)}
@@ -460,13 +460,13 @@ const AdminNotifications = () => {
                                 </select>
                               </div>
                               <div>
-                                <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-1.5">Nội dung</label>
+                                <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-1.5">{t("admin.notifContent")}</label>
                                 <textarea
                                   value={editMessage}
                                   onChange={(e) => setEditMessage(e.target.value)}
                                   rows={3}
                                   className="w-full px-4 py-2.5 rounded-2xl bg-white dark:bg-[#070a13] border border-indigo-500/50 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 resize-none"
-                                  placeholder="Nội dung"
+                                  placeholder={t("admin.notifContent")}
                                 />
                               </div>
                               <div className="flex items-center gap-2">
@@ -478,14 +478,14 @@ const AdminNotifications = () => {
                                   {isSavingEdit ? (
                                     <LoaderCircle size={13} className="animate-spin" />
                                   ) : (
-                                    <><Check size={13} /> Lưu</>
+                                    <><Check size={13} /> {t("common.save")}</>
                                   )}
                                 </button>
                                 <button
                                   onClick={handleCancelEdit}
                                   className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-100 dark:bg-white/8 hover:bg-slate-200 dark:hover:bg-white/15 text-slate-600 dark:text-slate-300 text-xs font-bold transition cursor-pointer"
                                 >
-                                  <X size={13} /> Huỷ
+                                  <X size={13} /> {t("common.cancelAlt")}
                                 </button>
                               </div>
                             </div>
@@ -519,7 +519,7 @@ const AdminNotifications = () => {
                                   <button
                                     onClick={() => handleStartEdit(b)}
                                     className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 hover:text-blue-700 transition-colors cursor-pointer"
-                                    title="Chỉnh sửa"
+                                    title={t("common.edit")}
                                   >
                                     <Pencil size={13} />
                                   </button>
@@ -529,14 +529,14 @@ const AdminNotifications = () => {
                                         onClick={() => handleDelete(b.id)}
                                         disabled={isDeleting}
                                         className="px-2.5 py-1.5 rounded-lg bg-red-600 text-white hover:bg-red-500 transition-colors text-[10px] font-extrabold uppercase tracking-wide cursor-pointer shadow-sm"
-                                        title="Xác nhận xoá"
+                                        title={t("admin.confirmDelete")}
                                       >
-                                        {isDeleting ? <LoaderCircle size={10} className="animate-spin" /> : "Xóa"}
+                                        {isDeleting ? <LoaderCircle size={10} className="animate-spin" /> : t("common.delete")}
                                       </button>
                                       <button
                                         onClick={() => setDeleteConfirmId(null)}
                                         className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors cursor-pointer"
-                                        title="Huỷ"
+                                        title={t("common.cancelAlt")}
                                       >
                                         <X size={12} />
                                       </button>
@@ -545,7 +545,7 @@ const AdminNotifications = () => {
                                     <button
                                       onClick={() => { setDeleteConfirmId(b.id); setEditingId(null); }}
                                       className="p-2 rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20 transition-colors cursor-pointer"
-                                      title="Xoá thông báo"
+                                      title={t("admin.deleteNotif")}
                                     >
                                       <Trash2 size={13} />
                                     </button>
@@ -570,10 +570,10 @@ const AdminNotifications = () => {
                   </div>
                   <div>
                     <p className="text-sm font-extrabold text-slate-700 dark:text-slate-300">
-                      Chưa có thông báo nào
+                      {t("admin.noNotifs")}
                     </p>
                     <p className="text-xs text-slate-400 dark:text-slate-500 mt-1.5 max-w-xs">
-                      Soạn và gửi thông báo đầu tiên bằng form bên trái.
+                      {t("admin.noNotifsDesc")}
                     </p>
                   </div>
                 </div>

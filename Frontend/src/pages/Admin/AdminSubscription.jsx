@@ -4,24 +4,28 @@ import toast from "react-hot-toast";
 import { usePageTitle } from "../../hooks/usePageTitle.js";
 import axiosConfig from "../../util/axiosConfig.jsx";
 import { API_ENDPOINTS } from "../../util/apiEndpoints.js";
+import { useTranslation } from "../../hooks/useTranslation.js";
 
 const DEFAULT_NEW_PLAN = {
   planId: "pkg_new",
   subscriptionPlan: "PREMIUM",
-  displayName: "Gói mới",
+  displayName: "New Plan",
   amount: 100000,
-  description: "Mô tả gói dịch vụ",
-  badge: "Mới",
-  cycleLabel: "1 tháng",
+  description: "Plan description",
+  badge: "New",
+  cycleLabel: "1 month",
   cycleMonths: 1,
   icon: "Star",
   accent: "from-indigo-600 via-indigo-500 to-violet-500",
-  features: ["Tính năng 1", "Tính năng 2"],
+  features: ["Feature 1", "Feature 2"],
   displayOrder: 99,
 };
 
 // ─── Confirm Modal ─────────────────────────────────────────────────────────────
-const ConfirmModal = ({ isOpen, title, message, onConfirm, onClose, confirmText = "Xác nhận", cancelText = "Hủy", isDanger = false, isLoading = false }) => {
+const ConfirmModal = ({ isOpen, title, message, onConfirm, onClose, confirmText, cancelText, isDanger = false, isLoading = false }) => {
+  const { t } = useTranslation();
+  const resolvedConfirm = confirmText ?? t("common.confirm");
+  const resolvedCancel = cancelText ?? t("common.cancel");
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
@@ -38,11 +42,11 @@ const ConfirmModal = ({ isOpen, title, message, onConfirm, onClose, confirmText 
         </div>
         <div className="flex justify-end gap-3 mt-6">
           <button onClick={onClose} disabled={isLoading} className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 font-medium hover:bg-slate-50 dark:hover:bg-white/5 transition-colors disabled:opacity-50">
-            {cancelText}
+            {resolvedCancel}
           </button>
           <button onClick={onConfirm} disabled={isLoading} className={`px-5 py-2.5 rounded-xl text-white font-semibold flex items-center gap-2 shadow-md transition-all duration-300 disabled:opacity-50 ${isDanger ? 'bg-red-600 hover:bg-red-500 shadow-red-600/15 hover:shadow-red-600/30' : 'bg-indigo-600 hover:bg-indigo-500 shadow-indigo-600/15 hover:shadow-indigo-500/30'}`}>
             {isLoading ? <LoaderCircle size={16} className="animate-spin" /> : null}
-            {confirmText}
+            {resolvedConfirm}
           </button>
         </div>
       </div>
@@ -52,6 +56,7 @@ const ConfirmModal = ({ isOpen, title, message, onConfirm, onClose, confirmText 
 
 // ─── Edit/Create Plan Modal ────────────────────────────────────────────────────
 const PlanFormModal = ({ isOpen, editingPlan, formData, setFormData, onSave, onClose, saving }) => {
+  const { t } = useTranslation();
   if (!isOpen || !formData) return null;
 
   const updateFeature = (fIndex, val) => {
@@ -59,7 +64,7 @@ const PlanFormModal = ({ isOpen, editingPlan, formData, setFormData, onSave, onC
     updatedFeatures[fIndex] = val;
     setFormData({ ...formData, features: updatedFeatures });
   };
-  const addFeature = () => setFormData({ ...formData, features: [...formData.features, "Tính năng mới"] });
+  const addFeature = () => setFormData({ ...formData, features: [...formData.features, "New feature"] });
   const removeFeature = (fIndex) => {
     const updatedFeatures = [...formData.features];
     updatedFeatures.splice(fIndex, 1);
@@ -79,10 +84,10 @@ const PlanFormModal = ({ isOpen, editingPlan, formData, setFormData, onSave, onC
         <div className="flex items-center justify-between px-7 pt-7 pb-5 border-b border-slate-100 dark:border-white/8">
           <div>
             <h2 className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-              {editingPlan?.isNew ? "✨ Thêm gói dịch vụ mới" : "✏️ Chỉnh sửa gói dịch vụ"}
+              {editingPlan?.isNew ? t("admin.addNewPlan") : t("admin.editPlan")}
             </h2>
             <p className="text-xs text-slate-400 mt-1">
-              {editingPlan?.isNew ? "Cấu hình thông tin cho gói thanh toán mới" : `Đang chỉnh sửa: ${formData.displayName}`}
+              {editingPlan?.isNew ? t("admin.newPlanConfigDesc") : `${t("admin.editingPlanPre")}${formData.displayName}`}
             </p>
           </div>
           <button
@@ -99,11 +104,11 @@ const PlanFormModal = ({ isOpen, editingPlan, formData, setFormData, onSave, onC
             {/* LEFT COLUMN */}
             <div className="space-y-5">
               <div>
-                <label className={labelCls}>Tên gói hiển thị</label>
-                <input type="text" value={formData.displayName} onChange={e => setFormData({ ...formData, displayName: e.target.value })} className={inputCls} placeholder="VD: Gói Premium..." />
+                <label className={labelCls}>{t("admin.planDisplayName")}</label>
+                <input type="text" value={formData.displayName} onChange={e => setFormData({ ...formData, displayName: e.target.value })} className={inputCls} placeholder="e.g., Premium Plan..." />
               </div>
               <div>
-                <label className={labelCls}>Mã kế hoạch (planId)</label>
+                <label className={labelCls}>{t("admin.planId")}</label>
                 <input
                   type="text"
                   value={formData.planId}
@@ -113,11 +118,11 @@ const PlanFormModal = ({ isOpen, editingPlan, formData, setFormData, onSave, onC
                 />
               </div>
               <div>
-                <label className={labelCls}>Giá (VND)</label>
+                <label className={labelCls}>{t("admin.planPrice")}</label>
                 <input type="number" value={formData.amount} onChange={e => setFormData({ ...formData, amount: Number(e.target.value) })} className={inputCls} />
               </div>
               <div>
-                <label className={labelCls}>Mức độ đặc quyền (Role)</label>
+                <label className={labelCls}>{t("admin.planRole")}</label>
                 <div className="relative">
                   <select
                     value={formData.subscriptionPlan}
@@ -130,31 +135,31 @@ const PlanFormModal = ({ isOpen, editingPlan, formData, setFormData, onSave, onC
                   </select>
                   <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" />
                 </div>
-                <p className="text-[10px] text-slate-400 mt-1.5 font-medium">Hệ thống phân biệt quyền truy cập dựa trên giá trị này</p>
+                <p className="text-[10px] text-slate-400 mt-1.5 font-medium">{t("admin.planRoleDesc")}</p>
               </div>
               <div>
-                <label className={labelCls}>Nhãn thẻ (Badge)</label>
-                <input type="text" value={formData.badge} onChange={e => setFormData({ ...formData, badge: e.target.value })} placeholder="VD: Phổ biến, Nâng cao..." className={inputCls} />
+                <label className={labelCls}>{t("admin.planBadge")}</label>
+                <input type="text" value={formData.badge} onChange={e => setFormData({ ...formData, badge: e.target.value })} placeholder="e.g., Popular, Advanced..." className={inputCls} />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className={labelCls}>Chu kỳ (Tháng)</label>
+                  <label className={labelCls}>{t("admin.planCycleMonths")}</label>
                   <input type="number" value={formData.cycleMonths} onChange={e => setFormData({ ...formData, cycleMonths: Number(e.target.value) })} className={inputCls} />
                 </div>
                 <div>
-                  <label className={labelCls}>Nhãn chu kỳ</label>
-                  <input type="text" value={formData.cycleLabel} onChange={e => setFormData({ ...formData, cycleLabel: e.target.value })} placeholder="1 tháng" className={inputCls} />
+                  <label className={labelCls}>{t("admin.planCycleLabel")}</label>
+                  <input type="text" value={formData.cycleLabel} onChange={e => setFormData({ ...formData, cycleLabel: e.target.value })} placeholder="1 month" className={inputCls} />
                 </div>
               </div>
               <div>
-                <label className={labelCls}>Thứ tự hiển thị</label>
+                <label className={labelCls}>{t("admin.planDisplayOrder")}</label>
                 <input type="number" value={formData.displayOrder} onChange={e => setFormData({ ...formData, displayOrder: Number(e.target.value) })} className={inputCls} />
               </div>
             </div>
 
             {/* RIGHT COLUMN - Features */}
             <div>
-              <label className={labelCls}>Tính năng của gói</label>
+              <label className={labelCls}>{t("admin.planFeatures")}</label>
               <div className="space-y-2.5 max-h-80 overflow-y-auto pr-1">
                 {formData.features.map((feature, fIndex) => (
                   <div key={fIndex} className="flex gap-2 items-center group">
@@ -165,7 +170,7 @@ const PlanFormModal = ({ isOpen, editingPlan, formData, setFormData, onSave, onC
                         value={feature}
                         onChange={e => updateFeature(fIndex, e.target.value)}
                         className="flex-1 bg-transparent text-sm text-slate-900 dark:text-white focus:outline-none"
-                        placeholder="Mô tả tính năng..."
+                        placeholder={t("admin.featurePlaceholder")}
                       />
                     </div>
                     <button
@@ -180,7 +185,7 @@ const PlanFormModal = ({ isOpen, editingPlan, formData, setFormData, onSave, onC
                   onClick={addFeature}
                   className="mt-2 w-full flex items-center justify-center gap-1.5 py-2.5 rounded-2xl border border-dashed border-slate-300 dark:border-white/10 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/5 hover:border-indigo-300 dark:hover:border-indigo-500/30 transition-all cursor-pointer"
                 >
-                  <Plus size={14} /> Thêm tính năng mới
+                  <Plus size={14} /> {t("admin.addFeature")}
                 </button>
               </div>
             </div>
@@ -193,7 +198,7 @@ const PlanFormModal = ({ isOpen, editingPlan, formData, setFormData, onSave, onC
             onClick={onClose}
             className="px-5 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 rounded-2xl transition-all cursor-pointer"
           >
-            Hủy bỏ
+            {t("common.cancelAlt")}
           </button>
           <button
             onClick={onSave}
@@ -201,7 +206,7 @@ const PlanFormModal = ({ isOpen, editingPlan, formData, setFormData, onSave, onC
             className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-white font-bold rounded-2xl flex items-center gap-2 hover:shadow-lg hover:shadow-indigo-500/20 transition-all text-sm cursor-pointer"
           >
             {saving ? <LoaderCircle size={16} className="animate-spin" /> : <Save size={16} />}
-            {saving ? "Đang lưu..." : "Lưu gói cước"}
+            {saving ? t("admin.saving") : t("admin.savePlan")}
           </button>
         </div>
       </div>
@@ -211,7 +216,8 @@ const PlanFormModal = ({ isOpen, editingPlan, formData, setFormData, onSave, onC
 
 // ─── Main Component ────────────────────────────────────────────────────────────
 const AdminSubscription = () => {
-  usePageTitle("Quản lý gói thanh toán", "Money Manager Admin");
+  const { t } = useTranslation();
+  usePageTitle(t("admin.subscriptionTitle"), "Money Manager Admin");
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingPlan, setEditingPlan] = useState(null);
@@ -226,7 +232,7 @@ const AdminSubscription = () => {
       const res = await axiosConfig.get(API_ENDPOINTS.GET_SUBSCRIPTION_PLANS);
       setPlans(res.data || []);
     } catch {
-      toast.error("Không thể tải danh sách gói. Vui lòng thử lại.");
+      toast.error(t("admin.cannotLoadPlans"));
     } finally {
       setLoading(false);
     }
@@ -251,11 +257,11 @@ const AdminSubscription = () => {
     setDeleting(true);
     try {
       await axiosConfig.delete(API_ENDPOINTS.ADMIN_DELETE_SUBSCRIPTION_PLAN(deletingPlan.id));
-      toast.success("Đã xóa gói thanh toán.");
+      toast.success(t("admin.planDeleted"));
       setDeletingPlan(null);
       fetchPlans();
     } catch (err) {
-      toast.error(err.response?.data?.message || "Không thể xóa gói.");
+      toast.error(err.response?.data?.message || t("admin.cannotDeletePlan"));
     } finally {
       setDeleting(false);
     }
@@ -266,16 +272,16 @@ const AdminSubscription = () => {
     try {
       if (editingPlan?.isNew) {
         await axiosConfig.post(API_ENDPOINTS.ADMIN_CREATE_SUBSCRIPTION_PLAN, formData);
-        toast.success("Đã thêm gói mới.");
+        toast.success(t("admin.planAdded"));
       } else {
         await axiosConfig.put(API_ENDPOINTS.ADMIN_UPDATE_SUBSCRIPTION_PLAN(editingPlan.id), formData);
-        toast.success("Đã cập nhật gói thanh toán.");
+        toast.success(t("admin.planUpdated"));
       }
       setEditingPlan(null);
       setFormData(null);
       fetchPlans();
     } catch (err) {
-      toast.error(err.response?.data?.message || "Không thể lưu gói.");
+      toast.error(err.response?.data?.message || t("admin.cannotSavePlan"));
     } finally {
       setSaving(false);
     }
@@ -291,21 +297,21 @@ const AdminSubscription = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">Cấu hình gói dịch vụ</h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Quản lý các gói thanh toán hiển thị cho người dùng</p>
+          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">{t("admin.planConfig")}</h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{t("admin.planConfigDesc")}</p>
         </div>
         <div className="flex gap-2.5">
           <button
             onClick={fetchPlans}
             className="px-4 py-2.5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 font-semibold rounded-2xl hover:bg-slate-50 dark:hover:bg-white/5 flex items-center justify-center gap-2 cursor-pointer transition-all text-sm"
           >
-            <RefreshCw size={15} className={loading ? "animate-spin" : ""} /> Làm mới
+            <RefreshCw size={15} className={loading ? "animate-spin" : ""} /> {t("admin.refresh")}
           </button>
           <button
             onClick={handleAddNew}
             className="flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-2xl hover:shadow-lg hover:shadow-indigo-500/20 transition-all cursor-pointer text-sm"
           >
-            <Plus size={18} /> Thêm gói
+            <Plus size={18} /> {t("admin.addPlan")}
           </button>
         </div>
       </div>
@@ -315,7 +321,7 @@ const AdminSubscription = () => {
         {loading && (
           <div className="col-span-full py-20 text-center text-slate-500 dark:text-slate-400">
             <RefreshCw size={32} className="animate-spin text-indigo-600 mx-auto mb-3" />
-            <p className="text-sm font-medium">Đang tải cấu hình gói dịch vụ...</p>
+            <p className="text-sm font-medium">{t("admin.loadingPlans")}</p>
           </div>
         )}
 
@@ -335,7 +341,7 @@ const AdminSubscription = () => {
                 </div>
                 <div className="text-right shrink-0">
                   <p className="text-2xl font-black text-slate-900 dark:text-white">{(plan.amount || 0).toLocaleString("vi-VN")}đ</p>
-                  <p className="text-xs text-slate-400 mt-0.5 font-semibold">/ {plan.cycleLabel || "tháng"}</p>
+                  <p className="text-xs text-slate-400 mt-0.5 font-semibold">/ {plan.cycleLabel || "month"}</p>
                 </div>
               </div>
 
@@ -347,7 +353,7 @@ const AdminSubscription = () => {
                   </li>
                 ))}
                 {(plan.features || []).length > 4 && (
-                  <li className="text-slate-400 dark:text-slate-500 text-[10px] italic pl-4">+ {plan.features.length - 4} tính năng khác...</li>
+                  <li className="text-slate-400 dark:text-slate-500 text-[10px] italic pl-4">{t("admin.moreFeaturesPre")}{plan.features.length - 4}{t("admin.moreFeaturesSuf")}</li>
                 )}
               </ul>
             </div>
@@ -358,7 +364,7 @@ const AdminSubscription = () => {
                 onClick={() => handleEdit(plan)}
                 className="flex-1 flex justify-center items-center gap-2 py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 rounded-2xl text-xs font-bold text-white shadow-sm hover:shadow-md hover:shadow-indigo-500/20 transition-all cursor-pointer"
               >
-                <Edit2 size={13} /> Chỉnh sửa
+                <Edit2 size={13} /> {t("common.edit")}
               </button>
               <button
                 onClick={() => handleDeleteTrigger(plan)}
@@ -372,9 +378,9 @@ const AdminSubscription = () => {
 
         {!loading && plans.length === 0 && (
           <div className="col-span-full py-20 text-center text-slate-400 bg-white dark:bg-[#0F172A] rounded-3xl border border-dashed border-slate-200 dark:border-white/10">
-            <p className="text-sm font-medium">Chưa có gói thanh toán nào được cấu hình.</p>
+            <p className="text-sm font-medium">{t("admin.noPlansConfigured")}</p>
             <button onClick={handleAddNew} className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-2xl text-sm transition-all cursor-pointer">
-              <Plus size={16} /> Thêm gói đầu tiên
+              <Plus size={16} /> {t("admin.addFirstPlan")}
             </button>
           </div>
         )}
@@ -394,10 +400,10 @@ const AdminSubscription = () => {
       {/* Delete Confirm Modal */}
       <ConfirmModal
         isOpen={!!deletingPlan}
-        title="Xóa gói dịch vụ"
-        message={`Bạn có chắc chắn muốn xóa gói "${deletingPlan?.displayName}" không? Hành động này sẽ gỡ bỏ gói cước khỏi hệ thống và không thể hoàn tác.`}
-        confirmText="Xóa vĩnh viễn"
-        cancelText="Hủy bỏ"
+        title={t("admin.deletePlan")}
+        message={`${t("admin.deletePlanConfirmPre")}${deletingPlan?.displayName}${t("admin.deletePlanConfirmSuf")}`}
+        confirmText={t("admin.deletePermanent")}
+        cancelText={t("common.cancelAlt")}
         isDanger={true}
         isLoading={deleting}
         onConfirm={handleConfirmDelete}

@@ -2,6 +2,7 @@ import moment from "moment";
 import { LoaderCircle, Mail, FileSpreadsheet, Lock } from "lucide-react";
 import { useState } from "react";
 import TransactionInfoCard from "./TransactionInfoCard.jsx";
+import { useTranslation } from "../hooks/useTranslation.js";
 
 const ExpenseList = ({
     transactions,
@@ -13,6 +14,7 @@ const ExpenseList = ({
     disabledMessage = "",
     calendarMonth,
 }) => {
+    const { t } = useTranslation();
     const [viewMode, setViewMode] = useState("month");
     const [loadingAction, setLoadingAction] = useState(null);
     const isBusy = loadingAction !== null;
@@ -36,9 +38,9 @@ const ExpenseList = ({
             <div className="mb-1 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                     <div>
-                        <h5 className="text-lg font-semibold text-slate-900 dark:text-white">Tất cả chi tiêu</h5>
+                        <h5 className="text-lg font-semibold text-slate-900 dark:text-white">{t("expense.allExpenses")}</h5>
                         <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">
-                            {filteredTransactions?.length ?? 0} giao dịch
+                            {filteredTransactions?.length ?? 0} {t("expense.transactions")}
                         </p>
                     </div>
 
@@ -52,7 +54,7 @@ const ExpenseList = ({
                                     : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
                             }`}
                         >
-                            Theo tháng
+                            {t("expense.byMonth")}
                         </button>
                         <button
                             type="button"
@@ -63,7 +65,7 @@ const ExpenseList = ({
                                     : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
                             }`}
                         >
-                            Tất cả
+                            {t("expense.all")}
                         </button>
                     </div>
                 </div>
@@ -73,7 +75,7 @@ const ExpenseList = ({
                         <button
                             disabled={isBusy || disableExportActions}
                             onClick={() => handleAction("email", onEmail)}
-                            title={disableExportActions ? disabledMessage : "Gửi báo cáo qua email"}
+                            title={disableExportActions ? disabledMessage : t("expense.sendEmailReport")}
                             type="button"
                             className={[
                                 "inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-600 shadow-sm transition dark:border-white/10 dark:bg-white/5 dark:text-slate-300",
@@ -82,18 +84,18 @@ const ExpenseList = ({
                             ].join(" ")}
                         >
                             {loadingAction === "email" ? (
-                                <><LoaderCircle size={14} className="animate-spin" />Đang gửi...</>
+                                <><LoaderCircle size={14} className="animate-spin" />{t("auth.sending")}</>
                             ) : disableExportActions ? (
-                                <><Lock size={14} />Gửi email</>
+                                <><Lock size={14} />{t("expense.sendEmail")}</>
                             ) : (
-                                <><Mail size={14} />Gửi email</>
+                                <><Mail size={14} />{t("expense.sendEmail")}</>
                             )}
                         </button>
 
                         <button
                             disabled={isBusy || disableExportActions}
                             onClick={() => handleAction("download", onDownload)}
-                            title={disableExportActions ? disabledMessage : "Tải file Excel về máy"}
+                            title={disableExportActions ? disabledMessage : t("expense.downloadExcel")}
                             type="button"
                             className={[
                                 "inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold transition shadow-sm active:scale-95",
@@ -103,11 +105,11 @@ const ExpenseList = ({
                             ].join(" ")}
                         >
                             {loadingAction === "download" ? (
-                                <><LoaderCircle size={14} className="animate-spin" />Đang tải...</>
+                                <><LoaderCircle size={14} className="animate-spin" />{t("common.loading")}</>
                             ) : disableExportActions ? (
-                                <><Lock size={14} />Xuất Excel</>
+                                <><Lock size={14} />{t("expense.exportExcel")}</>
                             ) : (
-                                <><FileSpreadsheet size={14} />Xuất Excel</>
+                                <><FileSpreadsheet size={14} />{t("expense.exportExcel")}</>
                             )}
                         </button>
                     </div>

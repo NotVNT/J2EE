@@ -22,6 +22,7 @@ import axiosConfig from "../../util/axiosConfig.jsx";
 import { API_ENDPOINTS } from "../../util/apiEndpoints.js";
 import { usePageTitle } from "../../hooks/usePageTitle.js";
 import toast from "react-hot-toast";
+import { useTranslation } from "../../hooks/useTranslation.js";
 
 const ADMIN_SETTINGS_KEY = "admin_settings";
 
@@ -85,6 +86,7 @@ const formatDateTime = (value) => {
 
 // ─── Confirm Delete Modal ──────────────────────────────────────────────────────
 const ConfirmDeleteModal = ({ payment, onConfirm, onClose, isLoading }) => {
+  const { t } = useTranslation();
   if (!payment) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
@@ -97,12 +99,12 @@ const ConfirmDeleteModal = ({ payment, onConfirm, onClose, isLoading }) => {
           </div>
           <div className="space-y-1.5">
             <h3 className="text-lg font-bold text-slate-900 dark:text-white leading-tight">
-              Xóa hóa đơn
+              {t("admin.deleteInvoice")}
             </h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-              Bạn có chắc muốn xóa hóa đơn{" "}
-              <span className="font-bold text-slate-800 dark:text-white">#{payment.orderCode}</span>?
-              Hành động này không thể hoàn tác.
+              {t("admin.deleteInvoiceConfirmPre")}
+              <span className="font-bold text-slate-800 dark:text-white">#{payment.orderCode}</span>
+              {t("admin.deleteInvoiceConfirmSuf")}
             </p>
           </div>
         </div>
@@ -117,7 +119,7 @@ const ConfirmDeleteModal = ({ payment, onConfirm, onClose, isLoading }) => {
             disabled={isLoading}
             className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 font-medium hover:bg-slate-50 dark:hover:bg-white/5 transition-colors disabled:opacity-50 cursor-pointer"
           >
-            Hủy
+            {t("common.cancel")}
           </button>
           <button
             onClick={onConfirm}
@@ -125,7 +127,7 @@ const ConfirmDeleteModal = ({ payment, onConfirm, onClose, isLoading }) => {
             className="px-5 py-2.5 rounded-xl text-white font-semibold flex items-center gap-2 shadow-md transition-all duration-300 disabled:opacity-50 bg-red-600 hover:bg-red-500 shadow-red-600/15 hover:shadow-red-600/30 cursor-pointer"
           >
             {isLoading ? <LoaderCircle size={15} className="animate-spin" /> : <Trash2 size={15} />}
-            Xóa hóa đơn
+            {t("admin.deleteInvoice")}
           </button>
         </div>
       </div>
@@ -158,6 +160,7 @@ const InfoRow = ({ icon: Icon, label, value, highlight }) => (
 
 // ─── Payment Detail Modal ─────────────────────────────────────────────────────
 const PaymentDetailModal = ({ orderCode, onClose, onDelete }) => {
+  const { t } = useTranslation();
   const [payment, setPayment] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -170,7 +173,7 @@ const PaymentDetailModal = ({ orderCode, onClose, onDelete }) => {
         const res = await axiosConfig.get(API_ENDPOINTS.ADMIN_PAYMENT_DETAIL(orderCode));
         setPayment(res.data);
       } catch (err) {
-        setError(err?.response?.data?.message || "Không thể tải chi tiết hóa đơn");
+        setError(err?.response?.data?.message || t("admin.cannotLoadInvoiceDetail"));
       } finally {
         setLoading(false);
       }
@@ -192,7 +195,7 @@ const PaymentDetailModal = ({ orderCode, onClose, onDelete }) => {
             </div>
             <div>
               <h2 className="text-lg font-extrabold text-slate-900 dark:text-white leading-tight">
-                Chi tiết hóa đơn
+                {t("admin.invoiceDetail")}
               </h2>
               {payment && (
                 <p className="text-xs text-slate-400 dark:text-slate-500 font-medium mt-0.5">
@@ -214,7 +217,7 @@ const PaymentDetailModal = ({ orderCode, onClose, onDelete }) => {
           {loading ? (
             <div className="py-16 flex flex-col items-center gap-3 text-slate-400">
               <LoaderCircle size={32} className="animate-spin text-indigo-600" />
-              <p className="text-sm font-medium">Đang tải chi tiết...</p>
+              <p className="text-sm font-medium">{t("admin.loadingDetail")}</p>
             </div>
           ) : error ? (
             <div className="py-16 text-center text-red-500 dark:text-red-400 text-sm font-medium">
@@ -229,7 +232,7 @@ const PaymentDetailModal = ({ orderCode, onClose, onDelete }) => {
                 <div className="flex items-center gap-2">
                   <span className={`w-2 h-2 rounded-full ${statusDotClass(payment.status)} shrink-0`} />
                   <span className="text-xs font-bold uppercase tracking-wider">
-                    Trạng thái: {payment.status || "UNKNOWN"}
+                    {t("admin.statusLabel")} {payment.status || "UNKNOWN"}
                   </span>
                 </div>
                 <span className="text-lg font-extrabold">{formatMoney(payment.amount)}</span>
@@ -239,27 +242,27 @@ const PaymentDetailModal = ({ orderCode, onClose, onDelete }) => {
               <div className="rounded-2xl border border-slate-100 dark:border-white/8 overflow-hidden">
                 <div className="px-4 py-2.5 bg-slate-50 dark:bg-white/3 border-b border-slate-100 dark:border-white/5">
                   <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    Thông tin đơn hàng
+                    {t("admin.orderInfo")}
                   </span>
                 </div>
-                <InfoRow icon={Hash} label="Mã đơn hàng" value={`#${payment.orderCode}`} />
-                <InfoRow icon={Tag} label="Gói cước" value={payment.planName || payment.planId} />
+                <InfoRow icon={Hash} label={t("admin.orderCode")} value={`#${payment.orderCode}`} />
+                <InfoRow icon={Tag} label={t("admin.planPackage")} value={payment.planName || payment.planId} />
                 <InfoRow
                   icon={Clock}
-                  label="Chu kỳ"
-                  value={payment.cycleMonths ? `${payment.cycleMonths} tháng` : null}
+                  label={t("admin.cycle")}
+                  value={payment.cycleMonths ? `${payment.cycleMonths}${t("admin.cycleMonthsSuf")}` : null}
                 />
-                <InfoRow icon={FileText} label="Mô tả" value={payment.description} />
+                <InfoRow icon={FileText} label={t("admin.description")} value={payment.description} />
               </div>
 
               {/* Payer info */}
               <div className="rounded-2xl border border-slate-100 dark:border-white/8 overflow-hidden">
                 <div className="px-4 py-2.5 bg-slate-50 dark:bg-white/3 border-b border-slate-100 dark:border-white/5">
                   <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    Người thanh toán
+                    {t("admin.payer")}
                   </span>
                 </div>
-                <InfoRow icon={User} label="Họ tên" value={payment.payerName} />
+                <InfoRow icon={User} label={t("admin.fullName")} value={payment.payerName} />
                 <InfoRow icon={CreditCard} label="Email" value={payment.payerEmail} />
               </div>
 
@@ -267,11 +270,11 @@ const PaymentDetailModal = ({ orderCode, onClose, onDelete }) => {
               <div className="rounded-2xl border border-slate-100 dark:border-white/8 overflow-hidden">
                 <div className="px-4 py-2.5 bg-slate-50 dark:bg-white/3 border-b border-slate-100 dark:border-white/5">
                   <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    Thời gian
+                    {t("admin.timeSection")}
                   </span>
                 </div>
-                <InfoRow icon={Calendar} label="Ngày tạo" value={formatDateTime(payment.createdAt)} />
-                <InfoRow icon={Clock} label="Cập nhật lần cuối" value={formatDateTime(payment.updatedAt)} />
+                <InfoRow icon={Calendar} label={t("admin.createdAt")} value={formatDateTime(payment.createdAt)} />
+                <InfoRow icon={Clock} label={t("admin.lastUpdated")} value={formatDateTime(payment.updatedAt)} />
               </div>
             </div>
           ) : null}
@@ -285,13 +288,13 @@ const PaymentDetailModal = ({ orderCode, onClose, onDelete }) => {
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/20 hover:bg-red-50 dark:hover:bg-red-500/5 font-semibold text-sm transition-all cursor-pointer"
             >
               <Trash2 size={15} />
-              Xóa hóa đơn
+              {t("admin.deleteInvoice")}
             </button>
             <button
               onClick={onClose}
               className="px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300 font-semibold text-sm hover:bg-slate-200 dark:hover:bg-white/10 transition-all cursor-pointer"
             >
-              Đóng
+              {t("common.close")}
             </button>
           </div>
         )}
@@ -303,7 +306,8 @@ const PaymentDetailModal = ({ orderCode, onClose, onDelete }) => {
 // ─── Main Component ───────────────────────────────────────────────────────────
 const AdminPayments = () => {
   const settings = useMemo(() => loadAdminSettings(), []);
-  usePageTitle("Quản lý thanh toán", "Money Manager Admin");
+  const { t } = useTranslation();
+  usePageTitle(t("admin.paymentsTitle"), "Money Manager Admin");
 
   const [status, setStatus] = useState(settings.defaultPaymentStatus || "ALL");
   const [search, setSearch] = useState("");
@@ -332,7 +336,7 @@ const AdminPayments = () => {
       });
       setPayments(Array.isArray(response.data) ? response.data : []);
     } catch (err) {
-      setError(err?.response?.data?.message || "Không thể tải danh sách thanh toán");
+      setError(err?.response?.data?.message || t("admin.cannotLoadPayments"));
     } finally {
       setLoading(false);
     }
@@ -359,12 +363,12 @@ const AdminPayments = () => {
     setDeleting(true);
     try {
       await axiosConfig.delete(API_ENDPOINTS.ADMIN_PAYMENT_DELETE(deleteTarget.orderCode));
-      toast.success(`Đã xóa hóa đơn #${deleteTarget.orderCode}`);
+      toast.success(`${t("admin.invoiceDeletedPre")}${deleteTarget.orderCode}${t("admin.invoiceDeletedSuf")}`);
       setDeleteTarget(null);
       setDetailOrderCode(null);
       fetchPayments();
     } catch (err) {
-      toast.error(err?.response?.data?.message || "Không thể xóa hóa đơn");
+      toast.error(err?.response?.data?.message || t("admin.cannotDeleteInvoice"));
     } finally {
       setDeleting(false);
     }
@@ -375,10 +379,10 @@ const AdminPayments = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-            Quản lý thanh toán
+            {t("admin.paymentsTitle")}
           </h1>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Theo dõi và quản lý lịch sử giao dịch toàn hệ thống.
+            {t("admin.paymentsDesc")}
           </p>
         </div>
         <button
@@ -386,7 +390,7 @@ const AdminPayments = () => {
           className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-white/10 text-sm font-semibold text-slate-700 dark:text-slate-350 hover:bg-slate-100 dark:hover:bg-white/5 transition-all cursor-pointer"
         >
           <RefreshCcw size={15} className={loading ? "animate-spin" : ""} />
-          Làm mới
+          {t("admin.refresh")}
         </button>
       </div>
 
@@ -397,7 +401,7 @@ const AdminPayments = () => {
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Tìm theo order code, email, mô tả..."
+                placeholder={t("admin.searchPaymentPlaceholder")}
                 className="search-input pl-10 w-full"
               />
               <Search
@@ -409,7 +413,7 @@ const AdminPayments = () => {
               type="submit"
               className="px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 hover:shadow-lg hover:shadow-indigo-500/20 text-white font-bold text-sm shadow-md transition-all cursor-pointer shrink-0"
             >
-              Tìm kiếm
+              {t("admin.searchBtn")}
             </button>
           </form>
 
@@ -419,7 +423,7 @@ const AdminPayments = () => {
               onChange={(e) => setStatus(e.target.value)}
               className="w-full md:w-48 px-4 py-3 pr-10 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0F172A] text-sm font-semibold text-slate-950 dark:text-white focus:outline-none appearance-none cursor-pointer"
             >
-              <option value="ALL">Tất cả trạng thái</option>
+              <option value="ALL">{t("admin.allStatuses")}</option>
               <option value="PAID">PAID</option>
               <option value="PENDING">PENDING</option>
               <option value="PROCESSING">PROCESSING</option>
@@ -440,14 +444,14 @@ const AdminPayments = () => {
         {loading ? (
           <div className="py-20 text-center text-slate-500 dark:text-slate-400">
             <RefreshCcw size={32} className="animate-spin text-indigo-600 mx-auto mb-2" />
-            <p className="text-sm font-medium">Đang tải dữ liệu thanh toán...</p>
+            <p className="text-sm font-medium">{t("admin.loadingPayments")}</p>
           </div>
         ) : error ? (
           <div className="py-20 text-center text-red-500 dark:text-red-400 font-medium">{error}</div>
         ) : payments.length === 0 ? (
           <div className="py-20 text-center text-slate-400 flex flex-col items-center gap-3">
             <Wallet size={48} className="text-slate-300 dark:text-slate-600 opacity-40" />
-            <p className="text-sm font-medium">Không có dữ liệu thanh toán</p>
+            <p className="text-sm font-medium">{t("admin.noPaymentData")}</p>
           </div>
         ) : (
           <>
@@ -457,25 +461,25 @@ const AdminPayments = () => {
                 <thead className="bg-slate-50 dark:bg-white/5 text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-white/10">
                   <tr>
                     <th className="text-left px-5 py-4 font-bold text-xs uppercase tracking-wider">
-                      Mã đơn hàng
+                      {t("admin.orderCode")}
                     </th>
                     <th className="text-left px-5 py-4 font-bold text-xs uppercase tracking-wider">
-                      Người dùng
+                      {t("admin.userCol")}
                     </th>
                     <th className="text-left px-5 py-4 font-bold text-xs uppercase tracking-wider">
-                      Gói
+                      {t("admin.planCol")}
                     </th>
                     <th className="text-left px-5 py-4 font-bold text-xs uppercase tracking-wider">
-                      Số tiền
+                      {t("admin.amount")}
                     </th>
                     <th className="text-left px-5 py-4 font-bold text-xs uppercase tracking-wider">
-                      Trạng thái
+                      {t("admin.statusCol")}
                     </th>
                     <th className="text-left px-5 py-4 font-bold text-xs uppercase tracking-wider">
-                      Ngày tạo
+                      {t("admin.createdAt")}
                     </th>
                     <th className="text-right px-5 py-4 font-bold text-xs uppercase tracking-wider">
-                      Hành động
+                      {t("admin.actions")}
                     </th>
                   </tr>
                 </thead>
@@ -524,14 +528,14 @@ const AdminPayments = () => {
                         <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
                             onClick={() => setDetailOrderCode(payment.orderCode)}
-                            title="Xem chi tiết"
+                            title={t("admin.viewDetail")}
                             className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-all cursor-pointer"
                           >
                             <Eye size={15} />
                           </button>
                           <button
                             onClick={() => setDeleteTarget(payment)}
-                            title="Xóa hóa đơn"
+                            title={t("admin.deleteInvoice")}
                             className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all cursor-pointer"
                           >
                             <Trash2 size={15} />
@@ -556,7 +560,7 @@ const AdminPayments = () => {
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <span className="text-[10px] font-bold text-slate-450 uppercase block">
-                        Mã đơn hàng
+                        {t("admin.orderCode")}
                       </span>
                       <h4 className="font-extrabold text-slate-900 dark:text-white text-base mt-0.5">
                         #{payment.orderCode}
@@ -571,7 +575,7 @@ const AdminPayments = () => {
 
                   <div className="space-y-0.5">
                     <span className="text-[10px] font-bold text-slate-450 uppercase block">
-                      Người thanh toán
+                      {t("admin.payer")}
                     </span>
                     <p className="text-sm font-bold text-slate-900 dark:text-slate-200">
                       {payment.payerName || "-"}
@@ -583,13 +587,13 @@ const AdminPayments = () => {
 
                   <div className="grid grid-cols-2 gap-4 border-t border-slate-100 dark:border-white/5 pt-3.5 text-xs">
                     <div>
-                      <span className="text-slate-400 font-medium block mb-0.5">Gói cước</span>
+                      <span className="text-slate-400 font-medium block mb-0.5">{t("admin.planPackage")}</span>
                       <span className="font-bold text-slate-800 dark:text-slate-200">
                         {payment.planName || payment.planId || "-"}
                       </span>
                     </div>
                     <div>
-                      <span className="text-slate-400 font-medium block mb-0.5">Số tiền</span>
+                      <span className="text-slate-400 font-medium block mb-0.5">{t("admin.amount")}</span>
                       <span className="font-extrabold text-indigo-600 dark:text-indigo-400 text-sm">
                         {formatMoney(payment.amount)}
                       </span>
@@ -598,7 +602,7 @@ const AdminPayments = () => {
 
                   <div className="border-t border-slate-100 dark:border-white/5 pt-3.5 flex items-center justify-between">
                     <div className="text-xs text-slate-500 dark:text-slate-450">
-                      <span className="font-medium">Ngày giao dịch: </span>
+                      <span className="font-medium">{t("admin.transactionDate")} </span>
                       <span className="font-bold text-slate-700 dark:text-slate-350">
                         {formatDateTime(payment.createdAt)}
                       </span>

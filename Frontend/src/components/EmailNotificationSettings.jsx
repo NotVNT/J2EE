@@ -3,8 +3,10 @@ import { Lock, Mail, RefreshCw, LoaderCircle } from "lucide-react";
 import axiosConfig from "../util/axiosConfig.jsx";
 import { API_ENDPOINTS } from "../util/apiEndpoints.js";
 import toast from "react-hot-toast";
+import { useTranslation } from "../hooks/useTranslation.js";
 
 const EmailNotificationSettings = () => {
+    const { t } = useTranslation();
     const [preferences, setPreferences] = useState([]);
     const [loading, setLoading] = useState(true);
     const [savingType, setSavingType] = useState(null);
@@ -22,7 +24,7 @@ const EmailNotificationSettings = () => {
                 setPreferences(res.data);
             }
         } catch (error) {
-            toast.error("Lỗi tải cài đặt email");
+            toast.error(t("profile.emailSettingsLoadError"));
             console.error(error);
         } finally {
             setLoading(false);
@@ -40,7 +42,7 @@ const EmailNotificationSettings = () => {
         } catch (error) {
             // Revert on failure
             setPreferences(preferences);
-            toast.error("Lỗi cập nhật cài đặt email");
+            toast.error(t("profile.emailSettingsUpdateError"));
             console.error(error);
         } finally {
             setSavingType(null);
@@ -48,16 +50,16 @@ const EmailNotificationSettings = () => {
     };
 
     const handleReset = async () => {
-        if (!window.confirm("Bạn có chắc muốn đặt lại về mặc định?")) return;
+        if (!window.confirm(t("profile.resetConfirm"))) return;
         setResetting(true);
         try {
             const res = await axiosConfig.post(API_ENDPOINTS.RESET_EMAIL_PREFERENCES);
             if (res.status === 200) {
-                toast.success("Đặt lại cài đặt email về mặc định");
+                toast.success(t("profile.resetSuccess"));
                 fetchPreferences();
             }
         } catch (error) {
-            toast.error("Lỗi đặt lại cài đặt");
+            toast.error(t("profile.resetError"));
             console.error(error);
         } finally {
             setResetting(false);
@@ -81,8 +83,8 @@ const EmailNotificationSettings = () => {
             <div className="rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-5">
                 <h3 className="flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-white mb-4">
                     <Lock size={18} className="text-red-500" />
-                    Email Quan Trọng
-                    <span className="ml-1 text-xs font-normal text-slate-500 dark:text-slate-400">(Không thể tắt)</span>
+                    {t("profile.criticalEmailsTitle")}
+                    <span className="ml-1 text-xs font-normal text-slate-500 dark:text-slate-400">{t("profile.cannotDisable")}</span>
                 </h3>
                 <div className="space-y-2">
                     {criticalPrefs.map(pref => (
@@ -92,7 +94,9 @@ const EmailNotificationSettings = () => {
                         >
                             <div className="flex items-center gap-3">
                                 <span className="text-xl leading-none">{pref.icon}</span>
-                                <span className="text-sm text-slate-700 dark:text-slate-300">{pref.displayName}</span>
+                                <span className="text-sm text-slate-700 dark:text-slate-300">
+                                    {t(`profile.emailTypes.${pref.type}`) || pref.displayName}
+                                </span>
                             </div>
                             <div className="relative inline-flex items-center">
                                 <div className="h-6 w-11 rounded-full bg-emerald-500 opacity-60" />
@@ -107,7 +111,7 @@ const EmailNotificationSettings = () => {
             <div className="rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-5">
                 <h3 className="flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-white mb-4">
                     <Mail size={18} className="text-violet-500" />
-                    Email Tuỳ Chọn
+                    {t("profile.optionalEmailsTitle")}
                 </h3>
                 <div className="space-y-1">
                     {optionalPrefs.map(pref => (
@@ -117,7 +121,9 @@ const EmailNotificationSettings = () => {
                         >
                             <div className="flex items-center gap-3">
                                 <span className="text-xl leading-none">{pref.icon}</span>
-                                <span className="text-sm text-slate-700 dark:text-slate-300">{pref.displayName}</span>
+                                <span className="text-sm text-slate-700 dark:text-slate-300">
+                                    {t(`profile.emailTypes.${pref.type}`) || pref.displayName}
+                                </span>
                             </div>
                             {savingType === pref.type ? (
                                 <LoaderCircle className="animate-spin text-violet-500 shrink-0" size={20} />
@@ -146,7 +152,7 @@ const EmailNotificationSettings = () => {
                     className="inline-flex items-center gap-2 rounded-2xl border border-slate-300 dark:border-white/10 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 transition hover:bg-slate-50 dark:hover:bg-white/5 disabled:opacity-50"
                 >
                     {resetting ? <LoaderCircle className="animate-spin" size={15} /> : <RefreshCw size={15} />}
-                    Đặt lại mặc định
+                    {t("profile.resetToDefault")}
                 </button>
             </div>
         </div>

@@ -32,7 +32,7 @@ const ContributionModal = ({ goal, onClose, onContribute }) => {
             const res = await axiosConfig.get(API_ENDPOINTS.SAVING_GOAL_CONTRIBUTIONS(goal.id));
             if (res.data) setContributions(res.data);
         } catch (err) {
-            console.error("Lỗi tải lịch sử:", err);
+            console.error("Error loading history:", err);
         } finally {
             setLoadingHistory(false);
         }
@@ -43,7 +43,7 @@ const ContributionModal = ({ goal, onClose, onContribute }) => {
     }, [fetchHistory, tab]);
 
     const handleSubmit = async () => {
-        if (!form.amount || Number(form.amount) <= 0) { alert("Số tiền phải lớn hơn 0"); return; }
+        if (!form.amount || Number(form.amount) <= 0) { alert("Amount must be greater than 0"); return; }
         const dto = {
             amount: Number(form.amount),
             contributionDate: form.contributionDate,
@@ -64,7 +64,7 @@ const ContributionModal = ({ goal, onClose, onContribute }) => {
     const labelClass = "text-xs font-medium text-slate-700 dark:text-slate-300";
 
     return (
-        <Modal isOpen={true} onClose={onClose} title={`Đóng góp – ${goal.name}`}>
+        <Modal isOpen={true} onClose={onClose} title={`Contribute – ${goal.name}`}>
             {/* Tabs */}
             <div className="flex border-b border-slate-200 dark:border-white/10 mb-4">
                 <button
@@ -75,7 +75,7 @@ const ContributionModal = ({ goal, onClose, onContribute }) => {
                             : "border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                     }`}
                 >
-                    <HandCoins size={16} /> Đóng góp
+                    <HandCoins size={16} /> Contribute
                 </button>
                 <button
                     onClick={() => setTab("history")}
@@ -85,7 +85,7 @@ const ContributionModal = ({ goal, onClose, onContribute }) => {
                             : "border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                     }`}
                 >
-                    <History size={16} /> Lịch sử
+                    <History size={16} /> History
                 </button>
             </div>
 
@@ -93,17 +93,17 @@ const ContributionModal = ({ goal, onClose, onContribute }) => {
                 <div className="flex flex-col gap-4">
                     <div className="bg-violet-50 dark:bg-violet-500/10 rounded-xl p-3 text-sm">
                         <div className="flex justify-between">
-                            <span className="text-slate-500 dark:text-slate-400">Đã có</span>
+                            <span className="text-slate-500 dark:text-slate-400">Saved</span>
                             <span className="font-semibold text-emerald-600 dark:text-emerald-400">{fmt(goal.currentAmount)}</span>
                         </div>
                         <div className="flex justify-between mt-1">
-                            <span className="text-slate-500 dark:text-slate-400">Còn thiếu</span>
+                            <span className="text-slate-500 dark:text-slate-400">Remaining</span>
                             <span className="font-semibold text-red-500 dark:text-red-400">{fmt(goal.remainingAmount)}</span>
                         </div>
                     </div>
 
                     <div>
-                        <label className={labelClass}>Số tiền đóng góp (VND)</label>
+                        <label className={labelClass}>Contribution amount (VND)</label>
                         <input
                             type="text"
                             value={fmtAmount(form.amount)}
@@ -113,7 +113,7 @@ const ContributionModal = ({ goal, onClose, onContribute }) => {
                         />
                     </div>
                     <div>
-                        <label className={labelClass}>Ngày đóng góp</label>
+                        <label className={labelClass}>Contribution date</label>
                         <DateInput
                             value={form.contributionDate}
                             onChange={(e) => setForm({ ...form, contributionDate: e.target.value })}
@@ -121,12 +121,12 @@ const ContributionModal = ({ goal, onClose, onContribute }) => {
                         />
                     </div>
                     <div>
-                        <label className={labelClass}>Ghi chú (tuỳ chọn)</label>
+                        <label className={labelClass}>Note (optional)</label>
                         <input
                             type="text"
                             value={form.note}
                             onChange={(e) => setForm({ ...form, note: e.target.value })}
-                            placeholder="VD: Lương tháng 3"
+                            placeholder="e.g. March salary"
                             className="form-input"
                         />
                     </div>
@@ -134,7 +134,7 @@ const ContributionModal = ({ goal, onClose, onContribute }) => {
                         onClick={handleSubmit}
                         className="w-full bg-violet-600 hover:bg-violet-700 text-white py-2.5 rounded-xl text-sm font-medium transition-colors"
                     >
-                        Xác nhận đóng góp
+                        Confirm contribution
                     </button>
                 </div>
             )}
@@ -142,10 +142,10 @@ const ContributionModal = ({ goal, onClose, onContribute }) => {
             {tab === "history" && (
                 <div>
                     {loadingHistory && (
-                        <p className="text-center text-slate-400 py-6">Đang tải...</p>
+                        <p className="text-center text-slate-400 py-6">Loading...</p>
                     )}
                     {!loadingHistory && contributions.length === 0 && (
-                        <p className="text-center text-slate-400 py-6">Chưa có lịch sử đóng góp</p>
+                        <p className="text-center text-slate-400 py-6">No contribution history yet</p>
                     )}
                     {!loadingHistory && contributions.length > 0 && (
                         <div className="max-h-72 overflow-y-auto space-y-2">

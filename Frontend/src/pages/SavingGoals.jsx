@@ -10,10 +10,12 @@ import ContributionModal from "../components/ContributionModal.jsx";
 import Modal from "../components/Modal.jsx";
 import DeleteAlert from "../components/DeleteAlert.jsx";
 import { usePageTitle } from "../hooks/usePageTitle.js";
+import { useTranslation } from "../hooks/useTranslation.js";
 
 const SavingGoals = () => {
   useUser();
-  usePageTitle("Mục tiêu tiết kiếm");
+  const { t } = useTranslation();
+  usePageTitle(t("savingGoals.title"));
 
   const [goals, setGoals] = useState([]);
   const [loading, setLoading] = useState(false);

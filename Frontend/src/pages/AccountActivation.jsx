@@ -1,15 +1,17 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { CheckCircle2, LoaderCircle, RefreshCw, ShieldCheck, Zap } from "lucide-react";
+import { CheckCircle2, LoaderCircle, RefreshCw, ShieldCheck } from "lucide-react";
 import Header from "../components/Header.jsx";
 import Footer from "../components/Footer.jsx";
 import axiosConfig from "../util/axiosConfig.jsx";
 import { API_ENDPOINTS } from "../util/apiEndpoints.js";
 import { usePageTitle } from "../hooks/usePageTitle.js";
 import favicon from "../assets/logo/favicon.png";
+import { useTranslation } from "../hooks/useTranslation.js";
 
 const AccountActivation = () => {
-  usePageTitle("Xác thực tài khoản");
+  const { t } = useTranslation();
+  usePageTitle(t("auth.activationTitle"));
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -33,8 +35,8 @@ const AccountActivation = () => {
   const handleVerify = async (e) => {
     e.preventDefault();
     setError("");
-    if (!email.trim()) { setError("Vui lòng nhập email."); return; }
-    if (otp.trim().length !== 6) { setError("Mã OTP phải có đúng 6 chữ số."); return; }
+    if (!email.trim()) { setError(t("auth.emailRequired")); return; }
+    if (otp.trim().length !== 6) { setError(t("auth.invalidOtpLength")); return; }
 
     setIsVerifying(true);
     try {
@@ -44,7 +46,7 @@ const AccountActivation = () => {
       });
       setSuccess(true);
     } catch (err) {
-      setError(err.response?.data?.message || "Xác thực thất bại. Vui lòng thử lại.");
+      setError(err.response?.data?.message || t("auth.activationFailed"));
     } finally {
       setIsVerifying(false);
     }
@@ -52,7 +54,7 @@ const AccountActivation = () => {
 
   const handleResend = async () => {
     if (countdown > 0 || isResending) return;
-    if (!email.trim()) { setError("Vui lòng nhập email trước."); return; }
+    if (!email.trim()) { setError(t("auth.emailRequiredFirst")); return; }
     setError("");
     setIsResending(true);
     try {
@@ -63,7 +65,7 @@ const AccountActivation = () => {
       if (retryAfter) {
         setCountdown(Number(retryAfter));
       } else {
-        setError(err.response?.data?.message || "Không thể gửi lại OTP. Vui lòng thử lại sau.");
+        setError(err.response?.data?.message || t("auth.resendLaterFailed"));
       }
     } finally {
       setIsResending(false);
@@ -86,12 +88,12 @@ const AccountActivation = () => {
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-500/10">
               <CheckCircle2 size={32} className="text-emerald-500" />
             </div>
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Kích hoạt thành công!</h2>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">{t("auth.activationSuccessTitle")}</h2>
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-7">
-              Tài khoản của bạn đã được xác thực. Bạn có thể đăng nhập ngay bây giờ.
+              {t("auth.activationSuccessDescription")}
             </p>
             <button onClick={() => navigate("/login")} className="btn-primary w-full">
-              Đăng nhập
+              {t("nav.login")}
             </button>
           </div>
         </main>
@@ -115,24 +117,24 @@ const AccountActivation = () => {
               <span className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Money<span className="text-amber-500">Manager</span></span>
             </div>
             <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white leading-snug">
-              Xác thực email để kích hoạt tài khoản.
+              {t("auth.activationHeroTitle")}
             </h1>
             <p className="text-slate-500 dark:text-slate-400 leading-relaxed text-sm">
-              Nhập mã OTP 6 chữ số đã được gửi tới email của bạn. Mã có hiệu lực trong{" "}
-              <strong className="text-slate-700 dark:text-slate-300">200 giây</strong>.
+              {t("auth.activationHeroDescription")}{" "}
+              <strong className="text-slate-700 dark:text-slate-300">200 {t("auth.seconds")}</strong>.
             </p>
             <div className="rounded-xl border border-slate-200 dark:border-white/10 p-4 space-y-2.5 text-sm text-slate-600 dark:text-slate-400">
               <div className="flex items-start gap-2">
                 <ShieldCheck size={15} className="mt-0.5 text-amber-500 shrink-0" />
-                <span>OTP được mã hóa và chỉ có hiệu lực một lần.</span>
+                <span>{t("auth.otpEncrypted")}</span>
               </div>
               <div className="flex items-start gap-2">
                 <ShieldCheck size={15} className="mt-0.5 text-amber-500 shrink-0" />
-                <span>Không chia sẻ mã OTP với bất kỳ ai.</span>
+                <span>{t("auth.otpDoNotShare")}</span>
               </div>
               <div className="flex items-start gap-2">
                 <ShieldCheck size={15} className="mt-0.5 text-amber-500 shrink-0" />
-                <span>Sau 5 lần nhập sai, mã sẽ bị hủy và bạn cần yêu cầu mã mới.</span>
+                <span>{t("auth.otpFailedLimit")}</span>
               </div>
             </div>
           </section>
@@ -144,47 +146,47 @@ const AccountActivation = () => {
             {!email ? (
               <form onSubmit={handleEmailSubmit} className="space-y-5">
                 <div>
-                  <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-1">Xác thực tài khoản</h2>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">Nhập email đã đăng ký để nhận mã OTP.</p>
+                  <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-1">{t("auth.activationTitle")}</h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">{t("auth.activationEmailInstruction")}</p>
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Email</label>
+                  <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">{t("auth.emailShort")}</label>
                   <input
                     type="email"
                     value={emailInput}
                     onChange={(e) => setEmailInput(e.target.value)}
-                    placeholder="tenban@example.com"
+                    placeholder={t("auth.emailPlaceholder")}
                     className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-transparent px-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
                     required
                     autoFocus
                   />
                 </div>
-                <button type="submit" className="btn-primary w-full">Tiếp tục</button>
+                <button type="submit" className="btn-primary w-full">{t("common.continue")}</button>
                 <p className="text-center text-sm text-slate-500 dark:text-slate-400">
-                  Chưa có tài khoản?{" "}
+                  {t("auth.noAccount")}{" "}
                   <Link to="/signup" className="font-semibold text-amber-600 dark:text-amber-400 hover:underline">
-                    Đăng ký
+                    {t("nav.signup")}
                   </Link>
                 </p>
               </form>
             ) : (
               <form onSubmit={handleVerify} className="space-y-5">
                 <div>
-                  <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-1">Nhập mã OTP</h2>
+                  <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-1">{t("auth.enterOtp")}</h2>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
-                    Mã đã được gửi tới <strong className="text-slate-700 dark:text-slate-300">{email}</strong>.{" "}
+                    {t("auth.otpSentTo")} <strong className="text-slate-700 dark:text-slate-300">{email}</strong>.{" "}
                     <button
                       type="button"
                       onClick={() => { setEmail(""); setEmailInput(""); setOtp(""); setError(""); }}
                       className="text-amber-600 dark:text-amber-400 hover:underline text-xs"
                     >
-                      Đổi email
+                      {t("auth.changeEmail")}
                     </button>
                   </p>
                 </div>
 
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Mã OTP (6 chữ số)</label>
+                  <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">{t("auth.otpLabel")}</label>
                   <input
                     type="text"
                     inputMode="numeric"
@@ -208,7 +210,7 @@ const AccountActivation = () => {
                   disabled={isVerifying}
                   type="submit"
                 >
-                  {isVerifying ? <><LoaderCircle className="animate-spin" size={18} /> Đang xác thực...</> : "Xác thực tài khoản"}
+                  {isVerifying ? <><LoaderCircle className="animate-spin" size={18} /> {t("auth.verifying")}</> : t("auth.activationTitle")}
                 </button>
 
                 <button
@@ -218,16 +220,16 @@ const AccountActivation = () => {
                   className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-white/10 px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-300 hover:border-amber-500/50 hover:text-amber-600 dark:hover:text-amber-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isResending
-                    ? <><LoaderCircle className="animate-spin" size={15} /> Đang gửi...</>
+                    ? <><LoaderCircle className="animate-spin" size={15} /> {t("auth.sending")}</>
                     : countdown > 0
-                      ? <><RefreshCw size={15} /> Gửi lại sau {countdown}s</>
-                      : <><RefreshCw size={15} /> Gửi lại mã OTP</>
+                      ? <><RefreshCw size={15} /> {t("auth.resendIn")} {countdown}s</>
+                      : <><RefreshCw size={15} /> {t("auth.resendOtp")}</>
                   }
                 </button>
 
                 <p className="text-center text-sm text-slate-500 dark:text-slate-400">
                   <Link to="/signup" className="font-semibold text-amber-600 dark:text-amber-400 hover:underline">
-                    Quay lại đăng ký
+                    {t("auth.backToSignup")}
                   </Link>
                 </p>
               </form>

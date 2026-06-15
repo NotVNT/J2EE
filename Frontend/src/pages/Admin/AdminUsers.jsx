@@ -10,6 +10,7 @@ import {
 } from "../../util/adminAiUiState.js";
 import toast from "react-hot-toast";
 import { usePageTitle } from "../../hooks/usePageTitle.js";
+import { useTranslation } from "../../hooks/useTranslation.js";
 
 const PLANS = ["ALL", "FREE", "BASIC", "PREMIUM"];
 const STATUS_OPTS = ["ALL", "active", "inactive"];
@@ -29,7 +30,10 @@ const roleBadge = (role) =>
     : "bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400";
 
 // ─── Custom Confirm Modal ─────────────────────────────────────────────────────
-const ConfirmModal = ({ isOpen, title, message, onConfirm, onClose, confirmText = "Xác nhận", cancelText = "Hủy", isDanger = false, isLoading = false }) => {
+const ConfirmModal = ({ isOpen, title, message, onConfirm, onClose, confirmText, cancelText, isDanger = false, isLoading = false }) => {
+  const { t } = useTranslation();
+  const resolvedConfirm = confirmText ?? t("common.confirm");
+  const resolvedCancel = cancelText ?? t("common.cancel");
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
@@ -52,19 +56,19 @@ const ConfirmModal = ({ isOpen, title, message, onConfirm, onClose, confirmText 
             disabled={isLoading}
             className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 font-medium hover:bg-slate-50 dark:hover:bg-white/5 transition-colors disabled:opacity-50"
           >
-            {cancelText}
+            {resolvedCancel}
           </button>
           <button
             onClick={onConfirm}
             disabled={isLoading}
             className={`px-5 py-2.5 rounded-xl text-white font-semibold flex items-center gap-2 shadow-md transition-all duration-300 disabled:opacity-50 ${
-              isDanger 
-                ? 'bg-red-600 hover:bg-red-500 shadow-red-600/15 hover:shadow-red-600/30' 
+              isDanger
+                ? 'bg-red-600 hover:bg-red-500 shadow-red-600/15 hover:shadow-red-600/30'
                 : 'bg-indigo-600 hover:bg-indigo-500 shadow-indigo-600/15 hover:shadow-indigo-600/30'
             }`}
           >
             {isLoading ? <LoaderCircle size={16} className="animate-spin" /> : null}
-            {confirmText}
+            {resolvedConfirm}
           </button>
         </div>
       </div>
@@ -74,6 +78,7 @@ const ConfirmModal = ({ isOpen, title, message, onConfirm, onClose, confirmText 
 
 // ─── Edit Modal ──────────────────────────────────────────────────────────────
 const EditModal = ({ user, onClose, onSaved, onUserRefresh }) => {
+  const { t } = useTranslation();
   const [currentUser, setCurrentUser] = useState(user);
   const [fullName, setFullName] = useState(user.fullName || "");
   const [isActive, setIsActive] = useState(user.isActive ?? true);
@@ -99,7 +104,7 @@ const EditModal = ({ user, onClose, onSaved, onUserRefresh }) => {
       setViolations(Array.isArray(res.data) ? res.data : []);
     } catch {
       setViolations([]);
-      toast.error("Không thể tải lịch sử vi phạm AI.");
+      toast.error(t("admin.cannotLoadAiViolations"));
     } finally {
       setLoadingViolations(false);
     }
@@ -118,19 +123,19 @@ const EditModal = ({ user, onClose, onSaved, onUserRefresh }) => {
         subscriptionPlan: plan,
         role,
       });
-      toast.success("\u0110\u00e3 c\u1eadp nh\u1eadt ng\u01b0\u1eddi d\u00f9ng.");
+      toast.success(t("admin.userUpdated"));
       setCurrentUser(res.data);
       onUserRefresh?.(res.data);
       onSaved(res.data);
     } catch (err) {
-      toast.error(err.response?.data?.message || "C\u1eadp nh\u1eadt th\u1ea5t b\u1ea1i.");
+      toast.error(err.response?.data?.message || t("admin.updateFailed"));
     } finally {
       setSaving(false);
     }
   };
 
   const handleUnblockAi = async () => {
-    if (!window.confirm(buildAiUnblockConfirmMessage(user.fullName || user.email))) {
+    if (!window.confirm(buildAiUnblockConfirmMessage(user.fullName || user.email, t))) {
       return;
     }
 
@@ -145,9 +150,9 @@ const EditModal = ({ user, onClose, onSaved, onUserRefresh }) => {
       setRole(detailRes.data.role || "user");
       onUserRefresh?.(detailRes.data);
       await fetchViolations();
-      toast.success("\u0110\u00e3 m\u1edf kh\u00f3a AI th\u00e0nh c\u00f4ng.");
+      toast.success(t("admin.aiUnlocked"));
     } catch (err) {
-      toast.error(err.response?.data?.message || "Kh\u00f4ng th\u1ec3 m\u1edf kh\u00f3a AI.");
+      toast.error(err.response?.data?.message || t("admin.cannotUnlockAi"));
     } finally {
       setUnblocking(false);
     }
@@ -157,7 +162,7 @@ const EditModal = ({ user, onClose, onSaved, onUserRefresh }) => {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
       <div className="w-full max-w-md rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0F172A] shadow-2xl animate-in fade-in zoom-in-95 duration-200">
         <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-white/10">
-          <h3 className="text-lg font-bold text-slate-900 dark:text-white">Chỉnh sửa người dùng</h3>
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white">{t("admin.editUser")}</h3>
           <button onClick={onClose} className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5 transition-all">
             <X size={18} />
           </button>
@@ -176,7 +181,7 @@ const EditModal = ({ user, onClose, onSaved, onUserRefresh }) => {
 
           {/* Full name */}
           <div>
-            <label className="mb-2 block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Họ và tên</label>
+            <label className="mb-2 block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">{t("admin.fullName")}</label>
             <input
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
@@ -186,7 +191,7 @@ const EditModal = ({ user, onClose, onSaved, onUserRefresh }) => {
 
           {/* Plan */}
           <div>
-            <label className="mb-2 block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Gói đăng ký</label>
+            <label className="mb-2 block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">{t("admin.subscriptionPlan")}</label>
             <div className="relative">
               <select
                 value={plan}
@@ -201,15 +206,15 @@ const EditModal = ({ user, onClose, onSaved, onUserRefresh }) => {
 
           {/* Role */}
           <div>
-            <label className="mb-2 block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Vai trò</label>
+            <label className="mb-2 block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">{t("admin.role")}</label>
             <div className="relative">
               <select
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
                 className="w-full appearance-none rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0F172A] px-4 py-3 text-sm text-slate-900 dark:text-white focus:border-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-600/20 pr-10 cursor-pointer transition-all"
               >
-                <option value="user">Người dùng</option>
-                <option value="admin">Quản trị viên</option>
+                <option value="user">{t("admin.roleUser")}</option>
+                <option value="admin">{t("admin.roleAdmin")}</option>
               </select>
               <ChevronDown size={14} className="absolute right-4.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             </div>
@@ -218,8 +223,8 @@ const EditModal = ({ user, onClose, onSaved, onUserRefresh }) => {
           {/* Active toggle */}
           <div className="flex items-center justify-between p-3.5 rounded-2xl border border-slate-200 dark:border-white/10">
             <div>
-              <p className="text-sm font-semibold text-slate-900 dark:text-white">Trạng thái tài khoản</p>
-              <p className="text-xs text-slate-400 mt-0.5">{isActive ? "Đang hoạt động" : "Đã vô hiệu hóa"}</p>
+              <p className="text-sm font-semibold text-slate-900 dark:text-white">{t("admin.accountStatus")}</p>
+              <p className="text-xs text-slate-400 mt-0.5">{isActive ? t("admin.statusActive") : t("admin.statusInactive")}</p>
             </div>
             <button
               type="button"
@@ -232,11 +237,11 @@ const EditModal = ({ user, onClose, onSaved, onUserRefresh }) => {
 
           <div className="rounded-2xl border border-slate-200 dark:border-white/10 p-4 space-y-3">
             <h4 className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
-              Trạng thái AI
+              {t("admin.aiStatus")}
             </h4>
 
             <div className="flex items-center justify-between text-sm">
-              <span className="text-slate-500 dark:text-slate-400">Điểm vi phạm</span>
+              <span className="text-slate-500 dark:text-slate-400">{t("admin.violationScore")}</span>
               <span
                 className={`font-bold ${
                   getAiViolationScoreTone(currentUser.aiViolationScore || 0) === "danger"
@@ -246,7 +251,7 @@ const EditModal = ({ user, onClose, onSaved, onUserRefresh }) => {
                       : "text-green-500"
                 }`}
               >
-                {currentUser.aiViolationScore || 0} / 6 điểm
+                {currentUser.aiViolationScore || 0} / 6
               </span>
             </div>
 
@@ -254,11 +259,11 @@ const EditModal = ({ user, onClose, onSaved, onUserRefresh }) => {
               <div className="rounded-2xl border border-red-200 bg-red-50/70 dark:border-red-500/30 dark:bg-red-500/10 p-3 space-y-2">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-red-700 dark:text-red-300">AI đang bị khóa</p>
+                    <p className="text-sm font-semibold text-red-700 dark:text-red-300">{t("admin.aiLocked")}</p>
                     <p className="text-xs text-red-600 dark:text-red-400 mt-1">{currentUser.aiBlockedReason}</p>
                     {currentUser.aiBlockedAt && (
                       <p className="text-[11px] text-red-500 dark:text-red-400 mt-1">
-                        Từ: {new Date(currentUser.aiBlockedAt).toLocaleString("vi-VN")}
+                        {t("admin.since")} {new Date(currentUser.aiBlockedAt).toLocaleString("vi-VN")}
                       </p>
                     )}
                   </div>
@@ -268,24 +273,24 @@ const EditModal = ({ user, onClose, onSaved, onUserRefresh }) => {
                     disabled={unblocking}
                     className="shrink-0 rounded-xl bg-red-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
                   >
-                    {unblocking ? "Đang mở khóa..." : "Mở khóa AI"}
+                    {unblocking ? t("admin.unlocking") : t("admin.unlockAi")}
                   </button>
                 </div>
               </div>
             ) : (
               <div className="rounded-2xl bg-green-50/70 dark:bg-green-500/10 px-3 py-2 text-sm text-green-700 dark:text-green-300">
-                AI hoạt động bình thường
+                {t("admin.aiNormal")}
               </div>
             )}
 
             <div className="space-y-2">
               <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                Lịch sử vi phạm gần nhất
+                {t("admin.recentViolations")}
               </p>
               {loadingViolations ? (
-                <p className="text-xs text-slate-400">Đang tải...</p>
+                <p className="text-xs text-slate-400">{t("common.loading")}</p>
               ) : violations.length === 0 ? (
-                <p className="text-xs text-slate-400">Chưa có vi phạm nào.</p>
+                <p className="text-xs text-slate-400">{t("admin.noViolations")}</p>
               ) : (
                 <div className="space-y-2">
                   {violations.slice(0, 5).map((violation) => {
@@ -298,7 +303,7 @@ const EditModal = ({ user, onClose, onSaved, onUserRefresh }) => {
                         <p className="font-semibold text-slate-700 dark:text-slate-200">{violationDisplay.type}</p>
                         <p className="mt-1">{violationDisplay.snippet}</p>
                         <p className="mt-1 text-[11px] text-slate-400">
-                          {violationDisplay.source} · {violation.createdAt ? new Date(violation.createdAt).toLocaleString("vi-VN") : "Không rõ thời gian"}
+                          {violationDisplay.source} · {violation.createdAt ? new Date(violation.createdAt).toLocaleString("vi-VN") : t("admin.unknownTime")}
                         </p>
                       </div>
                     );
@@ -311,14 +316,14 @@ const EditModal = ({ user, onClose, onSaved, onUserRefresh }) => {
 
         <div className="flex gap-3 px-6 pb-6 pt-2">
           <button onClick={onClose} className="flex-1 rounded-2xl border border-slate-200 dark:border-white/10 px-4 py-3 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 transition-all">
-            Hủy
+            {t("common.cancel")}
           </button>
           <button
             onClick={handleSave}
             disabled={saving}
             className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 hover:bg-indigo-500 px-4 py-3 text-sm font-bold text-white transition-all hover:shadow-lg hover:shadow-indigo-500/20 disabled:opacity-60 cursor-pointer"
           >
-            {saving ? <><LoaderCircle size={15} className="animate-spin" />Đang lưu...</> : <><Check size={15} />Lưu thay đổi</>}
+            {saving ? <><LoaderCircle size={15} className="animate-spin" />{t("admin.saving")}</> : <><Check size={15} />{t("admin.saveChanges")}</>}
           </button>
         </div>
       </div>
@@ -328,7 +333,8 @@ const EditModal = ({ user, onClose, onSaved, onUserRefresh }) => {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 const AdminUsers = () => {
-  usePageTitle("Quản lý người dùng", "Money Manager Admin");
+  const { t } = useTranslation();
+  usePageTitle(t("admin.usersTitle"), "Money Manager Admin");
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -348,7 +354,7 @@ const AdminUsers = () => {
       const res = await axiosConfig.get(API_ENDPOINTS.ADMIN_USERS, { params });
       setUsers(res.data);
     } catch {
-      toast.error("Không thể tải danh sách người dùng.");
+      toast.error(t("admin.cannotLoadUsers"));
     } finally {
       setLoading(false);
     }
@@ -366,11 +372,11 @@ const AdminUsers = () => {
     setDeletingId(id);
     try {
       await axiosConfig.delete(API_ENDPOINTS.ADMIN_USER_DELETE(id));
-      toast.success("Đã xóa người dùng.");
+      toast.success(t("admin.userDeleted"));
       setUsers(prev => prev.filter(u => u.id !== id));
       setDeletingUser(null);
     } catch (err) {
-      toast.error(err.response?.data?.message || "Xóa thất bại.");
+      toast.error(err.response?.data?.message || t("admin.deleteFailed"));
     } finally {
       setDeletingId(null);
     }
@@ -391,15 +397,15 @@ const AdminUsers = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">Quản lý người dùng</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{users.length} người dùng đã đăng ký</p>
+          <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">{t("admin.usersTitle")}</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{users.length}{t("admin.userCountSuf")}</p>
         </div>
         <button
           onClick={fetchUsers}
           className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-white/10 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer"
         >
           <RefreshCw size={15} className={loading ? "animate-spin" : ""} />
-          Làm mới
+          {t("admin.refresh")}
         </button>
       </div>
 
@@ -409,7 +415,7 @@ const AdminUsers = () => {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Tìm theo tên hoặc email..."
+            placeholder={t("admin.userSearchPlaceholder")}
             className="search-input pl-10 w-full"
           />
           <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors pointer-events-none" />
@@ -421,7 +427,7 @@ const AdminUsers = () => {
               onChange={(e) => setPlanFilter(e.target.value)}
               className="appearance-none w-full md:w-44 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0F172A] px-4 py-3 pr-10 text-sm font-medium text-slate-950 dark:text-white focus:border-indigo-600 focus:outline-none cursor-pointer"
             >
-              {PLANS.map(p => <option key={p} value={p}>{p === "ALL" ? "Tất cả gói" : p}</option>)}
+              {PLANS.map(p => <option key={p} value={p}>{p === "ALL" ? t("admin.allPlans") : p}</option>)}
             </select>
             <ChevronDown size={14} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
           </div>
@@ -433,7 +439,7 @@ const AdminUsers = () => {
             >
               {STATUS_OPTS.map(s => (
                 <option key={s} value={s}>
-                  {s === "ALL" ? "Tất cả trạng thái" : s === "active" ? "Đang hoạt động" : "Vô hiệu hóa"}
+                  {s === "ALL" ? t("admin.allStatuses") : s === "active" ? t("admin.statusActive") : t("admin.statusInactive")}
                 </option>
               ))}
             </select>
@@ -451,7 +457,7 @@ const AdminUsers = () => {
         ) : users.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-slate-400">
             <UserCircle2 size={48} className="mb-4 opacity-30" />
-            <p className="text-sm font-medium">Không tìm thấy người dùng nào.</p>
+            <p className="text-sm font-medium">{t("admin.noUsersFound")}</p>
           </div>
         ) : (
           <>
@@ -460,12 +466,12 @@ const AdminUsers = () => {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-slate-100 dark:border-white/10 bg-slate-50 dark:bg-white/5">
-                    <th className="px-5 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Người dùng</th>
-                    <th className="px-5 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Vai trò</th>
-                    <th className="px-5 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Gói</th>
-                    <th className="px-5 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Trạng thái</th>
-                    <th className="px-5 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Ngày tạo</th>
-                    <th className="px-5 py-4 text-right text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Thao tác</th>
+                    <th className="px-5 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t("admin.userCol")}</th>
+                    <th className="px-5 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t("admin.role")}</th>
+                    <th className="px-5 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t("admin.planCol")}</th>
+                    <th className="px-5 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t("admin.statusCol")}</th>
+                    <th className="px-5 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t("admin.createdAt")}</th>
+                    <th className="px-5 py-4 text-right text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t("admin.actions")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-white/5">
@@ -505,7 +511,7 @@ const AdminUsers = () => {
                       <td className="px-5 py-4">
                         <span className={`inline-flex items-center gap-1.5 text-xs font-semibold ${user.isActive ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400 dark:text-slate-500"}`}>
                           <span className={`w-1.5 h-1.5 rounded-full ${user.isActive ? "bg-emerald-500" : "bg-slate-300 dark:bg-white/20"}`} />
-                          {user.isActive ? "Hoạt động" : "Vô hiệu hóa"}
+                          {user.isActive ? t("admin.statusActive") : t("admin.statusInactive")}
                         </span>
                       </td>
 
@@ -520,14 +526,14 @@ const AdminUsers = () => {
                           <button
                             onClick={() => setEditingUser(user)}
                             className="p-2 rounded-xl text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-50 dark:hover:bg-indigo-500/10 transition-colors cursor-pointer"
-                            title="Chỉnh sửa"
+                            title={t("common.edit")}
                           >
                             <Edit2 size={15} />
                           </button>
                           <button
                             onClick={() => handleDeleteTrigger(user)}
                             className="p-2 rounded-xl text-slate-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-slate-50 dark:hover:bg-red-500/10 transition-colors cursor-pointer"
-                            title="Xóa tài khoản"
+                            title={t("admin.deleteAccount")}
                           >
                             <Trash2 size={15} />
                           </button>
@@ -570,14 +576,14 @@ const AdminUsers = () => {
 
                   <div className="flex items-center justify-between text-xs border-t border-slate-100 dark:border-white/5 pt-3">
                     <div className="flex flex-col gap-1">
-                      <span className="text-slate-400 font-medium">Trạng thái</span>
+                      <span className="text-slate-400 font-medium">{t("admin.statusCol")}</span>
                       <span className={`inline-flex items-center gap-1.5 font-bold ${user.isActive ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400 dark:text-slate-500"}`}>
                         <span className={`w-1.5 h-1.5 rounded-full ${user.isActive ? "bg-emerald-500" : "bg-slate-300 dark:bg-white/20"}`} />
-                        {user.isActive ? "Hoạt động" : "Vô hiệu hóa"}
+                        {user.isActive ? t("admin.statusActive") : t("admin.statusInactive")}
                       </span>
                     </div>
                     <div className="flex flex-col gap-1 items-end">
-                      <span className="text-slate-400 font-medium">Ngày tạo</span>
+                      <span className="text-slate-400 font-medium">{t("admin.createdAt")}</span>
                       <span className="font-bold text-slate-700 dark:text-slate-300">
                         {user.createdAt ? new Date(user.createdAt).toLocaleDateString("vi-VN") : "—"}
                       </span>
@@ -590,14 +596,14 @@ const AdminUsers = () => {
                       className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-2xl border border-slate-200 dark:border-white/10 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
                     >
                       <Edit2 size={13} />
-                      Chỉnh sửa
+                      {t("common.edit")}
                     </button>
                     <button
                       onClick={() => handleDeleteTrigger(user)}
                       className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-2xl bg-red-500/10 hover:bg-red-500/20 text-xs font-bold text-red-600 dark:text-red-400 transition-colors cursor-pointer"
                     >
                       <Trash2 size={13} />
-                      Xóa tài khoản
+                      {t("admin.deleteAccount")}
                     </button>
                   </div>
                 </div>
@@ -618,10 +624,10 @@ const AdminUsers = () => {
 
       <ConfirmModal
         isOpen={!!deletingUser}
-        title="Xóa người dùng"
-        message={`Bạn có chắc chắn muốn xóa người dùng "${deletingUser?.fullName || deletingUser?.email || ""}" không? Hành động này sẽ xóa vĩnh viễn tài khoản và không thể hoàn tác.`}
-        confirmText="Xóa vĩnh viễn"
-        cancelText="Hủy bỏ"
+        title={t("admin.deleteUser")}
+        message={`${t("admin.deleteUserConfirmPre")}${deletingUser?.fullName || deletingUser?.email || ""}${t("admin.deleteUserConfirmSuf")}`}
+        confirmText={t("admin.deletePermanent")}
+        cancelText={t("common.cancelAlt")}
         isDanger={true}
         isLoading={deletingId === deletingUser?.id}
         onConfirm={handleConfirmDelete}

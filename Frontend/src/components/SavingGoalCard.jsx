@@ -42,19 +42,19 @@ const SavingGoalCard = ({ goal, onEdit, onDelete, onContribute }) => {
 
     const statusBadge = isCompleted ? (
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400">
-            <CheckCircle2 size={12} /> Hoàn thành
+            <CheckCircle2 size={12} /> Completed
         </span>
     ) : isCancelled ? (
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400">
-            <XCircle size={12} /> Đã huỷ
+            <XCircle size={12} /> Cancelled
         </span>
     ) : isBehindSchedule ? (
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-500/15 text-red-600 dark:text-red-400">
-            <TrendingDown size={12} /> Chậm tiến độ
+            <TrendingDown size={12} /> Behind schedule
         </span>
     ) : (
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-violet-100 dark:bg-violet-500/15 text-violet-600 dark:text-violet-400">
-            <TrendingUp size={12} /> Đang thực hiện
+            <TrendingUp size={12} /> In progress
         </span>
     );
 
@@ -81,7 +81,7 @@ const SavingGoalCard = ({ goal, onEdit, onDelete, onContribute }) => {
             {/* Main progress */}
             <div className="mb-4">
                 <div className="flex justify-between text-sm mb-1">
-                    <span className="text-slate-500 dark:text-slate-400">Tiến độ tổng</span>
+                    <span className="text-slate-500 dark:text-slate-400">Overall progress</span>
                     <span className="font-semibold" style={{ color: progressColor }}>
                         {progressPercent?.toFixed(1)}%
                     </span>
@@ -100,19 +100,19 @@ const SavingGoalCard = ({ goal, onEdit, onDelete, onContribute }) => {
             {/* Stats grid */}
             <div className="grid grid-cols-2 gap-3 mb-4">
                 <div className="bg-slate-50 dark:bg-white/5 rounded-xl p-3">
-                    <p className="text-xs text-slate-400">Mục tiêu</p>
+                    <p className="text-xs text-slate-400">Target</p>
                     <p className="text-sm font-semibold text-slate-800 dark:text-white">{fmt(targetAmount)}</p>
                 </div>
                 <div className="bg-slate-50 dark:bg-white/5 rounded-xl p-3">
-                    <p className="text-xs text-slate-400">Đã có</p>
+                    <p className="text-xs text-slate-400">Saved</p>
                     <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">{fmt(currentAmount)}</p>
                 </div>
                 <div className="bg-slate-50 dark:bg-white/5 rounded-xl p-3">
-                    <p className="text-xs text-slate-400">Còn thiếu</p>
+                    <p className="text-xs text-slate-400">Remaining</p>
                     <p className="text-sm font-semibold text-red-500 dark:text-red-400">{fmt(remainingAmount)}</p>
                 </div>
                 <div className="bg-slate-50 dark:bg-white/5 rounded-xl p-3">
-                    <p className="text-xs text-slate-400">Cần/tháng</p>
+                    <p className="text-xs text-slate-400">Need/month</p>
                     <p className="text-sm font-semibold text-violet-600 dark:text-violet-400">{fmt(monthlyTarget)}</p>
                 </div>
             </div>
@@ -121,7 +121,7 @@ const SavingGoalCard = ({ goal, onEdit, onDelete, onContribute }) => {
             {isActive && (
                 <div className="mb-4 bg-slate-50 dark:bg-white/5 rounded-xl p-3">
                     <div className="flex justify-between text-xs mb-1">
-                        <span className="text-slate-400">Tiến độ tháng này</span>
+                        <span className="text-slate-400">This month&apos;s progress</span>
                         <span className="font-semibold" style={{ color: monthlyColor }}>
                             {fmt(monthlyContributed)} / {fmt(monthlyTarget)} ({monthlyProgressPercent?.toFixed(0)}%)
                         </span>
@@ -145,19 +145,19 @@ const SavingGoalCard = ({ goal, onEdit, onDelete, onContribute }) => {
                         onClick={onContribute}
                         className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-sm font-medium transition-colors"
                     >
-                        <HandCoins size={16} /> Đóng góp
+                        <HandCoins size={16} /> Contribute
                     </button>
                     <button
                         onClick={onEdit}
                         className="p-2 text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-500/10 rounded-xl transition-colors"
-                        title="Chỉnh sửa"
+                        title="Edit"
                     >
                         <Pencil size={16} />
                     </button>
                     <button
                         onClick={onDelete}
                         className="p-2 text-slate-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-colors"
-                        title="Huỷ mục tiêu"
+                        title="Cancel goal"
                     >
                         <Trash2 size={16} />
                     </button>

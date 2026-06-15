@@ -4,12 +4,15 @@ import { useContext, useState } from "react";
 import { AppContext } from "../../context/AppContext";
 import { useTheme } from "../../context/ThemeContext";
 import Footer from "../../components/Footer.jsx";
+import LanguageToggle from "../../components/LanguageToggle.jsx";
+import { useTranslation } from "../../hooks/useTranslation.js";
 import axiosConfig from "../../util/axiosConfig";
 import { API_ENDPOINTS } from "../../util/apiEndpoints";
 
 const AdminLayout = () => {
   const { clearUser } = useContext(AppContext);
   const { theme, toggleTheme } = useTheme();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -85,12 +88,12 @@ const AdminLayout = () => {
       </div>
 
       <nav className="flex-1 p-4 space-y-2">
-        <NavItem to="/admin" icon={LayoutDashboard} label="Bảng điều khiển" exact onClick={closeSidebar} />
-        <NavItem to="/admin/users" icon={Users} label="Người dùng" onClick={closeSidebar} />
-        <NavItem to="/admin/payments" icon={Wallet} label="Thanh toán" onClick={closeSidebar} />
-        <NavItem to="/admin/subscriptions" icon={Package} label="Gói cước" onClick={closeSidebar} />
-        <NavItem to="/admin/notifications" icon={Bell} label="Thông báo" onClick={closeSidebar} />
-        <NavItem to="/admin/settings" icon={Settings} label="Cài đặt" onClick={closeSidebar} />
+        <NavItem to="/admin" icon={LayoutDashboard} label={t("admin.dashboard")} exact onClick={closeSidebar} />
+        <NavItem to="/admin/users" icon={Users} label={t("admin.users")} onClick={closeSidebar} />
+        <NavItem to="/admin/payments" icon={Wallet} label={t("admin.payments")} onClick={closeSidebar} />
+        <NavItem to="/admin/subscriptions" icon={Package} label={t("admin.subscription")} onClick={closeSidebar} />
+        <NavItem to="/admin/notifications" icon={Bell} label={t("admin.notifications")} onClick={closeSidebar} />
+        <NavItem to="/admin/settings" icon={Settings} label={t("admin.settings")} onClick={closeSidebar} />
       </nav>
 
       <div className="p-4 border-t border-slate-100 dark:border-white/10 space-y-2">
@@ -99,14 +102,14 @@ const AdminLayout = () => {
           className="flex items-center gap-3 w-full px-4 py-3 text-slate-500 dark:text-slate-400 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-700 dark:hover:text-white transition-colors"
         >
           <ArrowLeft size={20} />
-          <span className="font-medium">Quay lại ứng dụng</span>
+          <span className="font-medium">{t("admin.back")}</span>
         </Link>
         <button
           onClick={handleLogout}
           className="flex items-center gap-3 w-full px-4 py-3 text-red-600 dark:text-red-400 rounded-xl hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
         >
           <LogOut size={20} className="text-red-500 dark:text-red-400" />
-          <span className="font-medium">Đăng xuất</span>
+          <span className="font-medium">{t("admin.logout")}</span>
         </button>
       </div>
     </>
@@ -149,12 +152,12 @@ const AdminLayout = () => {
             </div>
             <div className="flex items-center gap-2.5">
               <h1 className="text-lg lg:text-xl font-extrabold text-slate-800 dark:text-white">
-                {location.pathname === "/admin" && "Admin Dashboard"}
-                {location.pathname.startsWith("/admin/users") && "Người dùng"}
-                {location.pathname.startsWith("/admin/payments") && "Thanh toán"}
-                {location.pathname.startsWith("/admin/subscriptions") && "Gói cước"}
-                {location.pathname.startsWith("/admin/notifications") && "Thông báo"}
-                {location.pathname.startsWith("/admin/settings") && "Cài đặt"}
+                {location.pathname === "/admin" && t("admin.dashboardTitle")}
+                {location.pathname.startsWith("/admin/users") && t("admin.users")}
+                {location.pathname.startsWith("/admin/payments") && t("admin.payments")}
+                {location.pathname.startsWith("/admin/subscriptions") && t("admin.subscription")}
+                {location.pathname.startsWith("/admin/notifications") && t("admin.notifications")}
+                {location.pathname.startsWith("/admin/settings") && t("admin.settings")}
               </h1>
               <span className="hidden sm:inline-flex items-center px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
                 Admin
@@ -163,10 +166,11 @@ const AdminLayout = () => {
           </div>
 
           <div className="flex items-center gap-2">
+            <LanguageToggle />
             <button
               onClick={toggleTheme}
               className="p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
-              title={theme === "dark" ? "Chuyển sang giao diện sáng" : "Chuyển sang giao diện tối"}
+              title={theme === "dark" ? t("admin.themeLight") : t("admin.themeDark")}
             >
               {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
             </button>
@@ -175,7 +179,7 @@ const AdminLayout = () => {
               className="hidden sm:flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 rounded-xl hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors font-medium"
             >
               <LogOut size={16} />
-              Đăng xuất
+              {t("admin.logout")}
             </button>
           </div>
         </header>

@@ -54,6 +54,13 @@ export const INTENT_LABELS = {
   INVALID_REQUEST: "Yêu cầu không hợp lệ"
 };
 
+export const getIntentLabel = (intentType, t) => {
+  const translatedLabel = typeof t === "function" ? t(`ai.intentLabels.${intentType}`) : null;
+  return translatedLabel && translatedLabel !== `ai.intentLabels.${intentType}`
+    ? translatedLabel
+    : INTENT_LABELS[intentType] || intentType;
+};
+
 export const INTENT_ICONS = {
   CREATE_CATEGORY: "📁",
   UPDATE_CATEGORY: "✏️",

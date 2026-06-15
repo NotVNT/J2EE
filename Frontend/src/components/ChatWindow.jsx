@@ -4,10 +4,12 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import AIConfirmationForm from "./AIConfirmationForm.jsx";
-import { INTENT_ICONS, INTENT_LABELS } from "../util/aiIntentParser.js";
+import { getIntentLabel, INTENT_ICONS } from "../util/aiIntentParser.js";
 import { validateAiChatInput } from "../util/aiChatInputValidation.js";
 import { getAiChatCounterState, getAssistantMessageVariant } from "../util/aiChatUiState.js";
 import aiIcon from "../assets/logo/AI_favicon.png";
+import { useTranslation } from "../hooks/useTranslation.js";
+import LanguageToggle from "./LanguageToggle.jsx";
 
 const sanitizeSchema = {
   ...defaultSchema,
@@ -60,48 +62,48 @@ const modelLabelMap = {
   "gemini-3.1-flash-lite": "Gemini 3.1 Flash-Lite",
 };
 
-const CHAT_MODE_CARDS = [
+const getChatModeCards = (t) => [
   {
-    title: "Phân tích tài chính",
-    desc: "Phân tích và gợi ý cải thiện chi tiêu tháng này.",
+    title: t("ai.chatCards.0.title"),
+    desc: t("ai.chatCards.0.desc"),
     prompt: "Hãy phân tích tình hình tài chính tháng này của tôi và đưa ra lời khuyên cải thiện.",
   },
   {
-    title: "Gợi ý tiết kiệm",
-    desc: "Tư vấn kế hoạch tiết kiệm chi tiêu hiệu quả.",
+    title: t("ai.chatCards.1.title"),
+    desc: t("ai.chatCards.1.desc"),
     prompt: "Làm thế nào để tôi có thể tiết kiệm chi tiêu hiệu quả hơn trong tháng này?",
   },
   {
-    title: "Báo cáo tuần qua",
-    desc: "Tóm tắt nhanh dòng tiền tuần vừa rồi.",
+    title: t("ai.chatCards.2.title"),
+    desc: t("ai.chatCards.2.desc"),
     prompt: "Tóm tắt báo cáo chi tiêu và thu nhập của tôi trong tuần qua.",
   },
   {
-    title: "Kế hoạch tài chính",
-    desc: "Lập kế hoạch mục tiêu tài chính cá nhân.",
+    title: t("ai.chatCards.3.title"),
+    desc: t("ai.chatCards.3.desc"),
     prompt: "Giúp tôi lập kế hoạch tài chính để tiết kiệm được 50 triệu trong 6 tháng.",
   },
 ];
 
-const AGENT_MODE_CARDS = [
+const getAgentModeCards = (t) => [
   {
-    title: "Thêm nhanh chi tiêu",
-    desc: "Nhập giao dịch bằng ngôn ngữ tự nhiên.",
+    title: t("ai.agentCards.0.title"),
+    desc: t("ai.agentCards.0.desc"),
     prompt: "Thêm chi tiêu ăn trưa cùng đồng nghiệp 75k danh mục ăn uống hôm nay",
   },
   {
-    title: "Ghi thu nhập",
-    desc: "Ghi nhanh khoản thu nhập vừa nhận.",
+    title: t("ai.agentCards.1.title"),
+    desc: t("ai.agentCards.1.desc"),
     prompt: "Thêm thu nhập lương tháng 15 triệu hôm nay",
   },
   {
-    title: "Xuất Excel chi tiêu",
-    desc: "Tải xuống báo cáo chi tiêu tháng này.",
+    title: t("ai.agentCards.2.title"),
+    desc: t("ai.agentCards.2.desc"),
     prompt: "Xuất báo cáo chi tiêu tháng này ra file Excel",
   },
   {
-    title: "Gửi báo cáo qua email",
-    desc: "Gửi báo cáo tháng này đến email của bạn.",
+    title: t("ai.agentCards.3.title"),
+    desc: t("ai.agentCards.3.desc"),
     prompt: "Gửi báo cáo chi tiêu tháng này qua email cho tôi",
   },
 ];
@@ -149,6 +151,7 @@ const ChatWindow = ({
   onUndo,
   onStopGenerating,
 }) => {
+  const { t } = useTranslation();
   const [input, setInput] = useState("");
   const [inputError, setInputError] = useState(null);
   const [activeBranches, setActiveBranches] = useState({});
@@ -220,7 +223,7 @@ const ChatWindow = ({
   }, [safeMessages, activeBranches]);
 
   const hasModelControls = !!onProviderSwitch;
-  const suggestionCards = selectedProvider === "gemini" ? AGENT_MODE_CARDS : CHAT_MODE_CARDS;
+  const suggestionCards = selectedProvider === "gemini" ? getAgentModeCards(t) : getChatModeCards(t);
   const counterState = getAiChatCounterState(input.length);
 
   const cancelEditing = () => {
@@ -298,7 +301,7 @@ const ChatWindow = ({
               } ${isFreePlan ? "opacity-50 cursor-not-allowed" : ""}`}
             >
               <Sparkles size={12} className={selectedProvider === "gemini" ? "text-white" : ""} />
-              <span className="tracking-wide">Agent{isFreePlan ? " (Khóa)" : ""}</span>
+              <span className="tracking-wide">Agent{isFreePlan ? ` ${t("ai.agentLocked")}` : ""}</span>
             </button>
             <button
               type="button"
@@ -314,6 +317,7 @@ const ChatWindow = ({
             </button>
           </div>
         )}
+        <LanguageToggle />
       </div>
 
       {/* Chat area */}
@@ -336,16 +340,16 @@ const ChatWindow = ({
 
               {/* Title & Description */}
               <h1 className="text-3xl md:text-4xl font-extrabold text-slate-800 dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-white dark:via-[#e3e3e3] dark:to-[#c4c7c5] tracking-tight leading-tight">
-                Xin chào, {userName || "bạn"}!
+                {t("ai.welcomeTitle").replace("{name}", userName || "...")}
               </h1>
               <p className="text-slate-500 dark:text-slate-400 mt-3 text-sm md:text-base font-normal max-w-md leading-relaxed">
-                Tôi là Trợ lý Tài chính Nova AI. Bạn cần tôi hỗ trợ phân tích chi tiêu hay cập nhật giao dịch gì hôm nay không?
+                {t("ai.welcomeSubtitle")}
               </p>
-              
+
               <p className="text-xs text-slate-400 dark:text-slate-500 mb-3 font-medium">
                 {selectedProvider === "gemini"
-                  ? "Chế độ Agent - ra lệnh trực tiếp"
-                  : "Chế độ Chat - hỏi và tư vấn"}
+                  ? t("ai.modeAgentLabel")
+                  : t("ai.modeChatLabel")}
               </p>
 
               {/* Grid of Suggestion Cards */}
@@ -412,16 +416,16 @@ const ChatWindow = ({
                   {msg.isIntent && msg.isConfirmation && (
                     <div className="flex items-center gap-1.5 text-xs text-amber-500 dark:text-amber-400 font-medium">
                       <span>{INTENT_ICONS[msg.intent]}</span>
-                      <span>{INTENT_LABELS[msg.intent] || msg.intent}</span>
-                      <span className="text-green-500 dark:text-green-400">Đã xác nhận</span>
+                      <span>{getIntentLabel(msg.intent, t)}</span>
+                      <span className="text-green-500 dark:text-green-400">{t("ai.confirmed")}</span>
                     </div>
                   )}
 
                   {msg.isIntent && msg.isCancelled && (
                     <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium">
                       <span>{INTENT_ICONS[msg.intent]}</span>
-                      <span>{INTENT_LABELS[msg.intent] || msg.intent}</span>
-                      <span className="text-red-400 dark:text-red-400">Đã hủy</span>
+                      <span>{getIntentLabel(msg.intent, t)}</span>
+                      <span className="text-red-400 dark:text-red-400">{t("ai.cancelled")}</span>
                     </div>
                   )}
 
@@ -435,7 +439,7 @@ const ChatWindow = ({
                           className="inline-flex items-center gap-1 rounded-lg border border-amber-300 dark:border-amber-500/40 bg-amber-50 dark:bg-amber-500/15 px-3 py-1 text-xs font-semibold text-amber-600 dark:text-amber-400 transition hover:bg-amber-100 dark:hover:bg-amber-500/25 cursor-pointer"
                         >
                           <RotateCcw size={12} />
-                          Hoàn tác
+                          {t("ai.undoBtn")}
                         </button>
                       )}
                     </div>
@@ -485,7 +489,7 @@ const ChatWindow = ({
                           className="inline-flex items-center gap-1 rounded-lg bg-white/10 px-2.5 py-1 text-[11px] font-medium text-white/90 transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           <Pencil size={11} />
-                          Sửa & gửi lại
+                          {t("ai.editResend")}
                         </button>
                       </div>
                     </>
@@ -516,14 +520,14 @@ const ChatWindow = ({
         <form onSubmit={handleSubmit} className="max-w-3xl mx-auto">
           {editingTarget && (
             <div className="mb-2 flex items-center justify-between gap-3 rounded-2xl border border-violet-200/70 bg-violet-50/80 px-4 py-2 text-xs text-violet-700 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300">
-              <span>Đang sửa một tin nhắn cũ. Gửi đi sẽ tạo lại cuộc hội thoại từ đoạn này.</span>
+              <span>{t("ai.editingBanner")}</span>
               <button
                 type="button"
                 onClick={cancelEditing}
                 className="inline-flex items-center gap-1 rounded-lg px-2 py-1 font-semibold transition hover:bg-violet-100 dark:hover:bg-amber-500/10"
               >
                 <X size={12} />
-                Hủy
+                {t("ai.cancelEdit")}
               </button>
             </div>
           )}
@@ -548,7 +552,7 @@ const ChatWindow = ({
               onKeyDown={handleKeyDown}
               onCompositionStart={handleCompositionStart}
               onCompositionEnd={handleCompositionEnd}
-              placeholder={editingTarget ? "Sửa nội dung rồi gửi lại..." : "Nhập câu hỏi hoặc yêu cầu Nova Money..."}
+              placeholder={editingTarget ? t("ai.inputPlaceholderEditing") : t("ai.inputPlaceholder")}
               rows={1}
               className="flex-1 bg-transparent text-[14px] md:text-[15px] text-slate-800 dark:text-[#e3e3e3] placeholder-slate-400 dark:placeholder-[#c4c7c5]
                 resize-none outline-none py-2 max-h-[160px] leading-relaxed font-normal"
@@ -592,7 +596,7 @@ const ChatWindow = ({
           )}
 
           <p className="text-[10px] text-slate-400 dark:text-slate-600 text-center mt-2.5">
-            Nova Money có thể mắc lỗi. Hãy kiểm tra lại thông tin quan trọng.
+            {t("ai.disclaimer")}
           </p>
         </form>
       </div>
