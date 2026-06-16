@@ -2,6 +2,7 @@ import React, { useCallback, useContext } from "react";
 import { Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 import { AuthContext } from "../../contexts/AuthContext";
 import JarAllocationChart from "../../components/Jars/JarAllocationChart";
 import JarCard from "../../components/Jars/JarCard";
@@ -18,6 +19,8 @@ import ScreenBackHeader from "../../components/common/ScreenBackHeader";
 import { scale } from "../../utils/layoutScale";
 
 function JarActions({ colors, jarCount, onCreate, onTransfer }) {
+  const { t } = useTranslation();
+
   return (
     <View style={styles.actionsRow}>
       {jarCount >= 2 && (
@@ -27,7 +30,7 @@ function JarActions({ colors, jarCount, onCreate, onTransfer }) {
         >
           <View style={styles.btnContentRow}>
             <AppIcon name="swap-vertical" size={16} color={colors.PRIMARY} style={styles.btnIconSpacing} />
-            <Text style={[styles.secondaryButtonText, { color: colors.PRIMARY }]}>Chuyển tiền</Text>
+            <Text style={[styles.secondaryButtonText, { color: colors.PRIMARY }]}>{t("finance.jar.transfer")}</Text>
           </View>
         </Pressable>
       )}
@@ -37,7 +40,7 @@ function JarActions({ colors, jarCount, onCreate, onTransfer }) {
       >
         <View style={styles.btnContentRow}>
           <AppIcon name="add" size={16} color="#FFF" style={styles.btnIconSpacing} />
-          <Text style={styles.primaryButtonText}>Tạo hũ mới</Text>
+          <Text style={styles.primaryButtonText}>{t("finance.jar.create")}</Text>
         </View>
       </Pressable>
     </View>
@@ -58,6 +61,7 @@ function JarListRoute() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const colors = useAppColors();
+  const { t } = useTranslation();
   const { user } = useContext(AuthContext);
   const jarList = useJarList(user);
 
@@ -68,14 +72,14 @@ function JarListRoute() {
     }
 
     Alert.alert(
-      "Giới hạn gói ví",
-      `Gói thành viên hiện tại (${jarList.plan}) chỉ hỗ trợ tối đa ${jarList.maxJars} hũ chi tiêu. Vui lòng nâng cấp gói để tiếp tục!`,
+      t("finance.jar.limitTitle"),
+      t("finance.jar.limitMessage", { plan: jarList.plan, maxJars: jarList.maxJars }),
       [
-        { text: "Để sau", style: "cancel" },
-        { text: "Nâng cấp ngay", onPress: () => navigation.navigate("SettingTab", { screen: "Payment" }) }
+        { text: t("auth.common.later"), style: "cancel" },
+        { text: t("finance.jar.upgradeNow"), onPress: () => navigation.navigate("SettingTab", { screen: "Payment" }) }
       ]
     );
-  }, [jarList.canCreate, jarList.maxJars, jarList.plan, navigation]);
+  }, [jarList.canCreate, jarList.maxJars, jarList.plan, navigation, t]);
 
   const renderHeader = useCallback(
     () => (
@@ -94,11 +98,11 @@ function JarListRoute() {
         />
         <JarAllocationChart jarCount={jarList.jars.length} slices={jarList.slices} />
         <View style={styles.listHeader}>
-          <Text style={[styles.listTitle, { color: colors.TEXT }]}>Danh sách ví phụ</Text>
+          <Text style={[styles.listTitle, { color: colors.TEXT }]}>{t("finance.jar.listTitle")}</Text>
         </View>
       </View>
     ),
-    [colors, handleCreateJar, jarList.jars.length, jarList.maxJars, jarList.slices, jarList.totalBalance, jarList.totalPercentage, navigation]
+    [colors, handleCreateJar, jarList.jars.length, jarList.maxJars, jarList.slices, jarList.totalBalance, jarList.totalPercentage, navigation, t]
   );
 
   const renderJar = useCallback(
@@ -114,7 +118,7 @@ function JarListRoute() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.BG, paddingTop: getSafeAreaTop(insets) }]}>
-      <ScreenBackHeader title="Ví phụ" style={styles.screenHeader} />
+      <ScreenBackHeader title={t("finance.jar.title")} style={styles.screenHeader} />
       <FlatList
         data={jarList.jars}
         keyExtractor={(item) => String(item.id)}
@@ -129,10 +133,10 @@ function JarListRoute() {
         ListEmptyComponent={
           !jarList.loading && (
             <EmptyState
-              title="Chưa có hũ chi tiêu nào"
-              description="Phân bổ thu nhập của bạn thành các hũ nhỏ (ví dụ: ăn uống, đi lại, tiết kiệm) để quản lý ngân sách thông minh hơn."
+              title={t("finance.jar.emptyTitle")}
+              description={t("finance.jar.emptyDescription")}
               icon="archive-outline"
-              actionTitle="Tạo hũ đầu tiên"
+              actionTitle={t("finance.jar.firstAction")}
               onActionPress={handleCreateJar}
             />
           )

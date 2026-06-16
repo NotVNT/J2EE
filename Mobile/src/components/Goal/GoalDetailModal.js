@@ -1,14 +1,12 @@
 import React from "react";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { COLORS, useAppColors } from "../../constants/colors";
 import { formatMoney, formatDate } from "../../utils/format";
 import { getGoalVisual } from "./goalUtils";
 
-/**
- * Full-screen modal showing detailed goal info:
- * progress, stats grid, monthly progress, and actions.
- */
 export default function GoalDetailModal({ goal, visible, onClose, onContribute, onDelete }) {
+  const { t } = useTranslation();
   const colors = useAppColors();
 
   if (!goal) return null;
@@ -20,7 +18,7 @@ export default function GoalDetailModal({ goal, visible, onClose, onContribute, 
   const monthlyTarget = Number(goal?.monthlyTarget || 0);
   const monthlyContributed = Number(goal?.monthlyContributed || 0);
   const monthlyProgress = Math.max(0, Math.min(100, Number(goal?.monthlyProgressPercent || 0)));
-  const visual = getGoalVisual(goal);
+  const visual = getGoalVisual(goal, t);
   const isActive = String(goal?.status || "ACTIVE").toUpperCase() === "ACTIVE";
 
   return (
@@ -29,7 +27,7 @@ export default function GoalDetailModal({ goal, visible, onClose, onContribute, 
         <View style={[styles.card, { backgroundColor: colors.CARD }]}> 
           <View style={styles.header}>
             <View style={styles.headerLeft}>
-              <Text style={[styles.title, { color: colors.TEXT }]} numberOfLines={2}>{goal?.name || "Mục tiêu"}</Text>
+              <Text style={[styles.title, { color: colors.TEXT }]} numberOfLines={2}>{goal?.name || t("goalDetailModal.goal")}</Text>
               <Text style={[styles.period, { color: colors.TEXT_SECONDARY }]}>{formatDate(goal?.startDate)} {'>'} {formatDate(goal?.targetDate)}</Text>
             </View>
             <View style={[styles.statusBadge, { backgroundColor: visual.bg }]}>
@@ -38,7 +36,7 @@ export default function GoalDetailModal({ goal, visible, onClose, onContribute, 
           </View>
 
           <View style={styles.progressRow}>
-            <Text style={[styles.progressLabel, { color: colors.TEXT_SECONDARY }]}>Tiến độ tổng</Text>
+            <Text style={[styles.progressLabel, { color: colors.TEXT_SECONDARY }]}>{t("goalDetailModal.totalProgress")}</Text>
             <Text style={[styles.progressValue, { color: visual.color }]}>{progress.toFixed(1)}%</Text>
           </View>
           <View style={[styles.progressTrack, { backgroundColor: colors.CARD_BORDER }]}> 
@@ -47,19 +45,19 @@ export default function GoalDetailModal({ goal, visible, onClose, onContribute, 
 
           <View style={styles.statsGrid}>
             <View style={[styles.statBox, { backgroundColor: colors.BG }]}> 
-              <Text style={[styles.statLabel, { color: colors.TEXT_SECONDARY }]}>Mục tiêu</Text>
+              <Text style={[styles.statLabel, { color: colors.TEXT_SECONDARY }]}>{t("goalDetailModal.target")}</Text>
               <Text style={[styles.statValue, { color: colors.TEXT }]}>{formatMoney(target)}</Text>
             </View>
             <View style={[styles.statBox, { backgroundColor: colors.BG }]}> 
-              <Text style={[styles.statLabel, { color: colors.TEXT_SECONDARY }]}>Đã có</Text>
+              <Text style={[styles.statLabel, { color: colors.TEXT_SECONDARY }]}>{t("goalDetailModal.current")}</Text>
               <Text style={[styles.statValue, { color: colors.INCOME }]}>{formatMoney(current)}</Text>
             </View>
             <View style={[styles.statBox, { backgroundColor: colors.BG }]}> 
-              <Text style={[styles.statLabel, { color: colors.TEXT_SECONDARY }]}>Còn thiếu</Text>
+              <Text style={[styles.statLabel, { color: colors.TEXT_SECONDARY }]}>{t("goalDetailModal.remaining")}</Text>
               <Text style={[styles.statValue, { color: colors.EXPENSE }]}>{formatMoney(remaining)}</Text>
             </View>
             <View style={[styles.statBox, { backgroundColor: colors.BG }]}> 
-              <Text style={[styles.statLabel, { color: colors.TEXT_SECONDARY }]}>Cần/tháng</Text>
+              <Text style={[styles.statLabel, { color: colors.TEXT_SECONDARY }]}>{t("goalDetailModal.neededPerMonth")}</Text>
               <Text style={[styles.statValue, { color: colors.INFO }]}>{formatMoney(monthlyTarget)}</Text>
             </View>
           </View>
@@ -67,7 +65,7 @@ export default function GoalDetailModal({ goal, visible, onClose, onContribute, 
           {isActive ? (
             <View style={[styles.monthlyCard, { backgroundColor: colors.BG }]}> 
               <View style={styles.progressRow}>
-                <Text style={[styles.monthlyLabel, { color: colors.TEXT_SECONDARY }]}>Tiến độ tháng này</Text>
+                <Text style={[styles.monthlyLabel, { color: colors.TEXT_SECONDARY }]}>{t("goalDetailModal.monthlyProgress")}</Text>
                 <Text style={[styles.monthlyValue, { color: colors.TEXT }]}> 
                   {formatMoney(monthlyContributed)} / {formatMoney(monthlyTarget)} ({monthlyProgress.toFixed(0)}%)
                 </Text>
@@ -80,15 +78,15 @@ export default function GoalDetailModal({ goal, visible, onClose, onContribute, 
 
           <View style={styles.actions}>
             <Pressable style={[styles.secondaryButton, { borderColor: colors.CARD_BORDER }]} onPress={onClose}>
-              <Text style={[styles.secondaryText, { color: colors.TEXT }]}>Đóng</Text>
+              <Text style={[styles.secondaryText, { color: colors.TEXT }]}>{t("goalDetailModal.close")}</Text>
             </Pressable>
             {isActive ? (
               <>
                 <Pressable style={styles.deleteTextButton} onPress={() => onDelete(goal?.id)}>
-                  <Text style={[styles.deleteText, { color: colors.EXPENSE }]}>Xóa</Text>
+                  <Text style={[styles.deleteText, { color: colors.EXPENSE }]}>{t("goalDetailModal.delete")}</Text>
                 </Pressable>
                 <Pressable style={[styles.primaryButton, { backgroundColor: colors.PRIMARY }]} onPress={() => onContribute(goal)}>
-                  <Text style={styles.primaryText}>Đóng góp</Text>
+                  <Text style={styles.primaryText}>{t("goalDetailModal.contribute")}</Text>
                 </Pressable>
               </>
             ) : null}

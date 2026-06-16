@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useContext } from "react";
 import { Alert } from "react-native";
+import { useTranslation } from "react-i18next";
 import { AuthContext } from "../../contexts/AuthContext";
 
 // ─── Model & provider configuration ─────────────────────
@@ -25,6 +26,7 @@ const MODELS = {
  *   handleModeSwitch
  */
 export default function useModelConfig() {
+  const { t } = useTranslation();
   const { user } = useContext(AuthContext);
 
   const isFreePlan    = !user?.subscriptionPlan || user?.subscriptionPlan === "FREE";
@@ -43,8 +45,8 @@ export default function useModelConfig() {
   }, [activeMode, isPremiumPlan]);
 
   const inputPlaceholder = activeMode === "agent"
-    ? "Tạo/sửa/xóa dữ liệu, xuất excel..."
-    : "Trò chuyện, hỏi đáp tài chính...";
+    ? t("chatbot.inputAction")
+    : t("chatbot.inputChat");
 
   // ── Handlers ───────────────────────────────────────────
 
@@ -52,9 +54,9 @@ export default function useModelConfig() {
     if (mode === activeMode) return;
     if (mode === "agent" && isFreePlan) {
       Alert.alert(
-        "Yêu cầu gói BASIC trở lên",
-        "Tính năng Agent của Nova Money (Tạo/sửa/xóa dữ liệu tự động) chỉ khả dụng cho gói BASIC trở lên. Vui lòng nâng cấp gói để sử dụng.",
-        [{ text: "Đóng", style: "cancel" }]
+        t("chatbot.basicRequiredTitle"),
+        t("chatbot.basicRequiredMsg"),
+        [{ text: t("common.close"), style: "cancel" }]
       );
       return;
     }

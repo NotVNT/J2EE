@@ -1,9 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Animated, Easing, Pressable, StyleSheet, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { COLORS, useAppColors } from "../../constants/colors";
 
 export default function CategoryTypeSegmentedControl({ value, onChange }) {
   const colors = useAppColors();
+  const { t } = useTranslation();
   const typeAnim = useRef(new Animated.Value(value === "expense" ? 1 : 0)).current;
   const [width, setWidth] = useState(0);
   const segmentWidth = width > 0 ? (width - 8) / 2 : 0;
@@ -67,10 +69,10 @@ export default function CategoryTypeSegmentedControl({ value, onChange }) {
       ) : null}
 
       <Pressable style={styles.typeButton} onPress={() => onChange("income")}>
-        <Animated.Text style={[styles.typeText, { color: incomeTextColor, transform: [{ scale: incomeScale }] }]}>Thu nhập</Animated.Text>
+        <Animated.Text style={[styles.typeText, { color: incomeTextColor, transform: [{ scale: incomeScale }] }]}>{t("categoryTypeMeta.income")}</Animated.Text>
       </Pressable>
       <Pressable style={styles.typeButton} onPress={() => onChange("expense")}>
-        <Animated.Text style={[styles.typeText, { color: expenseTextColor, transform: [{ scale: expenseScale }] }]}>Chi tiêu</Animated.Text>
+        <Animated.Text style={[styles.typeText, { color: expenseTextColor, transform: [{ scale: expenseScale }] }]}>{t("categoryTypeMeta.expense")}</Animated.Text>
       </Pressable>
     </Animated.View>
   );

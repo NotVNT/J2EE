@@ -1,10 +1,12 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useAppColors } from "../../constants/colors";
 import AppIcon from "../ui/AppIcon";
 import { scale } from "../../utils/layoutScale";
 
 export default function IncomeEmptyState() {
+  const { t } = useTranslation();
   const colors = useAppColors();
 
   return (
@@ -12,9 +14,9 @@ export default function IncomeEmptyState() {
       <View style={[styles.iconContainer, { backgroundColor: colors.INCOME_LIGHT || "rgba(34,197,94,0.15)" }]}>
         <AppIcon name="cash-outline" size={28} color={colors.ACTION_INCOME || colors.INCOME} />
       </View>
-      <Text style={[styles.emptyTitle, { color: colors.TEXT }]}>Chưa có dữ liệu thu nhập</Text>
+      <Text style={[styles.emptyTitle, { color: colors.TEXT }]}>{t("incomeEmptyState.title")}</Text>
       <Text style={[styles.emptyText, { color: colors.TEXT_SECONDARY }]}>
-        Hãy thêm khoản thu nhập đầu tiên để bắt đầu theo dõi dòng tiền.
+        {t("incomeEmptyState.description")}
       </Text>
     </View>
   );

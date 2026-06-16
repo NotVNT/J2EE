@@ -1,5 +1,6 @@
 import React from "react";
 import { StyleSheet, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useAppColors } from "../../constants/colors";
 import SectionHeader from "../ui/SectionHeader";
 import ForecastAnomalyCard from "./ForecastAnomalyCard";
@@ -10,12 +11,13 @@ export default function ForecastAnomalySection({
   selectedMonth,
   selectedYear,
 }) {
+  const { t } = useTranslation();
   const colors = useAppColors();
 
   return (
     <View style={styles.section}>
       <SectionHeader 
-        title={`Cảnh báo tham khảo tháng ${selectedMonth}/${selectedYear}`} 
+        title={t("forecastComponents.anomalySectionTitle", { month: selectedMonth, year: selectedYear })} 
       />
       {anomalies.length > 0 ? (
         <View style={styles.anomalyList}>
@@ -24,7 +26,7 @@ export default function ForecastAnomalySection({
           ))}
         </View>
       ) : (
-        <ForecastEmptyState message="Không phát hiện giao dịch bất thường trong tháng này" />
+        <ForecastEmptyState message={t("forecastComponents.noAnomalies")} />
       )}
     </View>
   );

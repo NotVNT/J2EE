@@ -1,5 +1,6 @@
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { COLORS, useAppColors } from "../../constants/colors";
 
@@ -9,10 +10,11 @@ export default function ModeSegmentedControl({
   onChangeMode,
   embedded = false,
 }) {
+  const { t } = useTranslation();
   const colors = useAppColors();
   const modes = [
-    { value: "chat", label: "Trò chuyện", icon: "message-reply-text-outline" },
-    { value: "agent", label: "Tác vụ", icon: "robot-outline" },
+    { value: "chat", label: t("chatbot.modeChat"), icon: "message-reply-text-outline" },
+    { value: "agent", label: t("chatbot.modeTask"), icon: "robot-outline" },
   ];
 
   return (

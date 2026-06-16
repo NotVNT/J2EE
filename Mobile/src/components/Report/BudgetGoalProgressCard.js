@@ -1,26 +1,28 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS, useAppColors } from "../../constants/colors";
 
 export default function BudgetGoalProgressCard({ budgetsOnTrack, totalBudgets, completedGoalsThisMonth }) {
+  const { t } = useTranslation();
   const colors = useAppColors();
 
   return (
     <View style={[styles.card, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}> 
       <View style={styles.cardHeader}>
         <Ionicons name="pie-chart-outline" size={18} color={colors.PRIMARY} />
-        <Text style={[styles.cardTitle, { color: colors.TEXT }]}>Tiến độ ngân sách & mục tiêu</Text>
+        <Text style={[styles.cardTitle, { color: colors.TEXT }]}>{t("reportComponents.budgetGoalProgressTitle")}</Text>
       </View>
       <View style={styles.goalStatusRow}>
         <View style={styles.goalStatusItem}>
           <Text style={[styles.goalStatusValue, { color: colors.PRIMARY }]}>{budgetsOnTrack} / {totalBudgets}</Text>
-          <Text style={[styles.goalStatusLabel, { color: colors.TEXT_SECONDARY }]}>Ngân sách an toàn</Text>
+          <Text style={[styles.goalStatusLabel, { color: colors.TEXT_SECONDARY }]}>{t("reportComponents.budgetSafe")}</Text>
         </View>
         <View style={[styles.verticalDivider, { backgroundColor: colors.CARD_BORDER }]} />
         <View style={styles.goalStatusItem}>
           <Text style={[styles.goalStatusValue, { color: colors.PRIMARY }]}>{completedGoalsThisMonth}</Text>
-          <Text style={[styles.goalStatusLabel, { color: colors.TEXT_SECONDARY }]}>Mục tiêu hoàn thành</Text>
+          <Text style={[styles.goalStatusLabel, { color: colors.TEXT_SECONDARY }]}>{t("reportComponents.goalCompleted")}</Text>
         </View>
       </View>
     </View>

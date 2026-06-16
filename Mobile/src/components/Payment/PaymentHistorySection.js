@@ -1,5 +1,6 @@
 import React from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import AppIcon from "../ui/AppIcon";
 import { COLORS, useAppColors } from "../../constants/colors";
 import { formatMoney } from "../../utils/format";
@@ -30,20 +31,21 @@ export default function PaymentHistorySection({
   refreshing
 }) {
   const colors = useAppColors();
+  const { t } = useTranslation();
 
   return (
     <View style={styles.section}>
       <View style={styles.headerRow}>
         <View style={styles.headerText}>
-          <Text style={[styles.title, { color: colors.TEXT }]}>Lịch sử thanh toán</Text>
-          <Text style={[styles.subtitle, { color: colors.TEXT_SECONDARY }]}>Kiểm tra hóa đơn PayOS gần đây của bạn.</Text>
+          <Text style={[styles.title, { color: colors.TEXT }]}>{t("paymentHistory.sectionTitle")}</Text>
+          <Text style={[styles.subtitle, { color: colors.TEXT_SECONDARY }]}>{t("paymentHistory.sectionSubtitle")}</Text>
         </View>
         <Pressable
           style={[styles.refreshButton, { backgroundColor: colors.BG, borderColor: colors.CARD_BORDER }]}
           onPress={onRefresh}
           disabled={refreshing || loading}
           accessibilityRole="button"
-          accessibilityLabel="Tải lại lịch sử thanh toán"
+          accessibilityLabel={t("paymentHistory.refreshAccessibility")}
         >
           {refreshing || loading ? (
             <ActivityIndicator color={colors.PRIMARY} size="small" />
@@ -56,12 +58,12 @@ export default function PaymentHistorySection({
       {loading ? (
         <View style={styles.loadingWrap}>
           <ActivityIndicator color={colors.PRIMARY} />
-          <Text style={[styles.loadingText, { color: colors.TEXT_SECONDARY }]}>Đang tải lịch sử thanh toán...</Text>
+          <Text style={[styles.loadingText, { color: colors.TEXT_SECONDARY }]}>{t("paymentHistory.loading")}</Text>
         </View>
       ) : payments.length === 0 ? (
         <View style={[styles.emptyBox, { borderColor: colors.CARD_BORDER, backgroundColor: colors.BG }]}>
           <AppIcon name="receipt-outline" size={30} color={colors.TEXT_MUTED} />
-          <Text style={[styles.emptyText, { color: colors.TEXT_SECONDARY }]}>Chưa có hóa đơn thanh toán nào.</Text>
+          <Text style={[styles.emptyText, { color: colors.TEXT_SECONDARY }]}>{t("paymentHistory.empty")}</Text>
         </View>
       ) : (
         <View style={styles.list}>
@@ -79,10 +81,10 @@ export default function PaymentHistorySection({
                   </View>
                   <View style={styles.cardTitleBlock}>
                     <Text style={[styles.planName, { color: colors.TEXT }]} numberOfLines={1}>
-                      {payment?.planName || payment?.description || "Gói dịch vụ"}
+                      {payment?.planName || payment?.description || t("paymentHistory.planNameFallback")}
                     </Text>
                     <Text style={[styles.receiptLabel, { color: colors.TEXT_SECONDARY }]}>
-                      Hóa đơn thanh toán
+                      {t("paymentHistory.receiptLabel")}
                     </Text>
                   </View>
                   <View style={[styles.statusBadge, { backgroundColor: toneColors.backgroundColor }]}>
@@ -93,11 +95,11 @@ export default function PaymentHistorySection({
 
                 <View style={styles.detailGrid}>
                   <View style={[styles.detailItem, { backgroundColor: colors.BG }]}>
-                    <Text style={[styles.detailLabel, { color: colors.TEXT_MUTED }]}>Số tiền</Text>
+                    <Text style={[styles.detailLabel, { color: colors.TEXT_MUTED }]}>{t("paymentHistory.amount")}</Text>
                     <Text style={[styles.detailValue, { color: colors.TEXT }]}>{formatMoney(payment?.amount)}</Text>
                   </View>
                   <View style={[styles.detailItem, { backgroundColor: colors.BG }]}>
-                    <Text style={[styles.detailLabel, { color: colors.TEXT_MUTED }]}>Cập nhật</Text>
+                    <Text style={[styles.detailLabel, { color: colors.TEXT_MUTED }]}>{t("paymentHistory.updated")}</Text>
                     <Text style={[styles.detailValue, { color: colors.TEXT }]}>{formatPaymentDate(payment?.updatedAt || payment?.createdAt)}</Text>
                   </View>
                 </View>
@@ -109,7 +111,7 @@ export default function PaymentHistorySection({
                     disabled={isDeleting || !orderCode}
                   >
                     {isDeleting ? <ActivityIndicator color={colors.EXPENSE} size="small" /> : <AppIcon name="trash-outline" size={15} color={colors.EXPENSE} />}
-                    <Text style={[styles.deleteText, { color: colors.EXPENSE }]}>Xóa</Text>
+                    <Text style={[styles.deleteText, { color: colors.EXPENSE }]}>{t("paymentHistory.deleteButton")}</Text>
                   </Pressable>
                 </View>
               </View>

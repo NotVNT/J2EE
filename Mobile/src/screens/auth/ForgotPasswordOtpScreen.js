@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Alert } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
+import { useTranslation } from "react-i18next";
 import apiClient from "../../services/apiClient";
 import { API_ENDPOINTS } from "../../constants/api";
 import { getApiErrorMessage } from "../../utils/format";
@@ -13,6 +14,7 @@ import OtpVerificationLayout from "../../components/Otp/OtpVerificationLayout";
 export default function ForgotPasswordOtpScreen() {
   const navigation = useNavigation();
   const route = useRoute();
+  const { t } = useTranslation();
   const email = route.params?.email || "";
 
   const { otp, code, inputRefs, handleChange, handleKeyDown, reset } = useOtpInput();
@@ -27,7 +29,7 @@ export default function ForgotPasswordOtpScreen() {
 
   const handleSubmit = async () => {
     if (code.length !== 6) {
-      setError("Vui lòng nhập đầy đủ mã OTP.");
+      setError(t("auth.otp.missingCode"));
       return;
     }
     setError("");
@@ -39,7 +41,7 @@ export default function ForgotPasswordOtpScreen() {
       navigation.navigate("ResetPassword", { email, otp: code });
     } catch (err) {
       setLoading(false);
-      setError(getApiErrorMessage(err, "Mã OTP không đúng hoặc đã hết hạn."));
+      setError(getApiErrorMessage(err, t("auth.otp.resetInvalid")));
     }
   };
 
@@ -50,25 +52,25 @@ export default function ForgotPasswordOtpScreen() {
 
     try {
       await apiClient.post(API_ENDPOINTS.RESEND_OTP, { email });
-      Alert.alert("Đã gửi lại", "Mã OTP mới đã được gửi tới email của bạn.");
+      Alert.alert(t("auth.otp.resentTitle"), t("auth.otp.resentMessage"));
     } catch (err) {
       const retryAfterSeconds = getRetryAfterSeconds(err);
       if (retryAfterSeconds > 0) {
         startCountdown(retryAfterSeconds);
         return;
       }
-      setError(getApiErrorMessage(err, "Gửi lại mã thất bại."));
+      setError(getApiErrorMessage(err, t("auth.otp.resendFailed")));
       stopCountdown();
     }
   };
 
   return (
     <OtpVerificationLayout
-      title="Xác thực OTP"
-      subtitle="Vui lòng nhập mã OTP được gửi tới"
+      title={t("auth.otp.resetTitle")}
+      subtitle={t("auth.otp.resetSubtitle")}
       email={email}
       error={error}
-      actionLabel="Xác thực"
+      actionLabel={t("auth.common.verify")}
       actionLoading={loading}
       actionDisabled={loading}
       onAction={handleSubmit}

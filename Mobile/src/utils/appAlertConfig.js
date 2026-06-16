@@ -1,11 +1,11 @@
+import i18n from "i18next";
 import { COLORS } from "../constants/colors";
 
-export const DEFAULT_ALERT_TITLE = "Thông báo";
-export const DEFAULT_ALERT_BUTTON_TEXT = "Đã hiểu";
+export const DEFAULT_ALERT_TITLE = () => i18n.t("alertConfig.defaultTitle");
+export const DEFAULT_ALERT_BUTTON_TEXT = () => i18n.t("alertConfig.defaultButton");
 
 export const APP_ALERT_VARIANTS = {
   success: {
-    label: "Thành công",
     image: require("../assets/alert/success.png"),
     accent: "#4ADE70",
     accentDark: "#22C55E",
@@ -14,7 +14,6 @@ export const APP_ALERT_VARIANTS = {
     title: COLORS.TEXT
   },
   error: {
-    label: "Có lỗi",
     image: require("../assets/alert/error.png"),
     accent: "#EF3B3B",
     accentDark: "#DC2626",
@@ -23,7 +22,6 @@ export const APP_ALERT_VARIANTS = {
     title: COLORS.TEXT
   },
   warning: {
-    label: "Cần chú ý",
     image: require("../assets/alert/warning.png"),
     accent: COLORS.WARNING,
     accentDark: "#D97706",
@@ -32,7 +30,6 @@ export const APP_ALERT_VARIANTS = {
     title: COLORS.TEXT
   },
   confirm: {
-    label: "Xác nhận",
     image: require("../assets/alert/confirm.png"),
     accent: COLORS.WARNING,
     accentDark: "#D97706",
@@ -41,7 +38,6 @@ export const APP_ALERT_VARIANTS = {
     title: COLORS.TEXT
   },
   info: {
-    label: "Thông tin",
     image: require("../assets/alert/information.png"),
     accent: COLORS.INFO,
     accentDark: "#2563EB",
@@ -52,7 +48,7 @@ export const APP_ALERT_VARIANTS = {
 };
 
 const ALERT_KEYWORDS = {
-  success: ["thanh cong", "hoan tat", "da gui"],
+  success: ["thanh cong", "hoan tat", "da gui", "success"],
   error: ["that bai", "loi", "khong the", "khong mo duoc", "bi tu choi"],
   warning: ["thieu", "sai", "khong hop le", "hop le", "yeu", "can"],
   confirm: ["xac nhan", "ban co chac"]

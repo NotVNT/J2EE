@@ -1,5 +1,6 @@
 import React from "react";
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useAppColors } from "../../constants/colors";
 import { CategoryVectorIcon, getIconColor } from "../../utils/categoryIcons";
 import { scale } from "../../utils/layoutScale";
@@ -13,21 +14,22 @@ export default function CategoryPickerModal({
   visible
 }) {
   const colors = useAppColors();
+  const { t } = useTranslation();
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={[styles.modalOverlay, { backgroundColor: colors.OVERLAY }]} onPress={onClose}>
         <View style={[styles.pickerSheet, { backgroundColor: colors.CARD }]}>
           <View style={[styles.pickerHeader, { borderBottomColor: colors.CARD_BORDER }]}>
-            <Text style={[styles.pickerTitle, { color: colors.TEXT }]}>Chọn danh mục</Text>
+            <Text style={[styles.pickerTitle, { color: colors.TEXT }]}>{t("categoryPickerModal.title")}</Text>
             <Pressable onPress={onClose}>
-              <Text style={[styles.pickerClose, { color: colors.PRIMARY }]}>Đóng</Text>
+              <Text style={[styles.pickerClose, { color: colors.PRIMARY }]}>{t("categoryPickerModal.close")}</Text>
             </Pressable>
           </View>
           <ScrollView style={styles.pickerList}>
-            {loading ? <Text style={[styles.emptyPickerText, { color: colors.TEXT_SECONDARY }]}>Đang tải danh mục...</Text> : null}
+            {loading ? <Text style={[styles.emptyPickerText, { color: colors.TEXT_SECONDARY }]}>{t("categoryPickerModal.loading")}</Text> : null}
             {!loading && !categories.length ? (
-              <Text style={[styles.emptyPickerText, { color: colors.TEXT_SECONDARY }]}>Chưa có danh mục chi tiêu.</Text>
+              <Text style={[styles.emptyPickerText, { color: colors.TEXT_SECONDARY }]}>{t("categoryPickerModal.emptyExpense")}</Text>
             ) : null}
             {categories.map((category) => {
               const isSelected = String(category.id) === String(selectedId);

@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path, G, Text as SvgText } from "react-native-svg";
 import apiClient from "../../services/apiClient";
 import { API_ENDPOINTS } from "../../constants/api";
+import { useTranslation } from "react-i18next";
 import { COLORS, useAppColors } from "../../constants/colors";
 import { getApiErrorMessage, formatDate } from "../../utils/format";
 import {
@@ -12,7 +13,8 @@ import {
   formatJarMoney,
   getJarActualPercent,
   getJarProgressWidth,
-  JAR_CATEGORY_COLORS
+  JAR_CATEGORY_COLORS,
+  PARENT_WALLET_NAME
 } from "../../utils/jar";
 import { CategoryVectorIcon, getIconColor } from "../../utils/categoryIcons";
 import { getSafeAreaBottom, getSafeAreaTop } from "../../utils/safeArea";
@@ -21,6 +23,7 @@ import ScreenBackHeader from "../common/ScreenBackHeader";
 const screenWidth = Dimensions.get("window").width;
 
 function ExpenseItem({ item, onDelete }) {
+  const { t } = useTranslation();
   const colors = useAppColors();
   const amount = Number(item?.amount || 0);
   const note = item?.note || "";
@@ -34,8 +37,8 @@ function ExpenseItem({ item, onDelete }) {
         </View>
 
         <View style={styles.itemContent}>
-          <Text style={[styles.itemName, { color: colors.TEXT }]}>{item?.name || "Chi tiêu"}</Text>
-          <Text style={[styles.itemMeta, { color: colors.TEXT_SECONDARY }]}>{formatDate(item?.date)} • {item?.categoryName || "Khác"}</Text>
+          <Text style={[styles.itemName, { color: colors.TEXT }]}>{item?.name || t("jarDetail.expense")}</Text>
+          <Text style={[styles.itemMeta, { color: colors.TEXT_SECONDARY }]}>{formatDate(item?.date)} • {item?.categoryName || t("jarDetail.other")}</Text>
           {note ? (
             <View style={styles.noteRow}>
               <Text style={styles.noteIcon}>📝</Text>
@@ -48,7 +51,7 @@ function ExpenseItem({ item, onDelete }) {
       <View style={styles.itemRight}>
         <Text style={[styles.itemAmount, { color: colors.EXPENSE }]}>- {formatJarMoney(amount)}</Text>
         <Pressable onPress={() => onDelete(item?.id)} style={[styles.deleteButton, { backgroundColor: colors.EXPENSE_LIGHT, borderColor: colors.CARD_BORDER }]}>
-          <Text style={[styles.deleteText, { color: colors.EXPENSE }]}>Xóa</Text>
+          <Text style={[styles.deleteText, { color: colors.EXPENSE }]}>{t("jarDetail.delete")}</Text>
         </Pressable>
       </View>
     </View>
@@ -56,6 +59,7 @@ function ExpenseItem({ item, onDelete }) {
 }
 
 export default function JarDetailView() {
+  const { t } = useTranslation();
   const colors = useAppColors();
   const navigation = useNavigation();
   const route = useRoute();
@@ -77,8 +81,8 @@ export default function JarDetailView() {
       setJars(Array.isArray(jarsRes.data) ? jarsRes.data : []);
       setExpenses(Array.isArray(expensesRes.data) ? expensesRes.data : []);
     } catch (err) {
-      console.error("Lỗi tải thông tin hũ:", err);
-      Alert.alert("Lỗi", getApiErrorMessage(err, "Không thể tải chi tiết hũ."));
+      console.error("Error loading jar info:", err);
+      Alert.alert(t("auth.common.error"), getApiErrorMessage(err, t("jarDetail.loadFailed")));
     } finally {
       setLoading(false);
     }
@@ -94,7 +98,7 @@ export default function JarDetailView() {
       setJars(Array.isArray(jarsRes.data) ? jarsRes.data : []);
       setExpenses(Array.isArray(expensesRes.data) ? expensesRes.data : []);
     } catch (err) {
-      Alert.alert("Lỗi", getApiErrorMessage(err, "Không thể tải lại dữ liệu."));
+      Alert.alert(t("auth.common.error"), getApiErrorMessage(err, t("jarDetail.reloadFailed")));
     } finally {
       setRefreshing(false);
     }
@@ -153,20 +157,20 @@ export default function JarDetailView() {
 
   const handleDeleteJar = () => {
     Alert.alert(
-      "Xác nhận xoá hũ",
-      "Bạn có chắc muốn xoá hũ này không? Số dư trong hũ sẽ bị mất.",
+      t("jarDetail.deleteConfirmTitle"),
+      t("jarDetail.deleteConfirmMsg"),
       [
-        { text: "Hủy", style: "cancel" },
+        { text: t("jarDetail.cancel"), style: "cancel" },
         {
-          text: "Xoá",
+          text: t("jarDetail.deleteConfirm"),
           style: "destructive",
           onPress: async () => {
             try {
               await apiClient.delete(API_ENDPOINTS.DELETE_JAR(id));
-              Alert.alert("Thành công", "Đã xoá hũ thành công.");
+              Alert.alert(t("auth.common.success"), t("jarDetail.deleteSuccess"));
               navigation.goBack();
             } catch (err) {
-              Alert.alert("Lỗi", getApiErrorMessage(err, "Không thể xoá hũ."));
+              Alert.alert(t("auth.common.error"), getApiErrorMessage(err, t("jarDetail.deleteFailed")));
             }
           }
         }
@@ -175,18 +179,18 @@ export default function JarDetailView() {
   };
 
   const handleDeleteExpense = async (expenseId) => {
-    Alert.alert("Xác nhận", "Bạn có chắc muốn xóa khoản chi này?", [
-      { text: "Hủy", style: "cancel" },
+    Alert.alert(t("jarDetail.deleteExpenseConfirm"), t("jarDetail.deleteExpenseMsg"), [
+      { text: t("jarDetail.cancel"), style: "cancel" },
       {
-        text: "Xóa",
+        text: t("jarDetail.delete"),
         style: "destructive",
         onPress: async () => {
           try {
             await apiClient.delete(API_ENDPOINTS.DELETE_EXPENSE(expenseId));
-            Alert.alert("Thành công", "Đã xóa khoản chi thành công.");
+            Alert.alert(t("auth.common.success"), t("jarDetail.deleteExpenseSuccess"));
             fetchJarsAndExpenses();
           } catch (err) {
-            Alert.alert("Lỗi", getApiErrorMessage(err, "Không thể xóa khoản chi."));
+            Alert.alert(t("auth.common.error"), getApiErrorMessage(err, t("jarDetail.deleteExpenseFailed")));
           }
         }
       }
@@ -196,7 +200,7 @@ export default function JarDetailView() {
   if (!selectedJar) {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: colors.BG }]}>
-        <Text style={[styles.loadingText, { color: colors.TEXT_SECONDARY }]}>Đang tải chi tiết...</Text>
+        <Text style={[styles.loadingText, { color: colors.TEXT_SECONDARY }]}>{t("jarDetail.loading")}</Text>
       </View>
     );
   }
@@ -216,7 +220,7 @@ export default function JarDetailView() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.BG, paddingTop: getSafeAreaTop(insets) }]}>
-      <ScreenBackHeader title={selectedJar.name || "Chi tiết ví phụ"} style={styles.screenHeader} />
+      <ScreenBackHeader title={selectedJar.name === PARENT_WALLET_NAME ? t("jarForm.parentWalletName") : (selectedJar.name || t("jarDetail.expense"))} style={styles.screenHeader} />
       <FlatList
         data={jarExpenses}
         keyExtractor={(item) => String(item.id)}
@@ -233,8 +237,8 @@ export default function JarDetailView() {
                     <Text style={styles.iconText}>{selectedJar.icon || "🏺"}</Text>
                   </View>
                   <View>
-                    <Text style={[styles.cardName, { color: colors.TEXT }]}>{selectedJar.name}</Text>
-                    <Text style={[styles.cardTarget, { color: colors.TEXT_SECONDARY }]}>Mục tiêu: {selectedJar.targetPercentage ?? 0}%</Text>
+                    <Text style={[styles.cardName, { color: colors.TEXT }]}>{selectedJar.name === PARENT_WALLET_NAME ? t("jarForm.parentWalletName") : selectedJar.name}</Text>
+                    <Text style={[styles.cardTarget, { color: colors.TEXT_SECONDARY }]}>{t("goalForm.title")}: {selectedJar.targetPercentage ?? 0}%</Text>
                   </View>
                 </View>
 
@@ -244,25 +248,25 @@ export default function JarDetailView() {
                     style={[styles.actionBtn, { backgroundColor: colors.BG, borderColor: colors.CARD_BORDER }]}
                     onPress={() => navigation.navigate("JarForm", { initialData: selectedJar, isEditing: true })}
                   >
-                    <Text style={[styles.actionBtnText, { color: colors.TEXT_SECONDARY }]}>Sửa</Text>
+                    <Text style={[styles.actionBtnText, { color: colors.TEXT_SECONDARY }]}>{t("categoryForm.edit")}</Text>
                   </Pressable>
-                  {selectedJar.name !== "Ví tổng" && (
+                  {selectedJar.name !== PARENT_WALLET_NAME && (
                     <Pressable style={[styles.actionBtn, styles.deleteJarBtn, { backgroundColor: colors.EXPENSE_LIGHT, borderColor: colors.CARD_BORDER }]} onPress={handleDeleteJar}>
-                      <Text style={[styles.actionBtnText, { color: colors.EXPENSE }]}>Xóa</Text>
+                      <Text style={[styles.actionBtnText, { color: colors.EXPENSE }]}>{t("jarDetail.delete")}</Text>
                     </Pressable>
                   )}
                 </View>
               </View>
 
               <View style={styles.balanceRow}>
-                <Text style={[styles.balanceLabel, { color: colors.TEXT_MUTED }]}>Số dư hiện tại</Text>
+                <Text style={[styles.balanceLabel, { color: colors.TEXT_MUTED }]}>{t("dashboardComponents.wallet")}</Text>
                 <Text style={[styles.cardBalance, { color: colors.TEXT }, isNegative && { color: colors.EXPENSE }]}>
                   {formatJarMoney(selectedJar.currentBalance)}
                 </Text>
               </View>
 
               <View style={styles.progressRow}>
-                <Text style={[styles.progressLabel, { color: colors.TEXT_MUTED }]}>Tỷ trọng thực tế</Text>
+                <Text style={[styles.progressLabel, { color: colors.TEXT_MUTED }]}>{t("jarCard.actualRatio")}</Text>
                 <Text style={[styles.progressValue, { color: selectedJar.color || colors.PRIMARY }]}>
                   {actualPercent}%
                 </Text>
@@ -283,7 +287,7 @@ export default function JarDetailView() {
             {/* Spent Pie Chart breakdown */}
             {chartData.length > 0 && (
               <View style={[styles.chartCard, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}>
-                <Text style={[styles.chartTitle, { color: colors.TEXT }]}>Cấu trúc chi tiêu</Text>
+                <Text style={[styles.chartTitle, { color: colors.TEXT }]}>{t("jarDetail.expense")}</Text>
                 <View style={styles.chartWrapper}>
                   <Svg width={svgSize} height={svgSize} viewBox={`0 0 ${svgSize} ${svgSize}`}>
                     <G>
@@ -305,7 +309,7 @@ export default function JarDetailView() {
                         fontWeight="600"
                         fill={colors.TEXT_SECONDARY}
                       >
-                        Đã chi
+                        {t("budgetCard.budget")}
                       </SvgText>
                       <SvgText
                         x={cx}
@@ -315,7 +319,7 @@ export default function JarDetailView() {
                         fontWeight="800"
                         fill={colors.EXPENSE}
                       >
-                        Ví hũ
+                        {t("budgetCard.budget")}
                       </SvgText>
                     </G>
                   </Svg>
@@ -337,14 +341,14 @@ export default function JarDetailView() {
             {/* Section transactions list */}
             <View style={styles.sectionHeader}>
               <View style={styles.sectionHeaderLeft}>
-                <Text style={[styles.listTitle, { color: colors.TEXT }]}>Lịch sử chi tiêu</Text>
-                <Text style={[styles.listSubtitle, { color: colors.TEXT_SECONDARY }]}>Tổng cộng {jarExpenses.length} giao dịch</Text>
+                <Text style={[styles.listTitle, { color: colors.TEXT }]}>{t("jarDetail.expense")}</Text>
+                <Text style={[styles.listSubtitle, { color: colors.TEXT_SECONDARY }]}>{t("expenseSummary.transactions")}: {jarExpenses.length}</Text>
               </View>
               <Pressable
                 style={[styles.addExpenseShortcut, { backgroundColor: colors.PRIMARY }]}
                 onPress={() => navigation.navigate("AddExpense", { defaultJarId: selectedJar.id })}
               >
-                <Text style={[styles.addExpenseShortcutText, { color: colors.WHITE }]}>+ Thêm chi tiêu</Text>
+                <Text style={[styles.addExpenseShortcutText, { color: colors.WHITE }]}>+ {t("expenseSummary.addExpense")}</Text>
               </Pressable>
             </View>
           </View>
@@ -353,9 +357,9 @@ export default function JarDetailView() {
           !loading && (
             <View style={styles.emptyState}>
               <Text style={styles.emptyIcon}>🧾</Text>
-              <Text style={[styles.emptyTitle, { color: colors.TEXT }]}>Hũ chưa có chi tiêu</Text>
+              <Text style={[styles.emptyTitle, { color: colors.TEXT }]}>{t("emptyState.noData")}</Text>
               <Text style={[styles.emptyText, { color: colors.TEXT_SECONDARY }]}>
-                Các khoản chi gắn với hũ này sẽ được thống kê và liệt kê chi tiết ở đây.
+                {t("emptyState.noData")}
               </Text>
             </View>
           )

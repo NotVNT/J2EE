@@ -1,16 +1,18 @@
 import React from "react";
 import { FlatList, Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { COLORS, useAppColors } from "../../constants/colors";
 
 export default function CategorySelectionModal({ categories, onClose, onSelect, visible }) {
   const colors = useAppColors();
+  const { t } = useTranslation();
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={[styles.modalOverlay, { backgroundColor: colors.OVERLAY }]}>
         <View style={[styles.modalContent, { backgroundColor: colors.CARD }]}>
           <View style={[styles.modalHeader, { borderBottomColor: colors.CARD_BORDER }]}>
-            <Text style={[styles.modalTitle, { color: colors.TEXT }]}>Chọn Danh mục</Text>
+            <Text style={[styles.modalTitle, { color: colors.TEXT }]}>{t("categorySelectionModal.title")}</Text>
             <Pressable style={styles.modalCloseBtn} onPress={onClose}>
               <Text style={[styles.modalCloseText, { color: colors.TEXT_MUTED }]}>✕</Text>
             </Pressable>
@@ -26,7 +28,7 @@ export default function CategorySelectionModal({ categories, onClose, onSelect, 
                 <Text style={[styles.categoryName, { color: colors.TEXT }]}>{item.name}</Text>
               </Pressable>
             )}
-            ListEmptyComponent={<Text style={[styles.emptyCategories, { color: colors.TEXT_MUTED }]}>Không có danh mục nào.</Text>}
+            ListEmptyComponent={<Text style={[styles.emptyCategories, { color: colors.TEXT_MUTED }]}>{t("categorySelectionModal.empty")}</Text>}
           />
         </View>
       </View>

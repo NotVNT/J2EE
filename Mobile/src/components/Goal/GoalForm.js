@@ -1,14 +1,10 @@
 import React from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { COLORS, useAppColors } from "../../constants/colors";
 import { formatCurrencyInput } from "../../utils/format";
 import { PickDateField } from "../../utils/datePicker";
 
-/**
- * Form card for creating a new goal.
- *
- * Props are state + setters managed by the parent hook.
- */
 export default function GoalForm({
   name,
   targetAmount,
@@ -21,26 +17,27 @@ export default function GoalForm({
   onTargetDateChange,
   onSubmit,
 }) {
+  const { t } = useTranslation();
   const colors = useAppColors();
 
   return (
     <View style={[styles.card, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}> 
-      <Text style={[styles.title, { color: colors.TEXT }]}>Tạo mục tiêu mới</Text>
-      <Text style={[styles.subtitle, { color: colors.TEXT_SECONDARY }]}>Nhập mục tiêu và thời gian để theo dõi tiến độ tự động.</Text>
+      <Text style={[styles.title, { color: colors.TEXT }]}>{t("goalForm.title")}</Text>
+      <Text style={[styles.subtitle, { color: colors.TEXT_SECONDARY }]}>{t("goalForm.subtitle")}</Text>
 
-      <Text style={[styles.label, { color: colors.TEXT }]}>Tên mục tiêu</Text>
+      <Text style={[styles.label, { color: colors.TEXT }]}>{t("goalForm.nameLabel")}</Text>
       <TextInput
         style={[styles.input, { backgroundColor: colors.BG, borderColor: colors.CARD_BORDER, color: colors.TEXT }]}
-        placeholder="Ví dụ: Quỹ du lịch"
+        placeholder={t("goalForm.namePlaceholder")}
         placeholderTextColor={colors.TEXT_MUTED}
         value={name}
         onChangeText={onNameChange}
       />
 
-      <Text style={[styles.label, { color: colors.TEXT }]}>Số tiền mục tiêu</Text>
+      <Text style={[styles.label, { color: colors.TEXT }]}>{t("goalForm.targetLabel")}</Text>
       <TextInput
         style={[styles.input, { backgroundColor: colors.BG, borderColor: colors.CARD_BORDER, color: colors.TEXT }]}
-        placeholder="Ví dụ: 30.000.000"
+        placeholder={t("goalForm.targetPlaceholder")}
         placeholderTextColor={colors.TEXT_MUTED}
         keyboardType="numeric"
         value={targetAmount}
@@ -50,7 +47,7 @@ export default function GoalForm({
       <View style={styles.dateRow}>
         <View style={[styles.dateCol, styles.dateColLeft]}>
           <PickDateField
-            label="Ngày bắt đầu"
+            label={t("goalForm.startDate")}
             value={startDate}
             onChange={onStartDateChange}
             maximumDate={targetDate}
@@ -58,7 +55,7 @@ export default function GoalForm({
         </View>
         <View style={styles.dateCol}>
           <PickDateField
-            label="Ngày đích"
+            label={t("goalForm.endDate")}
             value={targetDate}
             onChange={onTargetDateChange}
             minimumDate={startDate}
@@ -71,7 +68,7 @@ export default function GoalForm({
         onPress={onSubmit}
         disabled={loading}
       >
-        <Text style={styles.saveButtonText}>{loading ? "Đang lưu..." : "Tạo mục tiêu"}</Text>
+        <Text style={styles.saveButtonText}>{loading ? t("goalForm.saving") : t("goalForm.create")}</Text>
       </Pressable>
     </View>
   );

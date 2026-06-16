@@ -2,6 +2,7 @@ import React from "react";
 import { FlatList, RefreshControl, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
+import { useTranslation } from "react-i18next";
 import { useAppColors } from "../../constants/colors";
 import { formatMoney } from "../../utils/format";
 import ShowMoreButton from "../../components/common/ShowMoreButton";
@@ -19,6 +20,7 @@ import { scale } from "../../utils/layoutScale";
 export default function GoalScreen() {
   const insets = useSafeAreaInsets();
   const colors = useAppColors();
+  const { t } = useTranslation();
 
   const {
     goals,
@@ -56,7 +58,7 @@ export default function GoalScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.BG, paddingTop: getSafeAreaTop(insets) }]}>
-      <ScreenBackHeader title="Mục tiêu" />
+      <ScreenBackHeader title={t("finance.goal.title")} />
       <FlatList
         data={visibleGoals}
         keyExtractor={(item) => String(item?.id)}
@@ -78,20 +80,20 @@ export default function GoalScreen() {
               <View style={styles.overviewBadgeRow}>
                 <View style={styles.overviewBadge}>
                   <AppIcon name="flag" size={13} color="#FFF" />
-                  <Text style={styles.overviewTag}>Kế hoạch tích lũy</Text>
+                  <Text style={styles.overviewTag}>{t("finance.goal.planTag")}</Text>
                 </View>
                 <View style={styles.overviewCountBadge}>
-                  <Text style={styles.overviewCountText}>{overview.activeCount} mục tiêu</Text>
+                  <Text style={styles.overviewCountText}>{t("finance.goal.count", { count: overview.activeCount })}</Text>
                 </View>
               </View>
 
-              <Text style={styles.overviewTitle}>Mục tiêu tiết kiệm</Text>
+              <Text style={styles.overviewTitle}>{t("finance.goal.overviewTitle")}</Text>
 
               <View style={styles.overviewMoneyRow}>
                 <View style={styles.overviewMoneyCol}>
                   <View style={styles.moneyLabelRow}>
                     <AppIcon name="wallet-outline" size={13} color="rgba(255,255,255,0.75)" style={styles.overviewMoneyLabelIcon} />
-                    <Text style={styles.overviewMoneyLabel}>Đã tích lũy</Text>
+                    <Text style={styles.overviewMoneyLabel}>{t("finance.goal.saved")}</Text>
                   </View>
                   <Text style={styles.overviewMoneyValue}>
                     {overview.totalCurrent > 0 ? formatMoney(overview.totalCurrent) : "0 ₫"}
@@ -101,7 +103,7 @@ export default function GoalScreen() {
                 <View style={styles.overviewMoneyCol}>
                   <View style={styles.moneyLabelRow}>
                     <AppIcon name="flag-outline" size={13} color="rgba(255,255,255,0.75)" style={styles.overviewMoneyLabelIcon} />
-                    <Text style={styles.overviewMoneyLabel}>Mục tiêu</Text>
+                    <Text style={styles.overviewMoneyLabel}>{t("finance.goal.target")}</Text>
                   </View>
                   <Text style={styles.overviewMoneyValueSub}>
                     {overview.totalTarget > 0 ? formatMoney(overview.totalTarget) : "0 ₫"}
@@ -111,7 +113,7 @@ export default function GoalScreen() {
 
               <View style={styles.overviewProgressRow}>
                 <Text style={styles.overviewProgressPercent}>{overview.overallProgress.toFixed(0)}%</Text>
-                <Text style={styles.overviewProgressLabel}>hoàn thành</Text>
+                <Text style={styles.overviewProgressLabel}>{t("finance.goal.completed")}</Text>
               </View>
               <View style={styles.overviewTrack}>
                 <View style={[styles.overviewFill, { width: `${Math.max(2, overview.overallProgress)}%`, backgroundColor: colors.WHITE }]} />
@@ -133,7 +135,7 @@ export default function GoalScreen() {
 
             {goals && goals.length ? (
               <View style={styles.listHeader}>
-                <Text style={[styles.listTitle, { color: colors.TEXT }]}>Danh sách mục tiêu</Text>
+                <Text style={[styles.listTitle, { color: colors.TEXT }]}>{t("finance.goal.listTitle")}</Text>
                 <ShowMoreButton visible={canExpandGoals} expanded={showAllGoals} onPress={toggleGoals} />
               </View>
             ) : null}
@@ -141,8 +143,8 @@ export default function GoalScreen() {
         }
         ListEmptyComponent={
           <EmptyState
-            title="Chưa có mục tiêu tiết kiệm"
-            description="Hãy tạo mục tiêu đầu tiên để bắt đầu kế hoạch tích lũy của bạn."
+            title={t("finance.goal.emptyTitle")}
+            description={t("finance.goal.emptyDescription")}
             icon="flag-outline"
           />
         }

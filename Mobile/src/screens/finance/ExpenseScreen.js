@@ -2,6 +2,7 @@ import React, { useCallback, useContext } from "react";
 import { FlatList, RefreshControl, StyleSheet, View } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 import ScreenBackHeader from "../../components/common/ScreenBackHeader";
 import ExpenseEmptyState from "../../components/Expenses/ExpenseEmptyState";
 import ExpenseForm from "../../components/Expenses/ExpenseForm";
@@ -29,10 +30,11 @@ function ExpenseFormRoute() {
   const navigation = useNavigation();
   const route = useRoute();
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   const { user } = useContext(AuthContext);
   const subscriptionPlan = String(user?.subscriptionPlan || "FREE").toUpperCase();
   const isPremium = subscriptionPlan === "PREMIUM";
-  const title = route.params?.initialData ? "Chỉnh sửa chi tiêu" : "Thêm chi tiêu";
+  const title = route.params?.initialData ? t("finance.expense.editTitle") : t("finance.expense.addTitle");
 
   const { handleScanReceipt, isScanning } = useExpenseReceiptImport({
     isPremium,
@@ -61,6 +63,7 @@ function ExpenseListRoute() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const colors = useAppColors();
+  const { t } = useTranslation();
   const { user } = useContext(AuthContext);
   const subscriptionPlan = String(user?.subscriptionPlan || "FREE").toUpperCase();
   const isPremium = subscriptionPlan === "PREMIUM";
@@ -131,7 +134,7 @@ function ExpenseListRoute() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.APP_BACKGROUND || colors.BG, paddingTop: getSafeAreaTop(insets, 12) }]}>
-      <ScreenBackHeader title="Lịch sử chi tiêu" />
+      <ScreenBackHeader title={t("finance.expense.historyTitle")} />
 
       <FlatList
         data={expenses}

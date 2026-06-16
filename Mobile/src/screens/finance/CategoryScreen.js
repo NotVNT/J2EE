@@ -1,6 +1,7 @@
 import React, { useCallback } from "react";
 import { FlatList, Modal, RefreshControl, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 import CategoryForm from "../../components/Categories/CategoryForm";
 import CategoryItem from "../../components/Categories/CategoryItem";
 import CategoryListHeader from "../../components/Categories/CategoryListHeader";
@@ -12,6 +13,7 @@ import { getSafeAreaBottom, getSafeAreaTop } from "../../utils/safeArea";
 export default function CategoryScreen() {
   const insets = useSafeAreaInsets();
   const colors = useAppColors();
+  const { t } = useTranslation();
   const {
     categories,
     canExpandCategories,
@@ -57,9 +59,9 @@ export default function CategoryScreen() {
       <CategoryForm
         form={createForm}
         onSave={onSave}
-        saveLabel="Thêm danh mục"
-        subtitle="Tạo nhóm giao dịch rõ ràng để theo dõi chi tiêu tốt hơn."
-        title="Thêm danh mục"
+        saveLabel={t("finance.category.addSave")}
+        subtitle={t("finance.category.addSubtitle")}
+        title={t("finance.category.addTitle")}
       />
 
       <FlatList
@@ -79,9 +81,9 @@ export default function CategoryScreen() {
               form={editForm}
               onCancel={onCloseEditCategory}
               onSave={onUpdateCategory}
-              saveLabel="Lưu thay đổi"
-              subtitle="Cập nhật tên, loại và icon"
-              title="Chỉnh sửa danh mục"
+              saveLabel={t("finance.category.editSave")}
+              subtitle={t("finance.category.editSubtitle")}
+              title={t("finance.category.editTitle")}
               variant="modal"
             />
           </View>
@@ -108,11 +110,13 @@ export default function CategoryScreen() {
 }
 
 function CategoryEmptyState({ colors }) {
+  const { t } = useTranslation();
+
   return (
     <View style={styles.emptyState}>
       <Text style={styles.emptyIcon}>🗂️</Text>
-      <Text style={[styles.emptyTitle, { color: colors.TEXT }]}>Chưa có danh mục nào</Text>
-      <Text style={[styles.emptyText, { color: colors.TEXT_SECONDARY }]}>Tạo danh mục đầu tiên để bắt đầu quản lý giao dịch gọn gàng hơn.</Text>
+      <Text style={[styles.emptyTitle, { color: colors.TEXT }]}>{t("finance.category.emptyTitle")}</Text>
+      <Text style={[styles.emptyText, { color: colors.TEXT_SECONDARY }]}>{t("finance.category.emptyDescription")}</Text>
     </View>
   );
 }

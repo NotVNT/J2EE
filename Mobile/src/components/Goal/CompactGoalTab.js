@@ -1,17 +1,15 @@
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { COLORS, useAppColors } from "../../constants/colors";
 import { formatDate } from "../../utils/format";
 import { getGoalVisual } from "./goalUtils";
 
-/**
- * Compact tab row shown in the FlatList.
- * Displays name, date range, progress bar, and status badge.
- */
 export default function CompactGoalTab({ item, onPress }) {
+  const { t } = useTranslation();
   const colors = useAppColors();
   const progress = Math.max(0, Math.min(100, Number(item?.progressPercent || 0)));
-  const visual = getGoalVisual(item);
+  const visual = getGoalVisual(item, t);
 
   // SpendBee goals color scheme
   const progressColor = item?.status === "COMPLETED" 
@@ -25,7 +23,7 @@ export default function CompactGoalTab({ item, onPress }) {
       <View style={[styles.accent, { backgroundColor: progressColor }]} />
       <View style={styles.main}>
         <View style={styles.header}>
-          <Text style={[styles.name, { color: colors.TEXT }]} numberOfLines={1}>{item?.name || "Mục tiêu"}</Text>
+          <Text style={[styles.name, { color: colors.TEXT }]} numberOfLines={1}>{item?.name || t("goalDetailModal.goal")}</Text>
           <Text style={[styles.percent, { color: progressColor }]}>{progress.toFixed(0)}%</Text>
         </View>
         <Text style={[styles.period, { color: colors.TEXT_SECONDARY }]} numberOfLines={1}>

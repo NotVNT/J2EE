@@ -1,12 +1,12 @@
 import { COLORS } from "../constants/colors";
 
-export function getBudgetVisual(progressRatio) {
+export function getBudgetVisual(progressRatio, t) {
   if (progressRatio >= 1) {
     return {
       color: COLORS.EXPENSE,
       bg: COLORS.EXPENSE_LIGHT,
       border: "#fecdca",
-      label: "Vượt hạn mức"
+      label: t ? t("budgetCard.overBudget") : "Vượt hạn mức"
     };
   }
 
@@ -15,7 +15,7 @@ export function getBudgetVisual(progressRatio) {
       color: COLORS.WARNING,
       bg: COLORS.WARNING_LIGHT,
       border: "#fedf89",
-      label: "Sắp chạm hạn mức"
+      label: t ? t("budgetCard.nearLimit") : "Sắp chạm hạn mức"
     };
   }
 
@@ -23,7 +23,7 @@ export function getBudgetVisual(progressRatio) {
     color: COLORS.INCOME,
     bg: COLORS.INCOME_LIGHT,
     border: "#abefc6",
-    label: "Trong giới hạn"
+    label: t ? t("budgetCard.withinLimit") : "Trong giới hạn"
   };
 }
 

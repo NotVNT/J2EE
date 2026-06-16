@@ -1,5 +1,6 @@
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useAppColors } from "../../constants/colors";
 import { getBudgetVisual } from "../../utils/budget";
 import { formatMoney } from "../../utils/format";
@@ -9,6 +10,7 @@ import TransactionIcon from "../ui/TransactionIcon";
 import { scale } from "../../utils/layoutScale";
 
 export default function BudgetCard({ item, onDelete }) {
+  const { t } = useTranslation();
   const colors = useAppColors();
   const limit = Number(item?.amountLimit || 0);
   const spent = Number(item?.totalSpent || 0);
@@ -43,24 +45,25 @@ export default function BudgetCard({ item, onDelete }) {
         <View style={styles.itemHeaderLeft}>
           <TransactionIcon iconValue={item?.categoryIcon} size={20} containerSize={40} color={iconColor} style={styles.itemIcon} />
           <View style={styles.itemHeaderTextWrap}>
-            <Text style={[styles.itemName, { color: colors.TEXT }]}>{item?.categoryName || "Ngân sách"}</Text>
-            <Text style={[styles.itemSubTitle, { color: colors.TEXT_SECONDARY }]}>Tháng {month}/{year}</Text>
+            <Text style={[styles.itemName, { color: colors.TEXT }]}>{item?.categoryName || t("budgetCard.budget")}</Text>
+            <Text style={[styles.itemSubTitle, { color: colors.TEXT_SECONDARY }]}>{t(`forecastComponents.month${month}`)} {year}</Text>
           </View>
         </View>
         <Pressable
-          style={[styles.deleteButton, { backgroundColor: colors.EXPENSE_LIGHT, borderColor: colors.EXPENSE }]}
           onPress={() => onDelete(item?.id)}
+          style={styles.iconButton}
+          accessibilityRole="button"
         >
-          <AppIcon name="trash-outline" size={14} color={colors.EXPENSE} />
+          <AppIcon name="trash-outline" size={15} color={colors.EXPENSE_COLOR || "#EF4444"} />
         </Pressable>
       </View>
       <View style={styles.statsRow}>
         <View>
-          <Text style={[styles.statLabel, { color: colors.TEXT_SECONDARY }]}>Đã chi</Text>
+          <Text style={[styles.statLabel, { color: colors.TEXT_SECONDARY }]}>{t("budgetSummary.spent")}</Text>
           <Text style={[styles.statValue, { color: colors.EXPENSE }]}>{formatMoney(spent)}</Text>
         </View>
         <View style={styles.statRight}>
-          <Text style={[styles.statLabel, { color: colors.TEXT_SECONDARY }]}>Hạn mức</Text>
+          <Text style={[styles.statLabel, { color: colors.TEXT_SECONDARY }]}>{t("budgetSummary.limit")}</Text>
           <Text style={[styles.statValue, { color: colors.TEXT }]}>{formatMoney(limit)}</Text>
         </View>
       </View>
@@ -112,13 +115,10 @@ const styles = StyleSheet.create({
   itemSubTitle: {
     fontSize: 12,
   },
-  deleteButton: {
-    width: scale(32),
-    height: scale(32),
-    borderRadius: scale(16),
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
+  iconButton: {
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
   },
   statsRow: {
     marginTop: scale(10),

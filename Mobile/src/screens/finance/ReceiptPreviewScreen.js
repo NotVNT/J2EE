@@ -2,6 +2,7 @@ import React, { useCallback } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 import JarSelector from "../../components/Receipt/JarSelector";
 import ReceiptItemRow from "../../components/Receipt/ReceiptItemRow";
 import ReceiptSummaryCard from "../../components/Receipt/ReceiptSummaryCard";
@@ -16,6 +17,7 @@ export default function ReceiptPreviewScreen() {
   const route = useRoute();
   const insets = useSafeAreaInsets();
   const colors = useAppColors();
+  const { t } = useTranslation();
 
   const handleBack = useCallback(() => {
     navigation.goBack();
@@ -47,7 +49,7 @@ export default function ReceiptPreviewScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.APP_BACKGROUND || colors.BG, paddingTop: getSafeAreaTop(insets) }]}>
-      <ScreenBackHeader title="Xem lại hóa đơn" style={styles.screenHeader} />
+      <ScreenBackHeader title={t("receipt.title")} style={styles.screenHeader} />
       <ReceiptSummaryCard
         itemCount={items.length}
         location={receiptMeta.location}
@@ -94,16 +96,16 @@ export default function ReceiptPreviewScreen() {
 function ReceiptPreviewEmptyState() {
   const insets = useSafeAreaInsets();
   const colors = useAppColors();
+  const { t } = useTranslation();
 
   return (
     <View style={[styles.emptyContainer, { backgroundColor: colors.APP_BACKGROUND || colors.BG, paddingTop: getSafeAreaTop(insets) }]}>
-      <ScreenBackHeader title="Xem lại hóa đơn" style={styles.screenHeader} />
+      <ScreenBackHeader title={t("receipt.title")} style={styles.screenHeader} />
       <View style={styles.emptyBody}>
         <Text style={styles.emptyIcon}>🧾</Text>
-        <Text style={[styles.emptyTitle, { color: colors.TEXT }]}>Không nhận diện được khoản chi</Text>
+        <Text style={[styles.emptyTitle, { color: colors.TEXT }]}>{t("receipt.emptyTitle")}</Text>
         <Text style={[styles.emptyText, { color: colors.TEXT_SECONDARY }]}>
-          Gemini không tìm thấy mặt hàng nào trong ảnh.{"\n"}
-          Hãy thử lại với ảnh rõ hơn hoặc nhập tay.
+          {t("receipt.emptyDescription")}
         </Text>
       </View>
     </View>
@@ -112,6 +114,7 @@ function ReceiptPreviewEmptyState() {
 
 function ReceiptPreviewFooter({ itemCount, onCancel, onConfirm, submitting }) {
   const colors = useAppColors();
+  const { t } = useTranslation();
 
   return (
     <View style={[styles.footer, { backgroundColor: colors.CARD, borderTopColor: colors.CARD_BORDER }]}>
@@ -119,12 +122,12 @@ function ReceiptPreviewFooter({ itemCount, onCancel, onConfirm, submitting }) {
         {submitting ? (
           <ActivityIndicator color={colors.WHITE || "#FFFFFF"} size="small" />
         ) : (
-          <Text style={[styles.confirmButtonText, { color: colors.WHITE || "#FFFFFF" }]}>✅ Xác nhận lưu ({itemCount} mục)</Text>
+          <Text style={[styles.confirmButtonText, { color: colors.WHITE || "#FFFFFF" }]}>✅ {t("receipt.confirm", { count: itemCount })}</Text>
         )}
       </Pressable>
 
       <Pressable style={[styles.cancelButton, { borderColor: colors.BORDER || colors.CARD_BORDER }]} onPress={onCancel} disabled={submitting}>
-        <Text style={[styles.cancelButtonText, { color: colors.TEXT_SECONDARY }]}>Hủy</Text>
+        <Text style={[styles.cancelButtonText, { color: colors.TEXT_SECONDARY }]}>{t("receipt.cancel")}</Text>
       </Pressable>
     </View>
   );

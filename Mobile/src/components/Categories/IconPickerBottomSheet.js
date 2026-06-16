@@ -9,8 +9,9 @@ import {
   Text,
   View
 } from "react-native";
+import { useTranslation } from "react-i18next";
 import { COLORS } from "../../constants/colors";
-import { CategoryVectorIcon, getCategoryIconPresets } from "../../utils/categoryIcons";
+import { CategoryVectorIcon, getCategoryIconPresets, getIconLocaleKey } from "../../utils/categoryIcons";
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get("window");
 const SHEET_HEIGHT = Math.min(SCREEN_HEIGHT * 0.58, 520);
@@ -22,11 +23,12 @@ const ICON_SIZE = Math.floor(
 );
 
 function PickerHeader({ title, onClose }) {
+  const { t } = useTranslation();
   return (
     <View style={styles.header}>
       <View>
         <Text style={styles.title}>{title}</Text>
-        <Text style={styles.subtitle}>Chọn icon đại diện cho danh mục</Text>
+        <Text style={styles.subtitle}>{t("iconPicker.subtitle")}</Text>
       </View>
       <Pressable style={styles.closeButton} onPress={onClose} accessibilityRole="button">
         <Text style={styles.closeText}>×</Text>
@@ -36,6 +38,7 @@ function PickerHeader({ title, onClose }) {
 }
 
 function SelectedIconSummary({ item }) {
+  const { t } = useTranslation();
   if (!item) return null;
 
   const color = item.color || COLORS.PRIMARY;
@@ -45,23 +48,24 @@ function SelectedIconSummary({ item }) {
       <View style={[styles.selectedIconBox, { backgroundColor: `${color}18` }]}>
         <CategoryVectorIcon iconValue={item.value} size={22} color={color} />
       </View>
-      <Text style={styles.selectedLabel} numberOfLines={1}>{item.label}</Text>
+      <Text style={styles.selectedLabel} numberOfLines={1}>{t(getIconLocaleKey(item.value)) || item.label}</Text>
     </View>
   );
 }
 
 function PickerTabs({ activeTab, allCount, recentCount, onChange }) {
+  const { t } = useTranslation();
   return (
     <View style={styles.tabs}>
       <TabButton
         active={activeTab === "all"}
-        label={`Tất cả ${allCount}`}
+        label={`${t("iconPicker.all")} ${allCount}`}
         onPress={() => onChange("all")}
       />
       <TabButton
         active={activeTab === "recent"}
         disabled={recentCount === 0}
-        label={`Gần đây ${recentCount || ""}`.trim()}
+        label={`${t("iconPicker.recent")} ${recentCount || ""}`.trim()}
         onPress={() => onChange("recent")}
       />
     </View>
@@ -84,6 +88,7 @@ function TabButton({ active, disabled, label, onPress }) {
 }
 
 const IconOption = memo(function IconOption({ item, selected, onSelect }) {
+  const { t } = useTranslation();
   const color = item.color || COLORS.PRIMARY;
 
   return (
@@ -91,7 +96,7 @@ const IconOption = memo(function IconOption({ item, selected, onSelect }) {
       style={[styles.iconOption, selected && styles.iconOptionSelected]}
       onPress={() => onSelect(item)}
       accessibilityRole="button"
-      accessibilityLabel={`Chọn icon ${item.label}`}
+      accessibilityLabel={t("iconPicker.selectIcon", { label: item.label })}
     >
       <View style={[styles.iconCircle, selected && { backgroundColor: `${color}16` }]}>
         <CategoryVectorIcon iconValue={item.value} size={21} color={color} />
@@ -102,10 +107,11 @@ const IconOption = memo(function IconOption({ item, selected, onSelect }) {
 });
 
 function EmptyRecent() {
+  const { t } = useTranslation();
   return (
     <View style={styles.emptyState}>
-      <Text style={styles.emptyTitle}>Chưa có icon gần đây</Text>
-      <Text style={styles.emptyText}>Icon bạn chọn sẽ xuất hiện ở đây.</Text>
+      <Text style={styles.emptyTitle}>{t("iconPicker.emptyRecentTitle")}</Text>
+      <Text style={styles.emptyText}>{t("iconPicker.emptyRecentText")}</Text>
     </View>
   );
 }
@@ -117,6 +123,7 @@ export default function IconPickerBottomSheet({
   selectedIcon,
   type = "expense"
 }) {
+  const { t } = useTranslation();
   const slideAnim = useRef(new Animated.Value(SHEET_HEIGHT)).current;
   const backdropAnim = useRef(new Animated.Value(0)).current;
   const [recentIcons, setRecentIcons] = useState([]);
@@ -174,7 +181,7 @@ export default function IconPickerBottomSheet({
 
       <Animated.View style={[styles.sheet, { transform: [{ translateY: slideAnim }] }]}>
         <View style={styles.handle} />
-        <PickerHeader title="Chọn icon" onClose={onClose} />
+        <PickerHeader title={t("iconPicker.title")} onClose={onClose} />
         <SelectedIconSummary item={selectedItem} />
         <PickerTabs
           activeTab={activeTab}
@@ -196,7 +203,7 @@ export default function IconPickerBottomSheet({
         />
 
         <Pressable style={styles.doneButton} onPress={onClose} accessibilityRole="button">
-          <Text style={styles.doneText}>Xong</Text>
+          <Text style={styles.doneText}>{t("iconPicker.done")}</Text>
         </Pressable>
       </Animated.View>
     </Modal>

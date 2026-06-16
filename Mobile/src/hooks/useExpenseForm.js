@@ -1,22 +1,25 @@
 import { useCallback, useEffect, useState } from "react";
 import { Alert } from "react-native";
-import { SUCCESS_ALERT_MESSAGES, SUCCESS_ALERT_TITLE } from "../constants/alertMessages";
+import { useTranslation } from "react-i18next";
 import { fetchCategoriesByType } from "../services/categoryService";
 import { createExpense, updateExpense } from "../services/expenseService";
 import { fetchJars } from "../services/jarService";
 import { formatCurrencyInput, getApiErrorMessage, parseCurrencyInput, todayIso } from "../utils/format";
 import { parseNote, suggestCategory } from "../utils/noteParser";
+import { PARENT_WALLET_NAME } from "../utils/jar";
+
 
 function getDefaultJarId(jars, defaultJarId) {
   if (defaultJarId) {
     return String(defaultJarId);
   }
 
-  const parentWallet = jars.find((jar) => jar.name === "Ví tổng");
+  const parentWallet = jars.find((jar) => jar.name === PARENT_WALLET_NAME);
   return parentWallet?.id ? String(parentWallet.id) : String(jars[0]?.id || "");
 }
 
 export default function useExpenseForm({ defaultJarId, initialData, onSaved }) {
+  const { t } = useTranslation();
   const [categories, setCategories] = useState([]);
   const [categoryLoading, setCategoryLoading] = useState(true);
   const [name, setName] = useState("");
@@ -43,7 +46,7 @@ export default function useExpenseForm({ defaultJarId, initialData, onSaved }) {
           setCategoryId(String(initialData?.categoryId || data[0].id));
         }
       } catch (error) {
-        Alert.alert("Lỗi", getApiErrorMessage(error, "Không tải được danh mục"));
+        Alert.alert(t("common.error"), getApiErrorMessage(error, t("expenseForm.loadCatFail")));
       } finally {
         if (active) {
           setCategoryLoading(false);
@@ -139,33 +142,34 @@ export default function useExpenseForm({ defaultJarId, initialData, onSaved }) {
     const numericAmount = parseCurrencyInput(amount);
 
     if (!normalizedName) {
-      Alert.alert("Thiếu thông tin", "Vui lòng nhập Tên khoản chi.");
+      Alert.alert(t("expenseForm.missingInfoTitle"), t("expenseForm.missingName"));
       return;
     }
 
     if (!amount.trim()) {
-      Alert.alert("Thiếu thông tin", "Vui lòng nhập Số tiền.");
+      Alert.alert(t("expenseForm.missingInfoTitle"), t("expenseForm.missingAmount"));
       return;
     }
 
     if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
-      Alert.alert("Sai số tiền", "Vui lòng nhập số tiền hợp lệ > 0.");
+      Alert.alert(t("expenseForm.invalidAmountTitle"), t("expenseForm.invalidAmountMsg"));
       return;
     }
 
     if (!categoryId) {
-      Alert.alert("Thiếu danh mục", "Vui lòng chọn danh mục.");
+      Alert.alert(t("expenseForm.missingCategoryTitle"), t("expenseForm.missingCategoryMsg"));
       return;
     }
 
     setSubmitting(true);
     try {
+      const selectedCategory = categories.find((c) => String(c.id) === String(categoryId));
       const payload = {
         name: normalizedName,
         amount: numericAmount,
         categoryId: Number(categoryId),
         date,
-        icon: "💸",
+        icon: selectedCategory?.icon || "",
         jarId: jarId ? Number(jarId) : null
       };
 
@@ -188,16 +192,16 @@ export default function useExpenseForm({ defaultJarId, initialData, onSaved }) {
         await createExpense(payload);
       }
 
-      const successMessage = isEditing ? SUCCESS_ALERT_MESSAGES.update.expense : SUCCESS_ALERT_MESSAGES.create.expense;
-      Alert.alert(SUCCESS_ALERT_TITLE, successMessage, [
+      const successMessage = isEditing ? t("expenseForm.updateSuccess") : t("expenseForm.createSuccess");
+      Alert.alert(t("common.success"), successMessage, [
         { text: "OK", onPress: onSaved }
       ]);
     } catch (error) {
-      Alert.alert("Lưu thất bại", getApiErrorMessage(error, "Không thể lưu khoản chi"));
+      Alert.alert(t("expenseForm.saveFailTitle"), getApiErrorMessage(error, t("expenseForm.saveFailMsg")));
     } finally {
       setSubmitting(false);
     }
-  }, [amount, categoryId, date, initialData, jarId, name, note, onSaved, splitInfo]);
+  }, [amount, categories, categoryId, date, initialData, jarId, name, note, onSaved, splitInfo]);
 
   return {
     amount,

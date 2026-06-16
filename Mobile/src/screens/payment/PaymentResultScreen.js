@@ -10,16 +10,7 @@ import { formatMoney, getApiErrorMessage } from "../../utils/format";
 import { COLORS, useAppColors } from "../../constants/colors";
 import { getSafeAreaContentStyle } from "../../utils/safeArea";
 import ScreenBackHeader from "../../components/common/ScreenBackHeader";
-
-const PAYMENT_STATUS_LABELS = {
-  PAID: "Đã thanh toán thành công",
-  PENDING: "Đang chờ thanh toán",
-  PROCESSING: "Đang xử lý",
-  FAILED: "Thanh toán thất bại",
-  CANCELLED: "Đã hủy",
-  EXPIRED: "Đã hết hạn",
-  UNDERPAID: "Thanh toán chưa đủ"
-};
+import { useTranslation } from "react-i18next";
 
 export default function PaymentResultScreen() {
   const navigation = useNavigation();
@@ -28,6 +19,7 @@ export default function PaymentResultScreen() {
   const colors = useAppColors();
   const { refreshUser } = useContext(AuthContext);
 
+  const { t } = useTranslation();
   const result = String(route.params?.result || "").toLowerCase();
   const orderCode = route.params?.orderCode ? String(route.params.orderCode) : "";
   const returnedStatus = String(route.params?.status || "").toUpperCase();
@@ -70,7 +62,7 @@ export default function PaymentResultScreen() {
         }
       } catch (syncError) {
         if (active) {
-          setError(getApiErrorMessage(syncError, "Không thể đồng bộ trạng thái thanh toán."));
+          setError(getApiErrorMessage(syncError, t("paymentHistory.loadFailed")));
         }
       }
     };
@@ -86,7 +78,7 @@ export default function PaymentResultScreen() {
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.BG }]} contentContainerStyle={[styles.content, getSafeAreaContentStyle(insets)]}>
-      <ScreenBackHeader title="Kết quả thanh toán" />
+      <ScreenBackHeader title={t("paymentResult.title")} />
       <View style={[styles.statusCard, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}>
         <View style={styles.iconContainer}>
           <View style={[styles.statusIconWrap, { backgroundColor: isSuccess ? "rgba(42, 157, 143, 0.1)" : "rgba(231, 111, 81, 0.1)" }]}>
@@ -98,25 +90,25 @@ export default function PaymentResultScreen() {
           </View>
         </View>
 
-        <Text style={[styles.sectionTitle, { color: colors.TEXT }]}>Trạng thái giao dịch</Text>
+        <Text style={[styles.sectionTitle, { color: colors.TEXT }]}>{t("paymentResult.transactionStatus")}</Text>
         <Text style={[styles.statusValue, { color: isSuccess ? colors.INCOME : colors.EXPENSE }]}>
-          {PAYMENT_STATUS_LABELS[displayStatus] || displayStatus}
+          {t(`paymentResult.statuses.${displayStatus}`, displayStatus)}
         </Text>
 
         <View style={[styles.divider, { backgroundColor: colors.CARD_BORDER }]} />
 
         <View style={styles.detailRow}>
-          <Text style={[styles.detailLabel, { color: colors.TEXT_SECONDARY }]}>Mã đơn hàng</Text>
+          <Text style={[styles.detailLabel, { color: colors.TEXT_SECONDARY }]}>{t("paymentResult.orderCode")}</Text>
           <Text style={[styles.detailValue, { color: colors.TEXT }]}>{orderCode || "--"}</Text>
         </View>
 
         <View style={styles.detailRow}>
-          <Text style={[styles.detailLabel, { color: colors.TEXT_SECONDARY }]}>Số tiền</Text>
+          <Text style={[styles.detailLabel, { color: colors.TEXT_SECONDARY }]}>{t("paymentResult.amount")}</Text>
           <Text style={[styles.detailValue, { color: colors.PRIMARY }]}>{payment?.amount ? formatMoney(payment.amount) : "--"}</Text>
         </View>
 
         <View style={styles.detailRow}>
-          <Text style={[styles.detailLabel, { color: colors.TEXT_SECONDARY }]}>Gói dịch vụ</Text>
+          <Text style={[styles.detailLabel, { color: colors.TEXT_SECONDARY }]}>{t("paymentResult.servicePlan")}</Text>
           <Text style={[styles.detailValue, { color: colors.TEXT }]}>{payment?.planName || "--"}</Text>
         </View>
       </View>
@@ -131,7 +123,7 @@ export default function PaymentResultScreen() {
         style={[styles.homeButton, { backgroundColor: colors.PRIMARY, shadowColor: colors.PRIMARY }]}
         onPress={() => navigation.navigate("HomeTab")}
       >
-        <Text style={styles.homeButtonText}>Về trang chủ</Text>
+        <Text style={styles.homeButtonText}>{t("paymentResult.home")}</Text>
       </Pressable>
     </ScrollView>
   );

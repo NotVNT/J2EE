@@ -1,11 +1,14 @@
 import React from "react";
 import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { useTranslation } from "react-i18next";
 import { Ionicons } from "@expo/vector-icons";
 import { PieChart } from "react-native-chart-kit";
 import { useAppColors } from "../../constants/colors";
 import { formatMoney } from "../../utils/format";
+import { CategoryVectorIcon, getIconColor } from "../../utils/categoryIcons";
 
 export default function CategoryBreakdownCard({ categories }) {
+  const { t } = useTranslation();
   const colors = useAppColors();
   const { width: screenWidth } = useWindowDimensions();
 
@@ -18,7 +21,7 @@ export default function CategoryBreakdownCard({ categories }) {
   const categoryPresets = ["#7C4DFF", "#FFB84D", "#22C55E", "#3B82F6", "#EF4444", "#EC4899", "#06B6D4"];
 
   const pieData = categories.map((item, idx) => ({
-    name: item.name || "Khác",
+    name: item.name || t("reportComponents.otherCategory"),
     amount: Number(item.amount || 0),
     color: item.color || categoryPresets[idx % categoryPresets.length],
     legendFontColor: colors.TEXT,
@@ -31,7 +34,7 @@ export default function CategoryBreakdownCard({ categories }) {
     <View style={[styles.card, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}> 
       <View style={styles.cardHeader}>
         <Ionicons name="pie-chart-outline" size={18} color={colors.PRIMARY} />
-        <Text style={[styles.cardTitle, { color: colors.TEXT }]}>Chi phí theo danh mục</Text>
+        <Text style={[styles.cardTitle, { color: colors.TEXT }]}>{t("reportComponents.categoryExpenseTitle")}</Text>
       </View>
 
       {/* Donut Chart Container */}
@@ -54,7 +57,7 @@ export default function CategoryBreakdownCard({ categories }) {
           <Text style={[styles.donutValueText, { color: colors.TEXT }]} numberOfLines={1} adjustsFontSizeToFit>
             {formatMoney(totalAmount)}
           </Text>
-          <Text style={[styles.donutLabelText, { color: colors.TEXT_SECONDARY }]}>Tổng chi</Text>
+          <Text style={[styles.donutLabelText, { color: colors.TEXT_SECONDARY }]}>{t("reportComponents.totalExpenseLabel")}</Text>
         </View>
       </View>
 
@@ -66,8 +69,12 @@ export default function CategoryBreakdownCard({ categories }) {
           return (
             <View key={idx} style={styles.categoryItem}>
               <View style={styles.categoryHeader}>
-                <View style={styles.categoryInfo}>
-                  <View style={[styles.legendDot, { backgroundColor: itemColor }]} />
+                  <View style={styles.categoryInfo}>
+                  {item.icon ? (
+                    <CategoryVectorIcon iconValue={item.icon} size={16} color={getIconColor(item.icon)} />
+                  ) : (
+                    <View style={[styles.legendDot, { backgroundColor: itemColor }]} />
+                  )}
                   <Text style={[styles.categoryName, { color: colors.TEXT }]}>{item.name}</Text>
                 </View>
                 <View style={styles.amountWrap}>

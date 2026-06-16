@@ -1,3 +1,5 @@
+import i18n from "i18next";
+
 function safeAmount(value) {
   const amount = Number(value || 0);
   return Number.isFinite(amount) ? amount : 0;
@@ -60,7 +62,7 @@ export function formatMonthKeyLabel(monthKey) {
   }
 
   const [year, month] = monthKey.split("-");
-  return `Tháng ${Number(month)}/${year}`;
+  return `${i18n.t(`reportComponents.month${Number(month)}`)} ${year}`;
 }
 
 export function formatMonthShortLabel(monthKey) {
@@ -119,7 +121,7 @@ export function buildReportWeekBuckets(selectedMonth, selectedYear, now = new Da
     return {
       key: toDateKey(date),
       label: `${date.getDate()}/${date.getMonth() + 1}`,
-      summaryLabel: `Ngày ${date.getDate()}`,
+      summaryLabel: i18n.t("reportComponents.dayPrefix", { date: date.getDate() }),
       value: 0,
     };
   });
@@ -127,11 +129,11 @@ export function buildReportWeekBuckets(selectedMonth, selectedYear, now = new Da
 
 export function buildReportMonthBuckets(selectedMonth, selectedYear) {
   return Array.from({ length: 5 }, (_, index) => {
-    const label = `T${index + 1}`;
+    const label = `${i18n.t("reportComponents.weekPrefix", { number: index + 1 })}`;
     return {
       key: String(index),
       label,
-      summaryLabel: `Tuần ${index + 1}`,
+      summaryLabel: label,
       value: 0,
     };
   });
@@ -162,19 +164,19 @@ export function buildReportChartSeries({
 
   if (range === "week") {
     buckets = buildReportWeekBuckets(selectedMonth, selectedYear, now);
-    title = "Biểu đồ theo tuần";
-    subtitle = "Thu chi phân theo từng ngày trong tuần";
-    totalLabel = "tổng tuần";
+    title = i18n.t("reportComponents.chartWeekTitle");
+    subtitle = i18n.t("reportComponents.chartWeekSubtitle");
+    totalLabel = i18n.t("reportComponents.chartWeekTotal");
   } else if (range === "sixMonths") {
     buckets = buildReportSixMonthBuckets(selectedMonth, selectedYear);
-    title = "Biểu đồ 6 tháng";
-    subtitle = "Thu chi phân theo từng tháng gần nhất";
-    totalLabel = "6 tháng";
+    title = i18n.t("reportComponents.chartSixMonthTitle");
+    subtitle = i18n.t("reportComponents.chartSixMonthSubtitle");
+    totalLabel = i18n.t("reportComponents.chartSixMonthTotal");
   } else {
     buckets = buildReportMonthBuckets(selectedMonth, selectedYear);
-    title = "Biểu đồ theo tháng";
-    subtitle = "Thu chi phân theo từng tuần trong tháng";
-    totalLabel = "tổng tháng";
+    title = i18n.t("reportComponents.chartMonthTitle");
+    subtitle = i18n.t("reportComponents.chartMonthSubtitle");
+    totalLabel = i18n.t("reportComponents.chartMonthTotal");
   }
 
   const expenseBuckets = new Map(buckets.map((bucket) => [bucket.key, { ...bucket }]));

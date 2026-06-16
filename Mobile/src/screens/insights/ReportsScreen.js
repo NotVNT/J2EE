@@ -12,6 +12,8 @@ import { useRoute } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BarChart } from "react-native-chart-kit";
 import { Ionicons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
+import i18n from "i18next";
 import { AuthContext } from "../../contexts/AuthContext";
 import { useAppColors } from "../../constants/colors";
 import { getSafeAreaContentStyle } from "../../utils/safeArea";
@@ -31,15 +33,16 @@ const toMillions = (v) => Number((v / 1_000_000).toFixed(2));
 
 const formatCompact = (v) => {
   const m = v / 1_000_000;
-  if (m >= 1) return `${m.toLocaleString("vi-VN", { maximumFractionDigits: 1 })} Trđ`;
+  if (m >= 1) return `${m.toLocaleString(i18n.language || "vi-VN", { maximumFractionDigits: 1 })} ${i18n.t("reportComponents.millionUnit")}`;
   const k = v / 1_000;
-  if (k >= 1) return `${Math.round(k)}K`;
-  return `${Math.round(v)} đ`;
+  if (k >= 1) return `${Math.round(k)}${i18n.t("dashboardComponents.thousand")}`;
+  return `${Math.round(v)} ${i18n.t("reportComponents.currencyUnit")}`;
 };
 
 // ─── Individual chart mini-card ────────────────────────────────────────────
 function MiniChartCard({ title, iconName, accentColor, dataPoints, labels, totalValue, totalLabel, chartWidth }) {
   const colors = useAppColors();
+  const { t } = useTranslation();
   const isLight = colors.CARD === "#FFFFFF";
 
   const fromColor = isLight
@@ -78,7 +81,7 @@ function MiniChartCard({ title, iconName, accentColor, dataPoints, labels, total
         </View>
         <View style={{ flex: 1 }}>
           <Text style={[styles.miniCardTitle, { color: colors.TEXT }]}>{title}</Text>
-          <Text style={[styles.miniCardSubtitle, { color: colors.TEXT_SECONDARY }]}>Đơn vị: Triệu đồng (Trđ)</Text>
+          <Text style={[styles.miniCardSubtitle, { color: colors.TEXT_SECONDARY }]}>{t("report.unit")}</Text>
         </View>
         {/* Total badge */}
         <View style={[styles.totalBadge, { backgroundColor: accentColor + "1A", borderColor: accentColor + "44" }]}>
@@ -127,26 +130,27 @@ function MiniChartCard({ title, iconName, accentColor, dataPoints, labels, total
 }
 
 // ─── Main chart container card ──────────────────────────────────────────────
-const CHART_RANGE_OPTIONS = [
-  { key: "week", label: "Tuần" },
-  { key: "month", label: "Tháng" },
-  { key: "sixMonths", label: "6 tháng" },
-];
-
 function ChartRangeSegment({ activeRange, onChange }) {
   const colors = useAppColors();
+  const { t } = useTranslation();
   const isLight = colors.CARD === "#FFFFFF";
+
+  const rangeOptions = [
+    { key: "week", label: t("report.week") },
+    { key: "month", label: t("report.month") },
+    { key: "sixMonths", label: t("report.sixMonths") },
+  ];
 
   return (
     <View style={[styles.rangeSegment, { backgroundColor: isLight ? "#F4EEF1" : "rgba(255,255,255,0.06)" }]}>
-      {CHART_RANGE_OPTIONS.map((option) => {
+      {rangeOptions.map((option) => {
         const active = activeRange === option.key;
 
         return (
           <Pressable
             key={option.key}
             accessibilityRole="button"
-            accessibilityLabel={`Xem biểu đồ theo ${option.label}`}
+            accessibilityLabel={t("report.chartAccessibility", { label: option.label })}
             onPress={() => onChange(option.key)}
             style={({ pressed }) => [
               styles.rangeButton,
@@ -168,6 +172,7 @@ function ChartRangeSegment({ activeRange, onChange }) {
 }
 
 function ReportsChartCard({ expenses, incomes, selectedMonth, selectedYear }) {
+  const { t } = useTranslation();
   const colors = useAppColors();
   const { width: screenWidth } = useWindowDimensions();
   const [chartRange, setChartRange] = useState("month");
@@ -197,7 +202,7 @@ function ReportsChartCard({ expenses, incomes, selectedMonth, selectedYear }) {
 
       {/* Expense mini-card */}
       <MiniChartCard
-        title="Chi tiêu"
+        title={t("report.expense")}
         iconName="trending-down-outline"
         accentColor="#FF5A5A"
         dataPoints={chartSeries.expense}
@@ -209,7 +214,7 @@ function ReportsChartCard({ expenses, incomes, selectedMonth, selectedYear }) {
 
       {/* Income mini-card */}
       <MiniChartCard
-        title="Thu nhập"
+        title={t("report.income")}
         iconName="trending-up-outline"
         accentColor="#2DD4A0"
         dataPoints={chartSeries.income}
@@ -227,6 +232,7 @@ export default function ReportsScreen() {
   const route = useRoute();
   const insets = useSafeAreaInsets();
   const colors = useAppColors();
+  const { t } = useTranslation();
   const { user } = useContext(AuthContext);
   const {
     selectedMonth,
@@ -271,10 +277,10 @@ export default function ReportsScreen() {
       contentContainerStyle={[styles.content, getSafeAreaContentStyle(insets)]}
       showsVerticalScrollIndicator={false}
     >
-      {shouldShowBackHeader ? <ScreenBackHeader title="Thống kê" /> : null}
+      {shouldShowBackHeader ? <ScreenBackHeader title={t("report.title")} /> : null}
 
       <ForecastMonthPicker
-        accessibilityLabel="Chọn tháng thống kê"
+        accessibilityLabel={t("report.selectMonth")}
         label={monthPickerLabel}
         visible={isMonthPickerVisible}
         options={monthOptions}
@@ -289,14 +295,14 @@ export default function ReportsScreen() {
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color={colors.PRIMARY} />
           <Text style={[styles.loadingText, { color: colors.TEXT_SECONDARY }]}>
-            Đang lập báo cáo chi tiết...
+            {t("report.generating")}
           </Text>
         </View>
       ) : error || !report ? (
         <View style={styles.centerContainer}>
           <Text style={styles.emptyIcon}>📊</Text>
           <Text style={[styles.errorText, { color: colors.TEXT_SECONDARY }]}>
-            {error || "Chưa có dữ liệu giao dịch trong tháng này để tạo báo cáo."}
+            {error || t("report.noData")}
           </Text>
         </View>
       ) : (
@@ -309,10 +315,7 @@ export default function ReportsScreen() {
             selectedYear={selectedYear}
           />
           <CategoryBreakdownCard categories={report.categoryBreakdown} />
-          <ReportAdviceCard
-            strengths={report.strengths}
-            improvements={report.improvements}
-          />
+          <ReportAdviceCard report={report} />
           <BudgetGoalProgressCard
             budgetsOnTrack={report.budgetsOnTrack}
             totalBudgets={report.totalBudgets}

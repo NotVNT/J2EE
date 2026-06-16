@@ -1,5 +1,6 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { COLORS, useAppColors } from "../../constants/colors";
 import IncomeExpenseChart from "../common/IncomeExpenseChart";
 import IncomeFilterTabs from "./IncomeFilterTabs";
@@ -15,6 +16,7 @@ export default function IncomeListHeader({
   onVoiceResult,
   totalIncome
 }) {
+  const { t } = useTranslation();
   const colors = useAppColors();
 
   return (
@@ -32,9 +34,9 @@ export default function IncomeListHeader({
 
       {incomes.length ? (
         <View>
-          <IncomeExpenseChart data={incomes} title="Tổng quan thu nhập" colorPrimary={COLORS.INCOME} />
+          <IncomeExpenseChart data={incomes} title={t("incomeList.overview")} colorPrimary={COLORS.INCOME} />
           <View style={styles.listHeader}>
-            <Text style={[styles.listTitle, { color: colors.TEXT }]}>Danh sách thu nhập</Text>
+            <Text style={[styles.listTitle, { color: colors.TEXT }]}>{t("incomeList.overview")}</Text>
           </View>
         </View>
       ) : null}

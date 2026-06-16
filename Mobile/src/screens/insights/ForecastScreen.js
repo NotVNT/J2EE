@@ -8,6 +8,7 @@ import {
 } from "react-native";
 import { useRoute } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 import { AuthContext } from "../../contexts/AuthContext";
 import { useAppColors } from "../../constants/colors";
 import { TREND_CONFIG } from "../../utils/forecast";
@@ -29,6 +30,7 @@ export default function ForecastScreen() {
   const route = useRoute();
   const insets = useSafeAreaInsets();
   const colors = useAppColors();
+  const { t } = useTranslation();
   const { user } = useContext(AuthContext);
   const isPremium = String(user?.subscriptionPlan || "").toUpperCase() === "PREMIUM";
 
@@ -64,7 +66,7 @@ export default function ForecastScreen() {
     return (
       <View style={[styles.container, { backgroundColor: colors.BG }]}>
         <View style={[styles.paywallContent, getSafeAreaContentStyle(insets, { bottom: 24 })]}>
-          <ScreenBackHeader title="Dự báo" />
+          <ScreenBackHeader title={t("forecast.title")} />
           <ForecastPaywall />
         </View>
       </View>
@@ -77,7 +79,7 @@ export default function ForecastScreen() {
       contentContainerStyle={[styles.content, getSafeAreaContentStyle(insets)]}
       showsVerticalScrollIndicator={false}
     >
-      <ScreenBackHeader title="Dự báo" />
+      <ScreenBackHeader title={t("forecast.title")} />
 
       <ForecastMonthPicker
         label={monthPickerLabel}
@@ -94,27 +96,27 @@ export default function ForecastScreen() {
       {isLoading ? (
         <View style={styles.loadingWrap}>
           <ActivityIndicator size="large" color={colors.PRIMARY} />
-          <Text style={[styles.loadingText, { color: colors.TEXT_SECONDARY }]}>Đang tải dữ liệu dự báo...</Text>
+          <Text style={[styles.loadingText, { color: colors.TEXT_SECONDARY }]}>{t("forecast.loading")}</Text>
         </View>
       ) : (
         <>
           <View style={styles.summaryRow}>
             <ForecastSummaryCard
               icon="💰"
-              label="Dự báo tổng"
+              label={t("forecast.totalLabel")}
               value={formatMoney(totalPredicted)}
               accent={colors.EXPENSE}
             />
             <ForecastSummaryCard
               icon={topCategory ? TREND_CONFIG[topCategory.trend]?.icon || "📊" : "📊"}
-              label="Tăng mạnh nhất"
+              label={t("forecast.topLabel")}
               value={topCategory ? topCategory.categoryName : "—"}
               sub={topCategory ? formatMoney(topCategory.predictedAmount) : ""}
               accent={colors.WARNING}
             />
             <ForecastSummaryCard
               icon="🚨"
-              label="Bất thường"
+              label={t("forecast.anomalyLabel")}
               value={`${anomalies.length}`}
               accent={anomalies.length > 0 ? colors.EXPENSE : colors.TEXT_MUTED}
             />
@@ -130,7 +132,7 @@ export default function ForecastScreen() {
               />
             </>
           ) : (
-            <ForecastEmptyState message="Chưa có dữ liệu dự báo cho tháng này" />
+            <ForecastEmptyState message={t("forecast.emptyMessage")} />
           )}
 
           <ForecastTrendChart

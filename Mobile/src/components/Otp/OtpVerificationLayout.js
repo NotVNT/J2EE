@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { COLORS } from "../../constants/colors";
 import { scale } from "../../utils/layoutScale";
+import { useTranslation } from "react-i18next";
 
 export default function OtpVerificationLayout({
   title,
@@ -25,6 +26,8 @@ export default function OtpVerificationLayout({
   countdown,
   onResend,
 }) {
+  const { t } = useTranslation();
+
   return (
     <KeyboardAvoidingView
       style={styles.screen}
@@ -53,15 +56,15 @@ export default function OtpVerificationLayout({
             disabled={actionDisabled}
           >
             <Text style={styles.actionButtonText}>
-              {actionLoading ? "Đang xác thực..." : actionLabel || "Xác thực"}
+              {actionLoading ? t("auth.common.verifying") : actionLabel || t("auth.common.verify")}
             </Text>
           </Pressable>
 
           <View style={styles.resendRow}>
-            <Text style={styles.resendLabel}>Không nhận được mã? </Text>
+            <Text style={styles.resendLabel}>{t("auth.common.noCode")}</Text>
             <Pressable onPress={onResend} disabled={resendDisabled}>
               <Text style={[styles.resendLink, resendDisabled && styles.resendLinkDisabled]}>
-                {resendDisabled ? `Gửi lại (${countdown}s)` : "Gửi lại"}
+                {resendDisabled ? `${t("auth.common.resend")} (${countdown}s)` : t("auth.common.resend")}
               </Text>
             </Pressable>
           </View>

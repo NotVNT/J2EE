@@ -1,16 +1,13 @@
 import React from "react";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { useTranslation } from "react-i18next";
 import { COLORS, useAppColors } from "../../constants/colors";
 
-const FEATURES = [
-  "Tóm tắt tài chính hằng tháng",
-  "Dự báo dòng tiền",
-  "Phân tích rủi ro",
-  "Khuyến nghị cá nhân hóa"
-];
+const FEATURE_KEYS = ["aiInsight.feature1", "aiInsight.feature2", "aiInsight.feature3", "aiInsight.feature4"];
 
 export default function AiInsightLockedModal({ visible, onClose }) {
+  const { t } = useTranslation();
   const colors = useAppColors();
   const navigation = useNavigation();
 
@@ -37,14 +34,14 @@ export default function AiInsightLockedModal({ visible, onClose }) {
 
           <Text style={[styles.title, { color: colors.TEXT }]}>AI Insight</Text>
           <Text style={[styles.description, { color: colors.TEXT_SECONDARY }]}>
-            Phân tích tài chính thông minh với AI, dự báo dòng tiền và gợi ý cá nhân hóa.
+            {t("aiInsight.description")}
           </Text>
 
           <View style={styles.featureList}>
-            {FEATURES.map((feature) => (
-              <View key={feature} style={styles.featureItem}>
+            {FEATURE_KEYS.map((featureKey) => (
+              <View key={featureKey} style={styles.featureItem}>
                 <Text style={[styles.featureCheck, { color: colors.INCOME }]}>✓</Text>
-                <Text style={[styles.featureText, { color: colors.TEXT }]}>{feature}</Text>
+                <Text style={[styles.featureText, { color: colors.TEXT }]}>{t(featureKey)}</Text>
               </View>
             ))}
           </View>

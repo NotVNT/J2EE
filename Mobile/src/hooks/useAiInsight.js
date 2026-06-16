@@ -1,5 +1,6 @@
 import { useCallback, useContext, useMemo, useState } from "react";
 import { AuthContext } from "../contexts/AuthContext";
+import i18n from "i18next";
 import { fetchAiForecast } from "../services/aiInsightService";
 import { saveAiForecastDraft } from "../services/forecastDraftCacheService";
 
@@ -37,7 +38,7 @@ export function useAiInsight() {
       months.push({
         month: d.getMonth() + 1,
         year: d.getFullYear(),
-        label: `Th\u00E1ng ${d.getMonth() + 1}/${d.getFullYear()}`,
+        label: `${i18n.t(`forecastComponents.month${d.getMonth() + 1}`)} ${d.getFullYear()}`,
       });
     }
     return months;

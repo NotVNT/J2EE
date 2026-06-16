@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Alert } from "react-native";
-import { SUCCESS_ALERT_MESSAGES, SUCCESS_ALERT_TITLE } from "../constants/alertMessages";
+import { useTranslation } from "react-i18next";
 import { fetchCategoriesByType } from "../services/categoryService";
 import { createIncome, updateIncome } from "../services/incomeService";
 import { fetchJars } from "../services/jarService";
 import { formatCurrencyInput, getApiErrorMessage, parseCurrencyInput, todayIso } from "../utils/format";
+
 
 function buildAllocations(jars, total) {
   if (!jars.length || total <= 0) {
@@ -52,6 +53,7 @@ function buildExistingAllocations(jars, existingAllocations = []) {
 }
 
 export default function useIncomeForm({ initialData, onSaved }) {
+  const { t } = useTranslation();
   const [categories, setCategories] = useState([]);
   const [categoryLoading, setCategoryLoading] = useState(true);
   const [name, setName] = useState(initialData?.name || "");
@@ -77,7 +79,7 @@ export default function useIncomeForm({ initialData, onSaved }) {
           setCategoryId(String(initialData?.categoryId || data[0].id));
         }
       } catch (error) {
-        Alert.alert("Lỗi", getApiErrorMessage(error, "Không tải được danh mục"));
+        Alert.alert(t("common.error"), t("incomeForm.loadCategoryFailMsg"));
       } finally {
         if (active) {
           setCategoryLoading(false);
@@ -179,33 +181,34 @@ export default function useIncomeForm({ initialData, onSaved }) {
     const numericAmount = parseCurrencyInput(amount);
 
     if (!normalizedName) {
-      Alert.alert("Thiếu thông tin", "Vui lòng nhập Tên khoản thu.");
+      Alert.alert(t("incomeForm.missingInfoTitle"), t("incomeForm.missingName"));
       return;
     }
 
     if (!amount.trim()) {
-      Alert.alert("Thiếu thông tin", "Vui lòng nhập Số tiền.");
+      Alert.alert(t("incomeForm.missingInfoTitle"), t("incomeForm.missingAmount"));
       return;
     }
 
     if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
-      Alert.alert("Sai số tiền", "Vui lòng nhập số tiền hợp lệ > 0.");
+      Alert.alert(t("incomeForm.invalidAmountTitle"), t("incomeForm.invalidAmountMsg"));
       return;
     }
 
     if (!categoryId) {
-      Alert.alert("Thiếu danh mục", "Vui lòng chọn danh mục.");
+      Alert.alert(t("incomeForm.missingCategoryTitle"), t("incomeForm.missingCategoryMsg"));
       return;
     }
 
     setSubmitting(true);
     try {
+      const selectedCategory = categories.find((c) => String(c.id) === String(categoryId));
       const payload = {
         name: normalizedName,
         amount: numericAmount,
         categoryId: Number(categoryId),
         date,
-        icon: "💰"
+        icon: selectedCategory?.icon || ""
       };
 
       if (jars.length > 0 && allocations.length > 0) {
@@ -221,14 +224,14 @@ export default function useIncomeForm({ initialData, onSaved }) {
         await createIncome(payload);
       }
 
-      const successMessage = isEditing ? SUCCESS_ALERT_MESSAGES.update.income : SUCCESS_ALERT_MESSAGES.create.income;
-      Alert.alert(SUCCESS_ALERT_TITLE, successMessage, [{ text: "OK", onPress: onSaved }]);
+      const successMessage = isEditing ? t("incomeForm.updateSuccess") : t("incomeForm.createSuccess");
+      Alert.alert(t("common.success"), successMessage, [{ text: t("common.ok"), onPress: onSaved }]);
     } catch (error) {
-      Alert.alert("Lưu thất bại", getApiErrorMessage(error, "Không thể lưu khoản thu"));
+      Alert.alert(t("incomeForm.saveFailTitle"), getApiErrorMessage(error, t("incomeForm.saveFailMsg")));
     } finally {
       setSubmitting(false);
     }
-  }, [allocations, amount, categoryId, date, initialData, jars.length, name, onSaved]);
+  }, [allocations, amount, categories, categoryId, date, initialData, jars.length, name, onSaved]);
 
   return {
     allocationDiff,

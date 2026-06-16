@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 import { Alert } from "react-native";
+import { useTranslation } from "react-i18next";
 import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
 import { analyzeReceiptFile } from "../services/receiptImportService";
@@ -12,6 +13,7 @@ const DOCUMENT_ICON = require("../assets/accessories/documentation.png");
 const EXPENSE_RECEIPT_MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 export default function useExpenseReceiptImport({ isPremium, navigation }) {
+  const { t } = useTranslation();
   const [isScanning, setIsScanning] = useState(false);
 
   const navigateToPreview = useCallback(
@@ -21,8 +23,8 @@ export default function useExpenseReceiptImport({ isPremium, navigation }) {
         const analyzeResult = await analyzeReceiptFile(fileAsset);
         if (!analyzeResult?.items?.length) {
           Alert.alert(
-            "Không nhận diện được",
-            "Gemini không tìm thấy khoản chi nào trong tệp. Hãy thử tệp khác hoặc nhập tay."
+            t("receiptImport.noItemsTitle"),
+            t("receiptImport.noItemsMsg")
           );
           return;
         }
@@ -30,8 +32,8 @@ export default function useExpenseReceiptImport({ isPremium, navigation }) {
         navigation.navigate("HomeTab", { screen: "ReceiptPreview", params: { analyzeResult } });
       } catch (error) {
         Alert.alert(
-          "Lỗi phân tích",
-          getApiErrorMessage(error, "Không thể phân tích hóa đơn. Vui lòng thử lại.")
+          t("receiptImport.analysisErrorTitle"),
+          getApiErrorMessage(error, t("receiptImport.analysisErrorMsg"))
         );
       } finally {
         setIsScanning(false);
@@ -43,7 +45,7 @@ export default function useExpenseReceiptImport({ isPremium, navigation }) {
   const pickCamera = useCallback(async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== "granted") {
-      Alert.alert("Quyền bị từ chối", "Cần cấp quyền camera để chụp hóa đơn.");
+      Alert.alert(t("receiptImport.cameraPermissionTitle"), t("receiptImport.cameraPermissionMsg"));
       return;
     }
 
@@ -55,7 +57,7 @@ export default function useExpenseReceiptImport({ isPremium, navigation }) {
         allowsEditing: false
       });
     } catch (error) {
-      Alert.alert("Lỗi", `Không thể mở camera: ${error.message || ""}`);
+      Alert.alert(t("receiptImport.cameraErrorTitle"), t("receiptImport.cameraErrorMsg", { message: error.message || "" }));
       return;
     }
 
@@ -69,7 +71,7 @@ export default function useExpenseReceiptImport({ isPremium, navigation }) {
   const pickImage = useCallback(async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
-      Alert.alert("Quyền bị từ chối", "Cần cấp quyền thư viện ảnh để chọn hóa đơn.");
+      Alert.alert(t("receiptImport.galleryPermissionTitle"), t("receiptImport.galleryPermissionMsg"));
       return;
     }
 
@@ -81,14 +83,14 @@ export default function useExpenseReceiptImport({ isPremium, navigation }) {
         allowsEditing: false
       });
     } catch (error) {
-      Alert.alert("Lỗi", `Không thể mở thư viện ảnh: ${error.message || ""}`);
+      Alert.alert(t("receiptImport.galleryErrorTitle"), t("receiptImport.galleryErrorMsg", { message: error.message || "" }));
       return;
     }
 
     if (result.canceled || !result.assets?.length) return;
     const asset = result.assets[0];
     if (asset.fileSize && asset.fileSize > EXPENSE_RECEIPT_MAX_FILE_SIZE) {
-      Alert.alert("Ảnh quá lớn", "Vui lòng chọn ảnh dưới 10 MB.");
+      Alert.alert(t("receiptImport.imageTooLargeTitle"), t("receiptImport.imageTooLargeMsg"));
       return;
     }
 
@@ -103,14 +105,14 @@ export default function useExpenseReceiptImport({ isPremium, navigation }) {
         copyToCacheDirectory: true
       });
     } catch (error) {
-      Alert.alert("Lỗi", `Không thể mở trình chọn file: ${error.message || ""}`);
+      Alert.alert(t("receiptImport.filePickerErrorTitle"), t("receiptImport.filePickerErrorMsg", { message: error.message || "" }));
       return;
     }
 
     if (result.canceled || !result.assets?.length) return;
     const asset = result.assets[0];
     if (asset.size && asset.size > EXPENSE_RECEIPT_MAX_FILE_SIZE) {
-      Alert.alert("File quá lớn", "Vui lòng chọn file PDF dưới 10 MB.");
+      Alert.alert(t("receiptImport.pdfTooLargeTitle"), t("receiptImport.pdfTooLargeMsg"));
       return;
     }
 
@@ -124,20 +126,20 @@ export default function useExpenseReceiptImport({ isPremium, navigation }) {
   const handleScanReceipt = useCallback(async () => {
     if (!isPremium) {
       Alert.alert(
-        "Tính năng Premium",
-        "Quét hóa đơn bằng ảnh / PDF là tính năng dành riêng cho gói Premium.\n\nHãy nâng cấp tài khoản để sử dụng.",
+        t("receiptImport.premiumTitle"),
+        t("receiptImport.premiumMsg"),
         [
-          { text: "Để sau", style: "cancel" },
-          { text: "Nâng cấp", onPress: () => navigation.navigate("SettingTab", { screen: "Payment" }) }
+          { text: t("receiptImport.premiumLater"), style: "cancel" },
+          { text: t("receiptImport.premiumUpgrade"), onPress: () => navigation.navigate("SettingTab", { screen: "Payment" }) }
         ]
       );
       return;
     }
 
-    Alert.alert("Nhập từ hóa đơn", "Chọn nguồn tệp hóa đơn:", [
-      { text: "Camera", image: CAMERA_ICON, accessibilityLabel: "Chụp ảnh hóa đơn", onPress: pickCamera },
-      { text: "Thư viện", image: GALLERY_ICON, accessibilityLabel: "Chọn ảnh hóa đơn", onPress: pickImage },
-      { text: "Tài liệu", image: DOCUMENT_ICON, accessibilityLabel: "Chọn file PDF hóa đơn", onPress: pickPdf }
+    Alert.alert(t("receiptImport.sourceTitle"), t("receiptImport.sourceMsg"), [
+      { text: t("receiptImport.cameraOption"), image: CAMERA_ICON, accessibilityLabel: t("receiptImport.cameraAccLabel"), onPress: pickCamera },
+      { text: t("receiptImport.galleryOption"), image: GALLERY_ICON, accessibilityLabel: t("receiptImport.galleryAccLabel"), onPress: pickImage },
+      { text: t("receiptImport.documentOption"), image: DOCUMENT_ICON, accessibilityLabel: t("receiptImport.documentAccLabel"), onPress: pickPdf }
     ]);
   }, [isPremium, navigation, pickCamera, pickImage, pickPdf]);
 

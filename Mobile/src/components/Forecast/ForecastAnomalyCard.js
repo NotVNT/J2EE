@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 import { COLORS, useAppColors } from "../../constants/colors";
 import { formatMoney, formatDate } from "../../utils/format";
 
@@ -11,6 +12,7 @@ import { formatMoney, formatDate } from "../../utils/format";
  * @param {object} props.item - Anomaly data { transactionId, categoryName, date, amount, meanAmount }
  */
 export default function ForecastAnomalyCard({ item }) {
+  const { t } = useTranslation();
   const colors = useAppColors();
   const amount = Number(item?.amount || 0);
   const meanAmount = Number(item?.meanAmount || 0);
@@ -34,14 +36,14 @@ export default function ForecastAnomalyCard({ item }) {
           <Ionicons name="warning" size={16} color={colors.WARNING} />
         </View>
         <View style={styles.info}>
-          <Text style={[styles.category, { color: colors.TEXT }]}>{item?.categoryName || "Không rõ"}</Text>
+          <Text style={[styles.category, { color: colors.TEXT }]}>{item?.categoryName || t("forecastComponents.unknown")}</Text>
           <Text style={[styles.date, { color: colors.TEXT_SECONDARY }]}>{formatDate(item?.date)}</Text>
         </View>
       </View>
       <View style={styles.right}>
         <Text style={[styles.amount, { color: colors.EXPENSE }]}>{formatMoney(amount)}</Text>
         <Text style={[styles.deviation, { color: colors.WARNING }]}> 
-          {deviation > 0 ? `Cao hơn ${deviation}% so với TB` : "Bất thường"}
+          {deviation > 0 ? t("forecastComponents.higherThan", { percent: deviation }) : t("forecastComponents.anomalyTitle")}
         </Text>
       </View>
     </View>

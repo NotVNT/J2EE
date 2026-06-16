@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useAppColors } from '../../constants/colors';
 import { scale } from '../../utils/layoutScale';
 import AppIcon from './AppIcon';
@@ -9,14 +10,16 @@ import AppButton from './AppButton';
  * Standardized EmptyState component for list fallbacks and empty views.
  */
 export default function EmptyState({
-  title = 'Không có dữ liệu',
+  title,
   description,
   icon = 'document-text-outline',
   actionTitle,
   onActionPress,
   style,
 }) {
+  const { t } = useTranslation();
   const COLORS = useAppColors();
+  const resolvedTitle = title || t("emptyState.noData");
 
   return (
     <View style={[styles.container, style]}>
@@ -24,7 +27,7 @@ export default function EmptyState({
         <AppIcon name={icon} size={scale(36)} color={COLORS.PRIMARY} />
       </View>
       <Text style={[styles.title, { color: COLORS.TEXT }]}>
-        {title}
+        {resolvedTitle}
       </Text>
       {description && (
         <Text style={[styles.description, { color: COLORS.TEXT_SECONDARY }]}>

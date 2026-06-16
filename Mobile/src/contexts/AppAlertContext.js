@@ -25,14 +25,14 @@ let presenter = null;
 
 function normalizeButtons(buttons) {
   if (!Array.isArray(buttons) || buttons.length === 0) {
-    return [{ text: DEFAULT_ALERT_BUTTON_TEXT, style: "default" }];
+    return [{ text: DEFAULT_ALERT_BUTTON_TEXT(), style: "default" }];
   }
 
   return buttons
     .filter(Boolean)
     .map((button) => ({
       ...button,
-      text: button.text || DEFAULT_ALERT_BUTTON_TEXT,
+      text: button.text || DEFAULT_ALERT_BUTTON_TEXT(),
       style: button.style || "default"
     }));
 }
@@ -41,7 +41,7 @@ function createAlertConfig(title, message, buttons, options) {
   const normalizedButtons = normalizeButtons(buttons);
 
   return {
-    title: title || DEFAULT_ALERT_TITLE,
+    title: title || DEFAULT_ALERT_TITLE(),
     message: message || "",
     buttons: normalizedButtons,
     options: options || {},
@@ -177,7 +177,7 @@ export function AppAlertProvider({ children }) {
                 {
                   backgroundColor: colors.CARD,
                   borderColor: colors.CARD_BORDER,
-                  shadowColor: displayVisual.accent,
+                  shadowColor: isDark ? (colors.SHADOW_COLOR || "rgba(0,0,0,0.4)") : displayVisual.accent,
                   transform: [{ translateY: slideAnim }, { scale: scaleAnim }]
                 }
               ]}

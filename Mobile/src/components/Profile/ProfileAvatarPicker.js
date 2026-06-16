@@ -1,10 +1,12 @@
 import React from "react";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS, useAppColors } from "../../constants/colors";
 
 export default function ProfileAvatarPicker({ fullName, onPickImage, onRemoveImage, previewUri }) {
   const colors = useAppColors();
+  const { t } = useTranslation();
 
   return (
     <View style={styles.avatarSection}>
@@ -26,7 +28,7 @@ export default function ProfileAvatarPicker({ fullName, onPickImage, onRemoveIma
 
       {previewUri ? (
         <Pressable style={styles.removeAvatarButton} onPress={onRemoveImage}>
-          <Text style={[styles.removeAvatarButtonText, { color: colors.EXPENSE }]}>Xóa ảnh hiện tại</Text>
+          <Text style={[styles.removeAvatarButtonText, { color: colors.EXPENSE }]}>{t("profileAvatar.removePhoto")}</Text>
         </Pressable>
       ) : null}
     </View>

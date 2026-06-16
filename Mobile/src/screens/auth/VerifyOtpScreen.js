@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Alert } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
+import { useTranslation } from "react-i18next";
 import apiClient from "../../services/apiClient";
 import { API_ENDPOINTS } from "../../constants/api";
 import { getApiErrorMessage } from "../../utils/format";
@@ -13,6 +14,7 @@ import OtpVerificationLayout from "../../components/Otp/OtpVerificationLayout";
 export default function VerifyOtpScreen() {
   const navigation = useNavigation();
   const route = useRoute();
+  const { t } = useTranslation();
   const email = route.params?.email || "";
 
   const { otp, code, inputRefs, handleChange, handleKeyDown, reset } = useOtpInput();
@@ -30,7 +32,7 @@ export default function VerifyOtpScreen() {
 
   const handleSubmit = async () => {
     if (code.length !== 6) {
-      setError("Vui lòng nhập đầy đủ mã OTP.");
+      setError(t("auth.otp.missingCode"));
       return;
     }
     setError("");
@@ -42,14 +44,14 @@ export default function VerifyOtpScreen() {
       setSuccessMsg("verified");
       setTimeout(() => {
         Alert.alert(
-          "Đăng ký thành công",
-          "Tài khoản của bạn đã được xác thực. Hãy thiết lập thông tin cá nhân.",
+          t("auth.otp.signupSuccessTitle"),
+          t("auth.otp.signupSuccessMessage"),
           [{ text: "OK", onPress: () => navigation.navigate("SetupProfile", { email }) }]
         );
       }, 5000);
     } catch (err) {
       setLoading(false);
-      setError(getApiErrorMessage(err, "Xác thực thất bại."));
+      setError(getApiErrorMessage(err, t("auth.otp.verifyFailed")));
     }
   };
 
@@ -61,14 +63,14 @@ export default function VerifyOtpScreen() {
 
     try {
       await apiClient.post(API_ENDPOINTS.RESEND_OTP, { email });
-      Alert.alert("Đã gửi lại", "Mã OTP mới đã được gửi tới email của bạn.");
+      Alert.alert(t("auth.otp.resentTitle"), t("auth.otp.resentMessage"));
     } catch (err) {
       const retryAfterSeconds = getRetryAfterSeconds(err);
       if (retryAfterSeconds > 0) {
         startCountdown(retryAfterSeconds);
         return;
       }
-      setError(getApiErrorMessage(err, "Gửi lại mã thất bại."));
+      setError(getApiErrorMessage(err, t("auth.otp.resendFailed")));
       stopCountdown();
     }
   };
@@ -77,11 +79,11 @@ export default function VerifyOtpScreen() {
 
   return (
     <OtpVerificationLayout
-      title="Kiểm tra email của bạn"
-      subtitle="Vui lòng nhập mã được gửi tới"
+      title={t("auth.otp.checkEmailTitle")}
+      subtitle={t("auth.otp.checkEmailSubtitle")}
       email={email}
       error={error}
-      actionLabel="Xác thực"
+      actionLabel={t("auth.common.verify")}
       actionLoading={loading}
       actionDisabled={actionDisabled}
       onAction={handleSubmit}

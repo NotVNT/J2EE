@@ -2,6 +2,7 @@ import React, { useCallback, useState } from "react";
 import { Alert, ScrollView, StyleSheet } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 import PaymentHistorySection from "../../components/Payment/PaymentHistorySection";
 import ScreenBackHeader from "../../components/common/ScreenBackHeader";
 import { API_ENDPOINTS } from "../../constants/api";
@@ -23,6 +24,7 @@ async function deletePayment(orderCode) {
 export default function PaymentHistoryScreen() {
   const insets = useSafeAreaInsets();
   const colors = useAppColors();
+  const { t } = useTranslation();
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -39,7 +41,7 @@ export default function PaymentHistoryScreen() {
       const history = await fetchPaymentHistory();
       setPayments(history);
     } catch (error) {
-      Alert.alert("Lỗi", getApiErrorMessage(error, "Không tải được lịch sử thanh toán."));
+      Alert.alert(t("auth.common.error"), getApiErrorMessage(error, t("paymentHistory.loadFailed")));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -57,10 +59,10 @@ export default function PaymentHistoryScreen() {
   const handleDeletePayment = useCallback((orderCode) => {
     if (!orderCode) return;
 
-    Alert.alert("Xóa hóa đơn?", "Hóa đơn này sẽ được xóa khỏi lịch sử thanh toán của bạn.", [
-      { text: "Hủy", style: "cancel" },
+    Alert.alert(t("paymentHistory.deleteTitle"), t("paymentHistory.deleteMessage"), [
+      { text: t("paymentHistory.cancel"), style: "cancel" },
       {
-        text: "Xóa",
+        text: t("paymentHistory.delete"),
         style: "destructive",
         onPress: async () => {
           setDeletingCode(String(orderCode));
@@ -70,7 +72,7 @@ export default function PaymentHistoryScreen() {
               String(payment?.orderCode) !== String(orderCode)
             )));
           } catch (error) {
-            Alert.alert("Xóa thất bại", getApiErrorMessage(error, "Không thể xóa hóa đơn này."));
+            Alert.alert(t("paymentHistory.deleteFailed"), getApiErrorMessage(error, t("paymentHistory.deleteFailedMsg")));
           } finally {
             setDeletingCode("");
           }
@@ -85,7 +87,7 @@ export default function PaymentHistoryScreen() {
       contentContainerStyle={[styles.content, getSafeAreaContentStyle(insets)]}
       showsVerticalScrollIndicator={false}
     >
-      <ScreenBackHeader title="Lịch sử thanh toán" />
+      <ScreenBackHeader title={t("paymentHistory.title")} />
       <PaymentHistorySection
         deletingCode={deletingCode}
         loading={loading}
