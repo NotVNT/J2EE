@@ -1366,5 +1366,72 @@
     "title": "Hũ chi tiêu áp dụng",
     "loading": "Đang tải danh sách hũ...",
     "empty": "Không tìm thấy hũ chi tiêu nào."
+  },
+  "privacy": {
+    "title": "Chính sách bảo mật",
+    "intro": "Money Manager cam kết bảo vệ quyền riêng tư và dữ liệu tài chính cá nhân của bạn. Chính sách này giải thích những thông tin chúng tôi thu thập, cách sử dụng, cách bảo vệ và quyền kiểm soát dữ liệu của bạn.",
+    "lastUpdated": "Cập nhật lần cuối: 18/06/2026",
+    "sections": [
+      {
+        "title": "Thông tin chúng tôi thu thập",
+        "items": [
+          "Thông tin tài khoản như họ tên, email và trạng thái xác thực để tạo và bảo vệ tài khoản.",
+          "Dữ liệu tài chính do bạn nhập, gồm thu nhập, chi tiêu, danh mục, ngân sách, hũ chi tiêu, mục tiêu tiết kiệm và báo cáo.",
+          "Dữ liệu sử dụng cơ bản như thời điểm đăng nhập, tùy chọn ngôn ngữ, chủ đề giao diện và tương tác trong ứng dụng."
+        ]
+      },
+      {
+        "title": "Cách chúng tôi sử dụng thông tin",
+        "items": [
+          "Cung cấp các chức năng quản lý tài chính cá nhân, theo dõi giao dịch, lập ngân sách và báo cáo.",
+          "Hỗ trợ phân tích bằng AI để gợi ý xu hướng chi tiêu, dự báo và tổng hợp thông tin tài chính cho bạn.",
+          "Cải thiện trải nghiệm, độ ổn định, bảo mật và chất lượng hỗ trợ khách hàng."
+        ]
+      },
+      {
+        "title": "Bảo mật dữ liệu",
+        "items": [
+          "Money Manager sử dụng HTTPS, JWT và cookie HttpOnly để giảm rủi ro lộ token xác thực.",
+          "Dữ liệu được lưu trữ trong các hệ thống phù hợp như MySQL, MongoDB, Redis và các dịch vụ lưu trữ an toàn.",
+          "Chúng tôi không bán dữ liệu cá nhân hoặc dữ liệu tài chính của bạn cho bên thứ ba."
+        ]
+      },
+      {
+        "title": "Quyền của bạn",
+        "items": [
+          "Bạn có thể xem, cập nhật hoặc chỉnh sửa thông tin tài khoản và dữ liệu tài chính của mình trong ứng dụng.",
+          "Bạn có thể yêu cầu xóa tài khoản, xóa dữ liệu liên quan hoặc xuất dữ liệu khi tính năng này được hỗ trợ.",
+          "Bạn có thể liên hệ đội ngũ hỗ trợ nếu cần kiểm tra, điều chỉnh hoặc làm rõ cách dữ liệu được xử lý."
+        ]
+      },
+      {
+        "title": "Cookie và token",
+        "items": [
+          "Money Manager dùng cookie HttpOnly mm_token để duy trì phiên đăng nhập và xác thực yêu cầu.",
+          "Cookie xác thực không được dùng để bán quảng cáo hoặc theo dõi bạn trên các website khác.",
+          "Bạn có thể đăng xuất để kết thúc phiên và trình duyệt sẽ xóa hoặc vô hiệu hóa token đăng nhập theo cấu hình hệ thống."
+        ]
+      },
+      {
+        "title": "Dịch vụ bên thứ ba",
+        "items": [
+          "Google Gemini có thể được dùng cho các tính năng AI như phân tích, dự báo và trò chuyện tài chính.",
+          "PayOS có thể được dùng để xử lý thanh toán gói dịch vụ, gia hạn hoặc nâng cấp tài khoản.",
+          "AWS S3 có thể được dùng để lưu trữ tệp, ảnh hoặc tài liệu bạn tải lên.",
+          "Brevo có thể được dùng để gửi email xác thực, thông báo tài khoản và thông tin hỗ trợ."
+        ]
+      },
+      {
+        "title": "Thay đổi chính sách",
+        "items": [
+          "Chúng tôi có thể cập nhật chính sách này khi sản phẩm, yêu cầu pháp lý hoặc biện pháp bảo mật thay đổi.",
+          "Các thay đổi quan trọng sẽ được thông báo qua email, trong ứng dụng hoặc trên trang này trước khi áp dụng khi phù hợp."
+        ]
+      }
+    ],
+    "contact": {
+      "title": "Liên hệ",
+      "description": "Nếu bạn có câu hỏi về quyền riêng tư, bảo mật hoặc yêu cầu liên quan đến dữ liệu cá nhân, vui lòng liên hệ đội ngũ hỗ trợ qua kênh hỗ trợ chính thức của Money Manager."
+    }
   }
 }

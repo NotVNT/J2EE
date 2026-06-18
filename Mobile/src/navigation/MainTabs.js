@@ -20,6 +20,7 @@ import JarScreen from "../screens/finance/JarScreen";
 import ReceiptPreviewScreen from "../screens/finance/ReceiptPreviewScreen";
 import ProfileScreen from "../screens/profile/ProfileScreen";
 import EditProfileScreen from "../screens/profile/EditProfileScreen";
+import PrivacyScreen from "../screens/profile/PrivacyScreen";
 import PaymentScreen from "../screens/payment/PaymentScreen";
 import PaymentCheckoutScreen from "../screens/payment/PaymentCheckoutScreen";
 import PaymentHistoryScreen from "../screens/payment/PaymentHistoryScreen";
@@ -128,6 +129,7 @@ export function SettingStack() {
       <Stack.Screen name="MoreMain" component={MoreScreen} />
       <Stack.Screen name="Profile" component={ProfileScreen} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+      <Stack.Screen name="Privacy" component={PrivacyScreen} />
       <Stack.Screen name="Payment" component={PaymentScreen} />
       <Stack.Screen name="PaymentHistory" component={PaymentHistoryScreen} />
       <Stack.Screen name="PaymentCheckout" component={PaymentCheckoutScreen} />

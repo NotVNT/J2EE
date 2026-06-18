@@ -1381,5 +1381,72 @@
     "title": "Applicable jar",
     "loading": "Loading jar list...",
     "empty": "No jars found."
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "intro": "Money Manager is committed to protecting your privacy and personal financial data. This policy explains what information we collect, how we use it, how we protect it, and how you can control your data.",
+    "lastUpdated": "Last updated: 06/18/2026",
+    "sections": [
+      {
+        "title": "Information we collect",
+        "items": [
+          "Account information such as your full name, email, and verification status to create and protect your account.",
+          "Financial data you enter, including income, expenses, categories, budgets, spending jars, savings goals, and reports.",
+          "Basic usage data such as login time, language preference, interface theme, and in-app interactions."
+        ]
+      },
+      {
+        "title": "How we use information",
+        "items": [
+          "Provide personal finance management, transaction tracking, budgeting, and reporting features.",
+          "Support AI analysis to suggest spending trends, forecasts, and summaries of your financial information.",
+          "Improve the experience, stability, security, and quality of customer support."
+        ]
+      },
+      {
+        "title": "Data security",
+        "items": [
+          "Money Manager uses HTTPS, JWT, and HttpOnly cookies to reduce the risk of authentication token exposure.",
+          "Data is stored in appropriate systems such as MySQL, MongoDB, Redis, and secure storage services.",
+          "We do not sell your personal data or financial data to third parties."
+        ]
+      },
+      {
+        "title": "Your rights",
+        "items": [
+          "You can view, update, or edit your account information and financial data in the app.",
+          "You can request account deletion, deletion of related data, or data export when this feature is supported.",
+          "You can contact support if you need to review, adjust, or clarify how your data is handled."
+        ]
+      },
+      {
+        "title": "Cookies and tokens",
+        "items": [
+          "Money Manager uses the HttpOnly mm_token cookie to maintain login sessions and authenticate requests.",
+          "Authentication cookies are not used to sell ads or track you across other websites.",
+          "You can sign out to end the session, and the browser will delete or invalidate the login token according to system configuration."
+        ]
+      },
+      {
+        "title": "Third-party services",
+        "items": [
+          "Google Gemini may be used for AI features such as analysis, forecasting, and financial chat.",
+          "PayOS may be used to process subscription payments, renewals, or account upgrades.",
+          "AWS S3 may be used to store files, images, or documents you upload.",
+          "Brevo may be used to send verification emails, account notifications, and support information."
+        ]
+      },
+      {
+        "title": "Policy changes",
+        "items": [
+          "We may update this policy when the product, legal requirements, or security measures change.",
+          "Important changes will be announced by email, in the app, or on this page before they take effect when appropriate."
+        ]
+      }
+    ],
+    "contact": {
+      "title": "Contact",
+      "description": "If you have questions about privacy, security, or requests related to personal data, please contact the support team through Money Manager's official support channel."
+    }
   }
 }

@@ -4,18 +4,18 @@ import SavingGoalCard from "./SavingGoalCard.jsx";
 const quickTips = [
     {
         icon: Target,
-        title: "Set clear goals",
-        description: "Enter the target amount and deadline so the system can automatically track your progress.",
+        title: "Tạo mục tiêu rõ ràng",
+        description: "Nhập số tiền mục tiêu và hạn chót để hệ thống tự động theo dõi tiến độ.",
     },
     {
         icon: WalletCards,
-        title: "Contribute regularly",
-        description: 'Click "Contribute" each time you add more money to your savings fund.',
+        title: "Đóng góp đều đặn",
+        description: 'Bấm "Đóng góp" mỗi lần bạn bỏ thêm tiền vào quỹ tiết kiệm.',
     },
     {
         icon: PiggyBank,
-        title: "Track monthly targets",
-        description: "Check this figure to know how much you should save each month.",
+        title: "Theo dõi mục tiêu hằng tháng",
+        description: "Kiểm tra con số này để biết mỗi tháng cần tiết kiệm bao nhiêu.",
     },
 ];
 
@@ -27,11 +27,11 @@ const SavingGoalList = ({ goals, loading, onAddClick, onEdit, onDelete, onContri
                     <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                         <div className="max-w-2xl">
                             <span className="inline-flex items-center rounded-full bg-violet-50 dark:bg-violet-500/10 px-3 py-1 text-xs font-medium text-violet-700 dark:text-violet-400">
-                                Savings plan
+                                Kế hoạch tích lũy
                             </span>
-                            <h2 className="mt-3 text-2xl font-semibold text-slate-900 dark:text-white">Saving goals</h2>
+                            <h2 className="mt-3 text-2xl font-semibold text-slate-900 dark:text-white">Mục tiêu tiết kiệm</h2>
                             <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                                Track each goal, know how much is left, and maintain a steady contribution rhythm each month.
+                                Theo dõi từng mục tiêu, biết còn thiếu bao nhiêu và giữ nhịp đóng góp ổn định mỗi tháng.
                             </p>
                         </div>
 
@@ -40,7 +40,7 @@ const SavingGoalList = ({ goals, loading, onAddClick, onEdit, onDelete, onContri
                             className="inline-flex items-center justify-center gap-1.5 rounded-2xl bg-slate-900 dark:bg-white/10 dark:hover:bg-white/15 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-slate-800"
                         >
                             <Plus size={15} />
-                            Add goal
+                            Thêm mục tiêu
                         </button>
                     </div>
                 </div>
@@ -73,8 +73,8 @@ const SavingGoalList = ({ goals, loading, onAddClick, onEdit, onDelete, onContri
 
                 {!loading && goals.length === 0 && (
                     <div className="flex flex-col items-center justify-center rounded-[28px] border border-dashed border-slate-200 dark:border-white/10 bg-white/80 dark:bg-white/3 py-16 text-slate-400">
-                        <p className="mb-2 text-lg">No saving goals yet</p>
-                        <p className="text-sm">Click &quot;Add goal&quot; to start planning!</p>
+                        <p className="mb-2 text-lg">Chưa có mục tiêu tiết kiệm nào</p>
+                        <p className="text-sm">Bấm &quot;Thêm mục tiêu&quot; để bắt đầu lập kế hoạch!</p>
                     </div>
                 )}
 
@@ -97,8 +97,8 @@ const SavingGoalList = ({ goals, loading, onAddClick, onEdit, onDelete, onContri
                         <CircleHelp size={18} />
                     </div>
                     <div>
-                        <p className="text-sm font-semibold text-slate-900 dark:text-white">Quick guide</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">Displayed on the right side for easier access.</p>
+                        <p className="text-sm font-semibold text-slate-900 dark:text-white">Hướng dẫn nhanh</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">Hiển thị bên phải để dễ tra cứu.</p>
                     </div>
                 </div>
 

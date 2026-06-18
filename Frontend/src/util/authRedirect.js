@@ -6,6 +6,8 @@ const PUBLIC_AUTH_PATHS = new Set([
   "/forgot-password",
   "/reset-password",
   "/activate",
+  "/about",
+  "/privacy",
 ]);
 
 const LOGIN_EXPIRED_ROUTE = "/login?expired=true";

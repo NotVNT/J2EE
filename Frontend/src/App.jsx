@@ -28,6 +28,8 @@ const Filter = lazy(() => import("./pages/Filter.jsx"));
 const Login = lazy(() => import("./pages/Login.jsx"));
 const Signup = lazy(() => import("./pages/Signup.jsx"));
 const LandingPage = lazy(() => import("./pages/LandingPage.jsx"));
+const Privacy = lazy(() => import("./pages/Privacy.jsx"));
+const About = lazy(() => import("./pages/About.jsx"));
 const Payment = lazy(() => import("./pages/Payment.jsx"));
 const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess.jsx"));
 const PaymentCancel = lazy(() => import("./pages/PaymentCancel.jsx"));
@@ -165,10 +167,12 @@ const App = () => {
     useEffect(() => {
         if (user) return;
 
-        const publicPaths = ["/", "/home", "/login", "/signup", "/forgot-password", "/reset-password", "/activate"];
+        const publicPaths = ["/", "/home", "/login", "/signup", "/forgot-password", "/reset-password", "/activate", "/about", "/privacy"];
         if (!publicPaths.includes(window.location.pathname)) {
             return;
         }
+
+        const noRedirectPaths = ["/about", "/privacy"];
 
         let cancelled = false;
         const checkSession = async () => {
@@ -176,7 +180,9 @@ const App = () => {
                 const response = await axiosConfig.get(API_ENDPOINTS.GET_USER_INFO, { _skipGlobalLoading: true });
                 if (!cancelled && response.data) {
                     setUser(response.data);
-                    navigate(getPostAuthRedirectPath(response.data));
+                    if (!noRedirectPaths.includes(window.location.pathname)) {
+                        navigate(getPostAuthRedirectPath(response.data));
+                    }
                 }
             } catch {
                 // Fail silently for guests
@@ -195,6 +201,8 @@ const App = () => {
                 <Routes>
                     <Route path="/" element={<Root />} />
                     <Route path="/home" element={<LandingPage />} />
+                    <Route path="/privacy" element={<Privacy />} />
+                    <Route path="/about" element={<About />} />
                     <Route path="/dashboard" element={<Home />} />
                     <Route path="/income" element={<Income />} />
                     <Route path="/expense" element={<Expense />} />

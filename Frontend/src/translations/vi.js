@@ -9,6 +9,7 @@ const vi = {
     userFallback: "Người dùng",
     upgradePremium: "Nâng cấp lên Premium",
     unlockAllAi: "Mở khoá tất cả tính năng AI",
+    goToDashboard: "Vào Dashboard",
     sidebar: {
       overview: "Tổng quan",
       category: "Danh mục",
@@ -712,9 +713,14 @@ const vi = {
 
   landing: {
     homeTitle: "Trang chủ",
+    about: "Giới thiệu",
     tagline: "Quản lý tài chính thông minh",
     ctaLogin: "Đăng nhập",
     ctaSignup: "Bắt đầu miễn phí",
+  },
+
+  privacy: {
+    title: "Chính sách bảo mật",
   },
 
   footer: {
