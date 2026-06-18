@@ -79,6 +79,7 @@
 | Notifications | react-hot-toast | 2.6 |
 | Emoji Picker | emoji-picker-react | 4.18 |
 | Date | moment.js | 2.30 |
+| i18n | Custom hook (`useTranslation`) | Tiếng Việt / English |
 
 **Frontend Tests**: Node built-in test runner (`node --test`) cho unit tests utility functions.
 
@@ -91,6 +92,7 @@
 | Navigation | React Navigation (bottom tab + native stack) | 7 |
 | Local Storage | AsyncStorage | 2.1 |
 | HTTP | Axios | 1.13 |
+| i18n | i18next + react-i18next + expo-localization | Tiếng Việt / English |
 
 ---
 
@@ -270,6 +272,33 @@ Trung tâm thông báo hệ thống (ngân sách vượt mức, đăng ký sắp
 
 ---
 
+## Đa Ngôn Ngữ (i18n)
+
+Hỗ trợ **Tiếng Việt** và **English** trên cả Web và Mobile.
+
+| Platform | Cơ chế | File dịch |
+|---|---|---|
+| Frontend | Custom `useTranslation` hook + `LanguageContext` | `src/translations/vi.js`, `src/translations/en.js` |
+| Mobile | `i18next` + `react-i18next` + `expo-localization` | `src/locales/vi.json`, `src/locales/en.json` |
+
+- Người dùng chuyển ngôn ngữ qua **LanguageToggle** trên navbar (Web) hoặc trong **Settings** (Mobile)
+- Mobile tự phát hiện ngôn ngữ thiết bị khi khởi động lần đầu
+- Tùy chọn ngôn ngữ được lưu vào `localStorage` (Web) / `AsyncStorage` (Mobile)
+
+---
+
+## Trang Công Khai
+
+| Trang | Đường dẫn | Mô tả |
+|---|---|---|
+| Landing Page | `/home` | Trang chủ giới thiệu sản phẩm, bảng giá |
+| Giới thiệu | `/about` | Giới thiệu tính năng và liên kết chính sách bảo mật |
+| Chính sách bảo mật | `/privacy` | Chính sách thu thập, sử dụng và bảo vệ dữ liệu |
+
+Các trang này không yêu cầu đăng nhập. Nếu người dùng đã đăng nhập, navbar hiển thị nút **"Vào Dashboard"** thay cho nút Đăng ký / Đăng nhập.
+
+---
+
 ## Các Tiện Ích Khác
 
 - **Xuất Excel** (`BASIC+`): Báo cáo thu/chi đa sheet, màu sắc phân loại (Apache POI)
@@ -278,7 +307,7 @@ Trung tâm thông báo hệ thống (ngân sách vượt mức, đăng ký sắp
 - **Báo cáo Email** (`BASIC+`): Gửi qua Brevo SMTP, template HTML
 - **Low Performance Mode**: Tắt animation trên thiết bị yếu
 - **Admin Dashboard** (`/admin`): Quản lý người dùng, thống kê doanh thu, broadcast thông báo
-- **React Native Mobile App**: Bottom tab navigation, đồng bộ 100% với Web
+- **React Native Mobile App**: Bottom tab navigation, đồng bộ 100% với Web, đa ngôn ngữ (Việt/Anh)
 
 ---
 
@@ -396,17 +425,26 @@ J2EE/
 │       ├── dto/             # Data Transfer Objects
 │       ├── entity/          # JPA Entities (MySQL) + Enums
 │       ├── repository/      # Spring Data JPA repositories
-│       ├── service/         # 32 services (business logic)
+│       ├── service/         # 34 services (business logic)
 │       ├── security/        # JWT filter, UserPrincipal
 │       ├── util/            # AIInstructionPromptBuilder, parsers
 │       ├── event/           # Application events
 │       └── exception/       # Custom exceptions
 ├── Frontend/
 │   └── src/
-│       ├── pages/           # 23 page components
+│       ├── pages/           # 24 page components (incl. About, Privacy)
 │       ├── components/      # Shared UI components
-│       ├── context/         # React contexts
+│       ├── context/         # React contexts (incl. LanguageContext)
+│       ├── translations/    # i18n dictionaries (vi.js, en.js)
+│       ├── hooks/           # Custom hooks (useTranslation, usePageTitle...)
 │       └── util/            # API endpoints, helpers, tests
 └── Mobile/
-    └── (React Native / Expo)
+    └── src/
+        ├── screens/         # Màn hình theo nhóm (auth, finance, insights, profile...)
+        ├── components/      # UI components
+        ├── hooks/           # Custom hooks
+        ├── contexts/        # React contexts (Auth, AppAlert)
+        ├── i18n/            # i18next config
+        ├── locales/         # i18n dictionaries (vi.json, en.json)
+        └── navigation/      # MainTabs, AppNavigator
 ```
