@@ -1,23 +1,27 @@
 import React from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { COLORS, useAppColors } from "../../constants/colors";
-import { CategoryVectorIcon, getIconLabel } from "../../utils/categoryIcons";
+import { CategoryVectorIcon, getIconColor, getIconLocaleKey } from "../../utils/categoryIcons";
 import CategoryTypeSegmentedControl from "./CategoryTypeSegmentedControl";
 
 export default function CategoryForm({
-  cancelLabel = "Hủy",
+  cancelLabel: cancelLabelProp,
   form,
   onCancel,
   onSave,
   saveLabel,
-  savingLabel = "Đang lưu...",
+  savingLabel: savingLabelProp,
   subtitle,
   title,
   variant = "card"
 }) {
   const colors = useAppColors();
+  const { t } = useTranslation();
   const isModal = variant === "modal";
   const containerStyle = isModal ? styles.modalBody : styles.formCard;
+  const cancelLabel = cancelLabelProp || t("categoryForm.cancel");
+  const savingLabel = savingLabelProp || t("categoryForm.saving");
 
   return (
     <View style={[containerStyle, { backgroundColor: colors.CARD }, !isModal && { borderColor: colors.CARD_BORDER, shadowColor: colors.TEXT }]}> 
@@ -26,26 +30,26 @@ export default function CategoryForm({
         <Text style={[isModal ? styles.modalSubTitle : styles.formSubtitle, { color: colors.TEXT_SECONDARY }]}>{subtitle}</Text>
       ) : null}
 
-      <Text style={[styles.inputLabel, { color: colors.TEXT }]}>Tên danh mục</Text>
+      <Text style={[styles.inputLabel, { color: colors.TEXT }]}>{t("categoryForm.nameLabel")}</Text>
       <TextInput
         style={[styles.input, { backgroundColor: colors.BG, borderColor: colors.CARD_BORDER, color: colors.TEXT }]}
         value={form.name}
         onChangeText={form.setName}
-        placeholder="Ví dụ: Ăn uống"
+        placeholder={t("categoryForm.namePlaceholder")}
         placeholderTextColor={colors.TEXT_MUTED}
       />
 
-      <Text style={[styles.inputLabel, { color: colors.TEXT }]}>Loại danh mục</Text>
+      <Text style={[styles.inputLabel, { color: colors.TEXT }]}>{t("categoryForm.typeLabel")}</Text>
       <CategoryTypeSegmentedControl value={form.type} onChange={form.setType} />
 
       {form.hint ? <Text style={[styles.hintText, { color: colors.TEXT_SECONDARY }]}>{form.hint}</Text> : null}
 
-      <Text style={[styles.inputLabel, { color: colors.TEXT }]}>Icon</Text>
+      <Text style={[styles.inputLabel, { color: colors.TEXT }]}>{t("categoryForm.iconLabel")}</Text>
       <Pressable style={[styles.iconPickerTrigger, { backgroundColor: colors.BG, borderColor: `${colors.PRIMARY_LIGHT}50` }]} onPress={() => form.setIsIconPickerOpen(true)}>
         <View style={[styles.iconPickerPreview, { backgroundColor: colors.ROSE_MIST }]}> 
           <CategoryVectorIcon iconValue={form.icon} size={22} />
         </View>
-        <Text style={[styles.iconPickerLabel, { color: colors.TEXT }]}>{getIconLabel(form.icon)}</Text>
+        <Text style={[styles.iconPickerLabel, { color: colors.TEXT }]}>{t(getIconLocaleKey(form.icon)) || t("categoryForm.selectIcon", { label: t(`categoryForm.${form.type || "expense"}`) })}</Text>
         <Text style={[styles.iconPickerChevron, { color: colors.TEXT_MUTED }]}>›</Text>
       </Pressable>
 

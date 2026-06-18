@@ -1,11 +1,13 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { LinearGradient } from "expo-linear-gradient";
 import { COLORS, useAppColors } from "../../constants/colors";
 import { formatJarMoney } from "../../utils/jar";
 
 export default function JarOverview({ jarCount, maxJars, totalBalance, totalPercentage }) {
   const colors = useAppColors();
+  const { t } = useTranslation();
 
   return (
     <LinearGradient
@@ -15,22 +17,22 @@ export default function JarOverview({ jarCount, maxJars, totalBalance, totalPerc
       style={[styles.overviewContainer, { shadowColor: colors.WALLET_GRADIENT_START || '#7C4DFF' }]}
     >
       <View style={[styles.overviewBox, { borderBottomColor: 'rgba(255,255,255,0.2)' }]}> 
-        <Text style={[styles.overviewLabel, { color: 'rgba(255,255,255,0.8)' }]}>Tổng số dư hũ</Text>
+        <Text style={[styles.overviewLabel, { color: 'rgba(255,255,255,0.8)' }]}>{t("jarOverview.totalBalance")}</Text>
         <Text style={[styles.overviewBalance, { color: '#FFFFFF' }]}>{formatJarMoney(totalBalance)}</Text>
       </View>
       <View style={styles.overviewRow}>
         <View style={[styles.smallOverviewBox, { marginRight: 8, backgroundColor: 'rgba(255,255,255,0.15)' }]}> 
-          <Text style={[styles.overviewLabel, { color: 'rgba(255,255,255,0.8)' }]}>Số hũ đang dùng</Text>
+          <Text style={[styles.overviewLabel, { color: 'rgba(255,255,255,0.8)' }]}>{t("jarOverview.jarsInUse")}</Text>
           <Text style={[styles.overviewValue, { color: '#FFFFFF' }]}>{jarCount} / {maxJars === Infinity ? "∞" : maxJars}</Text>
         </View>
         <View style={[styles.smallOverviewBox, { backgroundColor: 'rgba(255,255,255,0.15)' }]}> 
-          <Text style={[styles.overviewLabel, { color: 'rgba(255,255,255,0.8)' }]}>Tổng phân bổ %</Text>
+          <Text style={[styles.overviewLabel, { color: 'rgba(255,255,255,0.8)' }]}>{t("jarOverview.totalAllocation")}</Text>
           <Text style={[styles.overviewValue, { color: '#FFFFFF' }, totalPercentage > 100 && { color: '#FFD4B2' }]}>{totalPercentage.toFixed(1)}%</Text>
         </View>
       </View>
       {totalPercentage > 100 && (
         <View style={[styles.warningBanner, { backgroundColor: 'rgba(239,111,81,0.2)', borderColor: '#FFB84D' }]}> 
-          <Text style={[styles.warningText, { color: '#FFD4B2' }]}>🚨 Tổng tỉ lệ phân bổ đã vượt quá 100%! Vui lòng điều chỉnh lại tỉ lệ các hũ.</Text>
+          <Text style={[styles.warningText, { color: '#FFD4B2' }]}>{t("jarOverview.allocationOver100")}</Text>
         </View>
       )}
     </LinearGradient>

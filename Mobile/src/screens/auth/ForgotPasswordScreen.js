@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { useTranslation } from "react-i18next";
 import apiClient from "../../services/apiClient";
 import { API_ENDPOINTS } from "../../constants/api";
 import { getApiErrorMessage } from "../../utils/format";
@@ -15,24 +16,25 @@ import { scale, clampScale } from "../../utils/layoutScale";
 
 export default function ForgotPasswordScreen() {
   const navigation = useNavigation();
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [isFocusedEmail, setIsFocusedEmail] = useState(false);
 
   const showActivationOption = (activationEmail) => {
     Alert.alert(
-      "Tài khoản chưa được kích hoạt",
-      "Tài khoản này cần được xác thực OTP trước khi đặt lại mật khẩu.",
+      t("auth.common.activationRequiredTitle"),
+      t("auth.forgotPassword.activationMessage"),
       [
-        { text: "Để sau", style: "cancel" },
+        { text: t("auth.common.later"), style: "cancel" },
         {
-          text: "Xác thực OTP",
+          text: t("auth.common.verifyOtp"),
           onPress: async () => {
             try {
               await openActivationOtp(navigation, activationEmail);
             } catch (error) {
-              const message = getApiErrorMessage(error, "Không thể gửi lại mã OTP. Vui lòng thử lại.");
-              Alert.alert("Không thể gửi OTP", message);
+              const message = getApiErrorMessage(error, t("auth.common.resendOtpFailed"));
+              Alert.alert(t("auth.common.cannotResendOtp"), message);
             }
           }
         }
@@ -44,7 +46,7 @@ export default function ForgotPasswordScreen() {
     const normalizedEmail = email.trim();
 
     if (!normalizedEmail) {
-      Alert.alert("Thiếu email", "Vui lòng nhập email của bạn.");
+      Alert.alert(t("auth.forgotPassword.missingTitle"), t("auth.forgotPassword.missingEmail"));
       return;
     }
 
@@ -58,8 +60,8 @@ export default function ForgotPasswordScreen() {
         return;
       }
 
-      const message = getApiErrorMessage(error, "Không thể gửi yêu cầu. Vui lòng thử lại.");
-      Alert.alert("Thất bại", message);
+      const message = getApiErrorMessage(error, t("auth.forgotPassword.failedMessage"));
+      Alert.alert(t("auth.forgotPassword.failedTitle"), message);
     } finally {
       setLoading(false);
     }
@@ -79,8 +81,8 @@ export default function ForgotPasswordScreen() {
           <Image source={appLogo} style={styles.brandLogo} resizeMode="contain" />
         </View>
 
-        <Text style={styles.title}>Quên mật khẩu</Text>
-        <Text style={styles.subtitle}>Nhập email để nhận liên kết đặt lại mật khẩu.</Text>
+        <Text style={styles.title}>{t("auth.forgotPassword.title")}</Text>
+        <Text style={styles.subtitle}>{t("auth.forgotPassword.subtitle")}</Text>
 
         <View style={styles.formCard}>
           <View style={[styles.inputWrap, isFocusedEmail && { borderColor: COLORS.PRIMARY }]}>
@@ -90,7 +92,7 @@ export default function ForgotPasswordScreen() {
               onChangeText={setEmail}
               keyboardType="email-address"
               autoCapitalize="none"
-              placeholder="Nhập email"
+              placeholder={t("auth.common.enterEmail")}
               placeholderTextColor="#7f9085"
               onFocus={() => setIsFocusedEmail(true)}
               onBlur={() => setIsFocusedEmail(false)}
@@ -98,11 +100,11 @@ export default function ForgotPasswordScreen() {
           </View>
 
           <Pressable style={[styles.actionButton, loading && styles.actionButtonDisabled]} onPress={onSend} disabled={loading}>
-            <Text style={styles.actionButtonText}>{loading ? "Đang gửi..." : "Gửi yêu cầu"}</Text>
+            <Text style={styles.actionButtonText}>{loading ? t("auth.forgotPassword.sending") : t("auth.forgotPassword.sendRequest")}</Text>
           </Pressable>
 
           <Pressable style={styles.backButton} onPress={() => navigation.navigate("Login")}>
-            <Text style={styles.backButtonText}>Quay lại đăng nhập</Text>
+            <Text style={styles.backButtonText}>{t("auth.forgotPassword.backToLogin")}</Text>
           </Pressable>
         </View>
       </ScrollView>

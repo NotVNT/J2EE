@@ -8,6 +8,7 @@ import {
 } from "react-native";
 import { LineChart } from "react-native-chart-kit";
 import { useAppColors } from "../../constants/colors";
+import { useTranslation } from "react-i18next";
 import ForecastEmptyState from "./ForecastEmptyState";
 
 export default function ForecastTrendChart({
@@ -15,6 +16,7 @@ export default function ForecastTrendChart({
   lineChartData,
   isTrendLoading,
 }) {
+  const { t } = useTranslation();
   const colors = useAppColors();
   const { width: screenWidth } = useWindowDimensions();
   const chartWidth = Math.max(screenWidth - 48, 300);
@@ -43,7 +45,7 @@ export default function ForecastTrendChart({
   return (
     <View style={styles.section}>
       <Text style={[styles.sectionTitle, { color: colors.TEXT }]}> 
-        📈 Xu hướng: {categoryName}
+        {t("forecastComponents.trendChartTitle")}{categoryName}
       </Text>
       {isTrendLoading ? (
         <View style={styles.trendLoadingWrap}>
@@ -63,11 +65,11 @@ export default function ForecastTrendChart({
             yAxisSuffix="đ"
           />
           <Text style={[styles.trendNote, { color: colors.TEXT_MUTED }]}> 
-            Đường biểu diễn: chi tiêu thực tế 6 tháng gần nhất
+            {t("forecastComponents.trendNote")}
           </Text>
         </View>
       ) : (
-        <ForecastEmptyState message="Chưa đủ dữ liệu xu hướng cho danh mục này" />
+        <ForecastEmptyState message={t("forecastComponents.noTrendData")} />
       )}
     </View>
   );

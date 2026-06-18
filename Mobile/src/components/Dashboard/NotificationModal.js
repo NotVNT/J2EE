@@ -10,6 +10,7 @@ import {
   Text,
   View
 } from "react-native";
+import { useTranslation } from "react-i18next";
 import { API_ENDPOINTS } from "../../constants/api";
 import { COLORS, useAppColors } from "../../constants/colors";
 import apiClient from "../../services/apiClient";
@@ -24,23 +25,24 @@ import NotificationItem from "./NotificationItem";
 import AppIcon from "../ui/AppIcon";
 import { NotificationFilters, SelectionBar } from "./NotificationControls";
 
-function NotificationEmptyState({ colors, hasNotifications }) {
+function NotificationEmptyState({ colors, hasNotifications, t }) {
   return (
     <View style={styles.emptyState}>
       <View style={[styles.emptyIcon, { backgroundColor: colors.ROSE_MIST }]}>
         <Text style={styles.emptyIconText}>🔔</Text>
       </View>
-      <Text style={[styles.emptyTitle, { color: colors.TEXT }]}>Chưa có thông báo nào</Text>
+      <Text style={[styles.emptyTitle, { color: colors.TEXT }]}>{t("notificationModal.noNotifications")}</Text>
       <Text style={[styles.emptyMessage, { color: colors.TEXT_SECONDARY }]}>
         {hasNotifications
-          ? "Không có thông báo nào khớp với bộ lọc hiện tại."
-          : "Khi có cập nhật mới từ hệ thống, thông báo sẽ xuất hiện tại đây."}
+          ? t("notificationModal.noMatchFilter")
+          : t("notificationModal.emptyMessage")}
       </Text>
     </View>
   );
 }
 
 export default function NotificationModal({ visible, onClose, onUnreadCountChange }) {
+  const { t } = useTranslation();
   const colors = useAppColors();
   const { insets } = useDynamicViewport();
   const [notifications, setNotifications] = useState([]);
@@ -91,7 +93,7 @@ export default function NotificationModal({ visible, onClose, onUnreadCountChang
       setSelectedIds(new Set());
       updateUnreadCount(items);
     } catch {
-      setError("Không thể tải thông báo. Vui lòng thử lại.");
+      setError(t("notificationModal.fetchError"));
       setNotifications([]);
       setSelectedIds(new Set());
     } finally {
@@ -118,7 +120,7 @@ export default function NotificationModal({ visible, onClose, onUnreadCountChang
     } catch {
       setNotifications(notifications);
       updateUnreadCount(notifications);
-      setError("Không thể cập nhật trạng thái thông báo.");
+      setError(t("notificationModal.updateError"));
     }
   }, [notifications, updateUnreadCount]);
 
@@ -135,7 +137,7 @@ export default function NotificationModal({ visible, onClose, onUnreadCountChang
     } catch {
       setNotifications(previousNotifications);
       updateUnreadCount(previousNotifications);
-      setError("Không thể đánh dấu tất cả là đã đọc.");
+      setError(t("notificationModal.markAllError"));
     }
   }, [notifications, unreadCount, updateUnreadCount]);
 
@@ -172,16 +174,16 @@ export default function NotificationModal({ visible, onClose, onUnreadCountChang
     } catch {
       setNotifications(previousNotifications);
       updateUnreadCount(previousNotifications);
-      setError(ids.length === 1 ? "Không thể xóa thông báo." : "Không thể xóa các thông báo đã chọn.");
+      setError(ids.length === 1 ? t("notificationModal.deleteSingleError") : t("notificationModal.deleteBulkError"));
     }
   }, [notifications, updateUnreadCount]);
 
   const confirmDeleteNotification = useCallback((notification) => {
     if (!notification?.id) return;
 
-    Alert.alert("Xóa thông báo?", "Thông báo này sẽ được xóa khỏi hộp thư của bạn.", [
-      { text: "Hủy", style: "cancel" },
-      { text: "Xóa", style: "destructive", onPress: () => deleteNotificationsByIds([notification.id]) }
+    Alert.alert(t("notificationModal.deleteTitle"), t("notificationModal.deleteMessage"), [
+      { text: t("notificationModal.cancel"), style: "cancel" },
+      { text: t("notificationModal.delete"), style: "destructive", onPress: () => deleteNotificationsByIds([notification.id]) }
     ]);
   }, [deleteNotificationsByIds]);
 
@@ -190,11 +192,11 @@ export default function NotificationModal({ visible, onClose, onUnreadCountChang
 
     const ids = Array.from(selectedIds);
     Alert.alert(
-      "Xóa thông báo đã chọn?",
-      `Bạn đang chọn ${selectedCount} thông báo. Hành động này không thể hoàn tác.`,
+      t("notificationModal.deleteSelectedTitle"),
+      t("notificationModal.deleteSelectedMessage", { count: selectedCount }),
       [
-        { text: "Hủy", style: "cancel" },
-        { text: "Xóa", style: "destructive", onPress: () => deleteNotificationsByIds(ids) }
+        { text: t("notificationModal.cancel"), style: "cancel" },
+        { text: t("notificationModal.delete"), style: "destructive", onPress: () => deleteNotificationsByIds(ids) }
       ]
     );
   }, [deleteNotificationsByIds, selectedCount, selectedIds]);
@@ -202,24 +204,24 @@ export default function NotificationModal({ visible, onClose, onUnreadCountChang
   return (
     <Modal visible={visible} transparent animationType="fade" statusBarTranslucent onRequestClose={onClose}>
       <View style={[styles.overlay, { paddingTop: Math.max(insets.top, scale(20)), paddingBottom: Math.max(insets.bottom, scale(20)) }]}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityRole="button" accessibilityLabel="Đóng thông báo" />
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityRole="button" accessibilityLabel={t("notificationModal.closeNotification")} />
 
         <View style={[styles.sheet, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]} pointerEvents="auto">
           <View style={[styles.header, { backgroundColor: colors.INFO_LIGHT }]}>
             <View style={styles.headerTitleBlock}>
-              <Text style={[styles.title, { color: colors.TEXT }]}>Thông báo</Text>
+              <Text style={[styles.title, { color: colors.TEXT }]}>{t("notificationModal.title")}</Text>
               <View style={styles.headerMetaRow}>
                 <Text style={[styles.headerMetaText, { color: colors.TEXT_SECONDARY }]}>
-                  {unreadCount > 0 ? `${unreadCount} thông báo chưa đọc` : "Đã đọc hết thông báo"}
+                  {unreadCount > 0 ? t("notificationModal.unreadCount", { count: unreadCount }) : t("notificationModal.allRead")}
                 </Text>
                 {unreadCount > 0 ? (
                   <Pressable style={[styles.markAllButton, { backgroundColor: colors.CARD }]} onPress={markAllAsRead}>
-                    <Text style={[styles.markAllText, { color: colors.PRIMARY }]}>Đọc tất cả</Text>
+                    <Text style={[styles.markAllText, { color: colors.PRIMARY }]}>{t("notificationModal.markAllRead")}</Text>
                   </Pressable>
                 ) : null}
               </View>
             </View>
-            <Pressable style={[styles.closeButton, { backgroundColor: colors.CARD }]} onPress={onClose} accessibilityRole="button" accessibilityLabel="Đóng">
+            <Pressable style={[styles.closeButton, { backgroundColor: colors.CARD }]} onPress={onClose} accessibilityRole="button" accessibilityLabel={t("notificationModal.close")}>
               <AppIcon name="close" size={20} color={colors.TEXT} />
             </Pressable>
           </View>
@@ -247,7 +249,7 @@ export default function NotificationModal({ visible, onClose, onUnreadCountChang
           {loading ? (
             <View style={styles.loadingWrap}>
               <ActivityIndicator color={colors.PRIMARY} />
-              <Text style={[styles.loadingText, { color: colors.TEXT_SECONDARY }]}>Đang tải thông báo...</Text>
+              <Text style={[styles.loadingText, { color: colors.TEXT_SECONDARY }]}>{t("notificationModal.loading")}</Text>
             </View>
           ) : (
             <FlatList
@@ -264,7 +266,7 @@ export default function NotificationModal({ visible, onClose, onUnreadCountChang
               )}
               contentContainerStyle={[styles.listContent, filteredNotifications.length === 0 && styles.emptyListContent]}
               refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchNotifications({ silent: true })} tintColor={colors.PRIMARY} colors={[colors.PRIMARY]} />}
-              ListEmptyComponent={<NotificationEmptyState colors={colors} hasNotifications={notifications.length > 0} />}
+              ListEmptyComponent={<NotificationEmptyState colors={colors} hasNotifications={notifications.length > 0} t={t} />}
             />
           )}
         </View>

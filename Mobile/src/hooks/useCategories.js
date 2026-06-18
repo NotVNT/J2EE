@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Alert } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
-import { SUCCESS_ALERT_MESSAGES, SUCCESS_ALERT_TITLE } from "../constants/alertMessages";
 import { useVisibleItems } from "../components/common/ShowMoreButton";
 import {
   createCategory,
@@ -11,6 +11,7 @@ import {
 } from "../services/categoryService";
 import { getApiErrorMessage } from "../utils/format";
 import { getFirstCategoryIcon } from "../utils/categoryIcons";
+
 
 const DEFAULT_TYPE = "income";
 
@@ -27,14 +28,15 @@ function hasDuplicateName(categories, name, ignoredCategoryId) {
   });
 }
 
-function getFormHint(type) {
+function getFormHint(type, t) {
   if (type === "income") {
-    return "Gợi ý: Lương, Freelance, Thưởng...";
+    return t("categoryForm.nameHint");
   }
-  return "Gợi ý: Ăn uống, Di chuyển, Giải trí...";
+  return t("categoryForm.nameHintExpense");
 }
 
 export default function useCategories() {
+  const { t } = useTranslation();
   const [categories, setCategories] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -51,7 +53,7 @@ export default function useCategories() {
   const [isEditIconPickerOpen, setIsEditIconPickerOpen] = useState(false);
   const [editingCategorySaving, setEditingCategorySaving] = useState(false);
 
-  const formHint = useMemo(() => getFormHint(type), [type]);
+  const formHint = useMemo(() => getFormHint(type, t), [type, t]);
 
   const {
     visibleItems: visibleCategories,
@@ -82,7 +84,7 @@ export default function useCategories() {
     try {
       await fetchCategories();
     } catch (error) {
-      Alert.alert("Lỗi", getApiErrorMessage(error, "Không tải được danh mục"));
+      Alert.alert(t("common.error"), getApiErrorMessage(error, t("categoryForm.loadFail")));
     } finally {
       setRefreshing(false);
     }
@@ -102,12 +104,12 @@ export default function useCategories() {
   const onSave = useCallback(async () => {
     const normalizedName = name.trim();
     if (!normalizedName) {
-      Alert.alert("Thiếu dữ liệu", "Vui lòng nhập tên danh mục.");
+      Alert.alert(t("categoryForm.missingDataTitle"), t("categoryForm.missingName"));
       return;
     }
 
     if (hasDuplicateName(categories, normalizedName)) {
-      Alert.alert("Trùng danh mục", "Tên danh mục đã tồn tại.");
+      Alert.alert(t("categoryForm.duplicateTitle"), t("categoryForm.duplicateMsg"));
       return;
     }
 
@@ -121,9 +123,9 @@ export default function useCategories() {
 
       resetCreateForm();
       await fetchCategories();
-      Alert.alert(SUCCESS_ALERT_TITLE, SUCCESS_ALERT_MESSAGES.create.category);
+      Alert.alert(t("common.success"), t("categoryForm.createSuccess"));
     } catch (error) {
-      Alert.alert("Lưu thất bại", getApiErrorMessage(error, "Không thể thêm danh mục"));
+      Alert.alert(t("categoryForm.saveFailTitle"), getApiErrorMessage(error, t("categoryForm.saveFailMsg")));
     } finally {
       setSaving(false);
     }
@@ -151,20 +153,20 @@ export default function useCategories() {
     (category) => {
       if (!category?.id) return;
       Alert.alert(
-        "Xóa danh mục",
-        `Bạn có chắc muốn xóa danh mục "${category.name}" không? Các giao dịch thuộc danh mục này sẽ không bị xóa.`,
+        t("categoryForm.deleteTitle"),
+        t("categoryForm.deleteConfirm", { name: category.name }),
         [
-          { text: "Hủy", style: "cancel" },
+          { text: t("commonComponents.cancel"), style: "cancel" },
           {
-            text: "Xóa",
+            text: t("commonComponents.delete"),
             style: "destructive",
             onPress: async () => {
               try {
                 await deleteCategory(category.id);
                 await fetchCategories();
-                Alert.alert(SUCCESS_ALERT_TITLE, SUCCESS_ALERT_MESSAGES.delete.category);
+                Alert.alert(t("common.success"), t("categoryForm.deleteSuccess"));
               } catch (error) {
-                Alert.alert("Xóa thất bại", getApiErrorMessage(error, "Không thể xóa danh mục này"));
+                Alert.alert(t("categoryForm.deleteFailTitle"), getApiErrorMessage(error, t("categoryForm.deleteFailMsg")));
               }
             }
           }
@@ -178,12 +180,12 @@ export default function useCategories() {
     if (!editingCategory?.id) return;
     const normalizedName = editName.trim();
     if (!normalizedName) {
-      Alert.alert("Thiếu dữ liệu", "Vui lòng nhập tên danh mục.");
+      Alert.alert(t("categoryForm.missingDataTitle"), t("categoryForm.missingName"));
       return;
     }
 
     if (hasDuplicateName(categories, normalizedName, editingCategory.id)) {
-      Alert.alert("Trùng danh mục", "Tên danh mục đã tồn tại.");
+      Alert.alert(t("categoryForm.duplicateTitle"), t("categoryForm.duplicateMsg"));
       return;
     }
 
@@ -196,9 +198,9 @@ export default function useCategories() {
       });
       await fetchCategories();
       onCloseEditCategory();
-      Alert.alert(SUCCESS_ALERT_TITLE, SUCCESS_ALERT_MESSAGES.update.category);
+      Alert.alert(t("common.success"), t("categoryForm.updateSuccess"));
     } catch (error) {
-      Alert.alert("Cập nhật thất bại", getApiErrorMessage(error, "Không thể cập nhật danh mục"));
+      Alert.alert(t("categoryForm.updateFailTitle"), getApiErrorMessage(error, t("categoryForm.updateFailMsg")));
       setEditingCategorySaving(false);
     }
   }, [categories, editIcon, editName, editType, editingCategory, fetchCategories, onCloseEditCategory]);

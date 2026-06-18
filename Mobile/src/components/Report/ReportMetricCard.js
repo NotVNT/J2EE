@@ -1,5 +1,6 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { Ionicons } from "@expo/vector-icons";
 import Svg, { Circle } from "react-native-svg";
 import { COLORS, useAppColors } from "../../constants/colors";
@@ -66,11 +67,12 @@ function GradeMeter({ grade }) {
 }
 
 function SpendingChangePill({ value, colors }) {
+  const { t } = useTranslation();
   const spendingChange = Math.round(Number(value || 0));
   const isIncrease = spendingChange > 0;
   const changeText = spendingChange === 0
-    ? "Chi tiêu tương đương"
-    : `Chi tiêu ${isIncrease ? "tăng" : "giảm"} ${Math.abs(spendingChange)}%`;
+    ? t("reportComponents.spendingEquivalent")
+    : (isIncrease ? t("reportComponents.spendingIncrease", { percent: Math.abs(spendingChange) }) : t("reportComponents.spendingDecrease", { percent: Math.abs(spendingChange) }));
 
   return (
     <View style={[styles.spendingPill, { backgroundColor: colors.BG }]}>
@@ -81,13 +83,13 @@ function SpendingChangePill({ value, colors }) {
         <Text style={[styles.spendingPillTitle, { color: colors.TEXT }]}>
           {changeText}
         </Text>
-        <Text style={[styles.spendingPillSub, { color: colors.TEXT_SECONDARY }]}>so với tháng trước</Text>
+        <Text style={[styles.spendingPillSub, { color: colors.TEXT_SECONDARY }]}>{t("dashboardComponents.vsLastMonth")}</Text>
       </View>
     </View>
   );
 }
 
-function MetricRow({ colors, label, value, prevValue, type }) {
+function MetricRow({ colors, t: translate, label, value, prevValue, type }) {
   const isIncome = type === "income";
   const color = isIncome ? colors.INCOME : colors.EXPENSE;
   const isSavings = type === "savings";
@@ -97,7 +99,7 @@ function MetricRow({ colors, label, value, prevValue, type }) {
       <View style={styles.metricLeft}>
         <Text style={[styles.metricLabel, { color: colors.TEXT }]}>{label}</Text>
         {prevValue !== undefined && (
-          <Text style={[styles.prevText, { color: colors.TEXT_MUTED }]}>Tháng trước: {formatMoney(prevValue)}</Text>
+          <Text style={[styles.prevText, { color: colors.TEXT_MUTED }]}>{translate("reportComponents.lastMonth")}{formatMoney(prevValue)}</Text>
         )}
       </View>
       <Text style={[styles.metricValue, { color: isSavings ? colors.PRIMARY : color }]}>
@@ -108,6 +110,7 @@ function MetricRow({ colors, label, value, prevValue, type }) {
 }
 
 export default function ReportMetricCard({ report }) {
+  const { t } = useTranslation();
   const colors = useAppColors();
   const gradeConfig = getGradeConfig(report.grade);
   const savingsRate = Math.round(normalizeSavingsRate(report.savingsRate));
@@ -119,7 +122,7 @@ export default function ReportMetricCard({ report }) {
         <View style={styles.gradeContent}>
           <View style={styles.gradeTopRow}>
             <Text style={[styles.gradeLabel, { color: gradeConfig.color }]}>
-              {report.gradeLabel || "Không xác định"}
+              {t(`reportComponents.grade${report.grade}`) || t("reportComponents.unknownGrade")}
             </Text>
             <View style={[styles.trendIconBox, { backgroundColor: gradeConfig.light }]}>
               <Ionicons
@@ -129,7 +132,7 @@ export default function ReportMetricCard({ report }) {
               />
             </View>
           </View>
-          <Text style={[styles.savingsCaption, { color: colors.TEXT_SECONDARY }]}>Tỷ lệ tiết kiệm</Text>
+          <Text style={[styles.savingsCaption, { color: colors.TEXT_SECONDARY }]}>{t("reportComponents.savingsRate")}</Text>
           <Text style={[styles.savingsRateText, { color: gradeConfig.color }]}>
             {savingsRate}%
           </Text>
@@ -140,12 +143,12 @@ export default function ReportMetricCard({ report }) {
       <View style={[styles.card, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}>
         <View style={styles.cardHeader}>
           <Ionicons name="bar-chart-outline" size={18} color={colors.PRIMARY} />
-          <Text style={[styles.cardTitle, { color: colors.TEXT }]}>Chỉ số tài chính</Text>
+          <Text style={[styles.cardTitle, { color: colors.TEXT }]}>{t("reportComponents.financialMetrics")}</Text>
         </View>
-        <MetricRow colors={colors} label="Tổng thu nhập" value={report.totalIncome} prevValue={report.prevMonthIncome} type="income" />
-        <MetricRow colors={colors} label="Tổng chi tiêu" value={report.totalExpense} prevValue={report.prevMonthExpense} type="expense" />
+        <MetricRow colors={colors} t={t} label={t("reportComponents.totalIncomeLabel")} value={report.totalIncome} prevValue={report.prevMonthIncome} type="income" />
+        <MetricRow colors={colors} t={t} label={t("reportComponents.totalExpenseLabel")} value={report.totalExpense} prevValue={report.prevMonthExpense} type="expense" />
         <View style={[styles.divider, { backgroundColor: colors.CARD_BORDER }]} />
-        <MetricRow colors={colors} label="Tiết kiệm tích lũy" value={report.savings} prevValue={report.prevMonthSavings} type="savings" />
+        <MetricRow colors={colors} t={t} label={t("reportComponents.accumulatedSavings")} value={report.savings} prevValue={report.prevMonthSavings} type="savings" />
       </View>
     </>
   );

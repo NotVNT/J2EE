@@ -1,15 +1,15 @@
 import React from "react";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS, useAppColors } from "../../constants/colors";
-import { INTENT_ICONS, INTENT_LABELS } from "../../utils/aiIntent";
-import appLogo from "../../assets/logo&banner/applogo.png";
-import AIConfirmationForm from "./AIConfirmationForm";
+import { clampScale, scale } from "../../utils/layoutScale";
+import AppIcon from "../ui/AppIcon";
 import MarkdownContent from "./MarkdownContent";
+import appLogo from "../../assets/logo&banner/applogo.png";
 
 function AssistantAvatar() {
   const colors = useAppColors();
-
   return (
     <View style={[styles.assistantAvatar, { backgroundColor: colors.ROSE_MIST, borderColor: colors.PRIMARY_LIGHT, shadowColor: colors.PRIMARY }]}>
       <Image source={appLogo} style={styles.assistantAvatarImage} resizeMode="cover" />
@@ -26,6 +26,7 @@ export default function MessageBubble({
   onRetry,
   isProcessing
 }) {
+  const { t } = useTranslation();
   const colors = useAppColors();
   const isUser = message.sender === "user";
   const isBot = message.sender === "bot";
@@ -43,7 +44,7 @@ export default function MessageBubble({
           onPress={() => onEditMessage(message)}
           hitSlop={8}
           accessibilityRole="button"
-          accessibilityLabel="Chỉnh sửa tin nhắn"
+          accessibilityLabel={t("chatbot.editMessage")}
         >
           <Ionicons name="create-outline" size={14} color={colors.TEXT_MUTED} />
         </Pressable>
@@ -75,7 +76,7 @@ export default function MessageBubble({
           {message.isIntent && message.isConfirmation ? (
             <View style={styles.confirmedStatusWrapper}>
               <Text style={styles.confirmedStatusText}>
-                {INTENT_ICONS[message.intent] || "✅"} {INTENT_LABELS[message.intent]} đã được xử lý
+                {INTENT_ICONS[message.intent] || "✅"} {INTENT_LABELS[message.intent]} {t("chatbot.operationSuccess")}
               </Text>
             </View>
           ) : null}
@@ -86,7 +87,7 @@ export default function MessageBubble({
               <Pressable style={styles.undoBtn} onPress={() => onUndo(message.operationId)}>
                 <View style={styles.btnIconRow}>
                   <Ionicons name="arrow-undo-outline" size={14} color="#4cdad9" />
-                  <Text style={styles.undoBtnText}> Hoàn tác</Text>
+                  <Text style={styles.undoBtnText}> {t("chatbot.undoSuccess")}</Text>
                 </View>
               </Pressable>
             </View>
@@ -109,10 +110,10 @@ export default function MessageBubble({
               style={styles.retryBtn}
               onPress={onRetry}
               accessibilityRole="button"
-              accessibilityLabel="Thử lại tin nhắn"
+              accessibilityLabel={t("chatbot.retryMessage")}
             >
               <Ionicons name="refresh-outline" size={14} color={colors.PRIMARY} />
-              <Text style={[styles.retryBtnText, { color: colors.PRIMARY }]}> Thử lại</Text>
+              <Text style={[styles.retryBtnText, { color: colors.PRIMARY }]}> {t("chatbot.retryMessage")}</Text>
             </Pressable>
           ) : null}
         </View>

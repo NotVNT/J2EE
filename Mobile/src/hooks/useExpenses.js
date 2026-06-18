@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { Alert } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useFocusEffect } from "@react-navigation/native";
-import { SUCCESS_ALERT_MESSAGES, SUCCESS_ALERT_TITLE } from "../constants/alertMessages";
 import { deleteExpenseById, exportExpenseReport, fetchExpensesByFilter, parseExpenseVoice } from "../services/expenseService";
 import { getApiErrorMessage } from "../utils/format";
 
@@ -11,6 +11,7 @@ export const EXPENSE_FILTER_TYPES = {
 };
 
 export default function useExpenses() {
+  const { t } = useTranslation();
   const [expenses, setExpenses] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [filterType, setFilterType] = useState(EXPENSE_FILTER_TYPES.current);
@@ -28,7 +29,7 @@ export default function useExpenses() {
     try {
       await fetchExpenses();
     } catch (error) {
-      Alert.alert("Lỗi", getApiErrorMessage(error, "Không tải được danh sách chi tiêu"));
+      Alert.alert(t("common.error"), getApiErrorMessage(error, t("expenseCommon.loadFail")));
     } finally {
       setRefreshing(false);
     }
@@ -38,18 +39,18 @@ export default function useExpenses() {
     async (id) => {
       if (!id) return;
 
-      Alert.alert("Xác nhận", "Bạn có chắc muốn xóa khoản chi này?", [
-        { text: "Hủy", style: "cancel" },
+      Alert.alert(t("commonComponents.confirm"), t("expenseCommon.deleteConfirm"), [
+        { text: t("commonComponents.cancel"), style: "cancel" },
         {
-          text: "Xóa",
+          text: t("commonComponents.delete"),
           style: "destructive",
           onPress: async () => {
             try {
               await deleteExpenseById(id);
               await fetchExpenses();
-              Alert.alert(SUCCESS_ALERT_TITLE, SUCCESS_ALERT_MESSAGES.delete.expense);
+              Alert.alert(t("common.success"), t("expenseCommon.deleteSuccess"));
             } catch (error) {
-              Alert.alert("Xóa thất bại", getApiErrorMessage(error, "Không thể xóa khoản chi này"));
+              Alert.alert(t("expenseCommon.deleteFailTitle"), getApiErrorMessage(error, t("expenseCommon.deleteFailMsg")));
             }
           }
         }
@@ -71,7 +72,7 @@ export default function useExpenses() {
         onParsed?.(data);
       }
     } catch (error) {
-      Alert.alert("Lỗi AI", getApiErrorMessage(error, "Không thể phân tích nội dung giọng nói"));
+      Alert.alert(t("expenseCommon.aiErrorTitle"), getApiErrorMessage(error, t("expenseCommon.aiErrorMsg")));
     }
   }, []);
 
@@ -80,7 +81,7 @@ export default function useExpenses() {
     try {
       await exportExpenseReport(filterType);
     } catch (error) {
-      Alert.alert("Lỗi xuất file", getApiErrorMessage(error, "Không thể xuất báo cáo"));
+      Alert.alert(t("expenseCommon.exportFailTitle"), getApiErrorMessage(error, t("expenseCommon.exportFailMsg")));
     } finally {
       setIsExporting(false);
     }

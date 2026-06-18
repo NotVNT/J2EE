@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 import { LANGUAGES } from "../../constants/languages";
 import { COLORS, useAppColors } from "../../constants/colors";
 
 export default function LanguageSelector({ visible, selectedLanguageCode, onClose, onApply }) {
   const colors = useAppColors();
+  const { t } = useTranslation();
   const isDark = colors.BG === "#0F0D0C";
   const [draftLanguageCode, setDraftLanguageCode] = useState(selectedLanguageCode);
 
@@ -22,7 +24,7 @@ export default function LanguageSelector({ visible, selectedLanguageCode, onClos
       <View style={styles.overlay}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
         <View style={[styles.selector, { backgroundColor: colors.CARD, shadowColor: colors.SHADOW_COLOR || "#000" }]}> 
-          <Text style={[styles.title, { color: colors.TEXT }]}>Chọn ngôn ngữ của bạn</Text>
+          <Text style={[styles.title, { color: colors.TEXT }]}>{t("language.selectorTitle")}</Text>
 
           <View style={[styles.optionPanel, { backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "#EAF6EF" }]}> 
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.optionList}>
@@ -45,7 +47,7 @@ export default function LanguageSelector({ visible, selectedLanguageCode, onClos
                     <Text style={styles.flag}>{language.flag}</Text>
                     <View style={styles.optionTextWrap}>
                       <Text style={[styles.optionTitle, { color: colors.TEXT }]}>{language.label}</Text>
-                      <Text style={[styles.optionSubtitle, { color: colors.TEXT_SECONDARY }]}>{language.subtitle}</Text>
+                      <Text style={[styles.optionSubtitle, { color: colors.TEXT_SECONDARY }]}>{t(language.subtitleKey)}</Text>
                     </View>
                     <View
                       style={[
@@ -64,7 +66,7 @@ export default function LanguageSelector({ visible, selectedLanguageCode, onClos
             </ScrollView>
 
             <Pressable style={({ pressed }) => [styles.applyButton, pressed && styles.applyButtonPressed]} onPress={handleApply}>
-              <Text style={styles.applyButtonText}>Áp dụng</Text>
+              <Text style={styles.applyButtonText}>{t("common.apply")}</Text>
             </Pressable>
           </View>
         </View>

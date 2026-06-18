@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
 import { View, Text, StyleSheet, Dimensions } from "react-native";
+import { useTranslation } from "react-i18next";
 import { LineChart } from "react-native-chart-kit";
 import { COLORS, useAppColors } from "../../constants/colors";
 
@@ -7,6 +8,7 @@ const screenWidth = Dimensions.get("window").width;
 
 const IncomeExpenseChart = ({ data, title, colorPrimary }) => {
   const colors = useAppColors();
+  const { t } = useTranslation();
   const chartData = useMemo(() => {
     if (!data || data.length === 0) return null;
 
@@ -41,7 +43,7 @@ const IncomeExpenseChart = ({ data, title, colorPrimary }) => {
   if (!chartData) {
     return (
       <View style={[styles.emptyContainer, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}>
-        <Text style={[styles.emptyText, { color: colors.TEXT_SECONDARY }]}>Chưa có dữ liệu để vẽ biểu đồ.</Text>
+        <Text style={[styles.emptyText, { color: colors.TEXT_SECONDARY }]}>{t("chartComponents.noData")}</Text>
       </View>
     );
   }

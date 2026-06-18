@@ -1,12 +1,12 @@
-export const MONTH_LABELS = [
-  "Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6",
-  "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"
-];
+import i18n from "i18next";
 
-export const SHORT_MONTH_LABELS = [
-  "T1", "T2", "T3", "T4", "T5", "T6",
-  "T7", "T8", "T9", "T10", "T11", "T12"
-];
+export function getMonthLabel(index) {
+  return i18n.t(`forecastComponents.month${index + 1}`);
+}
+
+export function getShortMonthLabel(index) {
+  return i18n.t(`forecastComponents.shortMonth${index + 1}`);
+}
 
 export function getForecastRequestKey(year, month, extra = "") {
   return extra ? `${year}-${month}-${extra}` : `${year}-${month}`;
@@ -19,7 +19,7 @@ export function buildMonthOptions(currentYear, currentMonth) {
     options.push({
       month: date.getMonth() + 1,
       year: date.getFullYear(),
-      label: `${MONTH_LABELS[date.getMonth()]} ${date.getFullYear()}`
+      label: `${getMonthLabel(date.getMonth())} ${date.getFullYear()}`
     });
   }
   return options;
@@ -33,10 +33,10 @@ export function getMonthPickerState({ currentMonth, currentYear, selectedMonth, 
 
   return {
     isNextMonthSelected,
-    monthPickerLabel: `${MONTH_LABELS[selectedMonth - 1]} ${selectedYear}`,
+    monthPickerLabel: `${getMonthLabel(selectedMonth - 1)} ${selectedYear}`,
     monthPickerHint: isNextMonthSelected
-      ? "Dự báo cho tháng tiếp theo"
-      : `Dự báo cho tháng ${selectedMonth}/${selectedYear}`
+      ? i18n.t("forecastComponents.forecastNextMonth")
+      : i18n.t("forecastComponents.forecastForMonth", { month: selectedMonth, year: selectedYear })
   };
 }
 
@@ -83,7 +83,7 @@ export function buildTrendLineChartData(categoryTrend) {
     labels: points.map((point) => {
       const parts = (point?.yearMonth || "").split("-");
       const month = parseInt(parts[1] || "0", 10);
-      return month >= 1 && month <= 12 ? SHORT_MONTH_LABELS[month - 1] : "";
+      return month >= 1 && month <= 12 ? getShortMonthLabel(month - 1) : "";
     }),
     datasets: [
       {

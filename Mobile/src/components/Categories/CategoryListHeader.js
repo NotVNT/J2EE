@@ -1,10 +1,12 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { COLORS, useAppColors } from "../../constants/colors";
 import ShowMoreButton from "../common/ShowMoreButton";
 
 export default function CategoryListHeader({ canExpand, hasCategories, onToggle, showAll }) {
   const colors = useAppColors();
+  const { t } = useTranslation();
 
   if (!hasCategories) {
     return null;
@@ -12,7 +14,7 @@ export default function CategoryListHeader({ canExpand, hasCategories, onToggle,
 
   return (
     <View style={styles.listHeader}>
-      <Text style={[styles.listTitle, { color: colors.TEXT }]}>Danh mục gần đây</Text>
+      <Text style={[styles.listTitle, { color: colors.TEXT }]}>{t("recentCategories.title")}</Text>
       <ShowMoreButton visible={canExpand} expanded={showAll} onPress={onToggle} />
     </View>
   );

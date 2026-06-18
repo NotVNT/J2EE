@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text } from "react-native";
+import { useTranslation } from "react-i18next";
 import { COLORS, useAppColors } from "../../constants/colors";
 
 export function useVisibleItems(items, options = {}) {
@@ -53,11 +54,12 @@ export default function ShowMoreButton({
   expanded = false,
   onPress,
   label,
-  moreLabel = "Xem thêm",
-  lessLabel = "Thu gọn",
+  moreLabel,
+  lessLabel,
   style,
   textStyle
 }) {
+  const { t } = useTranslation();
   const colors = useAppColors();
 
   if (!visible) return null;
@@ -68,7 +70,7 @@ export default function ShowMoreButton({
       style={({ pressed }) => [styles.button, pressed && styles.buttonPressed, style]}
       accessibilityRole="button"
     >
-      <Text style={[styles.text, { color: colors.PRIMARY }, textStyle]}>{label || (expanded ? lessLabel : moreLabel)}</Text>
+      <Text style={[styles.text, { color: colors.PRIMARY }, textStyle]}>{label || (expanded ? lessLabel || t("commonComponents.viewLess") : moreLabel || t("commonComponents.viewMore"))}</Text>
     </Pressable>
   );
 }

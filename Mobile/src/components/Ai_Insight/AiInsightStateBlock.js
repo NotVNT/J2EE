@@ -1,17 +1,19 @@
 import React from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useAppColors } from "../../constants/colors";
 import AppIcon from "../ui/AppIcon";
 import { scale } from "../../utils/layoutScale";
 
 export default function AiInsightStateBlock({ error, loading, onRetry }) {
   const colors = useAppColors();
+  const { t } = useTranslation();
 
   if (loading) {
     return (
       <View style={[styles.stateBox, { backgroundColor: colors.BG, borderColor: colors.CARD_BORDER }]}>
         <ActivityIndicator size="large" color={colors.PRIMARY} />
-        <Text style={[styles.stateText, { color: colors.TEXT_SECONDARY }]}>Đang phân tích...</Text>
+        <Text style={[styles.stateText, { color: colors.TEXT_SECONDARY }]}>{t("aiInsightStateBlock.analyzing")}</Text>
       </View>
     );
   }
@@ -32,7 +34,7 @@ export default function AiInsightStateBlock({ error, loading, onRetry }) {
         ]} 
         onPress={onRetry}
       >
-        <Text style={[styles.retryBtnText, { color: colors.PRIMARY }]}>Thử lại</Text>
+        <Text style={[styles.retryBtnText, { color: colors.PRIMARY }]}>{t("aiInsightStateBlock.retry")}</Text>
       </Pressable>
     </View>
   );

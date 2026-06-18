@@ -1,10 +1,11 @@
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { COLORS, useAppColors } from "../../constants/colors";
 import AppIcon from "../ui/AppIcon";
 import { clampScale, scale } from "../../utils/layoutScale";
 
-function formatRelativeTime(value) {
+function formatRelativeTime(value, t) {
   if (!value) return "";
 
   const date = new Date(value);
@@ -16,12 +17,12 @@ function formatRelativeTime(value) {
   const diffHours = Math.floor(diffMinutes / 60);
   const diffDays = Math.floor(diffHours / 24);
 
-  if (diffMinutes < 1) return "Vừa xong";
-  if (diffMinutes < 60) return `${diffMinutes} phút trước`;
-  if (diffHours < 24) return `${diffHours} giờ trước`;
-  if (diffDays === 1) return "Hôm qua";
+  if (diffMinutes < 1) return t("notificationItem.justNow");
+  if (diffMinutes < 60) return t("notificationItem.minutesAgo", { count: diffMinutes });
+  if (diffHours < 24) return t("notificationItem.hoursAgo", { count: diffHours });
+  if (diffDays === 1) return t("notificationItem.yesterday");
 
-  return `${diffDays} ngày trước`;
+  return t("notificationItem.daysAgo", { count: diffDays });
 }
 
 function getTypeMeta(type, colors) {
@@ -48,8 +49,8 @@ function getTypeMeta(type, colors) {
 }
 
 export default function NotificationItem({ item, onDelete, onPress, onToggleSelect, selected }) {
+  const { t } = useTranslation();
   const colors = useAppColors();
-  const meta = getTypeMeta(item?.type, colors);
   const unread = !item?.isRead;
 
   return (
@@ -71,36 +72,32 @@ export default function NotificationItem({ item, onDelete, onPress, onToggleSele
         }}
         accessibilityRole="checkbox"
         accessibilityState={{ checked: selected }}
-        accessibilityLabel={selected ? "Bỏ chọn thông báo" : "Chọn thông báo"}
+        accessibilityLabel={selected ? t("notificationItem.deselect") : t("notificationItem.select")}
       >
         {selected ? <AppIcon name="checkmark" size={12} color={COLORS.WHITE} /> : null}
       </Pressable>
 
-      <View style={[styles.itemIcon, { backgroundColor: meta.bg }]}>
-        <Text style={[styles.itemIconText, { color: meta.color }]}>{meta.icon}</Text>
-      </View>
-
       <View style={styles.itemBody}>
         <View style={styles.itemTitleRow}>
           <Text style={[styles.itemTitle, { color: colors.TEXT }, unread && styles.itemTitleUnread]} numberOfLines={2}>
-            {item?.title || "Thông báo"}
+            {item?.title || t("notificationItem.defaultTitle")}
           </Text>
           {unread ? <View style={[styles.unreadDot, { backgroundColor: colors.PRIMARY }]} /> : null}
         </View>
         <Text style={[styles.itemMessage, { color: colors.TEXT_SECONDARY }]} numberOfLines={3}>
           {item?.message || ""}
         </Text>
-        <Text style={[styles.itemTime, { color: colors.TEXT_MUTED }]}>{formatRelativeTime(item?.createdAt)}</Text>
+        <Text style={[styles.itemTime, { color: colors.TEXT_MUTED }]}>{formatRelativeTime(item?.createdAt, t)}</Text>
       </View>
 
       <Pressable
-        style={[styles.deleteItemButton, { backgroundColor: colors.EXPENSE_LIGHT }]}
+        style={styles.deleteItemButton}
         onPress={(event) => {
           event?.stopPropagation?.();
           onDelete(item);
         }}
         accessibilityRole="button"
-        accessibilityLabel="Xóa thông báo"
+        accessibilityLabel={t("notificationItem.deleteAccessibility")}
       >
         <AppIcon name="trash-outline" size={16} color={colors.EXPENSE} />
       </Pressable>
@@ -165,11 +162,7 @@ const styles = StyleSheet.create({
     fontWeight: "700"
   },
   deleteItemButton: {
-    width: scale(32),
-    aspectRatio: 1,
-    borderRadius: scale(12),
-    alignItems: "center",
-    justifyContent: "center",
+    padding: scale(4),
     marginLeft: scale(10)
   },
   selectButton: {

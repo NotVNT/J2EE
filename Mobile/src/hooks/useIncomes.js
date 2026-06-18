@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { Alert } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useFocusEffect } from "@react-navigation/native";
-import { SUCCESS_ALERT_MESSAGES, SUCCESS_ALERT_TITLE } from "../constants/alertMessages";
 import { deleteIncomeById, exportIncomeReport, fetchIncomesByFilter, parseIncomeVoice } from "../services/incomeService";
 import { getApiErrorMessage } from "../utils/format";
 
@@ -11,6 +11,7 @@ export const INCOME_FILTER_TYPES = {
 };
 
 export default function useIncomes() {
+  const { t } = useTranslation();
   const [incomes, setIncomes] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [filterType, setFilterType] = useState(INCOME_FILTER_TYPES.current);
@@ -28,7 +29,7 @@ export default function useIncomes() {
     try {
       await fetchIncomes();
     } catch (error) {
-      Alert.alert("Lỗi", getApiErrorMessage(error, "Không tải được danh sách thu nhập"));
+      Alert.alert(t("common.error"), getApiErrorMessage(error, t("incomeCommon.loadFail")));
     } finally {
       setRefreshing(false);
     }
@@ -38,18 +39,18 @@ export default function useIncomes() {
     async (id) => {
       if (!id) return;
 
-      Alert.alert("Xác nhận", "Bạn có chắc muốn xóa khoản thu này?", [
-        { text: "Hủy", style: "cancel" },
+      Alert.alert(t("commonComponents.confirm"), t("incomeCommon.deleteConfirm"), [
+        { text: t("commonComponents.cancel"), style: "cancel" },
         {
-          text: "Xóa",
+          text: t("commonComponents.delete"),
           style: "destructive",
           onPress: async () => {
             try {
               await deleteIncomeById(id);
               await fetchIncomes();
-              Alert.alert(SUCCESS_ALERT_TITLE, SUCCESS_ALERT_MESSAGES.delete.income);
+              Alert.alert(t("common.success"), t("incomeCommon.deleteSuccess"));
             } catch (error) {
-              Alert.alert("Xóa thất bại", getApiErrorMessage(error, "Không thể xóa khoản thu này"));
+              Alert.alert(t("incomeCommon.deleteFailTitle"), getApiErrorMessage(error, t("incomeCommon.deleteFailMsg")));
             }
           }
         }
@@ -71,7 +72,7 @@ export default function useIncomes() {
         onParsed?.(data);
       }
     } catch (error) {
-      Alert.alert("Lỗi AI", getApiErrorMessage(error, "Không thể phân tích nội dung giọng nói"));
+      Alert.alert(t("incomeCommon.aiErrorTitle"), getApiErrorMessage(error, t("incomeCommon.aiErrorMsg")));
     }
   }, []);
 
@@ -80,7 +81,7 @@ export default function useIncomes() {
     try {
       await exportIncomeReport(filterType);
     } catch (error) {
-      Alert.alert("Lỗi xuất file", getApiErrorMessage(error, "Không thể xuất báo cáo"));
+      Alert.alert(t("incomeCommon.exportFailTitle"), getApiErrorMessage(error, t("incomeCommon.exportFailMsg")));
     } finally {
       setIsExporting(false);
     }

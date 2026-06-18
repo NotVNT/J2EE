@@ -1,6 +1,7 @@
 import React from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 import PasswordChangeFields from "../../components/Profile/PasswordChangeFields";
 import ProfileAvatarPicker from "../../components/Profile/ProfileAvatarPicker";
 import ProfileInfoFields from "../../components/Profile/ProfileInfoFields";
@@ -12,14 +13,15 @@ import ScreenBackHeader from "../../components/common/ScreenBackHeader";
 export default function EditProfileScreen() {
   const insets = useSafeAreaInsets();
   const colors = useAppColors();
+  const { t } = useTranslation();
   const form = useEditProfileForm();
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.BG }]} contentContainerStyle={[styles.content, getSafeAreaContentStyle(insets)]}>
-      <ScreenBackHeader title="Chỉnh sửa hồ sơ" />
+      <ScreenBackHeader title={t("editProfile.title")} />
       <View style={[styles.card, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}>
-        <Text style={[styles.title, { color: colors.TEXT }]}>Chỉnh sửa hồ sơ</Text>
-        <Text style={[styles.subtitle, { color: colors.TEXT_SECONDARY }]}>Cập nhật thông tin cá nhân và mật khẩu theo nhu cầu của bạn.</Text>
+        <Text style={[styles.title, { color: colors.TEXT }]}>{t("editProfile.title")}</Text>
+        <Text style={[styles.subtitle, { color: colors.TEXT_SECONDARY }]}>{t("editProfile.subtitle")}</Text>
 
         <ProfileAvatarPicker
           fullName={form.fullName}
@@ -51,7 +53,7 @@ export default function EditProfileScreen() {
           onPress={form.onSave}
           disabled={form.saving}
         >
-          <Text style={styles.saveButtonText}>{form.saving ? "Đang lưu..." : "Lưu thay đổi"}</Text>
+          <Text style={styles.saveButtonText}>{form.saving ? t("editProfile.saving") : t("editProfile.save")}</Text>
         </Pressable>
       </View>
     </ScrollView>

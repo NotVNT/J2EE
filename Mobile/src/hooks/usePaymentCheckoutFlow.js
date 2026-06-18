@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import { Alert, Linking } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import {
   buildPaymentResultParams,
@@ -8,6 +9,7 @@ import {
 } from "../utils/paymentUrl";
 
 export default function usePaymentCheckoutFlow() {
+  const { t } = useTranslation();
   const navigation = useNavigation();
   const route = useRoute();
   const webViewRef = useRef(null);
@@ -48,7 +50,7 @@ export default function usePaymentCheckoutFlow() {
       await Linking.openURL(url);
       return true;
     } catch {
-      Alert.alert("Không mở được liên kết", "Ứng dụng không thể mở liên kết thanh toán bên ngoài.");
+      Alert.alert(t("paymentCheckout.unableOpenLinkTitle"), t("paymentCheckout.unableOpenLinkMsg"));
       return true;
     }
   }, [moveToResultScreen]);
@@ -66,7 +68,7 @@ export default function usePaymentCheckoutFlow() {
 
     if (isExternalPaymentScheme(url)) {
       Linking.openURL(url).catch(() => {
-        Alert.alert("Không mở được liên kết", "Ứng dụng không thể mở liên kết thanh toán bên ngoài.");
+        Alert.alert(t("paymentCheckout.unableOpenLinkTitle"), t("paymentCheckout.unableOpenLinkMsg"));
       });
       return false;
     }
@@ -97,7 +99,7 @@ export default function usePaymentCheckoutFlow() {
 
   const handleWebViewError = useCallback(() => {
     setIsPageLoading(false);
-    Alert.alert("Tải trang thất bại", "Không thể tải cổng thanh toán. Bạn vui lòng thử lại.");
+    Alert.alert(t("paymentCheckout.pageLoadFailTitle"), t("paymentCheckout.pageLoadFailMsg"));
   }, []);
 
   return {

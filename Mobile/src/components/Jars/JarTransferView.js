@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Alert, FlatList, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 import apiClient from "../../services/apiClient";
 import { API_ENDPOINTS } from "../../constants/api";
 import { useAppColors } from "../../constants/colors";
@@ -16,6 +17,7 @@ export default function JarTransferView() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const colors = useAppColors();
+  const { t } = useTranslation();
 
   const [jars, setJars] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -48,7 +50,7 @@ export default function JarTransferView() {
       }
     } catch (err) {
       console.error("Lỗi tải hũ để chuyển khoản:", err);
-      Alert.alert("Lỗi", getApiErrorMessage(err, "Không thể tải danh sách hũ chi tiêu."));
+      Alert.alert(t("jarTransfer.errorLoadTitle"), getApiErrorMessage(err, t("jarTransfer.errorLoadMsg")));
     } finally {
       setLoading(false);
     }
@@ -56,28 +58,28 @@ export default function JarTransferView() {
 
   const onTransfer = async () => {
     if (!fromJar) {
-      Alert.alert("Thiếu thông tin", "Vui lòng chọn hũ nguồn.");
+      Alert.alert(t("jarTransfer.missingFromTitle"), t("jarTransfer.missingFromMsg"));
       return;
     }
     if (!toJar) {
-      Alert.alert("Thiếu thông tin", "Vui lòng chọn hũ đích.");
+      Alert.alert(t("jarTransfer.missingToTitle"), t("jarTransfer.missingToMsg"));
       return;
     }
     if (fromJar.id === toJar.id) {
-      Alert.alert("Lỗi chọn hũ", "Hũ nguồn và hũ đích không được trùng nhau.");
+      Alert.alert(t("jarTransfer.sameJarTitle"), t("jarTransfer.sameJarMsg"));
       return;
     }
 
     const numericAmount = parseCurrencyInput(amount);
     if (!amount.trim() || numericAmount <= 0) {
-      Alert.alert("Số tiền không hợp lệ", "Vui lòng nhập số tiền chuyển > 0.");
+      Alert.alert(t("jarTransfer.invalidAmountTitle"), t("jarTransfer.invalidAmountMsg"));
       return;
     }
 
     if (numericAmount > (fromJar.currentBalance || 0)) {
       Alert.alert(
-        "Số dư không đủ",
-        `Số dư của hũ "${fromJar.name}" hiện tại là ${formatJarMoney(fromJar.currentBalance)}, không đủ để chuyển ${formatJarMoney(numericAmount)}.`
+        t("jarTransfer.insufficientTitle"),
+        t("jarTransfer.insufficientMsg", { from: fromJar.name, balance: formatJarMoney(fromJar.currentBalance), amount: formatJarMoney(numericAmount) })
       );
       return;
     }
@@ -91,11 +93,11 @@ export default function JarTransferView() {
       };
 
       await apiClient.post(API_ENDPOINTS.TRANSFER_JAR, payload);
-      Alert.alert("Thành công", `Đã chuyển khoản thành công ${formatJarMoney(numericAmount)} từ hũ "${fromJar.name}" sang hũ "${toJar.name}".`);
+      Alert.alert(t("jarTransfer.successTitle"), t("jarTransfer.successMsg", { amount: formatJarMoney(numericAmount), from: fromJar.name, to: toJar.name }));
       navigation.goBack();
     } catch (err) {
       console.error("Lỗi chuyển tiền hũ:", err);
-      Alert.alert("Thất bại", getApiErrorMessage(err, "Không thể thực hiện giao dịch chuyển tiền."));
+      Alert.alert(t("jarTransfer.failTitle"), getApiErrorMessage(err, t("jarTransfer.failMsg")));
     } finally {
       setSubmitting(false);
     }
@@ -128,7 +130,7 @@ export default function JarTransferView() {
       </View>
       <View style={styles.itemInfo}>
         <Text style={[styles.itemName, { color: colors.TEXT }]}>{item.name}</Text>
-        <Text style={[styles.itemBalance, { color: colors.TEXT_SECONDARY }]}>Số dư: {formatJarMoney(item.currentBalance)}</Text>
+        <Text style={[styles.itemBalance, { color: colors.TEXT_SECONDARY }]}>{t("jarTransfer.balance")}{formatJarMoney(item.currentBalance)}</Text>
       </View>
       <View style={[styles.colorIndicator, { backgroundColor: item.color || colors.PRIMARY }]} />
     </Pressable>
@@ -136,17 +138,17 @@ export default function JarTransferView() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.BG, paddingTop: getSafeAreaTop(insets) }]}>
-      <ScreenBackHeader title="Chuyển tiền ví phụ" style={styles.screenHeader} />
+      <ScreenBackHeader title={t("jarTransfer.title")} style={styles.screenHeader} />
       <ScrollView
         contentContainerStyle={[styles.scrollContent, { paddingBottom: getSafeAreaBottom(insets) + scale(100) }]}
         showsVerticalScrollIndicator={false}
       >
         <Text style={[styles.descText, { color: colors.TEXT_SECONDARY }]}>
-          Chuyển số dư linh hoạt giữa các hũ chi tiêu để cân đối hạn mức và nguồn vốn chi tiêu của bạn.
+          {t("jarTransfer.description")}
         </Text>
 
         {/* Source Jar Selector */}
-        <Text style={[styles.label, { color: colors.TEXT }]}>Từ hũ (Nguồn chuyển)</Text>
+        <Text style={[styles.label, { color: colors.TEXT }]}>{t("jarTransfer.fromLabel")}</Text>
         <Pressable style={[styles.selectorCard, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]} onPress={() => setShowFromPicker(true)}>
           {fromJar ? (
             <View style={styles.selectedRow}>
@@ -155,12 +157,12 @@ export default function JarTransferView() {
               </View>
               <View style={styles.selectedInfo}>
                 <Text style={[styles.selectedName, { color: colors.TEXT }]}>{fromJar.name}</Text>
-                <Text style={[styles.selectedBalance, { color: colors.TEXT_SECONDARY }]}>Số dư khả dụng: {formatJarMoney(fromJar.currentBalance)}</Text>
+                <Text style={[styles.selectedBalance, { color: colors.TEXT_SECONDARY }]}>{t("jarTransfer.availableBalance")}{formatJarMoney(fromJar.currentBalance)}</Text>
               </View>
               <AppIcon name="chevron-down" size={16} color={colors.TEXT_MUTED} />
             </View>
           ) : (
-            <Text style={[styles.placeholderText, { color: colors.TEXT_MUTED }]}>Chọn hũ nguồn...</Text>
+            <Text style={[styles.placeholderText, { color: colors.TEXT_MUTED }]}>{t("jarTransfer.fromPlaceholder")}</Text>
           )}
         </Pressable>
 
@@ -174,7 +176,7 @@ export default function JarTransferView() {
         </View>
 
         {/* Destination Jar Selector */}
-        <Text style={[styles.label, { color: colors.TEXT }]}>Đến hũ (Nhận chuyển)</Text>
+        <Text style={[styles.label, { color: colors.TEXT }]}>{t("jarTransfer.toLabel")}</Text>
         <Pressable style={[styles.selectorCard, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]} onPress={() => setShowToPicker(true)}>
           {toJar ? (
             <View style={styles.selectedRow}>
@@ -183,23 +185,23 @@ export default function JarTransferView() {
               </View>
               <View style={styles.selectedInfo}>
                 <Text style={[styles.selectedName, { color: colors.TEXT }]}>{toJar.name}</Text>
-                <Text style={[styles.selectedBalance, { color: colors.TEXT_SECONDARY }]}>Số dư khả dụng: {formatJarMoney(toJar.currentBalance)}</Text>
+                <Text style={[styles.selectedBalance, { color: colors.TEXT_SECONDARY }]}>{t("jarTransfer.availableBalance")}{formatJarMoney(toJar.currentBalance)}</Text>
               </View>
               <AppIcon name="chevron-down" size={16} color={colors.TEXT_MUTED} />
             </View>
           ) : (
-            <Text style={[styles.placeholderText, { color: colors.TEXT_MUTED }]}>Chọn hũ nhận...</Text>
+            <Text style={[styles.placeholderText, { color: colors.TEXT_MUTED }]}>{t("jarTransfer.toPlaceholder")}</Text>
           )}
         </Pressable>
 
         {/* Amount Input */}
-        <Text style={[styles.label, { color: colors.TEXT, marginTop: 24 }]}>Số tiền chuyển (VND)</Text>
+        <Text style={[styles.label, { color: colors.TEXT, marginTop: 24 }]}>{t("jarTransfer.amountLabel")}</Text>
         <TextInput
           style={[styles.amountInput, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER, color: colors.PRIMARY }]}
           value={amount}
           onChangeText={(val) => setAmount(formatCurrencyInput(val))}
           keyboardType="numeric"
-          placeholder="0"
+          placeholder={t("jarTransfer.amountPlaceholder")}
           placeholderTextColor={colors.TEXT_MUTED}
         />
 
@@ -209,7 +211,7 @@ export default function JarTransferView() {
           disabled={submitting || loading}
         >
           <Text style={styles.transferButtonText}>
-            {submitting ? "Đang xử lý..." : "Xác nhận chuyển tiền"}
+            {submitting ? t("jarTransfer.transferring") : t("jarTransfer.transfer")}
           </Text>
         </Pressable>
       </ScrollView>
@@ -219,9 +221,9 @@ export default function JarTransferView() {
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: colors.CARD }]}>
             <View style={[styles.modalHeader, { borderBottomColor: colors.CARD_BORDER }]}>
-              <Text style={[styles.modalTitle, { color: colors.TEXT }]}>Chọn hũ nguồn</Text>
+              <Text style={[styles.modalTitle, { color: colors.TEXT }]}>{t("jarTransfer.modalFromTitle")}</Text>
               <Pressable onPress={() => setShowFromPicker(false)}>
-                <Text style={[styles.closeBtn, { color: colors.PRIMARY }]}>Đóng</Text>
+                <Text style={[styles.closeBtn, { color: colors.PRIMARY }]}>{t("jarTransfer.close")}</Text>
               </Pressable>
             </View>
             <FlatList
@@ -229,7 +231,7 @@ export default function JarTransferView() {
               keyExtractor={(item) => String(item.id)}
               renderItem={(props) => renderJarSelectItem({ ...props, onSelect: handleSelectFrom })}
               contentContainerStyle={styles.modalList}
-              ListEmptyComponent={<Text style={[styles.emptyPickerText, { color: colors.TEXT_MUTED }]}>Không có hũ nào khả dụng</Text>}
+              ListEmptyComponent={<Text style={[styles.emptyPickerText, { color: colors.TEXT_MUTED }]}>{t("jarTransfer.emptyList")}</Text>}
             />
           </View>
         </View>
@@ -240,9 +242,9 @@ export default function JarTransferView() {
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: colors.CARD }]}>
             <View style={[styles.modalHeader, { borderBottomColor: colors.CARD_BORDER }]}>
-              <Text style={[styles.modalTitle, { color: colors.TEXT }]}>Chọn hũ nhận</Text>
+              <Text style={[styles.modalTitle, { color: colors.TEXT }]}>{t("jarTransfer.modalToTitle")}</Text>
               <Pressable onPress={() => setShowToPicker(false)}>
-                <Text style={[styles.closeBtn, { color: colors.PRIMARY }]}>Đóng</Text>
+                <Text style={[styles.closeBtn, { color: colors.PRIMARY }]}>{t("jarTransfer.close")}</Text>
               </Pressable>
             </View>
             <FlatList
@@ -250,7 +252,7 @@ export default function JarTransferView() {
               keyExtractor={(item) => String(item.id)}
               renderItem={(props) => renderJarSelectItem({ ...props, onSelect: handleSelectTo })}
               contentContainerStyle={styles.modalList}
-              ListEmptyComponent={<Text style={[styles.emptyPickerText, { color: colors.TEXT_MUTED }]}>Không có hũ nào khả dụng</Text>}
+              ListEmptyComponent={<Text style={[styles.emptyPickerText, { color: colors.TEXT_MUTED }]}>{t("jarTransfer.emptyList")}</Text>}
             />
           </View>
         </View>

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
+import { useTranslation } from "react-i18next";
 import { COLORS } from "../../constants/colors";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { scale, clampScale } from "../../utils/layoutScale";
@@ -8,6 +9,7 @@ import { scale, clampScale } from "../../utils/layoutScale";
 export default function SetupProfileScreen() {
   const navigation = useNavigation();
   const route = useRoute();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const email = route.params?.email || "";
 
@@ -33,7 +35,7 @@ export default function SetupProfileScreen() {
 
         <View style={styles.body}>
           <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Họ và tên (bắt buộc)</Text>
+            <Text style={styles.inputLabel}>{t("auth.setupProfile.fullNameRequired")}</Text>
             <View style={[styles.inputWrap, isFocused && styles.inputWrapFocused]}>
               <TextInput
                 style={styles.input}
@@ -41,7 +43,7 @@ export default function SetupProfileScreen() {
                 onChangeText={setFullName}
                 onFocus={() => setIsFocused(true)}
                 onBlur={() => setIsFocused(false)}
-                placeholder="Ví dụ: Nguyễn Văn A"
+                placeholder={t("auth.setupProfile.fullNamePlaceholder")}
                 placeholderTextColor={COLORS.DARK_TEXT_SECONDARY}
                 autoCapitalize="words"
                 autoCorrect={false}
@@ -60,7 +62,7 @@ export default function SetupProfileScreen() {
             disabled={!canProceed}
           >
             <Text style={[styles.nextButtonText, !canProceed && styles.nextButtonTextDisabled]}>
-              Tiếp theo
+              {t("auth.common.next")}
             </Text>
           </Pressable>
         </View>

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 import { LinearGradient } from "expo-linear-gradient";
 import { API_ENDPOINTS } from "../../constants/api";
 import { COLORS, useAppColors } from "../../constants/colors";
@@ -23,17 +24,18 @@ const WALLET_PURPLE = "#7C4DFF";
 const WALLET_DEEP_BLUE = "#3B82F6";
 
 const PAYMENT_BENEFITS = [
-  "Không bị giới hạn trải nghiệm quản lý tài chính",
-  "Theo dõi tài khoản, ngân sách, tiết kiệm và mục tiêu",
-  "Báo cáo rõ ràng để ra quyết định chi tiêu tốt hơn",
-  "Theo dõi trạng thái thanh toán ngay trong ứng dụng",
-  "Ưu tiên các tiện ích nâng cao cho tài khoản trả phí"
+  "payment.benefits.0",
+  "payment.benefits.1",
+  "payment.benefits.2",
+  "payment.benefits.3",
+  "payment.benefits.4"
 ];
 
 export default function PaymentScreen() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const colors = useAppColors();
+  const { t } = useTranslation();
   const [selectedPlanId, setSelectedPlanId] = useState(PAYMENT_PLANS.find((plan) => plan.featured)?.id || PAYMENT_PLANS[0]?.id || "premium");
   const [loading, setLoading] = useState(false);
 
@@ -45,7 +47,7 @@ export default function PaymentScreen() {
 
   const createPayment = async () => {
     if (!selectedPlan) {
-      Alert.alert("Thiếu thông tin", "Vui lòng chọn gói dịch vụ trước khi thanh toán.");
+      Alert.alert(t("payment.missingInfo"), t("payment.missingPlan"));
       return;
     }
 
@@ -54,22 +56,22 @@ export default function PaymentScreen() {
       const response = await createPaymentLink({
         planId: selectedPlan.id,
         amount: selectedPlan.amount,
-        description: `Thanh toán ${selectedPlan.displayName}`
+        description: `Payment ${t(selectedPlan.displayNameKey)}`
       });
 
       const checkoutUrl = response?.checkoutUrl;
       if (!checkoutUrl) {
-        Alert.alert("Tạo liên kết thành công", "Không tìm thấy liên kết để mở cổng thanh toán.");
+        Alert.alert(t("payment.createSuccess"), t("payment.missingLink"));
         return;
       }
 
       navigation.navigate("PaymentCheckout", {
         checkoutUrl,
         orderCode: response?.orderCode ? String(response.orderCode) : "",
-        planName: selectedPlan.displayName
+        planName: t(selectedPlan.displayNameKey)
       });
     } catch (error) {
-      Alert.alert("Tạo thanh toán thất bại", getApiErrorMessage(error, "Không thể tạo liên kết thanh toán."));
+      Alert.alert(t("payment.createFailed"), getApiErrorMessage(error, t("payment.createFailedMsg")));
     } finally {
       setLoading(false);
     }
@@ -81,17 +83,17 @@ export default function PaymentScreen() {
         <LinearGradient colors={[WALLET_PURPLE, WALLET_BLUE]} style={styles.heroIcon}>
           <Image source={APP_LOGO} style={styles.appLogo} resizeMode="contain" />
         </LinearGradient>
-        <Text style={[styles.title, { color: colors.TEXT }]}>Money Manager Premium</Text>
+        <Text style={[styles.title, { color: colors.TEXT }]}>{t("payment.title")}</Text>
         <Text style={[styles.subtitle, { color: colors.TEXT_SECONDARY }]}>
-          Chọn gói phù hợp để thanh toán và mở khóa trải nghiệm quản lý tài chính tốt hơn.
+          {t("payment.subtitle")}
         </Text>
       </View>
 
       <View style={styles.benefitList}>
-        {PAYMENT_BENEFITS.map((benefit) => (
-          <View key={benefit} style={styles.benefitRow}>
+        {PAYMENT_BENEFITS.map((benefitKey) => (
+          <View key={benefitKey} style={styles.benefitRow}>
             <AppIcon name="star" size={22} color={brandColor} />
-            <Text style={[styles.benefitText, { color: colors.TEXT }]}>{benefit}</Text>
+            <Text style={[styles.benefitText, { color: colors.TEXT }]}>{t(benefitKey)}</Text>
           </View>
         ))}
       </View>
@@ -126,33 +128,33 @@ export default function PaymentScreen() {
                 }
               ]}
             >
-              {plan.discountLabel ? (
+              {plan.discountLabelKey ? (
                 <View style={styles.ribbon}>
-                  <Text style={styles.ribbonText}>{plan.badge} {plan.discountLabel}</Text>
+                  <Text style={styles.ribbonText}>{t(plan.badgeKey)} {t(plan.discountLabelKey)}</Text>
                 </View>
               ) : null}
 
               <View style={styles.planTopRow}>
                 <View style={styles.planTitleBlock}>
-                  <Text style={[styles.planName, { color: textColor }]}>{plan.displayName}</Text>
-                  <Text style={[styles.planDescription, { color: secondaryTextColor }]}>{plan.description}</Text>
+                  <Text style={[styles.planName, { color: textColor }]}>{t(plan.displayNameKey)}</Text>
+                  <Text style={[styles.planDescription, { color: secondaryTextColor }]}>{t(plan.descriptionKey)}</Text>
                 </View>
                 <View style={styles.priceBlock}>
                   {plan.originalAmount ? (
                     <Text style={[styles.originalAmount, { color: colors.TEXT_MUTED }]}>{formatMoney(plan.originalAmount)}</Text>
                   ) : null}
                   <Text style={[styles.planAmount, { color: colors.TEXT }]}>{formatMoney(plan.amount)}</Text>
-                  <Text style={[styles.planCycle, { color: secondaryTextColor }]}>/ {plan.cycleLabel}</Text>
+                  <Text style={[styles.planCycle, { color: secondaryTextColor }]}>/ {t(plan.cycleLabelKey)}</Text>
                 </View>
               </View>
 
-              <View style={[styles.planDivider, { backgroundColor: isDarkMode ? colors.CARD_BORDER : "#D7EBFF" }]} />
+              <View style={[styles.planDivider, { backgroundColor: colors.CARD_BORDER }]} />
 
               <View style={styles.featureList}>
-                {plan.features.map((feature) => (
-                  <View key={feature} style={styles.featureRow}>
+                {plan.featuresKeys.map((featureKey) => (
+                  <View key={featureKey} style={styles.featureRow}>
                     <AppIcon name={premium ? "sparkles" : "checkmark-circle"} size={15} color={premium ? WALLET_BLUE : accentColor} />
-                    <Text style={[styles.featureText, { color: secondaryTextColor }]}>{feature}</Text>
+                    <Text style={[styles.featureText, { color: secondaryTextColor }]}>{t(featureKey)}</Text>
                   </View>
                 ))}
               </View>
@@ -162,7 +164,7 @@ export default function PaymentScreen() {
                   {active ? <View style={[styles.radioInner, { backgroundColor: accentColor }]} /> : null}
                 </View>
                 <Text style={[styles.selectText, { color: active ? accentColor : colors.TEXT_SECONDARY }]}>
-                  {active ? "Đang chọn gói này" : "Chạm để chọn gói"}
+                  {active ? t("payment.selectedPlan") : t("payment.tapToSelect")}
                 </Text>
               </View>
             </View>
@@ -171,7 +173,7 @@ export default function PaymentScreen() {
       })}
 
       <Text style={[styles.noteText, { color: colors.TEXT_SECONDARY }]}>
-        Lưu ý: Phí dịch vụ được thanh toán theo gói bạn chọn. Sau khi giao dịch thành công, quyền lợi Basic hoặc Premium sẽ được kích hoạt cho tài khoản trong ứng dụng. Nếu kết quả thanh toán chưa hiển thị ngay, vui lòng thoát ra và mở lại màn hình thanh toán sau ít phút để hệ thống kiểm tra giao dịch. Gói dịch vụ không tự động gia hạn; khi hết thời hạn, bạn có thể chủ động thanh toán lại để tiếp tục sử dụng các tính năng nâng cấp.
+        {t("payment.note")}
       </Text>
 
       <Pressable
@@ -180,9 +182,9 @@ export default function PaymentScreen() {
         disabled={loading}
       >
         <LinearGradient colors={[WALLET_PURPLE, WALLET_BLUE]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.buttonGradient}>
-          <Text style={styles.buttonText}>{loading ? "Đang xử lý..." : "Chuyển khoản ngân hàng"}</Text>
+          <Text style={styles.buttonText}>{loading ? t("payment.paying") : t("payment.bankTransfer")}</Text>
           <View style={styles.buttonPill}>
-            <Text style={styles.buttonPillText}>{selectedPlan?.displayName || "Gói đã chọn"}</Text>
+            <Text style={styles.buttonPillText}>{selectedPlan ? t(selectedPlan.displayNameKey) : t("payment.selected")}</Text>
           </View>
         </LinearGradient>
       </Pressable>

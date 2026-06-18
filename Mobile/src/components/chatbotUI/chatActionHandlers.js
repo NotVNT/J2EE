@@ -1,29 +1,30 @@
+import { useTranslation } from "react-i18next";
 import apiClient from "../../services/apiClient";
 import { API_ENDPOINTS } from "../../constants/api";
 
-const ACTION_CONFIG = {
+const ACTION_CONFIG = (t) => ({
   EXPORT_EXCEL_INCOME: {
     endpoint: API_ENDPOINTS.INCOME_EXCEL_DOWNLOAD,
-    message: "📥 Đã chuẩn bị báo cáo Excel thu nhập tháng này!"
+    message: t("chatbot.exportIncome")
   },
   EXPORT_EXCEL_EXPENSE: {
     endpoint: API_ENDPOINTS.EXPENSE_EXCEL_DOWNLOAD,
-    message: "📥 Đã chuẩn bị báo cáo Excel chi tiêu tháng này!"
+    message: t("chatbot.exportExpense")
   },
   EMAIL_INCOME_REPORT: {
     endpoint: API_ENDPOINTS.EMAIL_INCOME,
-    message: "📧 Đã gửi báo cáo thu nhập tháng này đến email của bạn!"
+    message: t("chatbot.emailIncome")
   },
   EMAIL_EXPENSE_REPORT: {
     endpoint: API_ENDPOINTS.EMAIL_EXPENSE,
-    message: "📧 Đã gửi báo cáo chi tiêu tháng này đến email của bạn!"
+    message: t("chatbot.emailExpense")
   }
-};
+});
 
-export async function executeExportAction(intent) {
-  const config = ACTION_CONFIG[intent];
+export async function executeExportAction(intent, t) {
+  const config = ACTION_CONFIG(t)[intent];
   if (!config) {
-    throw new Error("Không xác định được hành động.");
+    throw new Error(t("chatbot.unknownAction"));
   }
 
   await apiClient.get(config.endpoint);

@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { Pressable, StyleSheet, Text, View, Modal, ScrollView, TextInput } from "react-native";
+import { useTranslation } from "react-i18next";
 import { COLORS, useAppColors } from "../../constants/colors";
 import { CategoryVectorIcon, getIconColor } from "../../utils/categoryIcons";
 
@@ -9,13 +10,14 @@ export default function CategoryGridSelector({
   onSelect,
   onCreateNew,
   recentIds = [],
-  label = "Danh mục",
-  placeholder = "Chọn danh mục",
+  label,
+  placeholder,
   hintText,
   highlighted = false,
   loading = false,
-  emptyText = "Chưa có danh mục. Hãy tạo danh mục ở tab Danh mục.",
+  emptyText,
 }) {
+  const { t } = useTranslation();
   const colors = useAppColors();
   const [modalVisible, setModalVisible] = useState(false);
   const [searchText, setSearchText] = useState("");
@@ -50,12 +52,16 @@ export default function CategoryGridSelector({
     setSearchText("");
   };
 
+  const resolvedLabel = label || t("categoryGridSelector.label");
+  const resolvedPlaceholder = placeholder || t("categoryGridSelector.placeholder");
+  const resolvedEmptyText = emptyText || t("categoryGridSelector.emptyDefault");
+
   if (loading) {
     return (
-      <View style={[styles.row, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }, highlighted && styles.rowHighlighted, highlighted && { backgroundColor: colors.CARD, borderColor: colors.PRIMARY, shadowColor: colors.PRIMARY }]}> 
-        <Text style={[styles.rowLabel, { color: highlighted ? colors.PRIMARY : colors.TEXT }, highlighted && styles.rowLabelHighlighted]}>{label}</Text>
+      <View style={[styles.row, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }, highlighted && styles.rowHighlighted, highlighted && { backgroundColor: colors.CARD, borderColor: colors.PRIMARY, shadowColor: colors.PRIMARY }]}>
+        <Text style={[styles.rowLabel, { color: highlighted ? colors.PRIMARY : colors.TEXT }, highlighted && styles.rowLabelHighlighted]}>{resolvedLabel}</Text>
         <View style={styles.rowRight}>
-          <Text style={[styles.rowPlaceholder, { color: colors.TEXT_SECONDARY }]}>Đang tải...</Text>
+          <Text style={[styles.rowPlaceholder, { color: colors.TEXT_SECONDARY }]}>{t("categoryGridSelector.loading")}</Text>
         </View>
       </View>
     );
@@ -65,7 +71,7 @@ export default function CategoryGridSelector({
     <>
       <Pressable style={[styles.row, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }, highlighted && styles.rowHighlighted, highlighted && { backgroundColor: colors.CARD, borderColor: colors.PRIMARY, shadowColor: colors.PRIMARY }]} onPress={() => setModalVisible(true)}>
         <View style={styles.rowTextBlock}>
-          <Text style={[styles.rowLabel, { color: highlighted ? colors.PRIMARY : colors.TEXT }, highlighted && styles.rowLabelHighlighted]}>{label}</Text>
+          <Text style={[styles.rowLabel, { color: highlighted ? colors.PRIMARY : colors.TEXT }, highlighted && styles.rowLabelHighlighted]}>{resolvedLabel}</Text>
           {highlighted && hintText ? <Text style={[styles.rowHint, { color: colors.TEXT_SECONDARY }]}>{hintText}</Text> : null}
         </View>
         <View style={styles.rowRight}>
@@ -95,7 +101,7 @@ export default function CategoryGridSelector({
               <Text style={[styles.rowValue, { color: colors.PRIMARY }]}>{selectedCategory.name}</Text>
             </View>
           ) : (
-            <Text style={[styles.rowPlaceholder, { color: colors.TEXT_SECONDARY }]}>{placeholder}</Text>
+            <Text style={[styles.rowPlaceholder, { color: colors.TEXT_SECONDARY }]}>{resolvedPlaceholder}</Text>
           )}
           {highlighted && <Text style={[styles.rowChevron, { color: colors.PRIMARY }]}>›</Text>}
         </View>
@@ -110,14 +116,14 @@ export default function CategoryGridSelector({
         <Pressable style={styles.backdrop} onPress={handleClose}>
           <Pressable style={[styles.modal, { backgroundColor: colors.CARD }]} onPress={() => {}}>
             <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: colors.TEXT }]}>Chọn danh mục</Text>
-              
+              <Text style={[styles.modalTitle, { color: colors.TEXT }]}>{t("categoryGridSelector.title")}</Text>
+
             </View>
 
-            <View style={[styles.searchWrap, { backgroundColor: colors.BG }]}> 
+            <View style={[styles.searchWrap, { backgroundColor: colors.BG }]}>
               <TextInput
                 style={[styles.searchInput, { color: colors.TEXT }]}
-                placeholder="Tìm kiếm danh mục"
+                placeholder={t("categoryGridSelector.searchPlaceholder")}
                 placeholderTextColor={colors.TEXT_SECONDARY}
                 value={searchText}
                 onChangeText={setSearchText}
@@ -137,7 +143,7 @@ export default function CategoryGridSelector({
             >
               {recentCategories.length > 0 && (
                 <View style={styles.section}>
-                  <Text style={[styles.sectionTitle, { color: colors.TEXT_SECONDARY }]}>Gần đây</Text>
+                  <Text style={[styles.sectionTitle, { color: colors.TEXT_SECONDARY }]}>{t("categoryGridSelector.recentTitle")}</Text>
                   <ScrollView
                     horizontal
                     showsHorizontalScrollIndicator={false}
@@ -181,10 +187,10 @@ export default function CategoryGridSelector({
 
               <View style={styles.section}>
                 {!searchText && (
-                  <Text style={[styles.sectionTitle, { color: colors.TEXT_SECONDARY }]}>Tất cả danh mục</Text>
+                  <Text style={[styles.sectionTitle, { color: colors.TEXT_SECONDARY }]}>{t("categoryGridSelector.allTitle")}</Text>
                 )}
                 {filteredCategories.length === 0 ? (
-                  <Text style={[styles.emptyText, { color: colors.TEXT_SECONDARY }]}>{emptyText}</Text>
+                  <Text style={[styles.emptyText, { color: colors.TEXT_SECONDARY }]}>{resolvedEmptyText}</Text>
                 ) : (
                   filteredCategories.map((cat) => {
                     const isActive = String(cat.id) === String(selectedId);
@@ -247,7 +253,7 @@ export default function CategoryGridSelector({
                 }}
               >
                 <Text style={[styles.createBtnPlus, { color: colors.PRIMARY }]}>+</Text>
-                <Text style={[styles.createBtnText, { color: colors.PRIMARY }]}>Tạo danh mục mới</Text>
+                <Text style={[styles.createBtnText, { color: colors.PRIMARY }]}>{t("categoryGridSelector.createNew")}</Text>
               </Pressable>
             )}
           </Pressable>

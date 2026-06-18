@@ -1,5 +1,6 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { COLORS } from "../../constants/colors";
 
 function RequirementItem({ met, label }) {
@@ -17,25 +18,27 @@ function RequirementItem({ met, label }) {
  * @param {{ notTooLong, noPersonalInfo }} [props.extraMet] - extra "must not contain" checks
  */
 export default function PasswordRequirement({ req, extraMet }) {
+  const { t } = useTranslation();
+
   return (
     <View style={styles.section}>
       <View style={styles.row}>
         <View style={styles.col}>
-          <Text style={styles.title}>Phải chứa ít nhất</Text>
-          <RequirementItem met={req.hasNumber} label="1 số" />
-          <RequirementItem met={req.hasUppercase} label="1 chữ hoa" />
-          <RequirementItem met={req.hasLowercase} label="1 chữ thường" />
-          <RequirementItem met={req.hasSpecial} label="1 ký tự đặc biệt" />
-          <RequirementItem met={req.hasMinLength} label="8 ký tự" />
+          <Text style={styles.title}>{t("auth.password.mustContain")}</Text>
+          <RequirementItem met={req.hasNumber} label={t("auth.password.oneNumber")} />
+          <RequirementItem met={req.hasUppercase} label={t("auth.password.oneUppercase")} />
+          <RequirementItem met={req.hasLowercase} label={t("auth.password.oneLowercase")} />
+          <RequirementItem met={req.hasSpecial} label={t("auth.password.oneSpecial")} />
+          <RequirementItem met={req.hasMinLength} label={t("auth.password.eightChars")} />
         </View>
         <View style={styles.col}>
-          <Text style={styles.title}>Không được chứa</Text>
+          <Text style={styles.title}>{t("auth.password.mustNotContain")}</Text>
           <RequirementItem
             met={extraMet ? extraMet.notTooLong : req.notTooLong}
-            label="Hơn 256 ký tự"
+            label={t("auth.password.over256")}
           />
           {extraMet?.noPersonalInfo !== undefined && (
-            <RequirementItem met={extraMet.noPersonalInfo} label="Tên hoặc email của bạn" />
+            <RequirementItem met={extraMet.noPersonalInfo} label={t("auth.password.personalInfo")} />
           )}
         </View>
       </View>

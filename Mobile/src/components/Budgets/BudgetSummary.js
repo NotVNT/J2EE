@@ -1,15 +1,17 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { COLORS } from "../../constants/colors";
 import { formatMoney } from "../../utils/format";
 
 export default function BudgetSummary({ summary }) {
+  const { t } = useTranslation();
   return (
     <View style={styles.overviewCard}>
-      <Text style={styles.overviewTitle}>Ngân sách tháng</Text>
-      <Text style={styles.overviewLimit}>Hạn mức: {formatMoney(summary.totalLimit)}</Text>
-      <Text style={styles.overviewSpent}>Đã chi: {formatMoney(summary.totalSpent)}</Text>
-      <Text style={styles.overviewHint}>{summary.warningCount} mục đang gần/vượt hạn mức</Text>
+      <Text style={styles.overviewTitle}>{t("budgetSummary.monthlyBudget")}</Text>
+      <Text style={styles.overviewLimit}>{t("budgetSummary.limit")} {formatMoney(summary.totalLimit)}</Text>
+      <Text style={styles.overviewSpent}>{t("budgetSummary.spent")} {formatMoney(summary.totalSpent)}</Text>
+      <Text style={styles.overviewHint}>{t("budgetSummary.itemsNearLimit", { count: summary.warningCount })}</Text>
     </View>
   );
 }

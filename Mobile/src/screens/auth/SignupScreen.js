@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Alert, Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { useTranslation } from "react-i18next";
 import apiClient from "../../services/apiClient";
 import { API_ENDPOINTS } from "../../constants/api";
 import { getApiErrorMessage } from "../../utils/format";
@@ -15,24 +16,25 @@ import { scale, clampScale } from "../../utils/layoutScale";
 
 export default function SignupScreen() {
   const navigation = useNavigation();
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [isFocusedEmail, setIsFocusedEmail] = useState(false);
 
   const showActivationOption = (activationEmail) => {
     Alert.alert(
-      "Tài khoản chưa được kích hoạt",
-      "Email này đã được đăng ký nhưng chưa xác thực OTP. Bạn có muốn tiếp tục kích hoạt tài khoản không?",
+      t("auth.common.activationRequiredTitle"),
+      t("auth.signup.activationMessage"),
       [
-        { text: "Để sau", style: "cancel" },
+        { text: t("auth.common.later"), style: "cancel" },
         {
-          text: "Xác thực OTP",
+          text: t("auth.common.verifyOtp"),
           onPress: async () => {
             try {
               await openActivationOtp(navigation, activationEmail);
             } catch (error) {
-              const message = getApiErrorMessage(error, "Không thể gửi lại mã OTP. Vui lòng thử lại.");
-              Alert.alert("Không thể gửi OTP", message);
+              const message = getApiErrorMessage(error, t("auth.common.resendOtpFailed"));
+              Alert.alert(t("auth.common.cannotResendOtp"), message);
             }
           }
         }
@@ -44,7 +46,7 @@ export default function SignupScreen() {
     const normalizedEmail = email.trim();
 
     if (!normalizedEmail) {
-      Alert.alert("Thiếu thông tin", "Vui lòng nhập email.");
+      Alert.alert(t("auth.signup.missingTitle"), t("auth.signup.missingEmail"));
       return;
     }
 
@@ -61,8 +63,8 @@ export default function SignupScreen() {
         return;
       }
 
-      const message = getApiErrorMessage(error, "Không thể đăng ký. Vui lòng thử lại.");
-      Alert.alert("Đăng ký thất bại", message);
+      const message = getApiErrorMessage(error, t("auth.signup.failedMessage"));
+      Alert.alert(t("auth.signup.failedTitle"), message);
     } finally {
       setLoading(false);
     }
@@ -85,8 +87,8 @@ export default function SignupScreen() {
           <Image source={appLogo} style={styles.brandLogo} resizeMode="contain" />
         </View>
 
-        <Text style={styles.title}>Tạo tài khoản</Text>
-        <Text style={styles.subtitle}>Nhập email để bắt đầu.</Text>
+        <Text style={styles.title}>{t("auth.signup.title")}</Text>
+        <Text style={styles.subtitle}>{t("auth.signup.subtitle")}</Text>
 
         <View style={styles.formCard}>
           <View style={[styles.inputWrap, isFocusedEmail && { borderColor: COLORS.PRIMARY }]}>
@@ -96,7 +98,7 @@ export default function SignupScreen() {
               onChangeText={setEmail}
               keyboardType="email-address"
               autoCapitalize="none"
-              placeholder="Email"
+              placeholder={t("auth.common.email")}
               placeholderTextColor="#7f9085"
               onFocus={() => setIsFocusedEmail(true)}
               onBlur={() => setIsFocusedEmail(false)}
@@ -108,11 +110,11 @@ export default function SignupScreen() {
             onPress={onSubmit}
             disabled={loading}
           >
-            <Text style={styles.actionButtonText}>{loading ? "Đang xử lý..." : "Tiếp theo"}</Text>
+            <Text style={styles.actionButtonText}>{loading ? t("auth.common.processing") : t("auth.common.next")}</Text>
           </Pressable>
 
           <Pressable style={styles.backButton} onPress={() => navigation.navigate("Login")}>
-            <Text style={styles.backButtonText}>Đã có tài khoản? Đăng nhập</Text>
+            <Text style={styles.backButtonText}>{t("auth.signup.hasAccount")}</Text>
           </Pressable>
         </View>
       </ScrollView>

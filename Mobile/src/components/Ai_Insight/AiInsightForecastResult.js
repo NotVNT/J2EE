@@ -1,5 +1,6 @@
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useAppColors } from "../../constants/colors";
 import { formatInsightMoney, getTrendColor, getTrendText } from "./aiInsightFormatters";
 import AppIcon from "../ui/AppIcon";
@@ -8,6 +9,7 @@ import { scale } from "../../utils/layoutScale";
 
 export default function AiInsightForecastResult({ onClose, onConfirm, onRetry, result }) {
   const colors = useAppColors();
+  const { t } = useTranslation();
   const categories = result?.categories || [];
   const anomalies = result?.anomalies || [];
   const topRiskCategory = result?.topRiskCategory;
@@ -19,12 +21,12 @@ export default function AiInsightForecastResult({ onClose, onConfirm, onRetry, r
   return (
     <View style={styles.results}>
       <Text style={[styles.kicker, { color: colors.PRIMARY }]}>
-        Dự báo tháng {result.month}/{result.year}
+        {t("aiInsightForecastResult.forecastMonth", { month: result.month, year: result.year })}
       </Text>
 
       {/* Main Expected Expense Row */}
       <View style={[styles.totalRow, { backgroundColor: colors.BG, borderColor: colors.CARD_BORDER }]}>
-        <Text style={[styles.totalLabel, { color: colors.TEXT_SECONDARY }]}>Tổng chi tiêu dự kiến</Text>
+        <Text style={[styles.totalLabel, { color: colors.TEXT_SECONDARY }]}>{t("aiInsightForecastResult.totalExpectedExpense")}</Text>
         <Text style={[styles.totalValue, { color: colors.EXPENSE_COLOR || colors.EXPENSE }]}>
           {formatInsightMoney(result.totalPredictedExpense)}
         </Text>
@@ -35,10 +37,10 @@ export default function AiInsightForecastResult({ onClose, onConfirm, onRetry, r
         <View style={[styles.riskRow, { backgroundColor: colors.WARNING_LIGHT || "#FFF8E1", borderColor: colors.WARNING || "#FFE082" }]}>
           <AppIcon name="warning-outline" size={18} color={colors.WARNING || "#FFB84D"} style={styles.riskIcon} />
           <View style={styles.riskBody}>
-            <Text style={[styles.riskLabel, { color: colors.TEXT_SECONDARY }]}>Danh mục có nguy cơ tăng mạnh</Text>
+            <Text style={[styles.riskLabel, { color: colors.TEXT_SECONDARY }]}>{t("aiInsightForecastResult.categoriesAtRisk")}</Text>
             <Text style={[styles.riskName, { color: colors.TEXT }]}>{topRiskCategory.categoryName}</Text>
             <Text style={[styles.riskDetail, { color: colors.TEXT_MUTED }]}>
-              Dự kiến: {formatInsightMoney(topRiskCategory.predictedAmount)} · {getTrendText(topRiskCategory.trend)}
+              {t("aiInsightForecastResult.expected")} {formatInsightMoney(topRiskCategory.predictedAmount)} · {getTrendText(topRiskCategory.trend)}
             </Text>
           </View>
         </View>
@@ -49,7 +51,7 @@ export default function AiInsightForecastResult({ onClose, onConfirm, onRetry, r
         <View style={[styles.anomalyRow, { backgroundColor: colors.EXPENSE_LIGHT || "#FFEBEE", borderColor: colors.EXPENSE_COLOR || "#FFCDD2" }]}>
           <AppIcon name="alert-circle-outline" size={16} color={colors.EXPENSE_COLOR || colors.EXPENSE} style={styles.anomalyIcon} />
           <Text style={[styles.anomalyText, { color: colors.EXPENSE_COLOR || colors.EXPENSE }]}>
-            Phát hiện {anomalies.length} giao dịch bất thường
+            {t("aiInsightForecastResult.anomaliesCount", { count: anomalies.length })}
           </Text>
         </View>
       ) : null}
@@ -57,7 +59,7 @@ export default function AiInsightForecastResult({ onClose, onConfirm, onRetry, r
       {/* Categories Forecast List */}
       {categories.length > 0 ? (
         <View style={[styles.catSection, { backgroundColor: colors.BG, borderColor: colors.CARD_BORDER }]}>
-          <Text style={[styles.sectionTitle, { color: colors.TEXT }]}>Dự báo theo danh mục</Text>
+          <Text style={[styles.sectionTitle, { color: colors.TEXT }]}>{t("aiInsightForecastResult.forecastByCategory")}</Text>
           {categories.slice(0, 6).map((category, index) => (
             <View key={category.categoryId || index} style={[styles.catRow, { borderBottomColor: colors.CARD_BORDER }]}>
               <View style={[styles.dot, { backgroundColor: getTrendColor(category.trend) }]} />
@@ -73,7 +75,7 @@ export default function AiInsightForecastResult({ onClose, onConfirm, onRetry, r
         <View style={[styles.narrativeBox, { backgroundColor: colors.BG, borderColor: colors.CARD_BORDER }]}>
           <View style={styles.narrativeHeader}>
             <AppIcon name="sparkles-outline" size={14} color={colors.PRIMARY} style={{ marginRight: 6 }} />
-            <Text style={[styles.narrativeTitle, { color: colors.TEXT }]}>Phân tích AI</Text>
+            <Text style={[styles.narrativeTitle, { color: colors.TEXT }]}>{t("aiInsightForecastResult.aiAnalysis")}</Text>
           </View>
           <Text style={[styles.narrativeText, { color: colors.TEXT_SECONDARY }]}>{result.narrative}</Text>
         </View>
@@ -90,7 +92,7 @@ export default function AiInsightForecastResult({ onClose, onConfirm, onRetry, r
           ]} 
           onPress={onRetry}
         >
-          <Text style={[styles.reBtnText, { color: colors.PRIMARY }]}>Phân tích lại</Text>
+          <Text style={[styles.reBtnText, { color: colors.PRIMARY }]}>{t("aiInsightForecastResult.reAnalyze")}</Text>
         </Pressable>
         
         <Pressable 
@@ -106,7 +108,7 @@ export default function AiInsightForecastResult({ onClose, onConfirm, onRetry, r
             end={{ x: 1, y: 1 }}
             style={styles.confirmGradient}
           >
-            <Text style={styles.confirmBtnText}>Xác nhận</Text>
+            <Text style={styles.confirmBtnText}>{t("aiInsightForecastResult.confirm")}</Text>
           </LinearGradient>
         </Pressable>
       </View>

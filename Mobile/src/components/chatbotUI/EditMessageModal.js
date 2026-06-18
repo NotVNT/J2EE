@@ -10,6 +10,7 @@ import {
   Platform,
   ScrollView
 } from "react-native";
+import { useTranslation } from "react-i18next";
 import { COLORS, useAppColors } from "../../constants/colors";
 import { scale, clampScale } from "../../utils/layoutScale";
 
@@ -19,6 +20,7 @@ export default function EditMessageModal({
   message,
   onSave
 }) {
+  const { t } = useTranslation();
   const colors = useAppColors();
   const [editText, setEditText] = useState("");
 
@@ -55,12 +57,12 @@ export default function EditMessageModal({
             style={StyleSheet.absoluteFill}
             onPress={onClose}
             accessibilityRole="button"
-            accessibilityLabel="Đóng hộp thoại chỉnh sửa"
+            accessibilityLabel={t("chatbot.closeEdit")}
           />
 
           <View style={[styles.sheet, { backgroundColor: colors.BG, borderColor: colors.CARD_BORDER }]}>
             <View style={[styles.header, { borderBottomColor: colors.CARD_BORDER }]}>
-              <Text style={[styles.title, { color: colors.PRIMARY }]}>Chỉnh sửa tin nhắn</Text>
+              <Text style={[styles.title, { color: colors.PRIMARY }]}>{t("chatbot.editMessage")}</Text>
               <Pressable style={[styles.closeButton, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]} onPress={onClose}>
                 <Text style={[styles.closeText, { color: colors.TEXT }]}>×</Text>
               </Pressable>
@@ -72,7 +74,7 @@ export default function EditMessageModal({
                   style={[styles.textInput, { color: colors.TEXT }]}
                   value={editText}
                   onChangeText={setEditText}
-                  placeholder="Nhập nội dung tin nhắn mới..."
+                  placeholder={t("chatbot.editPlaceholder")}
                   placeholderTextColor={colors.TEXT_MUTED}
                   multiline
                   autoFocus
@@ -82,7 +84,7 @@ export default function EditMessageModal({
 
               <View style={styles.footer}>
                 <Pressable style={[styles.cancelBtn, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]} onPress={onClose}>
-                  <Text style={[styles.cancelBtnText, { color: colors.TEXT }]}>Hủy</Text>
+                  <Text style={[styles.cancelBtnText, { color: colors.TEXT }]}>{t("commonComponents.cancel")}</Text>
                 </Pressable>
                 <Pressable
                   style={[
@@ -93,7 +95,7 @@ export default function EditMessageModal({
                   onPress={handleSave}
                   disabled={!editText.trim()}
                 >
-                  <Text style={styles.saveBtnText}>Lưu & Gửi lại</Text>
+                  <Text style={styles.saveBtnText}>{t("chatbot.editMessage")}</Text>
                 </Pressable>
               </View>
             </ScrollView>

@@ -1,11 +1,13 @@
 import { useCallback, useMemo, useState } from "react";
 import { Alert } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useFocusEffect } from "@react-navigation/native";
 import { deleteExpenseById, fetchExpensesByFilter } from "../services/expenseService";
 import { deleteIncomeById, fetchIncomesByFilter } from "../services/incomeService";
 import { getApiErrorMessage } from "../utils/format";
 
 export default function useTransactionHistory() {
+  const { t } = useTranslation();
   const [allTransactions, setAllTransactions] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -30,7 +32,7 @@ export default function useTransactionHistory() {
       merged.sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
       setAllTransactions(merged);
     } catch (error) {
-      Alert.alert("Lỗi", getApiErrorMessage(error, "Không tải được lịch sử giao dịch"));
+      Alert.alert(t("common.error"), getApiErrorMessage(error, t("transactionHistory.loadFail")));
     } finally {
       setRefreshing(false);
     }
@@ -44,10 +46,10 @@ export default function useTransactionHistory() {
 
   const handleDelete = useCallback((item) => {
     const isIncome = item.type === "income";
-    Alert.alert("Xác nhận", `Bạn có chắc muốn xóa khoản ${isIncome ? "thu nhập" : "chi tiêu"} này?`, [
-      { text: "Hủy", style: "cancel" },
+    Alert.alert(t("commonComponents.confirm"), t("transactionHistory.deleteConfirm", { type: isIncome ? t("incomeItem.type") : t("expenseItem.type") }), [
+      { text: t("commonComponents.cancel"), style: "cancel" },
       {
-        text: "Xóa",
+        text: t("commonComponents.delete"),
         style: "destructive",
         onPress: async () => {
           try {
@@ -58,7 +60,7 @@ export default function useTransactionHistory() {
             }
             loadData();
           } catch (error) {
-            Alert.alert("Thất bại", getApiErrorMessage(error, "Không thể xóa giao dịch"));
+            Alert.alert(t("commonComponents.unexpectedError"), getApiErrorMessage(error, t("transactionHistory.deleteFailMsg")));
           }
         }
       }
@@ -152,13 +154,18 @@ export function buildDaysInMonth(currentMonth) {
   const month = currentMonth.getMonth();
   const firstDayIndex = new Date(year, month, 1).getDay();
   const totalDays = new Date(year, month + 1, 0).getDate();
+  const today = new Date();
   const days = [];
 
   for (let index = 0; index < firstDayIndex; index += 1) {
     days.push({ id: `empty-${index}`, day: null });
   }
   for (let day = 1; day <= totalDays; day += 1) {
-    days.push({ id: `day-${day}`, day });
+    const isToday =
+      today.getFullYear() === year &&
+      today.getMonth() === month &&
+      today.getDate() === day;
+    days.push({ id: `day-${day}`, day, isToday });
   }
   return days;
 }

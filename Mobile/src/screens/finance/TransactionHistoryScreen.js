@@ -2,6 +2,7 @@ import React, { useCallback } from "react";
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 import TransactionCalendarHeader from "../../components/Transactions/TransactionCalendarHeader";
 import TransactionGroup from "../../components/Transactions/TransactionGroup";
 import AppIcon from "../../components/ui/AppIcon";
@@ -13,6 +14,7 @@ export default function TransactionHistoryScreen() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const colors = useAppColors();
+  const { t } = useTranslation();
 
   const {
     activeType,
@@ -54,11 +56,13 @@ export default function TransactionHistoryScreen() {
     const hasIncome = activeType === "income" && dayTransactions.some((transaction) => transaction.type === "income");
     const hasExpense = activeType === "expense" && dayTransactions.some((transaction) => transaction.type === "expense");
     const isSelected = selectedDay === item.day;
+    const isToday = item.isToday;
 
     return (
       <Pressable
         style={[
           styles.calendarDayCell,
+          isToday && styles.calendarDayToday,
           isSelected && {
             backgroundColor: activeType === "expense" ? (colors.ACTION_EXPENSE || "#F97316") : (colors.ACTION_INCOME || "#22C55E"),
             borderRadius: 14
@@ -93,7 +97,7 @@ export default function TransactionHistoryScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.APP_BACKGROUND || "#F2F2F7", paddingTop: getSafeAreaTop(insets, 12) }]}>
       <View style={styles.topHeader}>
-        <Text style={[styles.headerTitle, { color: colors.TEXT }]}>Lịch sử</Text>
+        <Text style={[styles.headerTitle, { color: colors.TEXT }]}>{t("finance.history.title")}</Text>
         <View style={styles.headerActions}>
           <Pressable style={[styles.actionIcon, { backgroundColor: colors.CARD, borderColor: colors.BORDER }]} onPress={() => setShowSearch((previous) => !previous)}>
             <AppIcon name={showSearch ? "close" : "search-outline"} size={20} color={colors.TEXT} />
@@ -111,7 +115,7 @@ export default function TransactionHistoryScreen() {
             style={[styles.searchInput, { color: colors.TEXT }]}
             value={searchQuery}
             onChangeText={setSearchQuery}
-            placeholder="Tìm kiếm giao dịch..."
+            placeholder={t("finance.history.searchPlaceholder")}
             placeholderTextColor={colors.TEXT_MUTED}
           />
           {searchQuery ? (
@@ -134,8 +138,8 @@ export default function TransactionHistoryScreen() {
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <AppIcon name="document-text-outline" size={48} color={colors.TEXT_MUTED} />
-            <Text style={[styles.emptyTitle, { color: colors.TEXT }]}>Không có giao dịch</Text>
-            <Text style={[styles.emptySubtitle, { color: colors.TEXT_SECONDARY }]}>Không tìm thấy giao dịch nào trong khoảng thời gian này.</Text>
+            <Text style={[styles.emptyTitle, { color: colors.TEXT }]}>{t("finance.history.emptyTitle")}</Text>
+            <Text style={[styles.emptySubtitle, { color: colors.TEXT_SECONDARY }]}>{t("finance.history.emptyDescription")}</Text>
           </View>
         }
       />
@@ -210,6 +214,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginVertical: 3,
     paddingBottom: 4
+  },
+  calendarDayToday: {
+    borderWidth: 1.5,
+    borderStyle: "dashed",
+    borderColor: "rgba(148, 163, 184, 0.5)",
+    borderRadius: 14
   },
   dayText: {
     fontSize: 14,

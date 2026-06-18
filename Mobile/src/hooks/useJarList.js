@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { Alert } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useFocusEffect } from "@react-navigation/native";
 import { COLORS } from "../constants/colors";
 import { fetchJars } from "../services/jarService";
@@ -38,6 +39,7 @@ function buildJarSlices(jars) {
 }
 
 export default function useJarList(user) {
+  const { t } = useTranslation();
   const [jars, setJars] = useState([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -53,7 +55,7 @@ export default function useJarList(user) {
       await loadJars();
     } catch (error) {
       console.error("Lỗi tải hũ:", error);
-      Alert.alert("Lỗi", getApiErrorMessage(error, "Không thể tải danh sách hũ chi tiêu."));
+      Alert.alert(t("common.error"), getApiErrorMessage(error, t("jarList.loadFail")));
     } finally {
       setLoading(false);
     }
@@ -64,7 +66,7 @@ export default function useJarList(user) {
     try {
       await loadJars();
     } catch (error) {
-      Alert.alert("Lỗi", getApiErrorMessage(error, "Không thể làm mới danh sách."));
+      Alert.alert(t("common.error"), getApiErrorMessage(error, t("jarList.refreshFail")));
     } finally {
       setRefreshing(false);
     }

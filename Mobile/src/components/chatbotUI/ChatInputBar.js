@@ -1,24 +1,17 @@
 import React, { useEffect, useRef } from "react";
 import { Image, StyleSheet, Text, View, TextInput, Pressable, Platform, Animated } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS, useAppColors } from "../../constants/colors";
+import { clampScale, scale } from "../../utils/layoutScale";
 import { getSafeAreaBottom } from "../../utils/safeArea";
 
 const MIC_ICON = require("../../assets/accessories/mic.png");
 
-export default function ChatInputBar({
-  value = "",
-  onChangeText,
-  onSend,
-  onStop,
-  placeholder,
-  loading,
-  disabled,
-  onMicPress,
-  isRecording
-}) {
+export default function ChatInputBar({ value, onChangeText, onSend, onStop, placeholder, loading, disabled, onMicPress, isRecording }) {
   const colors = useAppColors();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const isDisabled = loading || disabled;
   const hasText = value.trim().length > 0;
@@ -49,7 +42,7 @@ export default function ChatInputBar({
           style={[styles.actionCircle, styles.actionCircleStop]}
           onPress={onStop}
           accessibilityRole="button"
-          accessibilityLabel="Dừng tạo phản hồi"
+          accessibilityLabel={t("chatbot.stopResponse")}
         >
           <Ionicons name="square" size={16} color={COLORS.WHITE} />
         </Pressable>

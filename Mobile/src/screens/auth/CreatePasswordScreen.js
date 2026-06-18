@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 import apiClient from "../../services/apiClient";
 import { API_ENDPOINTS } from "../../constants/api";
 import { getApiErrorMessage } from "../../utils/format";
@@ -27,6 +28,7 @@ export default function CreatePasswordScreen() {
   const navigation = useNavigation();
   const route = useRoute();
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   const email = route.params?.email || "";
   const fullName = route.params?.fullName || "";
 
@@ -59,7 +61,7 @@ export default function CreatePasswordScreen() {
     if (!canProceed) return;
 
     if (containsNameOrEmail) {
-      Alert.alert("Mật khẩu yếu", "Mật khẩu không được chứa tên hoặc email của bạn.");
+      Alert.alert(t("auth.createPassword.weakTitle"), t("auth.createPassword.weakMessage"));
       return;
     }
 
@@ -67,13 +69,13 @@ export default function CreatePasswordScreen() {
     try {
       await apiClient.put(API_ENDPOINTS.COMPLETE_PROFILE, { email, fullName, password });
       Alert.alert(
-        "Hoàn tất",
-        "Tài khoản của bạn đã được thiết lập. Vui lòng đăng nhập.",
-        [{ text: "Đăng nhập", onPress: () => navigation.navigate("Login") }]
+        t("auth.createPassword.completeTitle"),
+        t("auth.createPassword.completeMessage"),
+        [{ text: t("auth.common.login"), onPress: () => navigation.navigate("Login") }]
       );
     } catch (error) {
-      const message = getApiErrorMessage(error, "Không thể thiết lập tài khoản. Vui lòng thử lại.");
-      Alert.alert("Lỗi", message);
+      const message = getApiErrorMessage(error, t("auth.createPassword.failedMessage"));
+      Alert.alert(t("auth.common.error"), message);
     } finally {
       setLoading(false);
     }
@@ -93,8 +95,8 @@ export default function CreatePasswordScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.title}>Thiết lập mật khẩu</Text>
-          <Text style={styles.subtitle}>Tạo mật khẩu mạnh để bảo vệ tài khoản của bạn.</Text>
+          <Text style={styles.title}>{t("auth.createPassword.title")}</Text>
+          <Text style={styles.subtitle}>{t("auth.createPassword.subtitle")}</Text>
 
           <PasswordInput
             value={password}
@@ -102,7 +104,7 @@ export default function CreatePasswordScreen() {
             onFocus={() => setPasswordFocused(true)}
             onBlur={() => setPasswordFocused(false)}
             focused={passwordFocused}
-            placeholder="Nhập mật khẩu"
+            placeholder={t("auth.common.enterPassword")}
           />
 
           <Pressable
@@ -111,7 +113,7 @@ export default function CreatePasswordScreen() {
             disabled={!canProceed || loading}
           >
             <Text style={styles.nextButtonText}>
-              {loading ? "Đang thiết lập..." : "Tiếp theo"}
+              {loading ? t("auth.createPassword.loading") : t("auth.common.next")}
             </Text>
           </Pressable>
 

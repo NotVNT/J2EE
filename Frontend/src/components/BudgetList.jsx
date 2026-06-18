@@ -51,9 +51,9 @@ const BudgetList = ({ budgets = [], onDelete, onAddClick, loading = false }) => 
         <div className="budget-list">
             <div className="budget-list__header">
                 <div>
-                    <h2 className="budget-list__title">Budget limits</h2>
+                    <h2 className="budget-list__title">Hạn mức ngân sách</h2>
                     <p className="budget-list__subtitle">
-                        Month {new Date().getMonth() + 1}/{new Date().getFullYear()}
+                        Tháng {new Date().getMonth() + 1}/{new Date().getFullYear()}
                     </p>
                 </div>
                 <button
@@ -61,16 +61,16 @@ const BudgetList = ({ budgets = [], onDelete, onAddClick, loading = false }) => 
                     onClick={onAddClick}
                     id="budget-add-btn"
                 >
-                    + Add limit
+                    + Thêm hạn mức
                 </button>
             </div>
 
             {budgets.length === 0 ? (
                 <div className="budget-list__empty">
                     <span className="budget-list__empty-icon">💸</span>
-                    <p>No limits set for this month</p>
+                    <p>Chưa có hạn mức nào trong tháng này</p>
                     <p className="budget-list__empty-hint">
-                        Click <strong>+ Add limit</strong> to start managing your budget
+                        Nhấn <strong>+ Thêm hạn mức</strong> để bắt đầu quản lý ngân sách
                     </p>
                 </div>
             ) : (

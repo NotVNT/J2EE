@@ -1,14 +1,10 @@
 import React from "react";
 import { Modal, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { COLORS, useAppColors } from "../../constants/colors";
 import { formatCurrencyInput } from "../../utils/format";
 import { PickDateField } from "../../utils/datePicker";
 
-/**
- * Modal for contributing money to a goal.
- *
- * Props are state + setters/callbacks managed by the parent hook.
- */
 export default function ContributionModal({
   visible,
   goal,
@@ -21,6 +17,7 @@ export default function ContributionModal({
   onClose,
   onSubmit,
 }) {
+  const { t } = useTranslation();
   const colors = useAppColors();
 
   if (!goal) return null;
@@ -29,25 +26,25 @@ export default function ContributionModal({
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.overlay}>
         <View style={[styles.card, { backgroundColor: colors.CARD }]}> 
-          <Text style={[styles.title, { color: colors.TEXT }]}>Đóng góp mục tiêu</Text>
+          <Text style={[styles.title, { color: colors.TEXT }]}>{t("contributionModal.title")}</Text>
           <Text style={[styles.subtitle, { color: colors.TEXT_SECONDARY }]}>{goal.name}</Text>
 
-          <Text style={[styles.label, { color: colors.TEXT }]}>Số tiền</Text>
+          <Text style={[styles.label, { color: colors.TEXT }]}>{t("contributionModal.amount")}</Text>
           <TextInput
             style={[styles.input, { backgroundColor: colors.BG, borderColor: colors.CARD_BORDER, color: colors.TEXT }]}
-            placeholder="Ví dụ: 1.000.000"
+            placeholder={t("contributionModal.amountPlaceholder")}
             placeholderTextColor={colors.TEXT_MUTED}
             keyboardType="numeric"
             value={amount}
             onChangeText={(value) => onAmountChange(formatCurrencyInput(value))}
           />
 
-          <PickDateField label="Ngày đóng góp" value={date} onChange={onDateChange} />
+          <PickDateField label={t("contributionModal.date")} value={date} onChange={onDateChange} />
 
-          <Text style={[styles.label, { color: colors.TEXT }]}>Ghi chú</Text>
+          <Text style={[styles.label, { color: colors.TEXT }]}>{t("contributionModal.note")}</Text>
           <TextInput
             style={[styles.input, { backgroundColor: colors.BG, borderColor: colors.CARD_BORDER, color: colors.TEXT }]}
-            placeholder="Tùy chọn"
+            placeholder={t("contributionModal.notePlaceholder")}
             placeholderTextColor={colors.TEXT_MUTED}
             value={note}
             onChangeText={onNoteChange}
@@ -55,10 +52,10 @@ export default function ContributionModal({
 
           <View style={styles.actions}>
             <Pressable style={[styles.secondaryButton, { borderColor: colors.CARD_BORDER }]} onPress={onClose}>
-              <Text style={[styles.secondaryText, { color: colors.TEXT }]}>Hủy</Text>
+              <Text style={[styles.secondaryText, { color: colors.TEXT }]}>{t("contributionModal.cancel")}</Text>
             </Pressable>
             <Pressable style={[styles.primaryButton, { backgroundColor: colors.PRIMARY }]} onPress={onSubmit}>
-              <Text style={styles.primaryText}>Xác nhận</Text>
+              <Text style={styles.primaryText}>{t("contributionModal.confirm")}</Text>
             </Pressable>
           </View>
         </View>

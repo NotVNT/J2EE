@@ -1,11 +1,13 @@
 import React, { useEffect, useRef, useState } from "react";
 import { StyleSheet, View, Text, Animated, ImageBackground } from "react-native";
+import { useTranslation } from "react-i18next";
 import { COLORS } from "../../constants/colors";
 import loadingscreenImg from "../../assets/logo&banner/loadingscreen.png";
 
 export default function LoadingScreen({ onComplete }) {
   const animatedProgress = useRef(new Animated.Value(0)).current;
   const [percent, setPercent] = useState(0);
+  const { t } = useTranslation();
 
   useEffect(() => {
     // Thêm listener để cập nhật số phần trăm hiển thị dạng text
@@ -48,7 +50,7 @@ export default function LoadingScreen({ onComplete }) {
           <View style={styles.progressBarTrack}>
             <Animated.View style={[styles.progressBarFill, { width: progressBarWidth }]} />
           </View>
-          <Text style={styles.statusText}>Đang tải tài nguyên...</Text>
+          <Text style={styles.statusText}>{t("loadingScreen.loading")}</Text>
         </View>
       </View>
     </ImageBackground>

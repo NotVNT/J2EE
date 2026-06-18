@@ -6,6 +6,7 @@ import { AppAlertProvider } from "./contexts/AppAlertContext";
 import { ThemeProvider, useTheme, THEME_MODES } from "./contexts/ThemeContext";
 import { configureGoogleSignin } from "./services/authGoogleService";
 import AppNavigator from "./navigation/AppNavigator";
+import { hydrateStoredLanguage } from "./i18n";
 
 function ThemedStatusBar() {
   const { theme, loaded } = useTheme();
@@ -16,6 +17,7 @@ function ThemedStatusBar() {
 export default function App() {
   useEffect(() => {
     configureGoogleSignin();
+    hydrateStoredLanguage();
   }, []);
 
   return (

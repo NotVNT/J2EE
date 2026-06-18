@@ -1,5 +1,6 @@
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useAppColors } from "../../constants/colors";
 import { clampScale, scale } from "../../utils/layoutScale";
 import { formatMoney, formatDate } from "../../utils/format";
@@ -10,6 +11,7 @@ import TransactionIcon from "../ui/TransactionIcon";
 
 function GoalPreviewCard({ goal, onPress }) {
   const colors = useAppColors();
+  const { t } = useTranslation();
   const target = Number(goal?.targetAmount || 0);
   const current = Number(goal?.currentAmount || 0);
   const progress = Math.max(0, Math.min(100, Number(goal?.progressPercent || 0)));
@@ -27,7 +29,7 @@ function GoalPreviewCard({ goal, onPress }) {
         <View style={styles.infoContainer}>
           <View style={styles.goalTitleRow}>
             <Text style={[styles.goalName, { color: colors.TEXT }]} numberOfLines={1}>
-              {goal?.name || "Mục tiêu"}
+              {goal?.name || t("dashboardComponents.goal")}
             </Text>
             <Text style={[styles.goalPercent, { color: colors.GOAL_PROGRESS || "#F97316" }]}>
               {Math.round(progress)}%
@@ -62,11 +64,12 @@ function GoalPreviewCard({ goal, onPress }) {
 
 export default function GoalsPreview({ goals, onCreate, onGoalPress, onMore }) {
   const colors = useAppColors();
+  const { t } = useTranslation();
 
   return (
     <>
-      <DashboardSectionHeader title="Mục tiêu tiết kiệm">
-        <ShowMoreButton visible={Boolean(onMore)} onPress={onMore} label="Xem tất cả" />
+      <DashboardSectionHeader title={t("dashboardComponents.goalsTitle")}>
+        <ShowMoreButton visible={Boolean(onMore)} onPress={onMore} label={t("dashboardComponents.viewAll")} />
       </DashboardSectionHeader>
       <DashboardSectionCard>
         {goals && goals.length > 0 ? (
@@ -76,9 +79,9 @@ export default function GoalsPreview({ goals, onCreate, onGoalPress, onMore }) {
             <View style={[styles.emptyIconCircle, { backgroundColor: colors.BADGE_POSITIVE_BG || "rgba(34, 197, 94, 0.1)" }]}>
               <AppIcon name="flag-outline" size={26} color={colors.GOAL_PROGRESS || "#F97316"} />
             </View>
-            <Text style={[styles.emptyGoalText, { color: colors.TEXT_SECONDARY }]}>Chưa có mục tiêu tiết kiệm nào.</Text>
+            <Text style={[styles.emptyGoalText, { color: colors.TEXT_SECONDARY }]}>{t("dashboardComponents.noGoals")}</Text>
             <Pressable style={[styles.createGoalButton, { backgroundColor: colors.GOAL_PROGRESS || "#F97316" }]} onPress={onCreate}>
-              <Text style={styles.createGoalButtonText}>Tạo mục tiêu</Text>
+              <Text style={styles.createGoalButtonText}>{t("dashboardComponents.createGoal")}</Text>
             </Pressable>
           </View>
         )}

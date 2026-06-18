@@ -59,6 +59,7 @@
           ]
         }
       ],
+      "expo-localization",
       "expo-font"
     ],
     "extra": {

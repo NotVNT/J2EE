@@ -1,8 +1,8 @@
 import { useCallback, useContext, useEffect, useState } from "react";
 import * as ImagePicker from "expo-image-picker";
 import { Alert } from "react-native";
+import { useTranslation } from "react-i18next";
 import { AuthContext } from "../contexts/AuthContext";
-import { SUCCESS_ALERT_MESSAGES, SUCCESS_ALERT_TITLE } from "../constants/alertMessages";
 import { API_ENDPOINTS } from "../constants/api";
 import apiClient from "../services/apiClient";
 import { tokenStorage } from "../storage/tokenStorage";
@@ -14,6 +14,7 @@ function validateEmail(email) {
 }
 
 export default function useEditProfileForm() {
+  const { t } = useTranslation();
   const { user, refreshUser } = useContext(AuthContext);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -35,7 +36,7 @@ export default function useEditProfileForm() {
   const onPickImage = useCallback(async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert("Permission to access media library is required to choose a profile photo.");
+      Alert.alert(t("editProfile.permissionTitle"), t("editProfile.permissionMsg"));
       return;
     }
 
@@ -58,26 +59,26 @@ export default function useEditProfileForm() {
 
   const onSave = useCallback(async () => {
     if (!fullName.trim()) {
-      Alert.alert("Thiếu thông tin", "Vui lòng nhập họ và tên.");
+      Alert.alert(t("editProfile.missingInfoTitle"), t("editProfile.missingName"));
       return;
     }
 
     if (!validateEmail(email)) {
-      Alert.alert("Email không hợp lệ", "Vui lòng nhập email hợp lệ.");
+      Alert.alert(t("editProfile.invalidEmailTitle"), t("editProfile.invalidEmailMsg"));
       return;
     }
 
     if (showPasswordFields) {
       if (!currentPassword.trim()) {
-        Alert.alert("Thiếu thông tin", "Vui lòng nhập mật khẩu hiện tại.");
+        Alert.alert(t("editProfile.missingInfoTitle"), t("editProfile.missingCurrentPw"));
         return;
       }
       if (!newPassword.trim() || newPassword.trim().length < 6) {
-        Alert.alert("Mật khẩu mới không hợp lệ", "Mật khẩu mới phải có ít nhất 6 ký tự.");
+        Alert.alert(t("editProfile.invalidNewPwTitle"), t("editProfile.invalidNewPwMsg"));
         return;
       }
       if (newPassword !== confirmPassword) {
-        Alert.alert("Xác nhận mật khẩu", "Mật khẩu xác nhận không khớp.");
+        Alert.alert(t("editProfile.pwMismatchTitle"), t("editProfile.pwMismatchMsg"));
         return;
       }
     }
@@ -108,9 +109,9 @@ export default function useEditProfileForm() {
       setNewPassword("");
       setConfirmPassword("");
       setShowPasswordFields(false);
-      Alert.alert(SUCCESS_ALERT_TITLE, SUCCESS_ALERT_MESSAGES.update.profile);
+      Alert.alert(t("common.success"), t("editProfile.updateSuccess"));
     } catch (error) {
-      Alert.alert("Cập nhật thất bại", getApiErrorMessage(error, "Không thể cập nhật hồ sơ."));
+      Alert.alert(t("editProfile.updateFailTitle"), getApiErrorMessage(error, t("editProfile.updateFailMsg")));
     } finally {
       setSaving(false);
     }

@@ -10,6 +10,7 @@ import {
   StyleSheet
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 import { useAppColors } from "../../constants/colors";
 import { clampScale, scale } from "../../utils/layoutScale";
 
@@ -24,17 +25,18 @@ export default function SessionsModal({
   onNewChat
 }) {
   const colors = useAppColors();
+  const { t } = useTranslation();
   const [editingSessionId, setEditingSessionId] = useState(null);
   const [renameText, setRenameText] = useState("");
 
   const handleStartRename = (session) => {
     setEditingSessionId(session.id);
-    setRenameText(session.title || "Cuộc trò chuyện");
+    setRenameText(session.title || t("chat.sessionDefaultTitle"));
   };
 
   const handleConfirmRename = (sessionId) => {
     if (!renameText.trim()) {
-      Alert.alert("Lỗi", "Tên cuộc trò chuyện không được để trống.");
+      Alert.alert(t("chat.missingInfo"), t("chat.emptyName"));
       return;
     }
     onRenameSession(sessionId, renameText.trim());
@@ -43,12 +45,12 @@ export default function SessionsModal({
 
   const handleDeleteConfirm = (session) => {
     Alert.alert(
-      "Xóa cuộc trò chuyện",
-      `Bạn có chắc chắn muốn xóa "${session.title || "Cuộc trò chuyện này"}"?`,
+      t("chat.deleteTitle"),
+      t("chat.deleteMessage", { title: session.title || t("chat.sessionDefaultTitle") }),
       [
-        { text: "Hủy", style: "cancel" },
+        { text: t("chat.cancel"), style: "cancel" },
         {
-          text: "Xóa",
+          text: t("chat.confirmDelete"),
           style: "destructive",
           onPress: () => onDeleteSession(session.id)
         }
@@ -73,7 +75,7 @@ export default function SessionsModal({
               value={renameText}
               onChangeText={setRenameText}
               autoFocus
-              placeholder="Nhập tên phiên..."
+              placeholder={t("chat.sessionsPlaceholder")}
               placeholderTextColor={colors.TEXT_MUTED}
             />
             <Pressable
@@ -103,7 +105,7 @@ export default function SessionsModal({
                 style={[styles.sessionTitle, { color: colors.TEXT }, isActive && [styles.sessionTitleActive, { color: colors.PRIMARY }]]}
                 numberOfLines={1}
               >
-                {item.title || "Cuộc trò chuyện"}
+                {item.title || t("chat.sessionDefaultTitle")}
               </Text>
             </Pressable>
 
@@ -144,12 +146,12 @@ export default function SessionsModal({
           style={styles.backdrop}
           onPress={onClose}
           accessibilityRole="button"
-          accessibilityLabel="Đóng lịch sử"
+          accessibilityLabel={t("chat.closeHistory")}
         />
 
         <View style={[styles.sheet, { backgroundColor: colors.BG, borderColor: colors.CARD_BORDER }]}>
           <View style={[styles.header, { borderBottomColor: colors.CARD_BORDER }]}>
-            <Text style={[styles.title, { color: colors.PRIMARY }]}>Lịch sử trò chuyện</Text>
+            <Text style={[styles.title, { color: colors.PRIMARY }]}>{t("chat.sessionHistory")}</Text>
             <Pressable style={[styles.closeButton, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]} onPress={onClose}>
               <Ionicons name="close" size={18} color={colors.TEXT} />
             </Pressable>
@@ -164,7 +166,7 @@ export default function SessionsModal({
           >
             <View style={styles.btnRow}>
               <Ionicons name="add" size={18} color="#ffffff" />
-              <Text style={styles.newChatButtonText}>Bắt đầu chat mới</Text>
+              <Text style={styles.newChatButtonText}>{t("chat.newChat")}</Text>
             </View>
           </Pressable>
 
@@ -176,7 +178,7 @@ export default function SessionsModal({
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
                 <Ionicons name="chatbubbles-outline" size={40} color={colors.TEXT_MUTED} style={{ marginBottom: 8 }} />
-                <Text style={[styles.emptyText, { color: colors.TEXT_MUTED }]}>Chưa có lịch sử trò chuyện nào.</Text>
+                <Text style={[styles.emptyText, { color: colors.TEXT_MUTED }]}>{t("chat.noHistory")}</Text>
               </View>
             }
           />

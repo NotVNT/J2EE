@@ -1,5 +1,6 @@
 import React from "react";
 import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { COLORS, useAppColors } from "../../constants/colors";
 import { formatMoney } from "../../utils/format";
 import VoiceInputButton from "../common/VoiceInputButton";
@@ -20,19 +21,20 @@ export default function ExpenseSummaryActions({
   onVoiceResult,
   totalExpense
 }) {
+  const { t } = useTranslation();
   const colors = useAppColors();
 
   return (
     <View style={[styles.summaryCard, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER, shadowColor: colors.TEXT }]}>
       <View style={styles.summaryContent}>
-        <Text style={[styles.summaryLabel, { color: colors.TEXT_SECONDARY }]}>Tổng chi tiêu</Text>
+        <Text style={[styles.summaryLabel, { color: colors.TEXT_SECONDARY }]}>{t("expenseSummary.totalExpense")}</Text>
         <Text style={[styles.summaryAmount, { color: colors.EXPENSE }]}>{formatMoney(totalExpense)}</Text>
-        <Text style={[styles.summaryHint, { color: colors.TEXT_SECONDARY }]}>{expenseCount} giao dịch</Text>
+        <Text style={[styles.summaryHint, { color: colors.TEXT_SECONDARY }]}>{expenseCount} {t("expenseSummary.transactions")}</Text>
       </View>
 
       <View style={styles.actionRowMain}>
         <Pressable style={[styles.addButtonMain, { backgroundColor: colors.PRIMARY, shadowColor: colors.PRIMARY }]} onPress={onAddExpense}>
-          <Text style={styles.addButtonText}>+ Thêm chi tiêu</Text>
+          <Text style={styles.addButtonText}>+ {t("expenseSummary.addExpense")}</Text>
         </Pressable>
         <VoiceInputButton iconSource={MIC_ICON} noBackground onResult={onVoiceResult} />
         <Pressable
@@ -49,7 +51,7 @@ export default function ExpenseSummaryActions({
       </View>
 
       {!isPremium && (
-        <Text style={[styles.premiumHint, { color: colors.TEXT_MUTED }]}>🔒 Quét hóa đơn là tính năng Premium</Text>
+        <Text style={[styles.premiumHint, { color: colors.TEXT_MUTED }]}>{t("expenseSummary.premiumHint")}</Text>
       )}
 
       <Pressable
@@ -59,10 +61,10 @@ export default function ExpenseSummaryActions({
       >
         <Text style={[styles.exportText, { color: colors.PRIMARY }]}>
           {isExporting
-            ? "Đang tạo báo cáo..."
+            ? t("expenseSummary.generating")
             : filterType === ALL_EXPENSE_FILTER
-              ? "Tải báo cáo tất cả tháng"
-              : "Tải báo cáo tháng này"}
+              ? t("expenseSummary.downloadAll")
+              : t("expenseSummary.downloadMonth")}
         </Text>
       </Pressable>
     </View>

@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useCallback, useEffect } from "react";
 import { View, Text, StyleSheet, Dimensions, Pressable } from "react-native";
 import Svg, { Path, G, Defs, LinearGradient, Stop, Text as SvgText } from "react-native-svg";
+import { useTranslation } from "react-i18next";
 import { buildRecentMonthKeys, formatMonthKeyLabel, formatMonthShortLabel, toMonthKey } from "../../utils/financeStats";
 import { formatMoney } from "../../utils/format";
 import { COLORS, useAppColors } from "../../constants/colors";
@@ -60,29 +61,29 @@ function describeArc(cx, cy, outerR, innerR, startAngle, endAngle) {
   ].join(" ");
 }
 
-function formatShortMoney(val) {
+function formatShortMoney(val, t) {
   const abs = Math.abs(val);
   if (abs >= 1_000_000_000) {
     const billions = abs / 1_000_000_000;
     const formatted = billions % 1 === 0 ? billions.toFixed(0) : billions.toFixed(1);
-    return `${formatted.replace(".", ",")} tỷ VND`;
+    return `${formatted.replace(".", ",")} ${t("dashboardComponents.billion")}`;
   }
   if (abs >= 1_000_000) {
     const millions = abs / 1_000_000;
     const formatted = millions % 1 === 0 ? millions.toFixed(0) : millions.toFixed(1);
-    return `${formatted.replace(".", ",")} tr VND`;
+    return `${formatted.replace(".", ",")} ${t("dashboardComponents.million")}`;
   }
   if (abs >= 1_000) {
     const thousands = abs / 1_000;
     const formatted = thousands % 1 === 0 ? thousands.toFixed(0) : thousands.toFixed(1);
-    return `${formatted.replace(".", ",")}K`;
+    return `${formatted.replace(".", ",")}${t("dashboardComponents.thousand")}`;
   }
-  return `${abs} VND`;
+  return `${abs}`;
 }
 
-function formatShortSignedMoney(val) {
+function formatShortSignedMoney(val, t) {
   const sign = Number(val || 0) < 0 ? "-" : "";
-  return `${sign}${formatShortMoney(val)}`;
+  return `${sign}${formatShortMoney(val, t)}`;
 }
 
 function normalizeMonthlySeries(series = []) {
@@ -145,7 +146,7 @@ function LegendItem({ color, label, value, valueColor, valueGradient }) {
 }
 
 // ─── Tooltip ─────────────────────────────────────────────────────
-function SliceTooltip({ slice, cx, cy, outerR }) {
+function SliceTooltip({ slice, cx, cy, outerR, t }) {
   if (!slice) return null;
 
   const midAngle = (slice.startAngle + slice.endAngle) / 2;
@@ -190,7 +191,7 @@ function SliceTooltip({ slice, cx, cy, outerR }) {
         {slice.sign}{formatMoney(slice.rawAmount)}
       </Text>
       <Text style={styles.tooltipPercent}>
-        {slice.percent.toFixed(1)}% tổng tiền
+        {slice.percent.toFixed(1)}% {t("dashboardComponents.ofTotal")}
       </Text>
     </View>
   );
@@ -213,7 +214,7 @@ function MonthSwitcher({ label, canPrev, canNext, onPrev, onNext }) {
 }
 
 // ─── Monthly Bar Chart ────────────────────────────────────────────
-function MonthlyBarsPlaceholder({ monthlySeries = [] }) {
+function MonthlyBarsPlaceholder({ monthlySeries = [], t }) {
   const colors = useAppColors();
 
   if (!monthlySeries.length) return null;
@@ -227,7 +228,7 @@ function MonthlyBarsPlaceholder({ monthlySeries = [] }) {
 
   return (
     <View style={styles.monthlySection}>
-      <Text style={[styles.monthlyTitle, { color: colors.TEXT_SECONDARY }]}>So sánh các tháng</Text>
+      <Text style={[styles.monthlyTitle, { color: colors.TEXT_SECONDARY }]}>{t("dashboardComponents.monthlyComparison")}</Text>
       <View style={styles.monthlyBarRow}>
         {monthlySeries.map((item, idx) => {
           const incomeHeight = Math.max(6, (item.income / maxValue) * barH);
@@ -276,6 +277,7 @@ function MonthlyBarsPlaceholder({ monthlySeries = [] }) {
 
 // ─── Main Component ──────────────────────────────────────────────
 const FinanceOverviewChart = ({ totalBalance, totalIncome, totalExpense, monthlySeries = [] }) => {
+  const { t } = useTranslation();
   const colors = useAppColors();
   const fallbackIncome = Number(totalIncome || 0);
   const fallbackExpense = Number(totalExpense || 0);
@@ -321,9 +323,9 @@ const FinanceOverviewChart = ({ totalBalance, totalIncome, totalExpense, monthly
   // Build slices
   const slices = useMemo(() => {
     const raw = [
-      { key: "income", name: "Thu nhập", rawAmount: income, color: colors.INCOME, valueColor: colors.INCOME, sign: "+" },
-      { key: "expense", name: "Chi tiêu", rawAmount: expense, color: colors.EXPENSE, valueColor: colors.EXPENSE, sign: "-" },
-      { key: "balance", name: "Số dư", rawAmount: Math.abs(balance), color: colors.PRIMARY, valueColor: colors.PRIMARY, sign: "" },
+      { key: "income", name: t("dashboardComponents.income"), rawAmount: income, color: colors.INCOME, valueColor: colors.INCOME, sign: "+" },
+      { key: "expense", name: t("dashboardComponents.expense"), rawAmount: expense, color: colors.EXPENSE, valueColor: colors.EXPENSE, sign: "-" },
+      { key: "balance", name: t("dashboardComponents.balance"), rawAmount: Math.abs(balance), color: colors.PRIMARY, valueColor: colors.PRIMARY, sign: "" },
     ].filter((s) => s.rawAmount > 0);
 
     const total = raw.reduce((sum, s) => sum + s.rawAmount, 0);
@@ -342,7 +344,7 @@ const FinanceOverviewChart = ({ totalBalance, totalIncome, totalExpense, monthly
       currentAngle = baseEndAngle;
       return { ...s, percent, startAngle, endAngle };
     });
-  }, [balance, colors.EXPENSE, colors.INCOME, colors.PRIMARY, expense, income]);
+  }, [balance, colors.EXPENSE, colors.INCOME, colors.PRIMARY, expense, income, t]);
 
   const handleSliceTap = useCallback(
     (idx) => {
@@ -377,21 +379,21 @@ const FinanceOverviewChart = ({ totalBalance, totalIncome, totalExpense, monthly
             <View style={styles.legendContainer}>
         <LegendItem
           color={colors.INCOME}
-          label="Thu nhập"
+          label={t("dashboardComponents.income")}
           value={`+${formatMoney(income)}`}
           valueColor={colors.INCOME}
           valueGradient={VALUE_GRADIENTS.income}
         />
         <LegendItem
           color={colors.EXPENSE}
-          label="Chi tiêu"
+          label={t("dashboardComponents.expense")}
           value={`-${formatMoney(expense)}`}
           valueColor={colors.EXPENSE}
           valueGradient={VALUE_GRADIENTS.expense}
         />
         <LegendItem
           color={colors.PRIMARY}
-          label="Số dư"
+          label={t("dashboardComponents.balance")}
           value={formatMoney(balance)}
           valueColor={colors.PRIMARY}
           valueGradient={VALUE_GRADIENTS.balance}
@@ -452,7 +454,7 @@ const FinanceOverviewChart = ({ totalBalance, totalIncome, totalExpense, monthly
                   fontWeight="600"
                   fill={colors.TEXT_SECONDARY}
                 >
-                  Số dư
+                  {t("dashboardComponents.balance")}
                 </SvgText>
 
                 <SvgText
@@ -460,14 +462,14 @@ const FinanceOverviewChart = ({ totalBalance, totalIncome, totalExpense, monthly
                   y={cy + 14}
                   textAnchor="middle"
                   fontSize={
-                    formatShortSignedMoney(balance).length > 12 ? 14 :
-                    formatShortSignedMoney(balance).length > 10 ? 16 :
-                    formatShortSignedMoney(balance).length > 8 ? 19 : 22
+                    formatShortSignedMoney(balance, t).length > 12 ? 14 :
+                    formatShortSignedMoney(balance, t).length > 10 ? 16 :
+                    formatShortSignedMoney(balance, t).length > 8 ? 19 : 22
                   }
                   fontWeight="900"
                   fill="url(#center-total-gradient)"
                 >
-                  {formatShortSignedMoney(balance)}
+                  {formatShortSignedMoney(balance, t)}
                 </SvgText>
               </G>
             </Svg>
@@ -478,23 +480,24 @@ const FinanceOverviewChart = ({ totalBalance, totalIncome, totalExpense, monthly
                 cx={cx}
                 cy={cy}
                 outerR={outerR}
+                t={t}
               />
             )}
           </View>
         </Pressable>
       ) : (
         <View style={[styles.chartEmptyWrap, { backgroundColor: colors.BG, borderColor: colors.CARD_BORDER }]}> 
-          <Text style={[styles.emptyText, { color: colors.TEXT_SECONDARY }]}>Tháng này chưa có dữ liệu thống kê.</Text>
+          <Text style={[styles.emptyText, { color: colors.TEXT_SECONDARY }]}>{t("dashboardComponents.noStatsThisMonth")}</Text>
           {!isCurrentMonth ? (
             <Pressable style={styles.currentMonthBtn} onPress={() => setSelectedMonthIndex(monthSeries.length - 1)}>
-              <Text style={styles.currentMonthBtnText}>Về tháng hiện tại</Text>
+              <Text style={styles.currentMonthBtnText}>{t("dashboardComponents.goToCurrentMonth")}</Text>
             </Pressable>
           ) : null}
         </View>
       )}
 
       {/* Monthly comparison bar chart */}
-      <MonthlyBarsPlaceholder monthlySeries={monthSeries} />
+      <MonthlyBarsPlaceholder monthlySeries={monthSeries} t={t} />
     </View>
   );
 };

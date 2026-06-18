@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useState } from "react";
 import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { LinearGradient } from "expo-linear-gradient";
 import { useAppColors } from "../../constants/colors";
 import AiInsightForecastResult from "./AiInsightForecastResult";
@@ -28,6 +29,7 @@ export default function AiInsightSheet({
   selectedYear,
   visible
 }) {
+  const { t } = useTranslation();
   const colors = useAppColors();
   const [pickerVisible, setPickerVisible] = useState(false);
 
@@ -35,7 +37,7 @@ export default function AiInsightSheet({
     const selected = (availableMonths || []).find(
       (month) => month.month === selectedMonth && month.year === selectedYear
     );
-    return selected ? selected.label : `Tháng ${selectedMonth}/${selectedYear}`;
+    return selected ? selected.label : t("forecastComponents.forecastForMonth", { month: selectedMonth, year: selectedYear });
   }, [availableMonths, selectedMonth, selectedYear]);
 
   const handleMonthSelect = useCallback((month, year) => {
@@ -56,7 +58,7 @@ export default function AiInsightSheet({
               <Image source={require("../../assets/ai-insight/ai-insight.png")} style={styles.headerIconImg} />
               <View>
                 <Text style={[styles.headerTitle, { color: colors.TEXT }]}>AI Insight</Text>
-                <Text style={[styles.headerSubtitle, { color: colors.TEXT_SECONDARY }]}>Dự báo hành vi tài chính</Text>
+                <Text style={[styles.headerSubtitle, { color: colors.TEXT_SECONDARY }]}>{t("aiInsight.subtitle")}</Text>
               </View>
             </View>
           </View>
@@ -67,7 +69,7 @@ export default function AiInsightSheet({
             showsVerticalScrollIndicator={true}
           >
             <ForecastMonthPicker
-              accessibilityLabel="Chọn tháng dự báo AI Insight"
+              accessibilityLabel={t("aiInsight.selectMonth")}
               label={monthLabel}
               visible={pickerVisible}
               options={availableMonths}
@@ -82,9 +84,9 @@ export default function AiInsightSheet({
               <View style={[styles.infoCard, { backgroundColor: colors.BG, borderColor: colors.CARD_BORDER }]}>
                 <Image source={require("../../assets/ai-insight/analyzing.png")} style={styles.infoIconImg} />
                 <View style={styles.infoTextWrap}>
-                  <Text style={[styles.infoTitle, { color: colors.TEXT }]}>Sẵn sàng phân tích</Text>
+                  <Text style={[styles.infoTitle, { color: colors.TEXT }]}>{t("aiInsight.readyToAnalyze")}</Text>
                   <Text style={[styles.idleText, { color: colors.TEXT_SECONDARY }]}>
-                    AI sẽ dùng dữ liệu các tháng trước để dự báo hành vi tài chính cho {monthLabel}.
+                    {t("aiInsight.readyDescription", { month: selectedMonth, year: selectedYear })}
                   </Text>
                 </View>
               </View>
@@ -94,7 +96,7 @@ export default function AiInsightSheet({
               <View style={[styles.stateBox, { backgroundColor: colors.BG, borderColor: colors.CARD_BORDER }]}>
                 <AppIcon name="lock-closed-outline" size={26} color={colors.PRIMARY} style={{ marginBottom: 4 }} />
                 <Text style={[styles.stateText, { color: colors.TEXT_SECONDARY }]}>
-                  Tính năng AI Insight cần gói Premium.
+                  {t("aiInsight.premiumRequired")}
                 </Text>
               </View>
             ) : null}
@@ -108,7 +110,7 @@ export default function AiInsightSheet({
                   style={styles.analyzeGradient}
                 >
                   <Image source={require("../../assets/ai-insight/pointing-finger.png")} style={styles.analyzeBtnIcon} />
-                  <Text style={styles.analyzeBtnText}>Phân tích</Text>
+                  <Text style={styles.analyzeBtnText}>{t("aiInsight.analyze")}</Text>
                 </LinearGradient>
               </Pressable>
             ) : null}

@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Alert } from "react-native";
+import { useTranslation } from "react-i18next";
 import { fetchCategoriesByType } from "../services/categoryService";
 import { fetchJars } from "../services/jarService";
 import { confirmReceiptImport } from "../services/receiptImportService";
 import { getApiErrorMessage, todayIso } from "../utils/format";
+import { PARENT_WALLET_NAME } from "../utils/jar";
 
 function normalizeReceiptItem(item, receiptDate) {
   return {
@@ -21,28 +23,28 @@ function getDefaultJarId(jars) {
     return "";
   }
 
-  const parentWallet = jars.find((jar) => jar.name === "Ví tổng");
+  const parentWallet = jars.find((jar) => jar.name === PARENT_WALLET_NAME);
   return String((parentWallet || jars[0]).id);
 }
 
-function validateReceiptItems(items) {
+function validateReceiptItems(items, t) {
   if (items.length === 0) {
-    Alert.alert("Không có mục nào", "Hóa đơn cần ít nhất 1 khoản chi để lưu.");
+    Alert.alert(t("receiptValidation.noItemsTitle"), t("receiptValidation.noItemsMsg"));
     return false;
   }
 
   for (let index = 0; index < items.length; index += 1) {
     const item = items[index];
     if (!item.name || !item.name.trim()) {
-      Alert.alert("Thiếu tên", `Khoản chi #${index + 1} chưa có tên.`);
+      Alert.alert(t("receiptValidation.missingNameTitle"), t("receiptValidation.missingNameMsg", { index: index + 1 }));
       return false;
     }
     if (!item.amount || Number(item.amount) <= 0) {
-      Alert.alert("Số tiền không hợp lệ", `Khoản chi #${index + 1} cần số tiền > 0.`);
+      Alert.alert(t("receiptValidation.invalidAmountTitle"), t("receiptValidation.invalidAmountMsg", { index: index + 1 }));
       return false;
     }
     if (!item.categoryId) {
-      Alert.alert("Thiếu danh mục", `Khoản chi #${index + 1} chưa chọn danh mục.`);
+      Alert.alert(t("receiptValidation.missingCategoryTitle"), t("receiptValidation.missingCategoryMsg", { index: index + 1 }));
       return false;
     }
   }
@@ -51,6 +53,7 @@ function validateReceiptItems(items) {
 }
 
 export default function useReceiptPreview({ analyzeResult, onImportSuccess }) {
+  const { t } = useTranslation();
   const receiptMeta = useMemo(
     () => ({
       initialItems: analyzeResult?.items || [],
@@ -117,10 +120,10 @@ export default function useReceiptPreview({ analyzeResult, onImportSuccess }) {
   }, []);
 
   const deleteItem = useCallback((index) => {
-    Alert.alert("Xóa mục này?", "Bạn sẽ không thể hoàn tác sau khi xác nhận.", [
-      { text: "Giữ lại", style: "cancel" },
+    Alert.alert(t("receiptValidation.deleteItemTitle"), t("receiptValidation.deleteItemMsg"), [
+      { text: t("receiptValidation.keepItem"), style: "cancel" },
       {
-        text: "Xóa",
+        text: t("commonComponents.delete"),
         style: "destructive",
         onPress: () => setItems((prev) => prev.filter((_, itemIndex) => itemIndex !== index))
       }
@@ -128,7 +131,7 @@ export default function useReceiptPreview({ analyzeResult, onImportSuccess }) {
   }, []);
 
   const confirmImport = useCallback(async () => {
-    if (!validateReceiptItems(items)) return;
+    if (!validateReceiptItems(items, t)) return;
 
     setSubmitting(true);
     try {
@@ -150,14 +153,14 @@ export default function useReceiptPreview({ analyzeResult, onImportSuccess }) {
       const count = result?.importedCount || items.length;
 
       Alert.alert(
-        "✅ Nhập hóa đơn thành công",
-        `Đã lưu ${count} khoản chi từ hóa đơn${receiptMeta.merchant ? ` "${receiptMeta.merchant}"` : ""}.`,
-        [{ text: "OK", onPress: onImportSuccess }]
+        t("receiptValidation.importSuccessTitle"),
+        t("receiptValidation.importSuccessMsg", { count, merchant: receiptMeta.merchant || "" }),
+        [{ text: t("common.ok"), onPress: onImportSuccess }]
       );
     } catch (error) {
       Alert.alert(
-        "Lỗi xác nhận",
-        getApiErrorMessage(error, "Không thể lưu hóa đơn. Vui lòng thử lại.")
+        t("receiptValidation.confirmFailTitle"),
+        getApiErrorMessage(error, t("receiptValidation.confirmFailMsg"))
       );
     } finally {
       setSubmitting(false);

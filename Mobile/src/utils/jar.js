@@ -1,3 +1,5 @@
+export const PARENT_WALLET_NAME = "Ví tổng";
+
 export const JAR_CATEGORY_COLORS = [
   "#8B5CF6",
   "#F59E0B",
@@ -24,20 +26,24 @@ export const JAR_COLORS = [
 
 export const JAR_EMOJI_CATEGORIES = [
   {
-    title: "💰 Tài chính & Tiết kiệm",
+    localeKey: "jarForm.catFinance",
+    title: "💰 Finance & Savings",
     emojis: ["🏺", "🐖", "💰", "💵", "💳", "🏦", "📈", "📉", "💸", "🪙", "💎", "🔑"]
   },
   {
-    title: "🏠 Đời sống & Đi lại",
+    localeKey: "jarForm.catLifestyle",
+    title: "🏠 Lifestyle & Transport",
     emojis: ["🏠", "🚗", "🛵", "✈️", "🛒", "🛍️", "👕", "👠", "🔌", "📦", "🏥", "🎓"]
   },
   {
-    title: "🍔 Ăn uống & Giải trí",
+    localeKey: "jarForm.catFood",
+    title: "🍔 Food & Entertainment",
     emojis: ["🍔", "🍕", "🍜", "🍣", "☕", "🍿", "🍰", "🍺", "🎮", "🎬", "🎤", "🎧"]
   },
   {
-    title: "🎪 Khác",
-    emojis: ["🏋️‍♂️", "🎫", "🎪", "🎨", "🎁", "👶", "👵", "🔒", "💼", "📊", "🚨", "✨"]
+    localeKey: "jarForm.catOther",
+    title: "🎪 Other",
+    emojis: ["🏋️\u200D♂️", "🎫", "🎪", "🎨", "🎁", "👶", "👵", "🔒", "💼", "📊", "🚨", "✨"]
   }
 ];
 
