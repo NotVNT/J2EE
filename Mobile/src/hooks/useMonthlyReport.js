@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { API_ENDPOINTS } from "../constants/api";
 import apiClient from "../services/apiClient";
-import { MONTH_LABELS } from "../utils/forecastDataUtils";
+import { getMonthLabel } from "../utils/forecastDataUtils";
 
 function getAccountStartDate(accountCreatedAt, fallbackDate) {
   if (!accountCreatedAt) return fallbackDate;
@@ -26,7 +26,7 @@ function buildReportMonthOptions({ accountCreatedAt, currentYear, currentMonth }
     options.push({
       month: cursorDate.getMonth() + 1,
       year: cursorDate.getFullYear(),
-      label: `${MONTH_LABELS[cursorDate.getMonth()]} ${cursorDate.getFullYear()}`
+      label: `${getMonthLabel(cursorDate.getMonth())} ${cursorDate.getFullYear()}`
     });
 
     cursorDate = new Date(cursorDate.getFullYear(), cursorDate.getMonth() + 1, 1);
@@ -84,7 +84,7 @@ export default function useMonthlyReport(accountCreatedAt) {
     [accountCreatedAt, now]
   );
 
-  const monthPickerLabel = `${MONTH_LABELS[selectedMonth - 1]} ${selectedYear}`;
+  const monthPickerLabel = `${getMonthLabel(selectedMonth - 1)} ${selectedYear}`;
 
   return {
     selectedMonth,

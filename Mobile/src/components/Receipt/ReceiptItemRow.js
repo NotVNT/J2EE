@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useAppColors } from "../../constants/colors";
 import { formatCurrencyInput, parseCurrencyInput, todayIso } from "../../utils/format";
 import { PickDateField } from "../../utils/datePicker";
@@ -15,6 +16,7 @@ export default function ReceiptItemRow({
   onDelete,
   onUpdate
 }) {
+  const { t } = useTranslation();
   const colors = useAppColors();
   const [pickerVisible, setPickerVisible] = useState(false);
   const selectedCategory = categories.find((category) => String(category.id) === String(item.categoryId));
@@ -37,32 +39,32 @@ export default function ReceiptItemRow({
         </View>
 
         <Pressable onPress={() => onDelete(index)} style={[styles.itemDeleteBtn, { backgroundColor: colors.BADGE_NEGATIVE_BG || colors.EXPENSE_LIGHT }]}>
-          <Text style={[styles.itemDeleteText, { color: colors.BADGE_NEGATIVE_FG || colors.EXPENSE }]}>✕ Xóa</Text>
+          <Text style={[styles.itemDeleteText, { color: colors.BADGE_NEGATIVE_FG || colors.EXPENSE }]}>✕ {t("receiptItem.deleteItem")}</Text>
         </Pressable>
       </View>
 
-      <Text style={[styles.fieldLabel, { color: colors.TEXT_SECONDARY }]}>Tên khoản chi</Text>
+      <Text style={[styles.fieldLabel, { color: colors.TEXT_SECONDARY }]}>{t("receiptItem.fieldName")}</Text>
       <TextInput
         style={[styles.textInput, { backgroundColor: colors.BG || colors.APP_BACKGROUND, borderColor: colors.BORDER || colors.CARD_BORDER, color: colors.TEXT }]}
         value={item.name || ""}
         onChangeText={(text) => onUpdate(index, { ...item, name: text })}
-        placeholder="VD: Cơm trưa, Xăng xe..."
+        placeholder={t("receiptItem.namePlaceholder")}
         placeholderTextColor={colors.TEXT_MUTED}
       />
 
-      <Text style={[styles.fieldLabel, { color: colors.TEXT_SECONDARY }]}>Số tiền (VNĐ)</Text>
+      <Text style={[styles.fieldLabel, { color: colors.TEXT_SECONDARY }]}>{t("receiptItem.fieldAmount")}</Text>
       <TextInput
         style={[styles.textInput, { backgroundColor: colors.BG || colors.APP_BACKGROUND, borderColor: colors.BORDER || colors.CARD_BORDER, color: colors.TEXT }]}
         value={item.amount ? formatCurrencyInput(String(item.amount)) : ""}
         onChangeText={(text) => onUpdate(index, { ...item, amount: parseCurrencyInput(text) })}
-        placeholder="0"
+        placeholder={t("receiptItem.amountPlaceholder")}
         placeholderTextColor={colors.TEXT_MUTED}
         keyboardType="numeric"
       />
 
       <View style={styles.fieldRow}>
         <View style={styles.fieldHalf}>
-          <Text style={[styles.fieldLabel, { color: colors.TEXT_SECONDARY }]}>Danh mục</Text>
+          <Text style={[styles.fieldLabel, { color: colors.TEXT_SECONDARY }]}>{t("receiptItem.fieldCategory")}</Text>
           <Pressable style={[styles.categoryBtn, { backgroundColor: colors.BG || colors.APP_BACKGROUND, borderColor: colors.BORDER || colors.CARD_BORDER }]} onPress={() => setPickerVisible(true)}>
             {selectedCategory ? (
               <View style={styles.categoryBtnContent}>
@@ -74,14 +76,14 @@ export default function ReceiptItemRow({
                 </Text>
               </View>
             ) : (
-              <Text style={[styles.categoryBtnPlaceholder, { color: colors.TEXT_MUTED }]}>Chọn...</Text>
+              <Text style={[styles.categoryBtnPlaceholder, { color: colors.TEXT_MUTED }]}>{t("receiptItem.selectCategory")}</Text>
             )}
           </Pressable>
         </View>
 
         <View style={styles.fieldHalf}>
           <PickDateField
-            label="Ngày"
+            label={t("receiptItem.fieldDate")}
             value={item.date || todayIso()}
             onChange={(newDate) => onUpdate(index, { ...item, date: newDate })}
           />
@@ -89,7 +91,7 @@ export default function ReceiptItemRow({
       </View>
 
       {item.categoryHint && !item.categoryId ? (
-        <Text style={[styles.hintText, { color: colors.WARNING }]}>💡 Gợi ý: {item.categoryHint}</Text>
+        <Text style={[styles.hintText, { color: colors.WARNING }]}>{t("receiptItem.suggestion")} {item.categoryHint}</Text>
       ) : null}
 
       <CategoryPickerModal

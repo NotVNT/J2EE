@@ -1,5 +1,6 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { COLORS, useAppColors } from "../../constants/colors";
 import IncomeExpenseChart from "../common/IncomeExpenseChart";
 import ShowMoreButton from "../common/ShowMoreButton";
@@ -11,6 +12,7 @@ export default function ExpenseListOverview({
   onToggle,
   searchKeyword
 }) {
+  const { t } = useTranslation();
   const colors = useAppColors();
 
   if (!expenses.length) {
@@ -19,10 +21,10 @@ export default function ExpenseListOverview({
 
   return (
     <View>
-      <IncomeExpenseChart data={expenses} title="Tổng quan chi tiêu" colorPrimary={COLORS.EXPENSE} />
+      <IncomeExpenseChart data={expenses} title={t("expenseList.overview")} colorPrimary={COLORS.EXPENSE} />
       <View style={styles.listHeader}>
         <Text style={[styles.listTitle, { color: colors.TEXT }]}>
-          {searchKeyword ? `Kết quả tìm kiếm (${expenses.length})` : "Danh sách chi tiêu"}
+          {searchKeyword ? t("expenseList.searchResults", { count: expenses.length }) : t("expenseList.list")}
         </Text>
         <ShowMoreButton visible={canToggle} expanded={expanded} onPress={onToggle} />
       </View>

@@ -1,5 +1,6 @@
 import React from "react";
 import { Pressable, StyleSheet, Text, TextInput } from "react-native";
+import { useTranslation } from "react-i18next";
 import { COLORS, useAppColors } from "../../constants/colors";
 
 export default function PasswordChangeFields({
@@ -13,44 +14,45 @@ export default function PasswordChangeFields({
   showPasswordFields
 }) {
   const colors = useAppColors();
+  const { t } = useTranslation();
 
   if (!showPasswordFields) {
     return (
       <Pressable style={[styles.secondaryButton, { borderColor: colors.PRIMARY_GLOW, backgroundColor: colors.PRIMARY_GLOW_STRONG ? colors.PRIMARY_GLOW : "rgba(239, 94, 131, 0.04)" }]} onPress={() => setShowPasswordFields(true)}>
-        <Text style={[styles.secondaryButtonText, { color: colors.PRIMARY }]}>Đổi mật khẩu</Text>
+        <Text style={[styles.secondaryButtonText, { color: colors.PRIMARY }]}>{t("passwordFields.buttonTitle")}</Text>
       </Pressable>
     );
   }
 
   return (
     <>
-      <Text style={[styles.label, { color: colors.TEXT }]}>Mật khẩu hiện tại</Text>
+      <Text style={[styles.label, { color: colors.TEXT }]}>{t("passwordFields.currentPassword")}</Text>
       <TextInput
         style={[styles.input, { backgroundColor: colors.BG, borderColor: colors.CARD_BORDER, color: colors.TEXT }]}
         value={currentPassword}
         onChangeText={setCurrentPassword}
         secureTextEntry
-        placeholder="Nhập mật khẩu hiện tại"
+        placeholder={t("passwordFields.currentPasswordPlaceholder")}
         placeholderTextColor={colors.TEXT_MUTED}
       />
 
-      <Text style={[styles.label, { color: colors.TEXT }]}>Mật khẩu mới</Text>
+      <Text style={[styles.label, { color: colors.TEXT }]}>{t("auth.password.newPassword")}</Text>
       <TextInput
         style={[styles.input, { backgroundColor: colors.BG, borderColor: colors.CARD_BORDER, color: colors.TEXT }]}
         value={newPassword}
         onChangeText={setNewPassword}
         secureTextEntry
-        placeholder="Ít nhất 6 ký tự"
+        placeholder={t("passwordFields.newPasswordPlaceholder")}
         placeholderTextColor={colors.TEXT_MUTED}
       />
 
-      <Text style={[styles.label, { color: colors.TEXT }]}>Xác nhận mật khẩu mới</Text>
+      <Text style={[styles.label, { color: colors.TEXT }]}>{t("passwordFields.confirmPassword")}</Text>
       <TextInput
         style={[styles.input, { backgroundColor: colors.BG, borderColor: colors.CARD_BORDER, color: colors.TEXT }]}
         value={confirmPassword}
         onChangeText={setConfirmPassword}
         secureTextEntry
-        placeholder="Nhập lại mật khẩu mới"
+        placeholder={t("passwordFields.confirmPasswordPlaceholder")}
         placeholderTextColor={colors.TEXT_MUTED}
       />
     </>

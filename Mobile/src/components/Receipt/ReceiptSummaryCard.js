@@ -1,21 +1,23 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useAppColors } from "../../constants/colors";
 import { formatDate, formatMoney } from "../../utils/format";
 import { scale } from "../../utils/layoutScale";
 
 export default function ReceiptSummaryCard({ itemCount, location, merchant, receiptDate, totalAmount }) {
+  const { t } = useTranslation();
   const colors = useAppColors();
 
   return (
     <View style={[styles.summaryCard, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}>
-      <Text style={[styles.summaryTitle, { color: colors.TEXT }]}>🧾 {merchant || "Hóa đơn"}</Text>
+      <Text style={[styles.summaryTitle, { color: colors.TEXT }]}>🧾 {merchant || t("receiptItem.receiptLabel")}</Text>
       {location ? <Text style={[styles.summaryLocation, { color: colors.TEXT_SECONDARY }]}>📍 {location}</Text> : null}
       <View style={styles.summaryRow}>
         <Text style={[styles.summaryDate, { color: colors.TEXT_SECONDARY }]}>📅 {formatDate(receiptDate)}</Text>
-        <Text style={[styles.summaryCount, { color: colors.PRIMARY }]}>{itemCount} mục</Text>
+        <Text style={[styles.summaryCount, { color: colors.PRIMARY }]}>{t("receiptItem.itemsCount", { count: itemCount })}</Text>
       </View>
-      <Text style={[styles.summaryTotal, { color: colors.EXPENSE_COLOR || colors.EXPENSE }]}>Tổng: {formatMoney(totalAmount)}</Text>
+      <Text style={[styles.summaryTotal, { color: colors.EXPENSE_COLOR || colors.EXPENSE }]}>{t("receiptItem.totalLabel")} {formatMoney(totalAmount)}</Text>
     </View>
   );
 }

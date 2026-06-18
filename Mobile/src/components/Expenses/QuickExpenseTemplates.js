@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Dimensions,
 } from "react-native";
+import { useTranslation } from "react-i18next";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import apiClient from "../../services/apiClient";
 import { API_ENDPOINTS } from "../../constants/api";
@@ -30,6 +31,7 @@ const DEFAULT_TEMPLATES = [
 ];
 
 export default function QuickExpenseTemplates({ onRefreshList }) {
+  const { t } = useTranslation();
   const colors = useAppColors();
   const [templates, setTemplates] = useState([]);
   const [jars, setJars] = useState([]);
@@ -104,14 +106,14 @@ export default function QuickExpenseTemplates({ onRefreshList }) {
       };
 
       await apiClient.post(API_ENDPOINTS.ADD_EXPENSE, payload);
-      Alert.alert("Thành công", `Đã ghi nhận nhanh: ${template.name} - ${formatMoney(template.amount)}`);
+      Alert.alert(t("common.success"), t("quickExpense.recordedMsg", { name: template.name, amount: formatMoney(template.amount) }));
       
       if (typeof onRefreshList === "function") {
         onRefreshList();
       }
     } catch (err) {
       console.error("Lỗi tạo chi tiêu nhanh:", err);
-      Alert.alert("Lỗi", "Không thể ghi nhận chi tiêu nhanh.");
+      Alert.alert(t("common.error"), t("quickExpense.failed"));
     } finally {
       setLoadingId(null);
     }
@@ -136,10 +138,10 @@ export default function QuickExpenseTemplates({ onRefreshList }) {
   };
 
   const handleDelete = (id) => {
-    Alert.alert("Xác nhận xóa", "Bạn có chắc muốn xóa mẫu chi tiêu này không?", [
-      { text: "Hủy", style: "cancel" },
+    Alert.alert(t("quickExpense.deleteTitle"), t("quickExpense.deleteMsg"), [
+      { text: t("quickExpense.cancel"), style: "cancel" },
       {
-        text: "Xóa",
+        text: t("quickExpense.delete"),
         style: "destructive",
         onPress: async () => {
           const next = templates.filter(t => t.id !== id);
@@ -158,14 +160,14 @@ export default function QuickExpenseTemplates({ onRefreshList }) {
             <Text style={styles.zapIconText}>⚡</Text>
           </View>
           <View>
-            <Text style={[styles.headerTitle, { color: colors.TEXT }]}>Chi tiêu nhanh</Text>
-            <Text style={[styles.headerSubtitle, { color: colors.TEXT_MUTED }]}>Ghi nhận ngay với 1 chạm</Text>
+            <Text style={[styles.headerTitle, { color: colors.TEXT }]}>{t("quickExpense.quickTitle")}</Text>
+            <Text style={[styles.headerSubtitle, { color: colors.TEXT_MUTED }]}>{t("quickExpense.quickSubtitle")}</Text>
           </View>
         </View>
 
         <View style={styles.headerActions}>
-          <Pressable style={[styles.addTemplateBtn, { backgroundColor: colors.ROSE_MIST }]} onPress={() => setEditingTemplate({})}>
-            <Text style={[styles.addTemplateBtnText, { color: colors.PRIMARY }]}>+ Thêm mẫu</Text>
+            <Pressable style={[styles.addTemplateBtn, { backgroundColor: colors.ROSE_MIST }]} onPress={() => setEditingTemplate({})}>
+            <Text style={[styles.addTemplateBtnText, { color: colors.PRIMARY }]}>+ {t("quickExpense.addTemplate")}</Text>
           </Pressable>
           <Pressable style={[styles.expandBtn, { backgroundColor: colors.BG }]} onPress={() => setIsExpanded(!isExpanded)}>
             <Text style={[styles.expandBtnText, { color: colors.TEXT_SECONDARY }]}>{isExpanded ? "▲" : "▼"}</Text>
@@ -178,8 +180,8 @@ export default function QuickExpenseTemplates({ onRefreshList }) {
           {templates.length === 0 ? (
             <Pressable style={[styles.emptyState, { borderColor: colors.CARD_BORDER }]} onPress={() => setEditingTemplate({})}>
               <Text style={styles.emptyIcon}>⚡</Text>
-              <Text style={[styles.emptyText, { color: colors.TEXT_SECONDARY }]}>Chưa có mẫu chi tiêu nhanh nào</Text>
-              <Text style={[styles.emptyActionText, { color: colors.PRIMARY }]}>+ Tạo mẫu chi tiêu đầu tiên</Text>
+              <Text style={[styles.emptyText, { color: colors.TEXT_SECONDARY }]}>{t("quickExpense.emptyTitle")}</Text>
+              <Text style={[styles.emptyActionText, { color: colors.PRIMARY }]}>+ {t("quickExpense.emptyAction")}</Text>
             </Pressable>
           ) : (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContainer}>
@@ -221,7 +223,7 @@ export default function QuickExpenseTemplates({ onRefreshList }) {
               {/* Add card */}
               <Pressable style={[styles.addTemplateCard, { borderColor: colors.CARD_BORDER }]} onPress={() => setEditingTemplate({})}>
                 <Text style={[styles.addCardIcon, { color: colors.TEXT_MUTED }]}>+</Text>
-                <Text style={[styles.addCardText, { color: colors.TEXT_MUTED }]}>Thêm</Text>
+                <Text style={[styles.addCardText, { color: colors.TEXT_MUTED }]}>{t("quickExpense.add")}</Text>
               </Pressable>
             </ScrollView>
           )}

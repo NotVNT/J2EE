@@ -7,10 +7,11 @@ import {
   Text,
   View,
 } from "react-native";
+import { useTranslation } from "react-i18next";
 import { COLORS, useAppColors } from "../../constants/colors";
 
 export default function ForecastMonthPicker({
-  accessibilityLabel = "Chọn tháng dự báo",
+  accessibilityLabel: accessibilityLabelProp,
   label,
   hint,
   visible,
@@ -21,7 +22,9 @@ export default function ForecastMonthPicker({
   onSelect,
   onClose,
 }) {
+  const { t } = useTranslation();
   const colors = useAppColors();
+  const accessibilityLabel = accessibilityLabelProp || t("forecastComponents.selectMonth");
 
   return (
     <>

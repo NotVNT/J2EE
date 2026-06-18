@@ -1,5 +1,6 @@
 import React from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useAppColors } from "../../constants/colors";
 import AppIcon from "../ui/AppIcon";
 import WalletGradientCard from "../ui/WalletGradientCard";
@@ -8,6 +9,7 @@ import AmountText from "../ui/AmountText";
 
 export default function HomeBanner({ balanceData, isBalanceVisible = true, monthlySeries }) {
   const colors = useAppColors();
+  const { t } = useTranslation();
   const balance = balanceData?.totalBalance ?? 0;
 
   // Calculate change rate compared to the previous month
@@ -35,7 +37,7 @@ export default function HomeBanner({ balanceData, isBalanceVisible = true, month
       <View style={styles.header}>
         <View style={styles.titleRow}>
           <AppIcon name="albums-outline" size={18} color="#FFFFFF" style={styles.walletIcon} />
-          <Text style={styles.titleText}>Ví cá nhân</Text>
+          <Text style={styles.titleText}>{t("dashboardComponents.wallet")}</Text>
         </View>
       </View>
 
@@ -50,7 +52,7 @@ export default function HomeBanner({ balanceData, isBalanceVisible = true, month
       <View style={styles.footer}>
         <ChangeRateBadge
           value={changeRate}
-          label="so với tháng trước"
+          label={t("dashboardComponents.vsLastMonth")}
           labelColor="rgba(255, 255, 255, 0.8)"
           style={styles.badge}
         />

@@ -8,6 +8,7 @@ import {
   Text,
   View
 } from "react-native";
+import { useTranslation } from "react-i18next";
 import DateTimePicker, { useDefaultStyles } from "react-native-ui-datepicker";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
@@ -65,6 +66,7 @@ function DatePickerModal({
   minimumDate,
   maximumDate
 }) {
+  const { t, i18n } = useTranslation();
   const [draft, setDraft] = useState(value ? dayjs(value) : dayjs());
   const slideAnim = useRef(new Animated.Value(0)).current;
   const defaultStyles = useDefaultStyles();
@@ -261,7 +263,7 @@ function DatePickerModal({
               }}
               minDate={minimumDate ? dayjs(minimumDate) : undefined}
               maxDate={maximumDate ? dayjs(maximumDate) : undefined}
-              locale="vi"
+              locale={i18n.language}
               firstDayOfWeek={1}
               weekdaysFormat="min"
               monthsFormat="short"
@@ -273,10 +275,10 @@ function DatePickerModal({
           {/* Action buttons */}
           <View style={styles.actionRow}>
             <Pressable style={styles.cancelBtn} onPress={onCancel}>
-              <Text style={styles.cancelBtnText}>Hủy</Text>
+              <Text style={styles.cancelBtnText}>{t("commonComponents.cancel")}</Text>
             </Pressable>
             <Pressable style={styles.confirmBtn} onPress={handleConfirm}>
-              <Text style={styles.confirmBtnText}>Xác nhận</Text>
+              <Text style={styles.confirmBtnText}>{t("commonComponents.confirm")}</Text>
             </Pressable>
           </View>
         </Animated.View>

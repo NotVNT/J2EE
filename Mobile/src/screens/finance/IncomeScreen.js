@@ -2,6 +2,7 @@ import React, { useCallback } from "react";
 import { FlatList, RefreshControl, StyleSheet, View } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 import IncomeEmptyState from "../../components/Incomes/IncomeEmptyState";
 import IncomeForm from "../../components/Incomes/IncomeForm";
 import IncomeItem from "../../components/Incomes/IncomeItem";
@@ -27,7 +28,8 @@ function IncomeFormRoute() {
   const navigation = useNavigation();
   const route = useRoute();
   const insets = useSafeAreaInsets();
-  const title = route.params?.initialData ? "Chỉnh sửa thu nhập" : "Thêm thu nhập";
+  const { t } = useTranslation();
+  const title = route.params?.initialData ? t("finance.income.editTitle") : t("finance.income.addTitle");
 
   const form = useIncomeForm({
     initialData: route.params?.initialData,
@@ -41,6 +43,7 @@ function IncomeListRoute() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const colors = useAppColors();
+  const { t } = useTranslation();
   const {
     filterType,
     handleExport,
@@ -87,7 +90,7 @@ function IncomeListRoute() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.APP_BACKGROUND || colors.BG, paddingTop: getSafeAreaTop(insets, 12) }]}>
-      <ScreenBackHeader title="Lịch sử thu nhập" />
+      <ScreenBackHeader title={t("finance.income.historyTitle")} />
 
       <FlatList
         data={incomes}

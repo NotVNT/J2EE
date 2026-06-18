@@ -3,6 +3,7 @@ import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 import { useAppColors } from "../constants/colors";
 import DashboardScreen from "../screens/dashboard/DashboardScreen";
 import ExpenseScreen from "../screens/finance/ExpenseScreen";
@@ -138,6 +139,7 @@ export function SettingStack() {
 export default function MainTabs() {
   const insets = useSafeAreaInsets();
   const colors = useAppColors();
+  const { t } = useTranslation();
   const [isQuickMenuVisible, setIsQuickMenuVisible] = useState(false);
   const [suppressTabFocus, setSuppressTabFocus] = useState(false);
   const [floatingFocusedKey, setFloatingFocusedKey] = useState(null);
@@ -250,7 +252,7 @@ export default function MainTabs() {
           name="HomeTab"
           component={HomeStack}
           options={{
-            tabBarLabel: tabLabel("Tổng quan"),
+            tabBarLabel: tabLabel(t("tabs.overview")),
             tabBarIcon: tabIcon(TAB_ICONS.home),
             tabBarButton: pillTabBarButton
           }}
@@ -260,7 +262,7 @@ export default function MainTabs() {
           name="CategoryTab"
           component={CategoryStack}
           options={{
-            tabBarLabel: tabLabel("Danh mục"),
+            tabBarLabel: tabLabel(t("tabs.categories")),
             tabBarIcon: tabIcon(TAB_ICONS.categories),
             tabBarButton: pillTabBarButton
           }}
@@ -291,7 +293,7 @@ export default function MainTabs() {
           name="ExpenseTab"
           component={ExpenseStack}
           options={{
-            tabBarLabel: tabLabel("Lịch sử"),
+            tabBarLabel: tabLabel(t("tabs.history")),
             tabBarIcon: tabIcon(TAB_ICONS.history),
             tabBarButton: pillTabBarButton
           }}
@@ -301,7 +303,7 @@ export default function MainTabs() {
           name="SettingTab"
           component={SettingStack}
           options={{
-            tabBarLabel: tabLabel("Cài đặt"),
+            tabBarLabel: tabLabel(t("tabs.settings")),
             tabBarIcon: tabIcon(TAB_ICONS.settings),
             tabBarButton: pillTabBarButton
           }}

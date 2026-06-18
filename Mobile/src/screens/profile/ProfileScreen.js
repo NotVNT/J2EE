@@ -2,6 +2,7 @@ import React, { useContext } from "react";
 import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 import { AuthContext } from "../../contexts/AuthContext";
 import { COLORS, useAppColors } from "../../constants/colors";
 import { getSafeAreaBottom, getSafeAreaTop } from "../../utils/safeArea";
@@ -13,7 +14,7 @@ function InfoRow({ colors, label, value, showChevron = false, isLast = false }) 
     <View style={[styles.infoRow, { borderBottomColor: colors.CARD_BORDER }, isLast && styles.infoRowLast]}>
       <Text style={[styles.infoLabel, { color: colors.TEXT_SECONDARY }]}>{label}</Text>
       <View style={styles.infoValueWrap}>
-        <Text style={[styles.infoValue, { color: colors.TEXT }, label === "Số điện thoại" && { color: colors.TEXT_SECONDARY }]}>{value || "-"}</Text>
+        <Text style={[styles.infoValue, { color: colors.TEXT }, showChevron && { color: colors.TEXT_SECONDARY }]}>{value || "-"}</Text>
         {showChevron && <Ionicons name="chevron-forward" size={16} color={colors.TEXT_MUTED} style={{ marginLeft: 6 }} />}
       </View>
     </View>
@@ -24,16 +25,17 @@ export default function ProfileScreen() {
   const { user } = useContext(AuthContext);
   const insets = useSafeAreaInsets();
   const colors = useAppColors();
+  const { t } = useTranslation();
 
-  const fullName = user?.fullName || "Người dùng";
-  const email = user?.email || "Chưa có email";
+  const fullName = user?.fullName || t("profile.anonymousUser");
+  const email = user?.email || t("profile.missingEmail");
   const initial = fullName.slice(0, 1).toUpperCase();
   const profileImageUrl = user?.profileImageUrl || "";
   const subscriptionPlan = String(user?.subscriptionPlan || "FREE").toUpperCase();
 
   return (
     <View style={[styles.safeArea, { backgroundColor: colors.BG, paddingTop: getSafeAreaTop(insets, 0) }]}>
-      <ScreenBackHeader title="Hồ sơ" style={styles.screenHeader} />
+      <ScreenBackHeader title={t("finance.profile.title")} style={styles.screenHeader} />
 
       <ScrollView style={[styles.container, { backgroundColor: colors.BG }]} contentContainerStyle={[styles.content, { paddingBottom: getSafeAreaBottom(insets) }]} showsVerticalScrollIndicator={false}>
 
@@ -56,21 +58,21 @@ export default function ProfileScreen() {
 
         {/* Personal Information Group Section */}
         <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: colors.TEXT_SECONDARY }]}>Thông tin cá nhân</Text>
+          <Text style={[styles.sectionTitle, { color: colors.TEXT_SECONDARY }]}>{t("finance.profile.personalInfo")}</Text>
         </View>
         <View style={[styles.sectionCard, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}>
-          <InfoRow colors={colors} label="Họ và tên" value={fullName} />
+          <InfoRow colors={colors} label={t("finance.profile.fullName")} value={fullName} />
           <InfoRow colors={colors} label="Email" value={email} />
-          <InfoRow colors={colors} label="Số điện thoại" value="Chưa cập nhật" showChevron={true} isLast={true} />
+          <InfoRow colors={colors} label={t("finance.profile.phone")} value={t("finance.profile.notUpdated")} showChevron={true} isLast={true} />
         </View>
 
         {/* Service Plan Group Section */}
         <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: colors.TEXT_SECONDARY }]}>Gói dịch vụ</Text>
+          <Text style={[styles.sectionTitle, { color: colors.TEXT_SECONDARY }]}>{t("finance.profile.servicePlan")}</Text>
         </View>
         <View style={[styles.sectionCard, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}>
           <View style={styles.planRow}>
-            <Text style={[styles.planLabel, { color: colors.TEXT_SECONDARY }]}>Gói hiện tại</Text>
+            <Text style={[styles.planLabel, { color: colors.TEXT_SECONDARY }]}>{t("finance.profile.currentPlan")}</Text>
             <StatusBadge plan={subscriptionPlan} />
           </View>
         </View>

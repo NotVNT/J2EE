@@ -1,5 +1,6 @@
 import React from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { COLORS } from "../../constants/colors";
 
 export default function PasswordInput({
@@ -10,9 +11,11 @@ export default function PasswordInput({
   focused,
   placeholder,
 }) {
+  const { t } = useTranslation();
+
   return (
     <View style={styles.inputGroup}>
-      <Text style={styles.inputLabel}>Mật khẩu mới</Text>
+      <Text style={styles.inputLabel}>{t("auth.password.newPassword")}</Text>
       <View style={[styles.inputWrap, focused && styles.inputWrapFocused]}>
         <TextInput
           style={styles.input}
@@ -21,7 +24,7 @@ export default function PasswordInput({
           onFocus={onFocus}
           onBlur={onBlur}
           secureTextEntry
-          placeholder={placeholder || "Nhập mật khẩu"}
+          placeholder={placeholder || t("auth.common.enterPassword")}
           placeholderTextColor={COLORS.DARK_TEXT_SECONDARY}
           autoCapitalize="none"
           autoCorrect={false}

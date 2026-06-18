@@ -1,5 +1,6 @@
 import React, { useRef, useState } from "react";
 import { Dimensions, Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useAppColors } from "../../constants/colors";
 import { getIconColor } from "../../utils/categoryIcons";
 import { formatDate } from "../../utils/format";
@@ -30,13 +31,14 @@ function getCreatedAtLabel(item) {
 
 export default function CategoryItem({ item, onEditCategory, onDeleteCategory }) {
   const colors = useAppColors();
+  const { t } = useTranslation();
   const normalizedType = String(item?.type || "").toLowerCase();
   const iconColor = getIconColor(item?.icon);
   const meta = CATEGORY_TYPE_META[normalizedType] || {
-    label: (item?.type || "-").toString().toUpperCase(),
     chipBg: colors.BG,
     chipText: colors.TEXT_SECONDARY
   };
+  const typeLabel = CATEGORY_TYPE_META[normalizedType] ? t(`categoryTypeMeta.${normalizedType}`) : (item?.type || "-").toString().toUpperCase();
   const createdAtLabel = getCreatedAtLabel(item);
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ top: 0, right: 16 });
@@ -85,11 +87,11 @@ export default function CategoryItem({ item, onEditCategory, onDeleteCategory })
 
       <View style={styles.itemContent}>
         <Text numberOfLines={1} style={[styles.itemName, { color: colors.TEXT }]}>
-          {item?.name || "Chưa đặt tên"}
+          {item?.name || t("categoryForm.unnamed")}
         </Text>
 
         <View style={[styles.typeChip, { backgroundColor: meta.chipBg }]}>
-          <Text style={[styles.typeChipText, { color: meta.chipText }]}>{meta.label}</Text>
+          <Text style={[styles.typeChipText, { color: meta.chipText }]}>{typeLabel}</Text>
         </View>
         {createdAtLabel ? (
           <Text style={[styles.createdAtText, { color: colors.TEXT_MUTED }]} numberOfLines={1}>{createdAtLabel}</Text>
@@ -107,7 +109,7 @@ export default function CategoryItem({ item, onEditCategory, onDeleteCategory })
               }}
             >
               <AppIcon name="pencil-outline" size={16} color={colors.TEXT} />
-              <Text style={[styles.menuItemText, { color: colors.TEXT }]}>Chỉnh sửa</Text>
+              <Text style={[styles.menuItemText, { color: colors.TEXT }]}>{t("categoryForm.edit")}</Text>
             </Pressable>
             <View style={[styles.menuDivider, { backgroundColor: colors.CARD_BORDER }]} />
             <Pressable
@@ -118,7 +120,7 @@ export default function CategoryItem({ item, onEditCategory, onDeleteCategory })
               }}
             >
               <AppIcon name="trash-outline" size={16} color={colors.EXPENSE} />
-              <Text style={[styles.menuItemText, { color: colors.EXPENSE }]}>Xóa</Text>
+              <Text style={[styles.menuItemText, { color: colors.EXPENSE }]}>{t("categoryForm.delete")}</Text>
             </Pressable>
           </View>
         </Pressable>

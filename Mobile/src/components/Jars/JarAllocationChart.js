@@ -1,5 +1,6 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import Svg, { G, Path, Text as SvgText } from "react-native-svg";
 import { COLORS, useAppColors } from "../../constants/colors";
 import { describeDonutArc } from "../../utils/jar";
@@ -13,20 +14,21 @@ const cy = svgSize / 2;
 
 export default function JarAllocationChart({ jarCount, slices }) {
   const colors = useAppColors();
+  const { t } = useTranslation();
 
   if (!slices.length) return null;
 
   return (
     <View style={[styles.chartCard, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}> 
-      <Text style={[styles.chartTitle, { color: colors.TEXT }]}>Cơ cấu tài sản thực tế</Text>
+      <Text style={[styles.chartTitle, { color: colors.TEXT }]}>{t("jarAllocationChart.actualAllocation")}</Text>
       <View style={styles.chartWrapper}>
         <Svg width={svgSize} height={svgSize} viewBox={`0 0 ${svgSize} ${svgSize}`}>
           <G>
             {slices.map((slice) => (
               <Path key={slice.key} d={describeDonutArc(cx, cy, outerR, innerR, slice.startAngle, slice.endAngle)} fill={slice.color} />
             ))}
-            <SvgText x={cx} y={cy - 6} textAnchor="middle" fontSize="11" fontWeight="600" fill={colors.TEXT_SECONDARY}>Ví hũ</SvgText>
-            <SvgText x={cx} y={cy + 12} textAnchor="middle" fontSize="14" fontWeight="800" fill={colors.PRIMARY}>{jarCount} Hũ</SvgText>
+            <SvgText x={cx} y={cy - 6} textAnchor="middle" fontSize="11" fontWeight="600" fill={colors.TEXT_SECONDARY}>{t("jarAllocationChart.walletJars")}</SvgText>
+            <SvgText x={cx} y={cy + 12} textAnchor="middle" fontSize="14" fontWeight="800" fill={colors.PRIMARY}>{t("jarAllocationChart.jarName", { name: jarCount })}</SvgText>
           </G>
         </Svg>
         <View style={styles.chartLegend}>
@@ -36,7 +38,7 @@ export default function JarAllocationChart({ jarCount, slices }) {
               <Text style={[styles.legendText, { color: colors.TEXT_SECONDARY }]} numberOfLines={1}>{slice.name} ({slice.percent.toFixed(1)}%)</Text>
             </View>
           ))}
-          {slices.length > 5 && <Text style={[styles.moreLegendText, { color: colors.TEXT_MUTED }]}>và {slices.length - 5} hũ khác...</Text>}
+          {slices.length > 5 && <Text style={[styles.moreLegendText, { color: colors.TEXT_MUTED }]}>{t("jarAllocationChart.andOthers", { count: slices.length - 5 })}</Text>}
         </View>
       </View>
     </View>

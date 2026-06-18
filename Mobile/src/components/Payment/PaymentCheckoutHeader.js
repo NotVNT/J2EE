@@ -1,15 +1,17 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { COLORS, useAppColors } from "../../constants/colors";
 
 export default function PaymentCheckoutHeader({ title }) {
   const colors = useAppColors();
+  const { t } = useTranslation();
 
   return (
     <View style={[styles.header, { backgroundColor: colors.CARD, borderBottomColor: colors.CARD_BORDER }]}>
       <View style={styles.headerTextWrap}>
         <Text style={[styles.headerTitle, { color: colors.TEXT }]}>{title}</Text>
-        <Text style={[styles.headerSubtitle, { color: colors.TEXT_SECONDARY }]}>Bạn có thể thanh toán ngay trong app. Nếu cần mở app ngân hàng, ứng dụng sẽ bật liên kết ngoài.</Text>
+        <Text style={[styles.headerSubtitle, { color: colors.TEXT_SECONDARY }]}>{t("paymentCheckoutHeader.description")}</Text>
       </View>
     </View>
   );

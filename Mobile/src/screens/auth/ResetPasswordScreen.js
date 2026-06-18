@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
+import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import apiClient from "../../services/apiClient";
 import { API_ENDPOINTS } from "../../constants/api";
@@ -26,6 +27,7 @@ import { scale, clampScale } from "../../utils/layoutScale";
 export default function ResetPasswordScreen() {
   const navigation = useNavigation();
   const route = useRoute();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const email = route.params?.email || "";
   const otp = route.params?.otp || "";
@@ -44,13 +46,13 @@ export default function ResetPasswordScreen() {
     try {
       await apiClient.post(API_ENDPOINTS.RESET_PASSWORD, { email, otp, newPassword: password });
       Alert.alert(
-        "Thành công",
-        "Mật khẩu của bạn đã được đặt lại. Vui lòng đăng nhập bằng mật khẩu mới.",
-        [{ text: "Đăng nhập", onPress: () => navigation.navigate("Login") }]
+        t("auth.common.success"),
+        t("auth.resetPassword.successMessage"),
+        [{ text: t("auth.common.login"), onPress: () => navigation.navigate("Login") }]
       );
     } catch (error) {
-      const message = getApiErrorMessage(error, "Không thể đặt lại mật khẩu. Vui lòng thử lại.");
-      Alert.alert("Lỗi", message);
+      const message = getApiErrorMessage(error, t("auth.resetPassword.failedMessage"));
+      Alert.alert(t("auth.common.error"), message);
     } finally {
       setLoading(false);
     }
@@ -70,8 +72,8 @@ export default function ResetPasswordScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.title}>Đặt lại mật khẩu</Text>
-          <Text style={styles.subtitle}>Nhập mật khẩu mới cho tài khoản của bạn.</Text>
+          <Text style={styles.title}>{t("auth.resetPassword.title")}</Text>
+          <Text style={styles.subtitle}>{t("auth.resetPassword.subtitle")}</Text>
 
           <PasswordInput
             value={password}
@@ -79,7 +81,7 @@ export default function ResetPasswordScreen() {
             onFocus={() => setPasswordFocused(true)}
             onBlur={() => setPasswordFocused(false)}
             focused={passwordFocused}
-            placeholder="Nhập mật khẩu mới"
+            placeholder={t("auth.resetPassword.placeholder")}
           />
 
           <Pressable
@@ -88,7 +90,7 @@ export default function ResetPasswordScreen() {
             disabled={!canProceed || loading}
           >
             <Text style={styles.resetButtonText}>
-              {loading ? "Đang đặt lại..." : "Đặt lại mật khẩu"}
+              {loading ? t("auth.resetPassword.loading") : t("auth.resetPassword.submit")}
             </Text>
           </Pressable>
 

@@ -1,5 +1,6 @@
 import React from "react";
 import { Image, Platform, Pressable, StatusBar, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { COLORS, useAppColors } from "../../constants/colors";
@@ -14,13 +15,14 @@ export default function ChatAssistantHeader({
   onOpenSessions,
 }) {
   const colors = useAppColors();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const statusBarTop = Platform.OS === "android" ? StatusBar.currentHeight || 0 : 0;
   const topInset = Math.max(insets.top, statusBarTop);
   const safeTopPadding = topInset + 8;
   const subtitle = activeMode === "agent"
-    ? "Trợ lý tự động tài chính"
-    : "Trợ lý tài chính AI";
+    ? t("chatAssistant.autoTitle")
+    : t("chatAssistant.title");
 
   return (
     <View style={[styles.headerCard, { marginTop: safeTopPadding, backgroundColor: colors.CARD, borderColor: colors.CHAT_BORDER, shadowColor: colors.PRIMARY }]}>
@@ -48,7 +50,7 @@ export default function ChatAssistantHeader({
           </View>
           <View style={styles.metaRow}>
             <View style={styles.onlineDot} />
-            <Text style={[styles.metaText, { color: colors.TEXT_SECONDARY }]}>Trực tuyến</Text>
+            <Text style={[styles.metaText, { color: colors.TEXT_SECONDARY }]}>{t("chatAssistant.online")}</Text>
             <View style={[styles.metaDivider, { backgroundColor: colors.CARD_BORDER }]} />
             <View style={styles.modelInline}>
               <Text style={[styles.metaText, { color: colors.TEXT_SECONDARY }]} numberOfLines={1}>{modelLabel}</Text>

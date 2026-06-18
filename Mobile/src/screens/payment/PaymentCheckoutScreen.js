@@ -1,6 +1,7 @@
 import React from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 import { WebView } from "react-native-webview";
 import PaymentCheckoutFallback from "../../components/Payment/PaymentCheckoutFallback";
 import PaymentCheckoutHeader from "../../components/Payment/PaymentCheckoutHeader";
@@ -14,6 +15,7 @@ const PAYOS_MERCHANT_HEADER_HEIGHT = 56;
 export default function PaymentCheckoutScreen() {
   const insets = useSafeAreaInsets();
   const colors = useAppColors();
+  const { t } = useTranslation();
   const checkout = usePaymentCheckoutFlow();
 
   if (!checkout.checkoutUrl) {
@@ -31,7 +33,7 @@ export default function PaymentCheckoutScreen() {
       {checkout.isPageLoading ? (
         <View style={[styles.loadingOverlay, { backgroundColor: isDark ? "rgba(44,44,46,0.94)" : "rgba(255,255,255,0.94)" }]}>
           <ActivityIndicator size="large" color={colors.PRIMARY} />
-          <Text style={[styles.loadingText, { color: colors.TEXT }]}>Đang tải cổng thanh toán...</Text>
+           <Text style={[styles.loadingText, { color: colors.TEXT }]}>{t("paymentCheckout.loading")}</Text>
         </View>
       ) : null}
 

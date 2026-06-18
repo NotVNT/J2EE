@@ -1,11 +1,13 @@
 import { useCallback, useMemo, useState } from "react";
 import { Alert } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useFocusEffect } from "@react-navigation/native";
 import { API_ENDPOINTS } from "../constants/api";
 import apiClient from "../services/apiClient";
 import { getApiErrorMessage } from "../utils/format";
 
 export default function useEmailPreferences() {
+  const { t } = useTranslation();
   const [preferences, setPreferences] = useState([]);
   const [isUpdating, setIsUpdating] = useState(false);
 
@@ -44,7 +46,7 @@ export default function useEmailPreferences() {
         await apiClient.put(API_ENDPOINTS.UPDATE_EMAIL_PREFERENCES, updatedPreferences);
       } catch (error) {
         setPreferences(previousPreferences);
-        Alert.alert("Lỗi", getApiErrorMessage(error, "Không thể cập nhật cài đặt email."));
+        Alert.alert(t("common.error"), getApiErrorMessage(error, t("emailPrefs.updateFail")));
       } finally {
         setIsUpdating(false);
       }

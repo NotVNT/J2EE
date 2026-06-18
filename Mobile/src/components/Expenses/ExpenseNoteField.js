@@ -1,38 +1,22 @@
 import React from "react";
 import { StyleSheet, Text, TextInput, View } from "react-native";
-import VoiceInputButton from "../common/VoiceInputButton";
+import { useTranslation } from "react-i18next";
 import { COLORS, useAppColors } from "../../constants/colors";
 
-/**
- * ExpenseNoteField — TextInput + VoiceInputButton cho ghi chú chi tiêu
- *
- * Props:
- *   value: string              — Giá trị note hiện tại
- *   onChange: (text) => void   — Callback khi note thay đổi
- *   onVoiceResult: (text) => void — Callback khi có kết quả voice
- *   placeholder: string        — Placeholder text
- *   multiline: boolean         — Cho phép nhập nhiều dòng
- */
 export default function ExpenseNoteField({
   value = "",
   onChange,
   onVoiceResult,
-  placeholder = "Nhập ghi chú chi tiết...",
+  placeholder,
   multiline = true
 }) {
+  const { t } = useTranslation();
   const colors = useAppColors();
-
-  const handleVoiceResult = (text) => {
-    // Nếu có text hiện tại, thêm vào cuối
-    const newText = value ? `${value}\n${text}` : text;
-    onChange?.(newText);
-    onVoiceResult?.(text);
-  };
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.label, { color: colors.TEXT }]}> 
-        <Text style={styles.labelIcon}>📝</Text> Ghi chú chi tiết
+      <Text style={[styles.label, { color: colors.TEXT }]}>
+        <Text style={styles.labelIcon}>📝</Text> {t("expenseForm.noteSection")}
       </Text>
 
       <View style={styles.inputRow}>
@@ -40,14 +24,11 @@ export default function ExpenseNoteField({
           style={[styles.input, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER, color: colors.TEXT }, multiline && styles.inputMultiline]}
           value={value}
           onChangeText={onChange}
-          placeholder={placeholder}
+          placeholder={placeholder || t("expenseForm.noteSection")}
           placeholderTextColor={colors.TEXT_MUTED}
           multiline={multiline}
           textAlignVertical="top"
         />
-        <View style={styles.micWrapper}>
-          <VoiceInputButton onResult={handleVoiceResult} language="vi-VN" />
-        </View>
       </View>
     </View>
   );
@@ -83,8 +64,5 @@ const styles = StyleSheet.create({
   inputMultiline: {
     minHeight: 60,
     maxHeight: 120
-  },
-  micWrapper: {
-    marginTop: 2
   }
 });

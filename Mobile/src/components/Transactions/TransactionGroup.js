@@ -1,11 +1,13 @@
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { formatDate } from "../../utils/format";
 import AmountText from "../ui/AmountText";
 import AppIcon from "../ui/AppIcon";
 import TransactionIcon from "../ui/TransactionIcon";
 
 export default function TransactionGroup({ colors, group, onDelete, onEdit }) {
+  const { t } = useTranslation();
   return (
     <View style={[styles.dateGroupContainer, { backgroundColor: colors.CARD, borderColor: colors.BORDER }]}> 
       <View style={[styles.groupHeaderRow, { borderBottomColor: colors.SEPARATOR }]}> 
@@ -42,7 +44,7 @@ export default function TransactionGroup({ colors, group, onDelete, onEdit }) {
                 }}
                 style={styles.rowActionButton}
                 accessibilityRole="button"
-                accessibilityLabel="Chỉnh sửa giao dịch"
+                accessibilityLabel={t("transactionGroup.editAccessibility")}
               >
                 <AppIcon name="create-outline" size={15} color={colors.PRIMARY || "#7C4DFF"} />
               </Pressable>
@@ -53,7 +55,7 @@ export default function TransactionGroup({ colors, group, onDelete, onEdit }) {
                 }}
                 style={styles.rowActionButton}
                 accessibilityRole="button"
-                accessibilityLabel="Xóa giao dịch"
+                accessibilityLabel={t("transactionGroup.deleteAccessibility")}
               >
                 <AppIcon name="trash-outline" size={15} color={colors.EXPENSE_COLOR || "#EF4444"} />
               </Pressable>
@@ -94,8 +96,8 @@ const styles = StyleSheet.create({
     gap: 8
   },
   groupTotalText: {
-    fontSize: 11,
-    fontWeight: "600"
+    fontSize: 14,
+    fontWeight: "800"
   },
   rowWrapper: {
     flexDirection: "row",
@@ -122,8 +124,8 @@ const styles = StyleSheet.create({
     marginTop: 2
   },
   rowAmount: {
-    fontSize: 14,
-    fontWeight: "900"
+    fontSize: 12,
+    fontWeight: "800"
   },
   rowRight: {
     alignItems: "flex-end",
@@ -136,11 +138,6 @@ const styles = StyleSheet.create({
     marginTop: 5
   },
   rowActionButton: {
-    width: 30,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: "rgba(148, 163, 184, 0.12)",
-    alignItems: "center",
-    justifyContent: "center"
+    padding: 4
   }
 });

@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { Alert } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useFocusEffect } from "@react-navigation/native";
 import {
   fetchDashboardData,
@@ -10,6 +11,7 @@ import {
 import { getApiErrorMessage } from "../utils/format";
 
 export default function useDashboard() {
+  const { t } = useTranslation();
   const [dashboard, setDashboard] = useState(null);
   const [goals, setGoals] = useState([]);
   const [monthlySeries, setMonthlySeries] = useState([]);
@@ -31,7 +33,7 @@ export default function useDashboard() {
       setMonthlySeries(series);
       setUnreadCount(nextUnreadCount);
     } catch (error) {
-      Alert.alert("Lỗi", getApiErrorMessage(error, "Không tải được dữ liệu trang chủ"));
+      Alert.alert(t("common.error"), getApiErrorMessage(error, t("dashboardComponents.loadFail")));
     } finally {
       setRefreshing(false);
     }

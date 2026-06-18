@@ -1,5 +1,6 @@
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useAppColors } from "../../constants/colors";
 import { formatDate } from "../../utils/format";
 import AppIcon from "../ui/AppIcon";
@@ -7,6 +8,7 @@ import TransactionIcon from "../ui/TransactionIcon";
 import AmountText from "../ui/AmountText";
 
 export default function IncomeItem({ item, onDelete, onEdit }) {
+  const { t } = useTranslation();
   const colors = useAppColors();
   const amount = Number(item?.amount || 0);
 
@@ -22,12 +24,12 @@ export default function IncomeItem({ item, onDelete, onEdit }) {
       ]}
     >
       <View style={styles.itemMain}>
-        <TransactionIcon iconValue={item?.icon || "wallet-outline"} containerSize={36} size={18} style={{ marginRight: 10 }} />
+        <TransactionIcon iconValue={item?.icon} containerSize={36} size={18} style={{ marginRight: 10 }} />
 
         <View style={styles.itemContent}>
-          <Text style={[styles.itemName, { color: colors.TEXT }]}>{item?.name || "Thu nhập"}</Text>
+          <Text style={[styles.itemName, { color: colors.TEXT }]}>{item?.name || t("incomeItem.type")}</Text>
           <Text style={[styles.itemMeta, { color: colors.TEXT_SECONDARY }]}>
-            {formatDate(item?.date)} • {item?.categoryName || "Khác"}
+            {formatDate(item?.date)} • {item?.categoryName || t("reportComponents.other")}
           </Text>
         </View>
       </View>
@@ -39,7 +41,7 @@ export default function IncomeItem({ item, onDelete, onEdit }) {
             onPress={() => onEdit?.(item)}
             style={styles.iconButton}
             accessibilityRole="button"
-            accessibilityLabel="Chỉnh sửa thu nhập"
+            accessibilityLabel={t("incomeItem.editAccessibility")}
           >
             <AppIcon name="create-outline" size={15} color={colors.PRIMARY || "#7C4DFF"} />
           </Pressable>
@@ -47,7 +49,7 @@ export default function IncomeItem({ item, onDelete, onEdit }) {
             onPress={() => onDelete(item?.id)}
             style={styles.iconButton}
             accessibilityRole="button"
-            accessibilityLabel="Xóa thu nhập"
+            accessibilityLabel={t("incomeItem.deleteAccessibility")}
           >
             <AppIcon name="trash-outline" size={15} color={colors.EXPENSE_COLOR || "#EF4444"} />
           </Pressable>

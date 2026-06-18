@@ -1,34 +1,37 @@
 import React from "react";
 import { StyleSheet, Text, View, Pressable, FlatList } from "react-native";
+import { useTranslation } from "react-i18next";
 import { COLORS, useAppColors } from "../../constants/colors";
 
 const QUICK_ACTIONS = [
   {
-    label: "Gợi ý tiết kiệm",
-    text: "Gợi ý cách tiết kiệm dựa trên thói quen chi tiêu của tôi",
+    labelKey: "chatbot.promptSavings",
+    textKey: "chatbot.promptSavings",
   },
   {
-    label: "Tâm lý chi tiêu",
-    text: "Tại sao tôi hay mua sắm bốc đồng và làm sao để kiểm soát?",
+    labelKey: "chatbot.promptSpending",
+    textKey: "chatbot.promptSpending",
   },
   {
-    label: "Đang lo về tiền",
-    text: "Tôi đang stress và lo lắng về tài chính, bạn có thể lắng nghe không?",
+    labelKey: "chatbot.promptWorry",
+    textKey: "chatbot.promptWorry",
   },
   {
-    label: "Lên kế hoạch",
-    text: "Giúp tôi lên kế hoạch tiết kiệm cho một mục tiêu lớn",
+    labelKey: "chatbot.promptPlan",
+    textKey: "chatbot.promptPlan",
   },
 ];
 
 export default function QuickPromptChips({ onSelect }) {
+  const { t } = useTranslation();
   const colors = useAppColors();
+  const actions = QUICK_ACTIONS.map(a => ({ ...a, label: t(a.labelKey), text: t(a.textKey) }));
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.title, { color: colors.TEXT_MUTED }]}>Thử gõ nhanh các gợi ý sau:</Text>
+      <Text style={[styles.title, { color: colors.TEXT_MUTED }]}>{t("chatbot.promptTitle")}</Text>
       <FlatList
-        data={QUICK_ACTIONS}
+        data={actions}
         horizontal
         showsHorizontalScrollIndicator={false}
         keyExtractor={(item) => item.label}

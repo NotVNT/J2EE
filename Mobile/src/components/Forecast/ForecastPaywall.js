@@ -1,5 +1,6 @@
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useNavigation } from "@react-navigation/native";
 import { useAppColors } from "../../constants/colors";
 import { scale } from "../../utils/layoutScale";
@@ -11,28 +12,28 @@ import { scale } from "../../utils/layoutScale";
 export default function ForecastPaywall() {
   const navigation = useNavigation();
   const colors = useAppColors();
+  const { t } = useTranslation();
 
   return (
     <View style={[styles.container, { backgroundColor: colors.BG }]}>
       <Text style={styles.icon}>🔮</Text>
-      <Text style={[styles.title, { color: colors.TEXT }]}>Dự báo & Phát hiện bất thường</Text>
+      <Text style={[styles.title, { color: colors.TEXT }]}>{t("forecastPaywall.title")}</Text>
       <Text style={[styles.desc, { color: colors.TEXT_SECONDARY }]}>
-        Dự đoán chi tiêu tháng tới theo danh mục, phát hiện giao dịch bất thường,{"\n"}
-        và nhận phân tích AI chuyên sâu về tài chính của bạn.
+        {t("forecastPaywall.description")}
       </Text>
 
       <View style={[styles.features, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}>
-        <Text style={[styles.feature, { color: colors.TEXT }]}>📊 Dự báo chi tiêu theo danh mục</Text>
-        <Text style={[styles.feature, { color: colors.TEXT }]}>📈 Biểu đồ xu hướng 6 tháng</Text>
-        <Text style={[styles.feature, { color: colors.TEXT }]}>🚨 Cảnh báo giao dịch bất thường</Text>
-        <Text style={[styles.feature, { color: colors.TEXT }]}>🤖 Phân tích AI chuyên sâu</Text>
+        <Text style={[styles.feature, { color: colors.TEXT }]}>{t("forecastPaywall.featureForecast")}</Text>
+        <Text style={[styles.feature, { color: colors.TEXT }]}>{t("forecastPaywall.featureTrend")}</Text>
+        <Text style={[styles.feature, { color: colors.TEXT }]}>{t("forecastPaywall.featureAnomaly")}</Text>
+        <Text style={[styles.feature, { color: colors.TEXT }]}>{t("forecastPaywall.featureAI")}</Text>
       </View>
 
       <Pressable
         style={[styles.button, { backgroundColor: colors.PRIMARY }]}
         onPress={() => navigation.navigate("SettingTab", { screen: "Payment" })}
       >
-        <Text style={[styles.buttonText, { color: colors.WHITE || "#FFFFFF" }]}>Nâng cấp lên PREMIUM</Text>
+        <Text style={[styles.buttonText, { color: colors.WHITE || "#FFFFFF" }]}>{t("forecastPaywall.upgrade")}</Text>
       </Pressable>
     </View>
   );

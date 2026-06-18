@@ -1,6 +1,7 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 import { COLORS, useAppColors } from "../../constants/colors";
 import { formatDate } from "../../utils/format";
 import SectionHeader from "../ui/SectionHeader";
@@ -10,12 +11,13 @@ export default function ForecastAISection({
   generatedAt,
   hasError,
 }) {
+  const { t } = useTranslation();
   const colors = useAppColors();
 
   if (narrative) {
     return (
       <View style={styles.section}>
-        <SectionHeader title="Phân tích AI" />
+        <SectionHeader title={t("forecastComponents.aiAnalysis")} />
         <View style={[styles.insightCard, { backgroundColor: colors.CARD, borderColor: colors.PRIMARY_LIGHT }]}> 
           <Text style={[styles.insightText, { color: colors.TEXT }]}>{narrative}</Text>
           {generatedAt ? (
@@ -33,7 +35,7 @@ export default function ForecastAISection({
           <View style={styles.errorRow}>
             <Ionicons name="alert-circle-outline" size={16} color={colors.WARNING} />
             <Text style={[styles.insightFallbackText, { color: colors.TEXT }]}> 
-              Không thể tạo phân tích AI lúc này. Vui lòng thử lại sau.
+              {t("forecastComponents.aiError")}
             </Text>
           </View>
         </View>

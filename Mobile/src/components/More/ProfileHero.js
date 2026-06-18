@@ -1,13 +1,15 @@
 import React from "react";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 import { COLORS, useAppColors } from "../../constants/colors";
 import StatusBadge from "../ui/StatusBadge";
 
 export default function ProfileHero({ user, onPress }) {
   const colors = useAppColors();
-  const fullName = user?.fullName || "Người dùng";
-  const email = user?.email || "Chưa có email";
+  const { t } = useTranslation();
+  const fullName = user?.fullName || t("profile.anonymousUser");
+  const email = user?.email || t("profile.missingEmail");
   const profileImageUrl = user?.profileImageUrl || "";
   const initial = fullName.slice(0, 1).toUpperCase();
   const plan = user?.subscriptionPlan || "FREE";

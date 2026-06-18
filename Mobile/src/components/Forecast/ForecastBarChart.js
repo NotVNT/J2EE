@@ -1,9 +1,11 @@
 import React from "react";
 import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { BarChart } from "react-native-chart-kit";
+import { useTranslation } from "react-i18next";
 import { useAppColors } from "../../constants/colors";
 
 export default function ForecastBarChart({ barChartData, categories }) {
+  const { t } = useTranslation();
   const colors = useAppColors();
   const { width: screenWidth } = useWindowDimensions();
   const chartWidth = Math.max(screenWidth - 48, 300);
@@ -27,7 +29,7 @@ export default function ForecastBarChart({ barChartData, categories }) {
 
   return (
     <View style={styles.section}>
-      <Text style={[styles.sectionTitle, { color: colors.TEXT }]}>📊 Dự báo vs Trung bình lịch sử</Text>
+      <Text style={[styles.sectionTitle, { color: colors.TEXT }]}>{t("forecastComponents.barChartTitle")}</Text>
       <View style={[styles.chartCard, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}> 
         <BarChart
           data={barChartData}
@@ -43,11 +45,11 @@ export default function ForecastBarChart({ barChartData, categories }) {
         <View style={styles.legendRow}>
           <View style={styles.legendItem}>
             <View style={[styles.legendDot, { backgroundColor: colors.PRIMARY }]} />
-            <Text style={[styles.legendText, { color: colors.TEXT_SECONDARY }]}>Dự báo</Text>
+            <Text style={[styles.legendText, { color: colors.TEXT_SECONDARY }]}>{t("forecastComponents.barLegendForecast")}</Text>
           </View>
           <View style={styles.legendItem}>
             <View style={[styles.legendDot, { backgroundColor: colors.INFO }]} />
-            <Text style={[styles.legendText, { color: colors.TEXT_SECONDARY }]}>Trung bình lịch sử</Text>
+            <Text style={[styles.legendText, { color: colors.TEXT_SECONDARY }]}>{t("forecastComponents.barLegendAvg")}</Text>
           </View>
         </View>
       </View>

@@ -9,6 +9,7 @@ import {
   Platform,
   StyleSheet
 } from "react-native";
+import { useTranslation } from "react-i18next";
 import { COLORS, useAppColors } from "../../constants/colors";
 import { getFieldsForIntent, INTENT_ICONS, INTENT_LABELS } from "../../utils/aiIntent";
 import { fetchCategoriesByType } from "../../services/categoryService";
@@ -23,6 +24,7 @@ export default function AIConfirmationForm({
   onCancel,
   isProcessing = false
 }) {
+  const { t } = useTranslation();
   const colors = useAppColors();
   const [fields, setFields] = useState([]);
   const [formData, setFormData] = useState({});
@@ -80,7 +82,7 @@ export default function AIConfirmationForm({
     // Basic validation
     const missingField = fields.find((f) => f.required && !formData[f.key]);
     if (missingField) {
-      Alert.alert("Thiếu thông tin", `Vui lòng nhập ${missingField.label}`);
+      Alert.alert(t("chat.missingInfo"), t("chat.missingField", { label: missingField.label }));
       return;
     }
     // Call parent handler
@@ -128,8 +130,8 @@ export default function AIConfirmationForm({
                     ]}
                   >
                     {loadingCategories
-                      ? "Đang tải danh mục..."
-                      : value || "-- Chọn danh mục --"}
+                      ? t("chat.loadingCategory")
+                      : value || t("chat.selectCategory")}
                   </Text>
                   <Text style={[styles.pickerArrow, { color: colors.TEXT_MUTED }]}>▼</Text>
                 </Pressable>
@@ -159,7 +161,7 @@ export default function AIConfirmationForm({
           {isProcessing ? (
             <ActivityIndicator size="small" color={colors.WHITE} />
           ) : (
-            <Text style={styles.confirmBtnText}>✓ Xác nhận</Text>
+            <Text style={styles.confirmBtnText}>✓ {t("contributionModal.confirm")}</Text>
           )}
         </Pressable>
 
@@ -168,7 +170,7 @@ export default function AIConfirmationForm({
           onPress={onCancel}
           disabled={isProcessing}
         >
-          <Text style={[styles.cancelBtnText, { color: colors.TEXT_SECONDARY }]}>✕ Hủy</Text>
+          <Text style={[styles.cancelBtnText, { color: colors.TEXT_SECONDARY }]}>✕ {t("commonComponents.cancel")}</Text>
         </Pressable>
       </View>
 

@@ -1,10 +1,12 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useAppColors } from "../../constants/colors";
 import AppIcon from "../ui/AppIcon";
 import { scale } from "../../utils/layoutScale";
 
 export default function ForecastEmptyState({ message }) {
+  const { t } = useTranslation();
   const colors = useAppColors();
 
   return (
@@ -13,7 +15,7 @@ export default function ForecastEmptyState({ message }) {
         <AppIcon name="bar-chart-outline" size={28} color={colors.INFO || "#6B9BD2"} />
       </View>
       <Text style={[styles.text, { color: colors.TEXT_SECONDARY }]}>
-        {message || "Chưa có dữ liệu dự báo"}
+        {message || t("forecastComponents.noForecastData")}
       </Text>
     </View>
   );

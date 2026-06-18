@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef } from "react";
 import { Alert } from "react-native";
+import { useTranslation } from "react-i18next";
 import {
   ExpoSpeechRecognitionModule,
   useSpeechRecognitionEvent
@@ -19,6 +20,7 @@ import {
  *   handleMicPress   — callback gắn vào nút mic (toggle start/stop)
  */
 export default function useVoiceInput({ language = "vi-VN", onResult } = {}) {
+  const { t } = useTranslation();
   const [isRecording, setIsRecording] = useState(false);
   const [voiceTranscript, setVoiceTranscript] = useState("");
   const [isStartingVoice, setIsStartingVoice] = useState(false);
@@ -71,8 +73,8 @@ export default function useVoiceInput({ language = "vi-VN", onResult } = {}) {
     setIsRecording(false);
     setIsStartingVoice(false);
     Alert.alert(
-      "Lỗi nhận diện giọng nói",
-      event.message || "Không thể nhận dạng giọng nói. Vui lòng thử lại."
+      t("voiceInput.error"),
+      event.message || t("voiceInput.errorMessage")
     );
   });
 
@@ -95,9 +97,9 @@ export default function useVoiceInput({ language = "vi-VN", onResult } = {}) {
       const { status } = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
       if (status !== "granted") {
         Alert.alert(
-          "Yêu cầu quyền microphone",
-          "Ứng dụng cần quyền truy cập microphone để nhập liệu bằng giọng nói. Vui lòng cấp quyền trong Cài đặt.",
-          [{ text: "Đóng", style: "cancel" }]
+          t("voiceInput.permissionTitle"),
+          t("voiceInput.permissionMessage"),
+          [{ text: t("common.close"), style: "cancel" }]
         );
         setIsStartingVoice(false);
         return;
@@ -123,7 +125,7 @@ export default function useVoiceInput({ language = "vi-VN", onResult } = {}) {
       console.error("[useVoiceInput] handleMicPress error:", err);
       ignoreNextEndRef.current = false;
       setIsStartingVoice(false);
-      Alert.alert("Lỗi", "Không thể khởi động voice input. Vui lòng thử lại.");
+      Alert.alert(t("auth.common.error"), t("voiceInput.startFailed"));
     }
   }, [isRecording, isStartingVoice, language]);
 

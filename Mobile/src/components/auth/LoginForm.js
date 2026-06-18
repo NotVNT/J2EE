@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Pressable, StyleSheet, Switch, Text, TextInput, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useAppColors } from "../../constants/colors";
 import { scale, clampScale } from "../../utils/layoutScale";
 import AppIcon from "../ui/AppIcon";
@@ -21,6 +22,7 @@ export default function LoginForm({
   const [isFocusedEmail, setIsFocusedEmail] = useState(false);
   const [isFocusedPassword, setIsFocusedPassword] = useState(false);
   const colors = useAppColors();
+  const { t } = useTranslation();
 
   return (
     <View style={[styles.formCard, { backgroundColor: colors.SURFACE, borderColor: colors.BORDER }]}>
@@ -28,7 +30,7 @@ export default function LoginForm({
         <TextInput
           autoCapitalize="none"
           keyboardType="email-address"
-          placeholder="Nhập email"
+          placeholder={t("auth.common.enterEmail")}
           placeholderTextColor={colors.TEXT_MUTED || "#7f9085"}
           style={[styles.input, { color: colors.TEXT }]}
           value={email}
@@ -41,7 +43,7 @@ export default function LoginForm({
       <View style={[styles.inputWrap, { backgroundColor: colors.APP_BACKGROUND, borderColor: colors.BORDER }, isFocusedPassword && { borderColor: colors.PRIMARY }]}>
         <TextInput
           secureTextEntry
-          placeholder="Nhập mật khẩu"
+          placeholder={t("auth.common.enterPassword")}
           placeholderTextColor={colors.TEXT_MUTED || "#7f9085"}
           style={[styles.input, { color: colors.TEXT }]}
           value={password}
@@ -60,10 +62,10 @@ export default function LoginForm({
             trackColor={{ false: colors.BORDER, true: colors.PRIMARY_LIGHT }}
             style={styles.switch}
           />
-          <Text style={[styles.rememberText, { color: colors.TEXT_SECONDARY }]}>Ghi nhớ đăng nhập</Text>
+          <Text style={[styles.rememberText, { color: colors.TEXT_SECONDARY }]}>{t("auth.login.rememberMe")}</Text>
         </View>
         <Pressable onPress={onForgotPassword}>
-          <Text style={[styles.forgotText, { color: colors.PRIMARY || "#7C4DFF" }]}>Quên mật khẩu?</Text>
+          <Text style={[styles.forgotText, { color: colors.PRIMARY || "#7C4DFF" }]}>{t("auth.login.forgotPassword")}</Text>
         </Pressable>
       </View>
 
@@ -73,22 +75,22 @@ export default function LoginForm({
         disabled={loading}
       >
         <Text style={styles.loginButtonText}>
-          {loading ? "Đang đăng nhập..." : "Đăng nhập"}
+          {loading ? t("auth.login.loading") : t("auth.common.loginAction")}
         </Text>
       </Pressable>
 
       <View style={styles.dividerRow}>
         <View style={[styles.dividerLine, { backgroundColor: colors.BORDER }]} />
-        <Text style={[styles.dividerText, { color: colors.TEXT_SECONDARY }]}>Hoặc tiếp tục với</Text>
+        <Text style={[styles.dividerText, { color: colors.TEXT_SECONDARY }]}>{t("auth.login.divider")}</Text>
         <View style={[styles.dividerLine, { backgroundColor: colors.BORDER }]} />
       </View>
 
       <SocialLoginButton loading={googleLoading} colors={colors} onPress={onGooglePress} />
 
       <View style={styles.signupRow}>
-        <Text style={[styles.signupText, { color: colors.TEXT_SECONDARY }]}>Chưa có tài khoản? </Text>
+        <Text style={[styles.signupText, { color: colors.TEXT_SECONDARY }]}>{t("auth.login.noAccount")}</Text>
         <Pressable onPress={onSignup}>
-          <Text style={[styles.signupLink, { color: colors.PRIMARY || "#7C4DFF" }]}>Đăng ký</Text>
+          <Text style={[styles.signupLink, { color: colors.PRIMARY || "#7C4DFF" }]}>{t("auth.login.signup")}</Text>
         </Pressable>
       </View>
     </View>

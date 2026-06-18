@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Alert } from "react-native";
+import { useTranslation } from "react-i18next";
 import { sendAiChat, parseAiIntent, confirmAiAction, undoAiAction } from "../../services/aiChatService";
 import { parseIntentResponse, isCrudIntent, isActionIntent, INTENT_ICONS } from "../../utils/aiIntent";
 import apiClient from "../../services/apiClient";
@@ -9,16 +10,18 @@ import {
   buildHistory,
   buildPersistedMessages,
   getCurrentTimeLabel,
+  getWelcomeMessage,
   hasPendingIntent,
-  mapStoredMessages,
-  WELCOME_MESSAGE
+  mapStoredMessages
 } from "./chatMessageUtils";
 
 /**
  * useChatMessages — Quản lý toàn bộ state tin nhắn, sessions, sửa tin, dừng & thử lại.
  */
 export default function useChatMessages({ activeMode, activeProvider, activeModel, activeModelLabel }) {
-  const [messages, setMessages] = useState([WELCOME_MESSAGE]);
+  const { t } = useTranslation();
+  const welcomeMessage = getWelcomeMessage(t);
+  const [messages, setMessages] = useState([welcomeMessage]);
   const [sessions, setSessions] = useState([]);
   const [activeSessionId, setActiveSessionId] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -68,13 +71,14 @@ export default function useChatMessages({ activeMode, activeProvider, activeMode
       const response = await apiClient.get(API_ENDPOINTS.AI_CHAT_MESSAGES(sessionId));
       if (requestId !== currentRequestIdRef.current) return;
 
-      const nextMsgs = mapStoredMessages(response.data || []);
+      const nextMsgs = mapStoredMessages(response.data || [], t);
       setMessages(nextMsgs);
       messagesRef.current = nextMsgs;
     } catch {
       if (requestId !== currentRequestIdRef.current) return;
-      setMessages([WELCOME_MESSAGE]);
-      messagesRef.current = [WELCOME_MESSAGE];
+      const fallback = getWelcomeMessage(t);
+      setMessages([fallback]);
+      messagesRef.current = [fallback];
     } finally {
       if (requestId === currentRequestIdRef.current) {
         setLoading(false);
@@ -88,7 +92,7 @@ export default function useChatMessages({ activeMode, activeProvider, activeMode
       await apiClient.put(API_ENDPOINTS.AI_CHAT_RENAME_SESSION(sessionId), { title: newTitle });
       fetchSessions();
     } catch {
-      Alert.alert("Lỗi", "Không thể đổi tên phiên.");
+      Alert.alert(t("auth.common.error"), t("chatbot.renameFailed"));
     }
   }, [fetchSessions]);
 
@@ -101,9 +105,9 @@ export default function useChatMessages({ activeMode, activeProvider, activeMode
     setPendingIntent(null);
     setLoading(false);
     setInputLocked(false);
-    setMessages([WELCOME_MESSAGE]);
-    messagesRef.current = [WELCOME_MESSAGE];
-  }, [stopGenerating]);
+    setMessages([welcomeMessage]);
+    messagesRef.current = [welcomeMessage];
+  }, [stopGenerating, welcomeMessage]);
 
   const deleteSession = useCallback(async (sessionId) => {
     try {
@@ -113,7 +117,7 @@ export default function useChatMessages({ activeMode, activeProvider, activeMode
       }
       fetchSessions();
     } catch {
-      Alert.alert("Lỗi", "Không thể xóa phiên trò chuyện.");
+      Alert.alert(t("auth.common.error"), t("chatbot.deleteSessionFailed"));
     }
   }, [activeSessionId, fetchSessions, startNewChat]);
 
@@ -150,7 +154,7 @@ export default function useChatMessages({ activeMode, activeProvider, activeMode
     if (hasPendingIntent(currentMessages) && !editMessageId) {
       appendMessage({
         id: createMessageId("system-warn"),
-        text: "⚠️ Vui lòng xác nhận hoặc hủy thao tác hiện tại trước khi gửi lệnh mới.",
+        text: t("chatbot.pendingIntentWarning"),
         sender: "bot",
         isSystem: true,
         time: getCurrentTimeLabel()
@@ -211,7 +215,7 @@ export default function useChatMessages({ activeMode, activeProvider, activeMode
         
         appendMessage({
           id: createMessageId("bot"),
-          text: response?.reply || "Tôi đã nhận câu hỏi nhưng hiện chưa tạo được câu trả lời phù hợp.",
+          text: response?.reply || t("chatbot.noAnswer"),
           sender: "bot",
           modelLabel: activeModelLabel,
           time: getCurrentTimeLabel()
@@ -251,7 +255,7 @@ export default function useChatMessages({ activeMode, activeProvider, activeMode
         } else if (parsed.intent === "ANSWER_QUESTION") {
           appendMessage({
             id: createMessageId("bot"),
-            text: parsed.answer || intentResponse?.reply || "Tôi đã nhận câu hỏi nhưng chưa tạo được câu trả lời phù hợp.",
+            text: parsed.answer || intentResponse?.reply || t("chatbot.noAnswer"),
             sender: "bot",
             modelLabel: activeModelLabel,
             time: getCurrentTimeLabel()
@@ -259,7 +263,7 @@ export default function useChatMessages({ activeMode, activeProvider, activeMode
         } else if (parsed.intent === "INVALID_REQUEST") {
           appendMessage({
             id: createMessageId("bot-error"),
-            text: parsed.validationErrors?.[0] || "Yêu cầu không hợp lệ hoặc ngoài phạm vi hỗ trợ.",
+            text: parsed.validationErrors?.[0] || t("chatbot.invalidRequest"),
             sender: "bot",
             isError: true,
             time: getCurrentTimeLabel()
@@ -274,7 +278,7 @@ export default function useChatMessages({ activeMode, activeProvider, activeMode
           
           appendMessage({
             id: createMessageId("bot"),
-            text: response?.reply || "Tôi đã nhận câu hỏi nhưng hiện chưa tạo được câu trả lời phù hợp.",
+            text: response?.reply || t("chatbot.noAnswer"),
             sender: "bot",
             modelLabel: activeModelLabel,
             time: getCurrentTimeLabel()
@@ -291,13 +295,13 @@ export default function useChatMessages({ activeMode, activeProvider, activeMode
         // Xử lý khi người dùng ấn nút STOP
         appendMessage({
           id: createMessageId("bot-info"),
-          text: "⏹️ Đã dừng sinh phản hồi.",
+          text: t("chatbot.stopped"),
           sender: "bot",
           isSystem: true,
           time: getCurrentTimeLabel()
         });
       } else {
-        const errorMsg = error.response?.data?.message || "Không thể xử lý yêu cầu. Vui lòng thử lại sau.";
+        const errorMsg = error.response?.data?.message || t("chatbot.processFailed");
         appendMessage({
           id: createMessageId("bot-error"),
           text: errorMsg,
@@ -344,11 +348,11 @@ export default function useChatMessages({ activeMode, activeProvider, activeMode
       let undoData = null;
 
       if (isActionIntent(intent)) {
-        resultContent = await executeExportAction(intent);
+        resultContent = await executeExportAction(intent, t);
       } else {
         const data = await confirmAiAction(intent, confirmedData);
         const icon = INTENT_ICONS[intent] || "✅";
-        resultContent = `${icon} ${data.message || "Thao tác thành công!"}`;
+        resultContent = `${icon} ${data.message || t("chatbot.operationSuccess")}`;
         if (data.undoable && data.operationId) undoData = data;
       }
 
@@ -367,12 +371,12 @@ export default function useChatMessages({ activeMode, activeProvider, activeMode
           sender: "bot",
           isUndoAction: true,
           operationId: undoData.operationId,
-          text: "Bạn có thể hoàn tác thao tác này trong vòng vài phút.",
+          text: t("chatbot.undoHint"),
           time: getCurrentTimeLabel()
         });
       }
     } catch (error) {
-      const errorMsg = error.response?.data?.message || "Không thể thực hiện thao tác.";
+      const errorMsg = error.response?.data?.message || t("chatbot.actionFailed");
       appendMessage({
         id: createMessageId("result-error"),
         text: `❌ Lỗi: ${errorMsg}`,
@@ -391,7 +395,7 @@ export default function useChatMessages({ activeMode, activeProvider, activeMode
     setMessages((prev) => prev.map((m) => m.isIntent ? { ...m, isConfirmation: true } : m));
     appendMessage({
       id: createMessageId("cancel"),
-      text: "Đã hủy thao tác.",
+      text: t("chatbot.actionCancelled"),
       sender: "bot",
       isSystem: true,
       time: getCurrentTimeLabel()
@@ -403,13 +407,13 @@ export default function useChatMessages({ activeMode, activeProvider, activeMode
       await undoAiAction(operationId);
       appendMessage({
         id: createMessageId("undo-result"),
-        text: "↩️ Đã hoàn tác thao tác thành công.",
+        text: t("chatbot.undoSuccess"),
         sender: "bot",
         isSystem: true,
         time: getCurrentTimeLabel()
       });
     } catch (e) {
-      Alert.alert("Lỗi hoàn tác", "Không thể hoàn tác. Có thể đã quá thời gian cho phép.");
+      Alert.alert(t("chatbot.undoFailed"), t("chatbot.undoFailed"));
     }
   }, [appendMessage, createMessageId]);
 

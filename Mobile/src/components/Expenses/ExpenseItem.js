@@ -1,5 +1,6 @@
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useAppColors } from "../../constants/colors";
 import { formatDate } from "../../utils/format";
 import AppIcon from "../ui/AppIcon";
@@ -32,6 +33,7 @@ function HighlightText({ colors, text, keyword }) {
 }
 
 export default function ExpenseItem({ item, onDelete, onEdit, searchKeyword }) {
+  const { t } = useTranslation();
   const colors = useAppColors();
   const amount = Number(item?.amount || 0);
   const note = item?.note || "";
@@ -51,8 +53,8 @@ export default function ExpenseItem({ item, onDelete, onEdit, searchKeyword }) {
         <TransactionIcon iconValue={item?.icon} containerSize={36} size={18} style={{ marginRight: 10 }} />
 
         <View style={styles.itemContent}>
-          <HighlightText colors={colors} text={item?.name || "Chi tiêu"} keyword={searchKeyword} />
-          <Text style={[styles.itemMeta, { color: colors.TEXT_SECONDARY }]}>{formatDate(item?.date)} • {item?.categoryName || "Khác"}</Text>
+          <HighlightText colors={colors} text={item?.name || t("expenseItem.type")} keyword={searchKeyword} />
+          <Text style={[styles.itemMeta, { color: colors.TEXT_SECONDARY }]}>{formatDate(item?.date)} • {item?.categoryName || t("reportComponents.other")}</Text>
           {note ? (
             <View style={styles.noteRow}>
               <AppIcon name="document-text-outline" size={12} color={colors.TEXT_SECONDARY} style={{ marginTop: 2 }} />
@@ -71,7 +73,7 @@ export default function ExpenseItem({ item, onDelete, onEdit, searchKeyword }) {
             onPress={() => onEdit?.(item)}
             style={styles.iconButton}
             accessibilityRole="button"
-            accessibilityLabel="Chỉnh sửa chi tiêu"
+            accessibilityLabel={t("expenseItem.editAccessibility")}
           >
             <AppIcon name="create-outline" size={15} color={colors.PRIMARY || "#7C4DFF"} />
           </Pressable>
@@ -79,7 +81,7 @@ export default function ExpenseItem({ item, onDelete, onEdit, searchKeyword }) {
             onPress={() => onDelete(item?.id)}
             style={styles.iconButton}
             accessibilityRole="button"
-            accessibilityLabel="Xóa chi tiêu"
+            accessibilityLabel={t("expenseItem.deleteAccessibility")}
           >
             <AppIcon name="trash-outline" size={15} color={colors.EXPENSE_COLOR || "#EF4444"} />
           </Pressable>

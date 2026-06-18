@@ -1,19 +1,20 @@
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { COLORS, useAppColors } from "../../constants/colors";
 import { EXPENSE_FILTER_TYPES } from "../../hooks/useExpenses";
 
-const FILTER_OPTIONS = [
-  { label: "Tháng này", value: EXPENSE_FILTER_TYPES.current },
-  { label: "Tất cả", value: EXPENSE_FILTER_TYPES.all }
-];
-
 export default function ExpenseFilterTabs({ filterType, onChange }) {
+  const { t } = useTranslation();
   const colors = useAppColors();
+  const FILTER_OPTIONS = [
+    { label: t("expenseFilterTabs.thisMonth"), value: EXPENSE_FILTER_TYPES.current },
+    { label: t("expenseFilterTabs.all"), value: EXPENSE_FILTER_TYPES.all }
+  ];
 
   return (
     <View style={[styles.filterCard, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}>
-      <Text style={[styles.filterTitle, { color: colors.TEXT }]}>Khung thời gian</Text>
+      <Text style={[styles.filterTitle, { color: colors.TEXT }]}>{t("expenseFilterTabs.timeRange")}</Text>
       <View style={styles.filterRow}>
         {FILTER_OPTIONS.map((option, index) => {
           const isActive = filterType === option.value;

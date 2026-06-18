@@ -13,6 +13,7 @@ import {
   StyleSheet
 } from "react-native";
 import { COLORS, useAppColors } from "../../constants/colors";
+import { useTranslation } from "react-i18next";
 import ChatAssistantHeader from "../../components/chatbotUI/ChatAssistantHeader";
 import MessageBubble from "../../components/chatbotUI/MessageBubble";
 import QuickPromptChips from "../../components/chatbotUI/QuickPromptChips";
@@ -62,6 +63,7 @@ function WaveformBar({ color }) {
 
 export default function ChatScreen() {
   const colors = useAppColors();
+  const { t, i18n } = useTranslation();
   const [inputText, setInputText] = useState("");
   const [isSessionsVisible, setIsSessionsVisible] = useState(false);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
@@ -112,7 +114,7 @@ export default function ChatScreen() {
   }, []);
 
   const { isRecording, handleMicPress } = useVoiceInput({
-    language: "vi-VN",
+    language: i18n.language?.startsWith("vi") ? "vi-VN" : "en-US",
     onResult: handleVoiceResult
   });
 
@@ -184,7 +186,7 @@ export default function ChatScreen() {
               <View style={[styles.loadingContainer, { backgroundColor: colors.CHAT_BUBBLE, borderColor: colors.CHAT_BORDER }]}>
                 <ActivityIndicator color={colors.PRIMARY} size="small" />
                 <Text style={[styles.loadingText, { color: colors.CHAT_MUTED }]}>
-                  Trợ lý AI đang suy nghĩ...
+                  {t("chat.thinking")}
                 </Text>
               </View>
             ) : null
@@ -232,7 +234,7 @@ export default function ChatScreen() {
       <Modal visible={isRecording} transparent animationType="slide">
         <View style={[styles.voiceModalContainer, { backgroundColor: colors.SURFACE }]}>
           <View style={styles.voiceHeader}>
-            <Text style={[styles.voiceTitle, { color: colors.TEXT }]}>Ghi âm giọng nói</Text>
+            <Text style={[styles.voiceTitle, { color: colors.TEXT }]}>{t("chat.voiceTitle")}</Text>
             <Pressable style={styles.voiceCloseBtn} onPress={handleMicPress}>
               <AppIcon name="close" size={24} color={colors.TEXT} />
             </Pressable>
@@ -251,12 +253,12 @@ export default function ChatScreen() {
             </View>
 
             <Text style={[styles.voiceDisclaimerText, { color: colors.TEXT_SECONDARY }]}>
-              "Ghi âm được chuyển đổi sang văn bản ngay trên thiết bị này. Bằng cách nhấn ghi âm, bạn đồng ý chia sẻ văn bản đã chuyển đổi với SpendBee và Google Gemini."
+              {t("chat.voiceDisclaimer")}
             </Text>
           </View>
 
           <View style={styles.voiceFooter}>
-            <Text style={[styles.voiceHintText, { color: colors.TEXT_SECONDARY }]}>Nhấn để dừng ghi âm</Text>
+            <Text style={[styles.voiceHintText, { color: colors.TEXT_SECONDARY }]}>{t("chat.voiceHint")}</Text>
             <Pressable
               style={styles.voiceMicButton}
               onPress={handleMicPress}
@@ -297,7 +299,6 @@ const styles = StyleSheet.create({
     marginTop: 6
   },
   loadingText: {
-    color: COLORS.CHAT_MUTED,
     fontSize: 12
   },
   voiceModalContainer: {

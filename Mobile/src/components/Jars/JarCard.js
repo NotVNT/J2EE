@@ -1,11 +1,13 @@
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useAppColors } from "../../constants/colors";
 import { formatJarMoney, getJarActualPercent, getJarProgressWidth } from "../../utils/jar";
 import { scale } from "../../utils/layoutScale";
 
 export default function JarCard({ item, totalBalance, onPress }) {
   const colors = useAppColors();
+  const { t } = useTranslation();
   const { name, icon, color, targetPercentage, currentBalance } = item;
   const actualPercent = getJarActualPercent(currentBalance, totalBalance);
   const progressWidth = getJarProgressWidth(currentBalance, totalBalance);
@@ -32,18 +34,18 @@ export default function JarCard({ item, totalBalance, onPress }) {
           </View>
           <View style={styles.cardTitleWrap}>
             <Text style={[styles.cardName, { color: colors.TEXT }]} numberOfLines={1}>{name}</Text>
-            <Text style={[styles.cardTarget, { color: colors.TEXT_SECONDARY }]}>Mục tiêu: {targetPercentage ?? 0}%</Text>
+            <Text style={[styles.cardTarget, { color: colors.TEXT_SECONDARY }]}>{t("jarCard.target")} {targetPercentage ?? 0}%</Text>
           </View>
         </View>
         <View style={[styles.statusBadge, { backgroundColor: isMet ? colors.INCOME_LIGHT : colors.WARNING_LIGHT, borderColor: isMet ? colors.INCOME : colors.WARNING }]}>
           <Text style={[styles.statusBadgeText, { color: isMet ? colors.INCOME : colors.WARNING }]}>
-            {isMet ? "Đạt mục tiêu" : "Dưới mục tiêu"}
+            {isMet ? t("jarCard.reachedTarget") : t("jarCard.belowTarget")}
           </Text>
         </View>
       </View>
       <Text style={[styles.cardBalance, { color: colors.TEXT }, isNegative && { color: colors.EXPENSE }]}>{formatJarMoney(currentBalance)}</Text>
       <View style={styles.progressRow}>
-        <Text style={[styles.progressLabel, { color: colors.TEXT_MUTED }]}>Tỷ trọng thực tế</Text>
+        <Text style={[styles.progressLabel, { color: colors.TEXT_MUTED }]}>{t("jarCard.actualRatio")}</Text>
         <Text style={[styles.progressValue, { color: color || colors.PRIMARY }]}>{actualPercent}% / {targetPercentage ?? 0}%</Text>
       </View>
       <View style={[styles.progressBarBg, { backgroundColor: colors.CARD_BORDER }]}>

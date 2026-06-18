@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { useTranslation } from "react-i18next";
 import appLogo from "../../assets/logo&banner/applogo.png";
 import { COLORS, useAppColors } from "../../constants/colors";
 import { scale, clampScale } from "../../utils/layoutScale";
@@ -17,6 +18,8 @@ import useLoginActions from "../../hooks/useLoginActions";
 import LoginForm from "../../components/auth/LoginForm";
 
 function LoginLoadingOverlay({ colors }) {
+  const { t } = useTranslation();
+
   return (
     <View
       style={[styles.loadingOverlay, { backgroundColor: colors.OVERLAY || "rgba(0, 0, 0, 0.5)" }]}
@@ -26,7 +29,7 @@ function LoginLoadingOverlay({ colors }) {
     >
       <View style={[styles.loadingContainer, { backgroundColor: colors.SURFACE, borderColor: colors.BORDER }]}>
         <ActivityIndicator size="large" color={colors.PRIMARY || "#7C4DFF"} />
-        <Text style={[styles.loadingText, { color: colors.TEXT }]}>MoneyManager đang xác thực</Text>
+        <Text style={[styles.loadingText, { color: colors.TEXT }]}>{t("auth.login.authenticating")}</Text>
       </View>
     </View>
   );
@@ -35,6 +38,7 @@ function LoginLoadingOverlay({ colors }) {
 export default function LoginScreen() {
   const navigation = useNavigation();
   const colors = useAppColors();
+  const { t } = useTranslation();
   const {
     email,
     setEmail,
@@ -68,8 +72,8 @@ export default function LoginScreen() {
           <Image source={appLogo} style={styles.brandLogo} resizeMode="contain" />
         </View>
 
-        <Text style={[styles.title, { color: colors.TEXT }]}>Đăng nhập tài khoản</Text>
-        <Text style={[styles.subtitle, { color: colors.TEXT_SECONDARY }]}>Chào mừng bạn quay lại. Hãy chọn cách đăng nhập.</Text>
+        <Text style={[styles.title, { color: colors.TEXT }]}>{t("auth.login.title")}</Text>
+        <Text style={[styles.subtitle, { color: colors.TEXT_SECONDARY }]}>{t("auth.login.subtitle")}</Text>
 
         <LoginForm
           email={email}

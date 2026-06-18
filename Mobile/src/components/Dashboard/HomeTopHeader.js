@@ -1,5 +1,6 @@
 import React from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { useAppColors } from "../../constants/colors";
@@ -17,6 +18,7 @@ export default function HomeTopHeader({
 }) {
   const insets = useSafeAreaInsets();
   const colors = useAppColors();
+  const { t } = useTranslation();
   const navigation = useNavigation();
   const displayCount = unreadCount > 9 ? "9+" : String(unreadCount);
 
@@ -40,7 +42,7 @@ export default function HomeTopHeader({
             />
           </Pressable>
         </View>
-        <Text style={[styles.subText, { color: colors.TEXT_SECONDARY }]}>Tổng số dư</Text>
+        <Text style={[styles.subText, { color: colors.TEXT_SECONDARY }]}>{t("dashboard.totalBalance")}</Text>
       </View>
 
       <View style={styles.rightContainer}>
@@ -48,7 +50,7 @@ export default function HomeTopHeader({
           style={[styles.bellButton, { borderColor: colors.BORDER, backgroundColor: colors.SURFACE }]}
           onPress={onBellPress}
         >
-          <AppIcon name="notifications-outline" size={18} color={colors.TEXT} />
+          <Image source={require("../../assets/accessories/bell.png")} style={[styles.bellIcon, { tintColor: colors.TEXT }]} />
           {unreadCount > 0 ? (
             <View style={[styles.badge, { backgroundColor: colors.EXPENSE_COLOR || "#EF4444", borderColor: colors.SURFACE }]}>
               <Text style={styles.badgeText}>{displayCount}</Text>
@@ -101,6 +103,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderWidth: 1,
     position: "relative",
+  },
+  bellIcon: {
+    width: 18,
+    height: 18,
   },
   badge: {
     position: "absolute",

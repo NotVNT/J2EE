@@ -3,6 +3,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-nati
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 import { AuthContext } from "../../contexts/AuthContext";
 import { useTheme, THEME_MODES } from "../../contexts/ThemeContext";
 import MoreSettings, { LogoutButton } from "../../components/More/MoreSettings";
@@ -18,6 +19,7 @@ export default function MoreScreen() {
   const { user, signOut } = useContext(AuthContext);
   const { theme, toggleTheme } = useTheme();
   const colors = useAppColors();
+  const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
   const [appNotifications, setAppNotifications] = useState(true);
   const [languageSelectorVisible, setLanguageSelectorVisible] = useState(false);
@@ -40,9 +42,9 @@ export default function MoreScreen() {
     }
     if (item.key === "about") {
       Alert.alert(
-        "Về ứng dụng Money Manager",
-        "Phiên bản: 1.5\n\nNền tảng tài chính thông minh nhất giúp bạn theo dõi chi tiêu, tiết kiệm và đầu tư hiệu quả cho tương lai.\n\nThiết kế bởi BotDev Team.",
-        [{ text: "Đóng", style: "cancel" }]
+        t("more.aboutTitle"),
+        t("more.aboutMessage"),
+        [{ text: t("common.close"), style: "cancel" }]
       );
       return;
     }
@@ -53,7 +55,8 @@ export default function MoreScreen() {
   const handleApplyLanguage = async (languageCode) => {
     setLanguageSelectorVisible(false);
     const nextLanguage = await languagePreference.changeLanguage(languageCode);
-    setLanguageToast(nextLanguage.changedMessage);
+    setLanguageToast(i18n.t(nextLanguage.changedMessageKey));
+    Alert.alert(t("language.alertTitle"), t("language.changed"));
   };
 
   return (

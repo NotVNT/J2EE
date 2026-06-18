@@ -1,5 +1,6 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useAppColors } from "../../constants/colors";
 import { clampScale, scale } from "../../utils/layoutScale";
 import { formatRelativeTime } from "../../utils/dashboard";
@@ -9,6 +10,7 @@ import AmountText from "../ui/AmountText";
 
 function TransactionRow({ item }) {
   const colors = useAppColors();
+  const { t } = useTranslation();
   const isIncome = String(item?.type || "").toUpperCase().includes("INCOME");
 
   return (
@@ -22,7 +24,7 @@ function TransactionRow({ item }) {
         />
         <View style={styles.textDetails}>
           <Text style={[styles.transactionName, { color: colors.TEXT }]} numberOfLines={1}>
-            {item?.name || "Giao dịch"}
+            {item?.name || t("dashboardComponents.transaction")}
           </Text>
           <Text style={[styles.transactionDate, { color: colors.TEXT_MUTED || "#B8A6AC" }]}>
             {formatRelativeTime(item?.createdAt || item?.updatedAt || item?.date)}
@@ -41,15 +43,16 @@ function TransactionRow({ item }) {
 
 export default function RecentTransactionsSection({ canToggle, expanded, onToggle, transactions }) {
   const colors = useAppColors();
+  const { t } = useTranslation();
 
   return (
     <>
-      <ToggleSectionHeader title="Giao dịch gần đây" visible={canToggle} expanded={expanded} onPress={onToggle} />
+      <ToggleSectionHeader title={t("dashboardComponents.recentTransactions")} visible={canToggle} expanded={expanded} onPress={onToggle} />
       <DashboardSectionCard>
         {transactions && transactions.length ? (
           transactions.map((item) => <TransactionRow key={item.id || `${item.name}-${item.date}`} item={item} />)
         ) : (
-          <Text style={[styles.emptyText, { color: colors.TEXT_SECONDARY }]}>Chưa có giao dịch gần đây.</Text>
+          <Text style={[styles.emptyText, { color: colors.TEXT_SECONDARY }]}>{t("dashboardComponents.noRecentTransactions")}</Text>
         )}
       </DashboardSectionCard>
     </>

@@ -1,9 +1,9 @@
 import { useCallback, useMemo, useState } from "react";
 import { Alert } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useFocusEffect } from "@react-navigation/native";
 import apiClient from "../services/apiClient";
 import { API_ENDPOINTS } from "../constants/api";
-import { SUCCESS_ALERT_MESSAGES, SUCCESS_ALERT_TITLE } from "../constants/alertMessages";
 import { parseCurrencyInput, todayIso, getApiErrorMessage } from "../utils/format";
 import { useVisibleItems } from "../components/common/ShowMoreButton";
 
@@ -12,6 +12,7 @@ import { useVisibleItems } from "../components/common/ShowMoreButton";
  * for the GoalScreen.
  */
 export default function useGoals() {
+  const { t } = useTranslation();
   // ── Goal list ──────────────────────────────────────────────
   const [goals, setGoals] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -62,7 +63,7 @@ export default function useGoals() {
     try {
       await fetchGoals();
     } catch (error) {
-      Alert.alert("Lỗi", getApiErrorMessage(error, "Không tải được mục tiêu tiết kiệm"));
+      Alert.alert(t("common.error"), getApiErrorMessage(error, t("goalForm.loadFail")));
     } finally {
       setRefreshing(false);
     }
@@ -79,19 +80,19 @@ export default function useGoals() {
     const amount = parseCurrencyInput(targetAmount);
 
     if (!name.trim()) {
-      Alert.alert("Thiếu thông tin", "Vui lòng nhập Tên mục tiêu.");
+      Alert.alert(t("goalForm.missingInfoTitle"), t("goalForm.missingName"));
       return;
     }
     if (!targetAmount.trim()) {
-      Alert.alert("Thiếu thông tin", "Vui lòng nhập Số tiền mục tiêu.");
+      Alert.alert(t("goalForm.missingInfoTitle"), t("goalForm.missingTargetAmount"));
       return;
     }
     if (!Number.isFinite(amount) || amount <= 0) {
-      Alert.alert("Sai dữ liệu", "Vui lòng nhập số tiền mục tiêu hợp lệ.");
+      Alert.alert(t("goalForm.invalidDataTitle"), t("goalForm.invalidTargetAmount"));
       return;
     }
     if (new Date(targetDate).getTime() < new Date(startDate).getTime()) {
-      Alert.alert("Sai ngày", "Ngày đích cần lớn hơn hoặc bằng ngày bắt đầu.");
+      Alert.alert(t("goalForm.invalidDateTitle"), t("goalForm.invalidDateMsg"));
       return;
     }
 
@@ -109,9 +110,9 @@ export default function useGoals() {
       setStartDate(todayIso());
       setTargetDate(todayIso());
       await fetchGoals();
-      Alert.alert(SUCCESS_ALERT_TITLE, SUCCESS_ALERT_MESSAGES.create.goal);
+      Alert.alert(t("common.success"), t("goalForm.createSuccess"));
     } catch (error) {
-      Alert.alert("Thất bại", getApiErrorMessage(error, "Không thể tạo mục tiêu"));
+      Alert.alert(t("common.error"), getApiErrorMessage(error, t("goalForm.createFailMsg")));
     } finally {
       setLoading(false);
     }
@@ -121,19 +122,19 @@ export default function useGoals() {
   const onDelete = async (id) => {
     if (!id) return;
 
-    Alert.alert("Xác nhận", "Bạn có chắc muốn xóa mục tiêu này không?", [
-      { text: "Hủy", style: "cancel" },
+    Alert.alert(t("commonComponents.confirm"), t("goalForm.deleteConfirm"), [
+      { text: t("commonComponents.cancel"), style: "cancel" },
       {
-        text: "Xóa",
+        text: t("commonComponents.delete"),
         style: "destructive",
         onPress: async () => {
           try {
             await apiClient.delete(API_ENDPOINTS.DELETE_GOAL(id));
             setDetailGoal(null);
             await fetchGoals();
-            Alert.alert(SUCCESS_ALERT_TITLE, SUCCESS_ALERT_MESSAGES.delete.goal);
+            Alert.alert(t("common.success"), t("goalForm.deleteSuccess"));
           } catch (error) {
-            Alert.alert("Xóa thất bại", getApiErrorMessage(error, "Không thể xóa mục tiêu"));
+            Alert.alert(t("goalForm.deleteFailTitle"), getApiErrorMessage(error, t("goalForm.deleteFailMsg")));
           }
         },
       },
@@ -163,11 +164,11 @@ export default function useGoals() {
 
     const amount = parseCurrencyInput(contributionAmount);
     if (!contributionAmount.trim()) {
-      Alert.alert("Thiếu thông tin", "Vui lòng nhập Số tiền.");
+      Alert.alert(t("goalForm.missingInfoTitle"), t("goalForm.missingAmount"));
       return;
     }
     if (!Number.isFinite(amount) || amount <= 0) {
-      Alert.alert("Sai dữ liệu", "Vui lòng nhập số tiền đóng góp hợp lệ.");
+      Alert.alert(t("goalForm.invalidDataTitle"), t("goalForm.invalidContribution"));
       return;
     }
 
@@ -181,9 +182,9 @@ export default function useGoals() {
       setReturnGoalAfterContribution(null);
       closeContributionModal();
       await fetchGoals();
-      Alert.alert(SUCCESS_ALERT_TITLE, SUCCESS_ALERT_MESSAGES.contribute.goal);
+      Alert.alert(t("common.success"), t("goalForm.contributeSuccess"));
     } catch (error) {
-      Alert.alert("Thất bại", getApiErrorMessage(error, "Không thể đóng góp cho mục tiêu"));
+      Alert.alert(t("common.error"), getApiErrorMessage(error, t("goalForm.contributeFailMsg")));
     }
   };
 

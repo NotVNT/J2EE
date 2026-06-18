@@ -1,5 +1,6 @@
 import React from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import AmountText from "../ui/AmountText";
 import AppIcon from "../ui/AppIcon";
 
@@ -17,7 +18,8 @@ export default function TransactionCalendarHeader({
   showTypeTabs = true,
   summaryMode = "combined"
 }) {
-  const monthYearStr = `Tháng ${currentMonth.getMonth() + 1}, ${currentMonth.getFullYear()}`;
+  const { t } = useTranslation();
+  const monthYearStr = t("reportComponents.month" + (currentMonth.getMonth() + 1)) + ` ${currentMonth.getFullYear()}`;
   const isDark = colors.BG === "#0F0D0C";
   const isExpenseOnly = summaryMode === "expense";
 
@@ -36,7 +38,7 @@ export default function TransactionCalendarHeader({
             }}
           >
             <Text style={[styles.segmentButtonText, activeType === "expense" ? styles.segmentButtonTextActive : { color: colors.TEXT_SECONDARY }]}> 
-              Chi tiêu
+              {t("expenseItem.type")}
             </Text>
           </Pressable>
           <Pressable
@@ -50,7 +52,7 @@ export default function TransactionCalendarHeader({
             }}
           >
             <Text style={[styles.segmentButtonText, activeType === "income" ? styles.segmentButtonTextActive : { color: colors.TEXT_SECONDARY }]}> 
-              Thu nhập
+              {t("incomeItem.type")}
             </Text>
           </Pressable>
         </View>
@@ -85,14 +87,14 @@ export default function TransactionCalendarHeader({
 
       <View style={[styles.summaryCard, { backgroundColor: colors.SURFACE, borderColor: colors.BORDER }]}>
         <View style={styles.summaryCol}>
-          <Text style={[styles.summaryLabel, { color: colors.TEXT_SECONDARY }]}>{activeType === "income" ? "Thu nhập" : "Chi phí"}</Text>
+          <Text style={[styles.summaryLabel, { color: colors.TEXT_SECONDARY }]}>{activeType === "income" ? t("incomeItem.type") : t("expenseItem.type")}</Text>
           <AmountText value={activeType === "income" ? monthlySummary.income : monthlySummary.expense} type={activeType} style={styles.summaryValue} />
         </View>
         {!isExpenseOnly ? (
           <>
             <View style={[styles.summaryDivider, { backgroundColor: colors.SEPARATOR }]} />
             <View style={styles.summaryCol}>
-              <Text style={[styles.summaryLabel, { color: colors.TEXT_SECONDARY }]}>Số dư ròng</Text>
+              <Text style={[styles.summaryLabel, { color: colors.TEXT_SECONDARY }]}>{t("dashboardComponents.balance")}</Text>
               <AmountText value={monthlySummary.net} type={monthlySummary.net >= 0 ? "income" : "expense"} style={styles.summaryValue} />
             </View>
           </>

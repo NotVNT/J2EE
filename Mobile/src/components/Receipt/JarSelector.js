@@ -1,18 +1,20 @@
 import React from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useAppColors } from "../../constants/colors";
 import { scale } from "../../utils/layoutScale";
 
 export default function JarSelector({ jarId, jars, loading, onChange }) {
   const colors = useAppColors();
+  const { t } = useTranslation();
 
   return (
     <View style={[styles.jarsCard, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER }]}>
-      <Text style={[styles.jarsLabel, { color: colors.TEXT_SECONDARY }]}>Hũ chi tiêu áp dụng</Text>
+      <Text style={[styles.jarsLabel, { color: colors.TEXT_SECONDARY }]}>{t("jarSelector.title")}</Text>
       {loading ? (
-        <Text style={[styles.mutedText, { color: colors.TEXT_MUTED }]}>Đang tải danh sách hũ...</Text>
+        <Text style={[styles.mutedText, { color: colors.TEXT_MUTED }]}>{t("jarSelector.loading")}</Text>
       ) : jars.length === 0 ? (
-        <Text style={[styles.mutedText, { color: colors.TEXT_MUTED }]}>Không tìm thấy hũ chi tiêu nào.</Text>
+        <Text style={[styles.mutedText, { color: colors.TEXT_MUTED }]}>{t("jarSelector.empty")}</Text>
       ) : (
         <ScrollView
           horizontal

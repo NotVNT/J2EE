@@ -1,5 +1,6 @@
 import { useCallback, useContext, useEffect, useState } from "react";
 import { Alert } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useNavigation } from "@react-navigation/native";
 import { AuthContext } from "../contexts/AuthContext";
 import { getApiErrorMessage } from "../utils/format";
@@ -11,6 +12,7 @@ import {
 import { tokenStorage } from "../storage/tokenStorage";
 
 export default function useLoginActions() {
+  const { t } = useTranslation();
   const navigation = useNavigation();
   const { signIn, signInWithGoogle, googleAuthLoading } = useContext(AuthContext);
 
@@ -45,18 +47,18 @@ export default function useLoginActions() {
   const showActivationOption = useCallback(
     (activationEmail) => {
       Alert.alert(
-        "Tài khoản chưa được kích hoạt",
-        "Tài khoản này đã được đăng ký nhưng chưa xác thực OTP. Bạn có muốn tiếp tục kích hoạt tài khoản không?",
+        t("auth.common.activationRequiredTitle"),
+        t("auth.signup.activationMessage"),
         [
-          { text: "Để sau", style: "cancel" },
+          { text: t("auth.common.later"), style: "cancel" },
           {
-            text: "Xác thực OTP",
+            text: t("auth.common.verifyOtp"),
             onPress: async () => {
               try {
                 await openActivationOtp(navigation, activationEmail);
               } catch (error) {
-                const message = getApiErrorMessage(error, "Không thể gửi lại mã OTP. Vui lòng thử lại.");
-                Alert.alert("Không thể gửi OTP", message);
+                const message = getApiErrorMessage(error, t("auth.common.resendOtpFailed"));
+                Alert.alert(t("auth.common.cannotResendOtp"), message);
               }
             },
           },
@@ -70,7 +72,7 @@ export default function useLoginActions() {
     const normalizedEmail = email.trim();
 
     if (!normalizedEmail || !password.trim()) {
-      Alert.alert("Thiếu thông tin", "Vui lòng nhập đầy đủ email và mật khẩu.");
+      Alert.alert(t("auth.signup.missingTitle"), t("auth.login.missingCredentials"));
       return;
     }
 
@@ -86,14 +88,14 @@ export default function useLoginActions() {
 
       if (isTimeout || isNetworkError || isServiceUnavailable) {
         Alert.alert(
-          "Không kết nối được với máy chủ",
-          "Hệ thống đang gặp sự cố kết nối. Vui lòng kiểm tra kết nối mạng của bạn hoặc thử lại sau ít phút."
+          t("auth.login.connectionErrorTitle"),
+          t("auth.login.connectionErrorMsg")
         );
       } else if (statusCode === 403 && isActivationRequiredError(error)) {
         showActivationOption(getActivationEmail(error, normalizedEmail));
       } else {
-        const message = getApiErrorMessage(error, "Không thể đăng nhập. Vui lòng kiểm tra lại tài khoản.");
-        Alert.alert("Đăng nhập thất bại", message);
+        const message = getApiErrorMessage(error, t("auth.login.failedMessage"));
+        Alert.alert(t("auth.login.failedTitle"), message);
       }
     } finally {
       setLoading(false);
@@ -104,8 +106,8 @@ export default function useLoginActions() {
     try {
       await signInWithGoogle();
     } catch (error) {
-      const message = getApiErrorMessage(error, "Không thể đăng nhập bằng Google. Vui lòng thử lại.");
-      Alert.alert("Đăng nhập thất bại", message);
+      const message = getApiErrorMessage(error, t("auth.login.googleFailMsg"));
+      Alert.alert(t("auth.login.failedTitle"), message);
     }
   }, [signInWithGoogle]);
 

@@ -12,20 +12,15 @@ import {
   ExpoSpeechRecognitionModule,
   useSpeechRecognitionEvent
 } from "expo-speech-recognition";
+import { useTranslation } from "react-i18next";
 import { COLORS, useAppColors } from "../../constants/colors";
 
 const MIC_ICON = require("../../assets/accessories/mic.png");
 
-/**
- * VoiceInputButton — Nút microphone để nhập liệu bằng giọng nói
- *
- * Props:
- *   onResult: (text: string) => void  — Callback khi có kết quả voice-to-text
- *   language: string                  — Mã ngôn ngũ (VD: "vi-VN", "en-US")
- */
-
-export default function VoiceInputButton({ iconSource, iconStyle, noBackground = false, onResult, language = "vi-VN" }) {
+export default function VoiceInputButton({ iconSource, iconStyle, noBackground = false, onResult, language: langProp }) {
   const colors = useAppColors();
+  const { t, i18n } = useTranslation();
+  const language = langProp || (i18n.language?.startsWith("vi") ? "vi-VN" : "en-US");
   const [modalVisible, setModalVisible] = useState(false);
   const [recognizing, setRecognizing] = useState(false);
   const [transcript, setTranscript] = useState("");
@@ -55,7 +50,7 @@ export default function VoiceInputButton({ iconSource, iconStyle, noBackground =
     console.log("Speech recognition error:", event);
     setRecognizing(false);
     setIsStarting(false);
-    setError(event.message || "Không thể nhận dạng giọng nói");
+    setError(event.message || t("voiceInput.recognitionFailed"));
   });
 
   const handleStart = useCallback(async () => {
@@ -72,7 +67,7 @@ export default function VoiceInputButton({ iconSource, iconStyle, noBackground =
       // Yêu cầu quyền microphone
       const { status } = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
       if (status !== "granted") {
-        setError("Ứng dụng cần quyền truy cập microphone để nhận diện giọng nói.");
+        setError(t("voiceInput.permissionDenied"));
         setModalVisible(true);
         setIsStarting(false);
         return;
@@ -102,7 +97,7 @@ export default function VoiceInputButton({ iconSource, iconStyle, noBackground =
     } catch (err) {
       console.error("handleStart error:", err);
       setIsStarting(false);
-      setError(err.message || "Không thể khởi động voice input");
+      setError(err.message || t("voiceInput.startFailed"));
       setModalVisible(true); // Show error in modal
     }
   }, [language, recognizing, isStarting]);
@@ -142,7 +137,7 @@ export default function VoiceInputButton({ iconSource, iconStyle, noBackground =
         ]}
         onPress={handleStart}
         disabled={recognizing || isStarting}
-        accessibilityLabel="Nhập liệu bằng giọng nói"
+        accessibilityLabel={t("voiceInput.accessibilityLabel")}
         accessibilityRole="button"
       >
         {iconSource ? (
@@ -169,18 +164,18 @@ export default function VoiceInputButton({ iconSource, iconStyle, noBackground =
             {/* Trạng thái */}
             <Text style={[styles.statusText, { color: colors.TEXT }]}>
               {recognizing
-                ? "Đang nghe..."
+                ? t("voiceInput.listening")
                 : error
-                  ? "Lỗi"
+                  ? t("voiceInput.error")
                   : transcript
-                    ? "Hoàn thành"
-                    : "Đang chuẩn bị..."}
+                    ? t("voiceInput.done")
+                    : t("voiceInput.preparing")}
             </Text>
 
             {/* Kết quả transcript */}
             <View style={[styles.transcriptContainer, { backgroundColor: colors.BG, borderColor: colors.CARD_BORDER }]}>
               <Text style={[styles.transcriptText, { color: colors.TEXT }]}>
-                {transcript || (recognizing ? "Hãy nói nội dung giao dịch..." : (isStarting ? "Đang khởi động..." : ""))}
+                {transcript || (recognizing ? t("voiceInput.speakHint") : (isStarting ? t("voiceInput.starting") : ""))}
               </Text>
             </View>
 
@@ -192,12 +187,12 @@ export default function VoiceInputButton({ iconSource, iconStyle, noBackground =
             {/* Nút điều khiển */}
             <View style={styles.actionRow}>
               <Pressable style={[styles.cancelButton, { borderColor: colors.CARD_BORDER }]} onPress={handleCancel}>
-                <Text style={[styles.cancelText, { color: colors.TEXT_SECONDARY }]}>Hủy</Text>
+                <Text style={[styles.cancelText, { color: colors.TEXT_SECONDARY }]}>{t("voiceInput.cancel")}</Text>
               </Pressable>
 
               {recognizing ? (
                 <Pressable style={[styles.stopButton, { backgroundColor: colors.EXPENSE }]} onPress={handleStop}>
-                  <Text style={styles.stopText}>Dừng</Text>
+                  <Text style={styles.stopText}>{t("voiceInput.stop")}</Text>
                 </Pressable>
               ) : (
                 <Pressable
@@ -205,7 +200,7 @@ export default function VoiceInputButton({ iconSource, iconStyle, noBackground =
                   onPress={error ? handleCancel : handleConfirm}
                   disabled={!transcript.trim() && !error}
                 >
-                  <Text style={styles.confirmText}>{error ? "Đóng" : "Xong"}</Text>
+                  <Text style={styles.confirmText}>{error ? t("voiceInput.close") : t("voiceInput.confirm")}</Text>
                 </Pressable>
               )}
             </View>

@@ -120,7 +120,7 @@ export const DARK_COLORS = {
   // ─── Override for Dark Mode ─────────────────────────────
   BG: '#0F0D0C',
   CARD: '#2C2C2E', // iOS dark card background
-  CARD_BORDER: '#2E2A28',
+  CARD_BORDER: '#505052',
   TEXT: '#F3EEEC',
   TEXT_SECONDARY: '#B8ACA6',
   TEXT_MUTED: '#7A6E68',

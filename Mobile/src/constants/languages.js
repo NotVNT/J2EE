@@ -5,7 +5,8 @@ export const LANGUAGES = [
     label: "Tiếng Việt",
     subtitle: "Ngôn ngữ mặc định",
     settingsLabel: "Tiếng Việt",
-    changedMessage: "Đã chuyển sang tiếng Việt",
+    changedMessageKey: "language.changed",
+    subtitleKey: "language.viSubtitle",
     flag: "🇻🇳"
   },
   {
@@ -14,13 +15,14 @@ export const LANGUAGES = [
     label: "English",
     subtitle: "Default language",
     settingsLabel: "English",
-    changedMessage: "Language changed to English",
+    changedMessageKey: "language.changed",
+    subtitleKey: "language.enSubtitle",
     flag: "🇺🇸"
   }
 ];
 
-export const DEFAULT_LANGUAGE_CODE = "vi";
+export const DEFAULT_LANGUAGE_CODE = "en";
 
 export function getLanguageInfo(code) {
-  return LANGUAGES.find((language) => language.code === code) || LANGUAGES[0];
+  return LANGUAGES.find((language) => language.code === code) || LANGUAGES.find((language) => language.code === DEFAULT_LANGUAGE_CODE) || LANGUAGES[0];
 }

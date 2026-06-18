@@ -1,14 +1,16 @@
 export const getCurrentTimeLabel = () =>
   new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
-export const WELCOME_MESSAGE = {
-  id: "welcome",
-  text: "Xin chào! Tôi là Nova Money - Trợ lý AI của Money Manager. Tôi có thể trò chuyện, tư vấn tài chính, hoặc tự động thao tác dữ liệu giúp bạn ở chế độ Agent.",
-  sender: "bot",
-  time: getCurrentTimeLabel()
-};
+export function getWelcomeMessage(t) {
+  return {
+    id: "welcome",
+    text: t("chatbot.welcome"),
+    sender: "bot",
+    time: getCurrentTimeLabel()
+  };
+}
 
-export function mapStoredMessages(rawMessages = []) {
+export function mapStoredMessages(rawMessages = [], t = null) {
   const mapped = rawMessages.map((message) => ({
     id: String(message.id || Math.random()),
     text: message.content || "",
@@ -18,7 +20,7 @@ export function mapStoredMessages(rawMessages = []) {
       : getCurrentTimeLabel()
   }));
 
-  return mapped.length > 0 ? mapped : [WELCOME_MESSAGE];
+  return mapped.length > 0 ? mapped : [getWelcomeMessage(t || (() => ""))];
 }
 
 function isHistoryMessage(message) {

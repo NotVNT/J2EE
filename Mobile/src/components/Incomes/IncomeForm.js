@@ -1,5 +1,6 @@
 import React from "react";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import CategoryGridSelector from "../common/CategoryGridSelector";
 import { useAppColors } from "../../constants/colors";
 import { formatCurrencyInput, formatMoney } from "../../utils/format";
@@ -7,36 +8,37 @@ import { PickDateField } from "../../utils/datePicker";
 import { scale } from "../../utils/layoutScale";
 import ScreenBackHeader from "../common/ScreenBackHeader";
 
-export default function IncomeForm({ form, insetsStyle, title = "Thêm thu nhập" }) {
+export default function IncomeForm({ form, insetsStyle, title }) {
   const colors = useAppColors();
+  const { t } = useTranslation();
   const primaryThemeColor = colors.INCOME; // Teal palette for income
   const lightThemeColor = colors.INCOME_LIGHT;
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.BG }]} contentContainerStyle={[styles.content, insetsStyle]} keyboardShouldPersistTaps="handled">
-      <ScreenBackHeader title={title} />
+      <ScreenBackHeader title={title || t("incomeForm.save")} />
 
       {/* SECTION 1: THÔNG TIN GIAO DỊCH */}
       <View style={[styles.sectionContainer, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER, shadowColor: colors.SHADOW_COLOR || "#000" }]}>
-        <Text style={[styles.sectionTitle, { color: primaryThemeColor }]}>Thông tin thu nhập</Text>
+        <Text style={[styles.sectionTitle, { color: primaryThemeColor }]}>{t("incomeForm.transactionInfo")}</Text>
 
-        <Text style={[styles.amountLabel, { color: colors.TEXT_SECONDARY }]}>Số tiền thu nhập</Text>
+        <Text style={[styles.amountLabel, { color: colors.TEXT_SECONDARY }]}>{t("incomeForm.amount")}</Text>
         <TextInput
           style={[styles.amountInput, { borderBottomColor: primaryThemeColor, color: colors.TEXT }]}
           value={form.amount}
           onChangeText={form.setAmount}
           keyboardType="numeric"
-          placeholder="0 ₫"
+          placeholder={t("incomeForm.amountPlaceholder")}
           placeholderTextColor={colors.TEXT_MUTED}
           selectTextOnFocus
         />
 
-        <Text style={[styles.label, { color: colors.TEXT }]}>Tên khoản thu</Text>
+        <Text style={[styles.label, { color: colors.TEXT }]}>{t("incomeForm.name")}</Text>
         <TextInput
           style={[styles.input, { backgroundColor: colors.BG, borderColor: colors.CARD_BORDER, color: colors.TEXT }]}
           value={form.name}
           onChangeText={form.setName}
-          placeholder="Ví dụ: Lương tháng"
+          placeholder={t("incomeForm.namePlaceholder")}
           placeholderTextColor={colors.TEXT_MUTED}
         />
       </View>
@@ -44,11 +46,11 @@ export default function IncomeForm({ form, insetsStyle, title = "Thêm thu nhậ
       {/* SECTION 2: PHÂN BỔ HŨ TÀI CHÍNH */}
       {form.jars.length > 0 && form.incomeAmount > 0 && (
         <View style={[styles.sectionContainer, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER, shadowColor: colors.SHADOW_COLOR || "#000" }]}>
-          <Text style={[styles.sectionTitle, { color: primaryThemeColor }]}>Phân bổ hũ tài chính</Text>
+          <Text style={[styles.sectionTitle, { color: primaryThemeColor }]}>{t("incomeForm.jarSection")}</Text>
 
           <Pressable style={[styles.allocHeader, { backgroundColor: lightThemeColor, borderRadius: 10 }]} onPress={() => form.setShowAllocations(!form.showAllocations)}>
             <Text style={[styles.allocHeaderTitle, { color: primaryThemeColor }]}>
-              💰 Phân bổ vào {form.jars.length} hũ ({formatMoney(form.totalAllocated)} / {formatMoney(form.incomeAmount)})
+              {t("incomeForm.allocHeader", { count: form.jars.length, allocated: formatMoney(form.totalAllocated), income: formatMoney(form.incomeAmount) })}
             </Text>
             <Text style={[styles.allocHeaderArrow, { color: primaryThemeColor }]}>{form.showAllocations ? "▲" : "▼"}</Text>
           </Pressable>
@@ -67,7 +69,7 @@ export default function IncomeForm({ form, insetsStyle, title = "Thêm thu nhậ
                         <Text style={[styles.allocJarName, { color: colors.TEXT }]} numberOfLines={1}>
                           {allocation.jarName}
                         </Text>
-                        <Text style={[styles.allocJarPct, { color: colors.TEXT_MUTED }]}>Mục tiêu: {allocation.percentage}%</Text>
+                        <Text style={[styles.allocJarPct, { color: colors.TEXT_MUTED }]}>{t("incomeForm.allocTarget", { percentage: allocation.percentage })}</Text>
                       </View>
                     </View>
                     <TextInput
@@ -75,7 +77,7 @@ export default function IncomeForm({ form, insetsStyle, title = "Thêm thu nhậ
                       value={formatCurrencyInput(String(allocation.amount))}
                       onChangeText={(value) => form.handleAllocationAmountChange(index, value)}
                       keyboardType="numeric"
-                      placeholder="0"
+                      placeholder={t("incomeForm.allocPlaceholder")}
                       placeholderTextColor={colors.TEXT_MUTED}
                     />
                   </View>
@@ -85,8 +87,8 @@ export default function IncomeForm({ form, insetsStyle, title = "Thêm thu nhậ
               {form.allocationDiff !== 0 && (
                 <Text style={[styles.allocWarning, form.allocationDiff > 0 ? styles.allocWarningUnder : styles.allocWarningOver]}>
                   {form.allocationDiff > 0
-                    ? `⚠️ Còn ${formatMoney(form.allocationDiff)} chưa được phân bổ`
-                    : `⚠️ Vượt ${formatMoney(Math.abs(form.allocationDiff))} so với số tiền nhập`}
+                    ? t("incomeForm.allocUnder", { amount: formatMoney(form.allocationDiff) })
+                    : t("incomeForm.allocOver", { amount: formatMoney(Math.abs(form.allocationDiff)) })}
                 </Text>
               )}
             </View>
@@ -96,22 +98,25 @@ export default function IncomeForm({ form, insetsStyle, title = "Thêm thu nhậ
 
       {/* SECTION 3: PHÂN LOẠI GIAO DỊCH */}
       <View style={[styles.sectionContainer, { backgroundColor: colors.CARD, borderColor: colors.CARD_BORDER, shadowColor: colors.SHADOW_COLOR || "#000" }]}>
-        <Text style={[styles.sectionTitle, { color: primaryThemeColor }]}>Phân loại giao dịch</Text>
+        <Text style={[styles.sectionTitle, { color: primaryThemeColor }]}>{t("incomeForm.transactionClass")}</Text>
 
-        <PickDateField label="Ngày nhận" value={form.date} onChange={form.setDate} />
+        <PickDateField label={t("incomeForm.date")} value={form.date} onChange={form.setDate} />
 
-        <Text style={[styles.label, { color: colors.TEXT, marginTop: 16, marginBottom: 8 }]}>Danh mục</Text>
+        <Text style={[styles.label, { color: colors.TEXT, marginTop: 16, marginBottom: 8 }]}>{t("incomeForm.category")}</Text>
         <CategoryGridSelector
           categories={form.categories}
           selectedId={form.categoryId}
           onSelect={form.setCategoryId}
           loading={form.categoryLoading}
-          emptyText="Chưa có danh mục thu nhập. Hãy tạo ở tab Danh mục."
+          highlighted
+          hintText={t("incomeForm.categoryHint")}
+          placeholder={t("incomeForm.categoryPlaceholder")}
+          emptyText={t("incomeForm.categoryEmpty")}
         />
       </View>
 
       <Pressable style={[styles.saveButton, { backgroundColor: primaryThemeColor }, form.submitting && styles.saveButtonDisabled]} onPress={form.onSave} disabled={form.submitting}>
-        <Text style={styles.saveButtonText}>{form.submitting ? "Đang lưu..." : "Lưu thu nhập"}</Text>
+        <Text style={styles.saveButtonText}>{form.submitting ? t("incomeForm.saving") : t("incomeForm.save")}</Text>
       </Pressable>
     </ScrollView>
   );

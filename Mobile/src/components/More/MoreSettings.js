@@ -1,8 +1,9 @@
 import React from "react";
 import { Image, Pressable, StyleSheet, Switch, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 import { COLORS, useAppColors } from "../../constants/colors";
-import { MORE_MENU_GROUPS } from "./MoreMenuGroup";
+import { getMoreMenuGroups } from "./MoreMenuGroup";
 
 function SettingGroup({ colors, title, children }) {
   return (
@@ -25,7 +26,7 @@ function SettingItem({ colors, icon, image, title, subtitle, value, valueStyle, 
       style={({ pressed }) => [
         styles.itemRow,
         { borderBottomColor: colors.BG },
-        isUpgrade && styles.upgradeRow,
+        isUpgrade && [styles.upgradeRow, { backgroundColor: colors.CARD_BORDER }],
         pressed && !isSwitch && !rowDisabled && styles.itemRowPressed,
         disabled && styles.itemRowDisabled
       ]}
@@ -71,6 +72,7 @@ function SettingItem({ colors, icon, image, title, subtitle, value, valueStyle, 
 
 export function LogoutButton({ onPress }) {
   const colors = useAppColors();
+  const { t } = useTranslation();
 
   return (
     <Pressable
@@ -78,13 +80,15 @@ export function LogoutButton({ onPress }) {
       android_ripple={{ color: "transparent" }}
       onPress={onPress}
     >
-      <Text style={[styles.logoutText, { color: colors.EXPENSE }]}>Đăng xuất</Text>
+      <Text style={[styles.logoutText, { color: colors.EXPENSE }]}>{t("more.logout")}</Text>
     </Pressable>
   );
 }
 
 export default function MoreSettings({ appNotifications, emailPreferences, isDark, languageLabel, onAppNotificationsChange, onThemeChange, onItemPress }) {
   const colors = useAppColors();
+  const { t } = useTranslation();
+  const menuGroups = getMoreMenuGroups(t);
 
   const getDynamicProps = (key) => {
     switch (key) {
@@ -100,7 +104,7 @@ export default function MoreSettings({ appNotifications, emailPreferences, isDar
         };
       case "dark-mode":
         return {
-          subtitle: isDark ? "Đang bật chế độ tối" : "Đang bật chế độ sáng",
+          subtitle: isDark ? t("more.darkModeOn") : t("more.lightModeOn"),
           switchValue: isDark,
           onSwitchChange: onThemeChange
         };
@@ -111,7 +115,7 @@ export default function MoreSettings({ appNotifications, emailPreferences, isDar
 
   return (
     <>
-      {MORE_MENU_GROUPS.map((group) => (
+      {menuGroups.map((group) => (
         <SettingGroup key={group.key} colors={colors} title={group.title}>
           {group.items.map((item) => {
             const { key, ...settingItemProps } = item;
@@ -163,7 +167,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1.5,
   },
   upgradeRow: {
-    backgroundColor: "#EEF9FF",
     borderBottomWidth: 0,
     marginHorizontal: 8,
     marginVertical: 8,

@@ -8,6 +8,7 @@ import {
   View
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { useTranslation } from "react-i18next";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
 import appLogo from "../../assets/logo&banner/applogo.png";
@@ -20,24 +21,24 @@ export const ONBOARDING_KEY = "botdev_onboarding_done";
 const SLIDES = [
   {
     id: "plan",
-    title: "Theo Dõi Mọi Dòng Tiền",
-    subtitle: "Quản lý thu chi trong một giao diện gọn gàng, dễ theo dõi.",
+    titleKey: "onboarding.slides.planTitle",
+    subtitleKey: "onboarding.slides.planSubtitle",
     icon: "wallet",
     glowColor: "rgba(124, 77, 255, 0.12)",
     iconColor: "#7C4DFF",
   },
   {
     id: "insight",
-    title: "Ghi chép Bằng Giọng Nói",
-    subtitle: "Nhập chi tiêu/thu nhập bằng giọng nói thông minh chỉ trong vài giây.",
+    titleKey: "onboarding.slides.insightTitle",
+    subtitleKey: "onboarding.slides.insightSubtitle",
     icon: "mic",
     glowColor: "rgba(249, 115, 22, 0.12)",
     iconColor: "#F97316",
   },
   {
     id: "control",
-    title: "Chủ Động Tài Chính",
-    subtitle: "Thiết lập mục tiêu, giữ ngân sách và quản lý tài chính hiệu quả.",
+    titleKey: "onboarding.slides.controlTitle",
+    subtitleKey: "onboarding.slides.controlSubtitle",
     icon: "flag",
     glowColor: "rgba(59, 130, 246, 0.12)",
     iconColor: "#3B82F6",
@@ -46,6 +47,7 @@ const SLIDES = [
 
 export default function OnboardingScreen() {
   const navigation = useNavigation();
+  const { t } = useTranslation();
   const listRef = useRef(null);
   const colors = useAppColors();
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -101,7 +103,7 @@ export default function OnboardingScreen() {
       <View style={styles.headerRow}>
         <Image source={appLogo} style={styles.brandLogo} resizeMode="contain" />
         <Pressable onPress={finishOnboarding}>
-          <Text style={[styles.skipText, { color: colors.TEXT_SECONDARY || "#6B7280" }]}>Bỏ qua</Text>
+          <Text style={[styles.skipText, { color: colors.TEXT_SECONDARY || "#6B7280" }]}>{t("onboarding.skip")}</Text>
         </Pressable>
       </View>
 
@@ -119,8 +121,8 @@ export default function OnboardingScreen() {
             <View style={[styles.iconBubble, { backgroundColor: item.glowColor, borderColor: item.iconColor }]}>
               <AppIcon name={item.icon} size={scale(44)} color={item.iconColor} />
             </View>
-            <Text style={[styles.title, { color: colors.TEXT || "#1C1C1E" }]}>{item.title}</Text>
-            <Text style={[styles.subtitle, { color: colors.TEXT_SECONDARY || "#6B7280" }]}>{item.subtitle}</Text>
+            <Text style={[styles.title, { color: colors.TEXT || "#1C1C1E" }]}>{t(item.titleKey)}</Text>
+            <Text style={[styles.subtitle, { color: colors.TEXT_SECONDARY || "#6B7280" }]}>{t(item.subtitleKey)}</Text>
           </View>
         )}
       />
@@ -128,7 +130,7 @@ export default function OnboardingScreen() {
       <View style={styles.footer}>
         <View style={styles.dotsRow}>{dots}</View>
         <Pressable style={[styles.ctaButton, { backgroundColor: "#3B82F6" }]} onPress={handleNext}>
-          <Text style={styles.ctaText}>{isLastSlide ? "Bắt đầu" : "Tiếp tục"}</Text>
+          <Text style={styles.ctaText}>{isLastSlide ? t("onboarding.start") : t("onboarding.continue")}</Text>
         </Pressable>
       </View>
     </View>

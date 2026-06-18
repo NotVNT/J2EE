@@ -1,5 +1,6 @@
 import React from 'react';
 import { Image, View, Text, StyleSheet } from 'react-native';
+import { useTranslation } from "react-i18next";
 import { useAppColors } from '../../constants/colors';
 import AmountText from '../ui/AmountText';
 import expenseIcon from '../../assets/expense/spending.png';
@@ -7,6 +8,7 @@ import incomeIcon from '../../assets/income/financial-statement.png';
 
 export default function DailySummaryCards({ totalIncome = 0, totalExpense = 0 }) {
   const colors = useAppColors();
+  const { t } = useTranslation();
   const expenseColor = colors.EXPENSE || colors.ACTION_EXPENSE || '#EF4444';
   const incomeColor = colors.INCOME || colors.ACTION_INCOME || '#22C55E';
 
@@ -17,7 +19,7 @@ export default function DailySummaryCards({ totalIncome = 0, totalExpense = 0 })
           <View style={styles.iconContainer}>
             <Image source={expenseIcon} style={styles.iconImage} resizeMode="contain" />
           </View>
-          <Text style={[styles.label, { color: expenseColor }]}>Chi tiêu</Text>
+          <Text style={[styles.label, { color: expenseColor }]}>{t("dashboardComponents.expenseType")}</Text>
         </View>
         <AmountText value={totalExpense} type="expense" style={styles.amount} />
       </View>
@@ -27,7 +29,7 @@ export default function DailySummaryCards({ totalIncome = 0, totalExpense = 0 })
           <View style={styles.iconContainer}>
             <Image source={incomeIcon} style={styles.iconImage} resizeMode="contain" />
           </View>
-          <Text style={[styles.label, { color: incomeColor }]}>Thu nhập</Text>
+          <Text style={[styles.label, { color: incomeColor }]}>{t("dashboardComponents.incomeType")}</Text>
         </View>
         <AmountText value={totalIncome} type="income" style={styles.amount} />
       </View>

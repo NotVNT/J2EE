@@ -1,5 +1,6 @@
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { COLORS } from "../../constants/colors";
 import AppIcon from "../ui/AppIcon";
 import { clampScale, scale } from "../../utils/layoutScale";
@@ -8,19 +9,18 @@ import {
   NOTIFICATION_READ_FILTERS
 } from "../../utils/notificationFilters";
 
-const READ_FILTER_OPTIONS = [
-  { id: NOTIFICATION_READ_FILTERS.ALL, label: "Tất cả" },
-  { id: NOTIFICATION_READ_FILTERS.UNREAD, label: "Chưa đọc" }
-];
-
-const CATEGORY_FILTER_OPTIONS = [
-  { id: NOTIFICATION_CATEGORY_FILTERS.ALL, label: "Tất cả", compactLabel: "Tất cả", icon: "notifications-outline" },
-  { id: NOTIFICATION_CATEGORY_FILTERS.FINANCIAL, label: "Biến động số dư", compactLabel: "Số dư", icon: "trending-up-outline" },
-  { id: NOTIFICATION_CATEGORY_FILTERS.BUDGET, label: "Ngân sách", compactLabel: "Ngân sách", icon: "shield-checkmark-outline" },
-  { id: NOTIFICATION_CATEGORY_FILTERS.SYSTEM, label: "Hệ thống / Gói", compactLabel: "Hệ thống", icon: "sparkles-outline" }
-];
-
 export function NotificationFilters({ categoryFilter, colors, readFilter, setCategoryFilter, setReadFilter }) {
+  const { t } = useTranslation();
+  const READ_FILTER_OPTIONS = [
+    { id: NOTIFICATION_READ_FILTERS.ALL, label: t("notificationControls.all") },
+    { id: NOTIFICATION_READ_FILTERS.UNREAD, label: t("notificationControls.unread") }
+  ];
+  const CATEGORY_FILTER_OPTIONS = [
+    { id: NOTIFICATION_CATEGORY_FILTERS.ALL, label: t("notificationControls.all"), compactLabel: t("notificationControls.all"), icon: "notifications-outline" },
+    { id: NOTIFICATION_CATEGORY_FILTERS.FINANCIAL, label: t("notificationControls.balanceChanges"), compactLabel: t("notificationControls.balance"), icon: "trending-up-outline" },
+    { id: NOTIFICATION_CATEGORY_FILTERS.BUDGET, label: t("notificationControls.budget"), compactLabel: t("notificationControls.budget"), icon: "shield-checkmark-outline" },
+    { id: NOTIFICATION_CATEGORY_FILTERS.SYSTEM, label: t("notificationControls.system"), compactLabel: t("notificationControls.system"), icon: "sparkles-outline" }
+  ];
   return (
     <View style={[styles.filterPanel, { borderBottomColor: colors.CARD_BORDER }]}>
       <View style={[styles.readFilterGroup, { backgroundColor: colors.BG, borderColor: colors.CARD_BORDER }]}>
@@ -71,6 +71,7 @@ export function NotificationFilters({ categoryFilter, colors, readFilter, setCat
 }
 
 export function SelectionBar({ allVisibleSelected, colors, onDeleteSelected, onToggleAll, selectedCount }) {
+  const { t } = useTranslation();
   return (
     <View style={[styles.selectionBar, { backgroundColor: colors.BG, borderBottomColor: colors.CARD_BORDER }]}>
       <Pressable
@@ -89,7 +90,7 @@ export function SelectionBar({ allVisibleSelected, colors, onDeleteSelected, onT
           {allVisibleSelected ? <AppIcon name="checkmark" size={12} color={COLORS.WHITE} /> : null}
         </View>
         <Text style={[styles.selectAllText, { color: colors.TEXT_SECONDARY }]}>
-          {selectedCount > 0 ? `Đã chọn ${selectedCount} mục` : "Chọn tất cả"}
+          {selectedCount > 0 ? t("notificationControls.selectedCount", { count: selectedCount }) : t("notificationControls.selectAll")}
         </Text>
       </Pressable>
       {selectedCount > 0 ? (
@@ -97,10 +98,10 @@ export function SelectionBar({ allVisibleSelected, colors, onDeleteSelected, onT
           style={[styles.deleteSelectedButton, { backgroundColor: colors.EXPENSE_LIGHT }]}
           onPress={onDeleteSelected}
           accessibilityRole="button"
-          accessibilityLabel="Xóa thông báo đã chọn"
+          accessibilityLabel={t("notificationControls.deleteSelectedAccessibility")}
         >
           <AppIcon name="trash-outline" size={14} color={colors.EXPENSE} />
-          <Text style={[styles.deleteSelectedText, { color: colors.EXPENSE }]}>Xóa đã chọn</Text>
+          <Text style={[styles.deleteSelectedText, { color: colors.EXPENSE }]}>{t("notificationControls.deleteSelected")}</Text>
         </Pressable>
       ) : null}
     </View>
